@@ -139,7 +139,7 @@ cp -rf .zshrc $HOME/.zshrc > /dev/null 2>&1
 
 # install asdf
 echo "\e[32m[DOT]\e[34m install asdf ... \e[39m\n"
-echo -e "\nsource $(brew --prefix asdf)/asdf.sh" >> $HOME/.bash_profile
+echo -e "\n\nsource $(brew --prefix asdf)/asdf.sh" >> $HOME/.zshrc
 
 # auto install default python packages
 cp -rf default-python-packages $HOME/.default-python-packages > /dev/null 2>&1
@@ -213,8 +213,8 @@ echo "\e[32m[DOT]\e[34m copying environment files ... \e[39m\n"
 cp -rf .p10k.zsh $HOME/.p10k.zsh > /dev/null 2>&1
 
 # add the zsh autocomplete and auto suggest scripts
-echo -e "\nsource $(brew --prefix zsh-autosuggestions)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" >> $HOME/.zshrc
-echo -e "\nsource $(brew --prefix zsh-syntax-highlighting)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> $HOME/.zshrc
+echo -e "source $(brew --prefix zsh-autosuggestions)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" >> $HOME/.zshrc
+echo -e "source $(brew --prefix zsh-syntax-highlighting)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" >> $HOME/.zshrc
 
 # loads the source
 source $HOME/.zshrc
