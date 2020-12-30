@@ -93,18 +93,8 @@ group by commands.argv order by count(*) desc limit 1"
     suggestion=$(_histdb_query "$query")
 }
 
-_zsh_autosuggest_strategy_histdb_top() {
-    local query="select commands.argv from
-history left join commands on history.command_id = commands.rowid
-left join places on history.place_id = places.rowid
-where commands.argv LIKE '$(sql_escape $1)%'
-group by commands.argv
-order by places.dir != '$(sql_escape $PWD)', count(*) desc limit 1"
-    suggestion=$(_histdb_query "$query")
-}
-
 # Defines Auto Suggestion Strategy
-ZSH_AUTOSUGGEST_STRATEGY=(histdb_top_here histdb_top history completion)
+ZSH_AUTOSUGGEST_STRATEGY=histdb_top_here
 
 # Which plugins would you like to load?
 # Standard plugins can be found in ~/.oh-my-zsh/plugins/*
@@ -176,17 +166,7 @@ fi
 # Loads SQLite History
 source "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-histdb/sqlite-history.zsh"
 source "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-histdb/histdb-interactive.zsh"
-bindkey '^r' _histdb-isearch
-
 autoload -Uz add-zsh-hook
-
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 
 # Custom Aliases
 alias cl="clear"

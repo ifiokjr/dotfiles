@@ -4,7 +4,7 @@ import { readFileSync, writeFileSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const jsonFilePath = join(__dirname, 'quotes.json');
-const pluginFilePath = join(__dirname, 'quotes/quotes.plugin.sh');
+const pluginFilePath = join(__dirname, 'quotes/quotes.plugin.zsh');
 const start = '### START REPLACEMENT ###';
 const end = '### END REPLACEMENT ###';
 const regexp = /^### START REPLACEMENT ###[\s\S]+### END REPLACEMENT ###$/m;
@@ -22,7 +22,7 @@ const quotes = [];
 
 for (const { author = 'Unknown', text } of jsonQuotes) {
   quotes.push(
-    JSON.stringify(`\\e[0m${text}\\n\\t\\e[1m\\e[96m${author}\\e[0m`).replace(
+    JSON.stringify(`\\e[0m"${text}"\\n\\t\\e[1m\\e[96m${author}\\e[0m`).replace(
       /\\\\([e|n|t])/g,
       '\\$1',
     ),
