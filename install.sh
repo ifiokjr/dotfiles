@@ -144,9 +144,6 @@ echo -e "\n\nsource $(brew --prefix asdf)/asdf.sh" >> $HOME/.zshrc
 # auto install default python packages
 cp -rf default-python-packages $HOME/.default-python-packages > /dev/null 2>&1
 
-# make sure to use all the latest available ruby versions
-export ASDF_RUBY_BUILD_VERSION=master
-
 TOOL_VERSIONS=""
 ASDF_PLUGINS=(
   flutter
@@ -178,15 +175,14 @@ NODE_VERSION=$(asdf latest nodejs 14)
 asdf global nodejs $NODE_VERSION
 TOOL_VERSIONS="nodejs $NODE_VERSION\n$TOOL_VERSIONS"
 
+# Add the rust binary tools
+echo -e "source $HOME/.asdf/installs/rust/$(asdf latest rust)/env" >> $HOME/.zshrc
+
 # install ruby gems
 echo "\e[32m[DOT]\e[34m installing ruby bundler ... \e[39m\n"
 brew gem install bundler --homebrew-ruby > /dev/null 2>&1
 brew gem install solargraph --homebrew-ruby > /dev/null 2>&1
 brew gem install fastlane --homebrew-ruby > /dev/null 2>&1
-
-if [[ $OSTYPE == darwin* ]]; then
-  brew gem install cocoapods --homebrew-ruby
-fi
 
 # creating default tool versions
 echo -e $TOOL_VERSIONS > $HOME/.tool-versions
@@ -219,13 +215,20 @@ echo -e "source $(brew --prefix zsh-syntax-highlighting)/share/zsh-syntax-highli
 # loads the source
 source $HOME/.zshrc
 
-# initializes history db
+# Initializes history db
 echo "\e[32m[DOT]\e[34m initializing history database ... \e[39m\n"
 histdb-sync > /dev/null 2>&1
 
-# import old history into new history
-# npx histdbimport
+# Instructions on how to port old history into new history.
+echo "\e[32m[DOT]\e[39m Port your history to \`\e[90mzsh-histdb\e[39m\`.\n\`\e[36mpnpx histdbimport\` \e[39m\n"
 
+# Remove the last login prompt when opening a new terminal
+touch $HOME/.hushlogin
+
+# Copy the custom quotes plugin.
+cp -rf quotes "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/quotes
+
+# Cleanup uneccessary files.
 echo "\e[32m[DOT]\e[34m cleanup unneeded files ... \e[39m\n"
 rm -rf $HOME/.Brewfile $HOME/.Brewfile.mac $HOME/.default-python-packages > /dev/null 2>&1
 

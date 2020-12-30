@@ -121,6 +121,7 @@ plugins=(
 	thefuck
 	man
 	colored-man-pages
+	quotes
 )
 
 if [[ $OSTYPE == darwin* ]]; then

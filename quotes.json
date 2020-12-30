@@ -6570,5 +6570,599 @@
   {
     "text": "Sometimes the cards we are dealt are not always fair. However you must keep smiling and moving on.",
     "author": "Tom Jackson"
-  }
+  },
+
+  { "text": "Talk is cheap. Show me the code.", "author": "Linus Torvalds" },
+  {
+    "text": "Most good programmers do programming not because they expect to get paid or get adulation by the public, but because it is fun to program.",
+    "author": "Linus Torvalds"
+  },
+  {
+    "text": "I'm an egotistical bastard, and I name all my projects after myself. First Linux, now git.",
+    "author": "Linus Torvalds"
+  },
+  {
+    "text": "One man's constant is another man's variable.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Functions delay binding; data structures induce binding. Moral: Structure data late in the programming process.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Syntactic sugar causes cancer of the semicolon.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Every program is a part of some other program and rarely fits.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If a program manipulates a large amount of data, it does so in a small number of ways.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Symmetry is a complexity-reducing concept (co-routines include subroutines); seek it everywhere.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It is easier to write an incorrect program than understand a correct one.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "A programming language is low level when its programs require attention to the irrelevant.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It is better to have 100 functions operate on one data structure than 10 functions on 10 data structures.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Get into a rut early: Do the same process the same way. Accumulate idioms. Standardize. The only difference(!) between Shakespeare and you was the size of his idiom list - not the size of his vocabulary.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If you have a procedure with ten parameters, you probably missed some.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Recursion is the root of computation since it trades description for time.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If two people write exactly the same program, each should be put into microcode and then they certainly won't be the same.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In the long run every program becomes rococo - then rubble.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Everything should be built top-down, except the first time.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Every program has (at least) two purposes: the one for which it was written, and another for which it wasn't.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If a listener nods his head when you're explaining your program, wake him up.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "A program without a loop and a structured variable isn't worth writing.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "A language that doesn't affect the way you think about programming, is not worth knowing.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Wherever there is modularity there is the potential for misunderstanding: Hiding information implies a need to check communication.",
+    "author": "Alan J. Perlis"
+  },
+  { "text": "Optimization hinders evolution.", "author": "Alan J. Perlis" },
+  {
+    "text": "A good system can't have a weak command language.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "To understand a program you must become both the machine and the program.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Perhaps if we wrote programs from childhood on, as adults we'd be able to read them.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "One can only display complex information in the mind. Like seeing, movement or flow or alteration of view is more important than the static picture, no matter how lovely.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "There will always be things we wish to say in our programs that in all known languages can only be said poorly.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Once you understand how to write a program get someone else to write it.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Around computers it is difficult to find the correct unit of time to measure progress. Some cathedrals took a century to complete. Can you imagine the grandeur and scope of a program that would take as long?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "For systems, the analogue of a face-lift is to add to the control graph an edge that creates a cycle, not just an additional node.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In programming, everything we do is a special case of something more general -- and often we know it too quickly.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Simplicity does not precede complexity, but follows it.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Programmers are not to be measured by their ingenuity and their logic but by the completeness of their case analysis.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The eleventh commandment was \"Thou Shalt Compute\" or \"Thou Shalt Not Compute\" - I forget which.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The string is a stark data structure and everywhere it is passed there is much duplication of process. It is a perfect vehicle for hiding information.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Everyone can be taught to sculpt: Michelangelo would have had to be taught not to. So it is with great programmers.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The use of a program to prove the 4-color theorem will not change mathematics - it merely demonstrates that the theorem, a challenge for a century, is probably not important to mathematics.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The most important computer is the one that rages in our skulls and ever seeks that satisfactory external emulator. The standarization of real computers would be a disaster - and so it probably won't happen.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Structured Programming supports the law of the excluded middle.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Re graphics: A picture is worth 10K words - but only those to describe the picture. Hardly any sets of 10K words can be adequately described with pictures.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "There are two ways to write error-free programs; only the third one works.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Some programming languages manage to absorb change, but withstand progress.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "You can measure a programmer's perspective by noting his attitude on the continuing vitality of FORTRAN.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In software systems, it is often the early bird that makes the worm.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Sometimes I think the only universal in the computing field is the fetch-execute cycle.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The goal of computation is the emulation of our synthetic abilities, not the understanding of our analytic ones.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Like punning, programming is a play on words.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "As Will Rogers would have said, \"There is no such thing as a free variable.\"",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The best book on programming for the layman is \"Alice in Wonderland\"; but that's because it's the best book on anything for the layman.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Giving up on assembly language was the apple in our Garden of Eden: Languages whose use squanders machine cycles are sinful. The LISP machine now permits LISP programmers to abandon bra and fig-leaf.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "When we understand knowledge-based systems, it will be as before -- except our fingertips will have been singed.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Bringing computers into the home won't change either one, but may revitalize the corner saloon.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Systems have sub-systems and sub-systems have sub-systems and so on ad infinitum - which is why we're always starting over.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "So many good ideas are never heard from again once they embark in a voyage on the semantic gulf.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Beware of the Turing tar-pit in which everything is possible but nothing of interest is easy.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "A LISP programmer knows the value of everything, but the cost of nothing.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Software is under a constant tension. Being symbolic it is arbitrarily perfectible; but also it is arbitrarily changeable.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It is easier to change the specification to fit the program than vice versa.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In English every word can be verbed. Would that it were so in our programming languages.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In seeking the unattainable, simplicity only gets in the way.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In programming, as in everything else, to be in error is to be reborn.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In computing, invariants are ephemeral.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "When we write programs that \"learn\", it turns out that we do and they don't.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Often it is the means that justify the ends: Goals advance technique and technique survives even when goal structures crumble.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Make no mistake about it: Computers process numbers - not symbols. We measure our understanding (and control) by the extent to which we can arithmetize an activity.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Making something variable is easy. Controlling duration of constancy is the trick.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Think of all the psychic energy expended in seeking a fundamental distinction between \"algorithm\" and \"program\".",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If we believe in data structures, we must believe in independent (hence simultaneous) processing. For why else would we collect items within a structure? Why do we tolerate languages that give us the one without the other?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In a 5 year period we get one superb programming language. Only we can't control when the 5 year period will be.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Over the centuries the Indians developed sign language for communicating phenomena of interest. Programmers from different tribes (FORTRAN, LISP, ALGOL, SNOBOL, etc.) could use one that doesn't require them to carry a blackboard on their ponies.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Documentation is like term insurance: It satisfies because almost no one who subscribes to it depends on its benefits.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "An adequate bootstrap is a contradiction in terms.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It is not a language's weakness but its strengths that control the gradient of its change: Alas, a language never escapes its embryonic sac.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Is it possible that software is not like anything else, that it is meant to be discarded: that the whole point is to see it as a soap bubble?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Because of its vitality, the computing field is always in desperate need of new cliches: Banality soothes our nerves.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It is the user who should parameterize procedures, not their creators.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The cybernetic exchange between man, computer and algorithm is like a game of musical chairs: The frantic search for balance always leaves one of the three standing ill at ease.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If your computer speaks English, it was probably made in Japan.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "A year spent in artificial intelligence is enough to make one believe in God.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Prolonged contact with the computer turns mathematicians into clerks and vice versa.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In computing, turning the obvious into the useful is a living definition of the word \"frustration\".",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "We are on the verge: Today our program proved Fermat's next-to-last theorem.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "What is the difference between a Turing machine and the modern computer? It's the same as that between Hillary's ascent of Everest and the establishment of a Hilton hotel on its peak.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Motto for a research laboratory: What we work on today, others will first think of tomorrow.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Though the Chinese should adore APL, it's FORTRAN they put their money on.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "We kid ourselves if we think that the ratio of procedure to data in an active data-base system can be made arbitrarily small or even kept small.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "We have the mini and the micro computer. In what semantic niche would the pico computer fall?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It is not the computer's fault that Maxwell's equations are not adequate to design the electric motor.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "One does not learn computing by using a hand calculator, but one can forget arithmetic.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Computation has made the tree flower.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The computer reminds one of Lon Chaney -- it is the machine of a thousand faces.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The computer is the ultimate polluter: its feces are indistinguish- able from the food it produces.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "When someone says \"I want a programming language in which I need only say what I wish done,\" give him a lollipop.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Interfaces keep things tidy, but don't accelerate growth: Functions do.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Don't have good ideas if you aren't willing to be responsible for them.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Computers don't introduce order anywhere as much as they expose opportunities.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "When a professor insists computer science is X but not Y, have compassion for his graduate students.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In computing, the mean time to failure keeps getting shorter.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "In man-machine symbiosis, it is man who must adjust: The machines can't.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "We will never run out of things to program as long as there is a single program around.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Dealing with failure is easy: Work hard to improve. Success is also easy to handle: You've solved the wrong problem. Work hard to improve.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "One can't proceed from the informal to the formal by formal means.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Purely applicative languages are poorly applicable.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The proof of a system's value is its existence.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "You can't communicate complexity, only an awareness of it.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It's difficult to extract sense from strings, but they're the only communication coin we can count on.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The debate rages on: is PL/I Bachtrian or Dromedary?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Whenever two programmers meet to criticize their programs, both are silent.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Think of it! With VLSI we can pack 100 ENIACS in 1 sq. cm.",
+    "author": "Alan J. Perlis"
+  },
+  { "text": "Editing is a rewording activity.", "author": "Alan J. Perlis" },
+  {
+    "text": "Why did the Roman Empire collapse? What is Latin for office automation?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Computer Science is embarrassed by the computer.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "The only constructive theory connecting neuroscience and psychology will arise from the study of software.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Within a computer natural language is unnatural.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Most people find the concept of programming obvious, but the doing impossible.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "You think you know when you can learn, are more sure when you can write, even more when you can teach, but certain when you can program.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "It goes against the grain of modern education to teach children to program. What fun is there in making plans, acquiring discipline in organizing thoughts, devoting attention to detail and learning to be self-critical?",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "If you can imagine a society in which the computer- robot is the only menial, you can imagine anything.",
+    "author": "Alan J. Perlis"
+  },
+  { "text": "Programming is an unnatural act.", "author": "Alan J. Perlis" },
+  {
+    "text": "Adapting old programs to fit new machines usually means adapting new machines to behave like old ones.",
+    "author": "Alan J. Perlis"
+  },
+  {
+    "text": "Beware of bugs in the above code; I have only proved it correct, not tried it.",
+    "author": "Donald E. Knuth"
+  },
+  {
+    "text": "Science is knowledge which we understand so well that we can teach it to a computer; and if we don't fully understand something, it is an art to deal with it.",
+    "author": "Donald E. Knuth"
+  },
+  {
+    "text": "In fact, my main conclusion after spending ten years of my life working on the TEX project is that software is hard. It’s harder than anything else I’ve ever had to do.",
+    "author": "Donald E. Knuth"
+  },
+  {
+    "text": "Let us change our traditional attitude to the construction of programs: Instead of imagining that our main task is to instruct a computer what to do, let us concentrate rather on explaining to human beings what we want a computer to do.",
+    "author": "Donald E. Knuth"
+  },
+  {
+    "text": "The real problem is that programmers have spent far too much time worrying about efficiency in the wrong places and at the wrong times; premature optimization is the root of all evil (or at least most of it) in programming.",
+    "author": "Donald E. Knuth"
+  },
+  {
+    "text": "Testing shows the presence, not the absence of bugs.",
+    "author": "Edsger W. Dijkstra"
+  },
+  {
+    "text": "The competent programmer is fully aware of the strictly limited size of his own skull; therefore he approaches the programming task in full humility, and among other things he avoids clever tricks like the plague.",
+    "author": "Edsger W. Dijkstra"
+  },
+  {
+    "text": "LISP has been jokingly described as \"the most intelligent way to misuse a computer\". I think that description a great compliment because it transmits the full flavor of liberation: it has assisted a number of our most gifted fellow humans in thinking previously impossible thoughts.",
+    "author": "Edsger W. Dijkstra"
+  },
+  {
+    "text": "Besides a mathematical inclination, an exceptionally good mastery of one's native tongue is the most vital asset of a competent programmer.",
+    "author": "Edsger W. Dijkstra"
+  },
+  {
+    "text": "Simplicity is a great virtue but it requires hard work to achieve it and education to appreciate it. And to make matters worse: complexity sells better.",
+    "author": "Edsger W. Dijkstra"
+  },
+  {
+    "text": "My point today is that, if we wish to count lines of code, we should not regard them as \"lines produced\" but as \"lines spent\": the current conventional wisdom is so foolish as to book that count on the wrong side of the ledger.",
+    "author": "Edsger W. Dijkstra"
+  },
+  {
+    "text": "There are two ways of constructing a software design. One way is to make it so simple that there are obviously no deficiencies. And the other way is to make it so complicated that there are no obvious deficiencies.",
+    "author": "C.A.R. Hoare"
+  },
+  {
+    "text": "There are only two hard things in Computer Science: cache invalidation and naming things.",
+    "author": "Phil Karlton"
+  },
+  {
+    "text": "Always code as if the guy who ends up maintaining your code will be a violent psychopath who knows where you live.",
+    "author": "Martin Golding"
+  },
+  {
+    "text": "The trouble with programmers is that you can never tell what a programmer is doing until it’s too late.",
+    "author": "Seymour Cray"
+  },
+  {
+    "text": "First learn computer science and all the theory. Next develop a programming style. Then forget all that and just hack.",
+    "author": "George Carrette"
+  },
+  {
+    "text": "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.",
+    "author": "Brian W. Kernighan"
+  },
+  {
+    "text": "Measuring programming progress by lines of code is like measuring aircraft building progress by weight.",
+    "author": "Bill Gates"
+  },
+  {
+    "text": "The best programmers are not marginally better than merely good ones. They are an order-of-magnitude better, measured by whatever standard: conceptual creativity, speed, ingenuity of design, or problem-solving ability.",
+    "author": "Randall E. Stross"
+  },
+  {
+    "text": "For a long time it puzzled me how something so expensive, so leading edge, could be so useless. And then it occurred to me that a computer is a stupid machine with the ability to do incredibly smart things, while computer programmers are smart people with the ability to do incredibly stupid things. They are, in short, a perfect match.",
+    "author": "Bill Bryson"
+  },
+  {
+    "text": "You can’t have great software without a great team, and most software teams behave like dysfunctional families.",
+    "author": "Jim McCarthy"
+  },
+  {
+    "text": "Incorrect documentation is often worse than no documentation.",
+    "author": "Bertrand Meyer"
+  },
+  {
+    "text": "Correctness is clearly the prime quality. If a system does not do what it is supposed to do, then everything else about it matters little.",
+    "author": "Bertrand Meyer"
+  },
+  {
+    "text": "I would love to change the world, but they won't give me the source code.",
+    "author": "Anonymous"
+  },
+  {
+    "text": "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+    "author": "Martin Fowler"
+  },
+  {
+    "text": "I am not a great programmer; I am just a good programmer with great habits.",
+    "author": "Kent Beck"
+  },
+  {
+    "text": "A Computer is a state machine. Threads are for people who can't program state machines.",
+    "author": "Alan Cox"
+  },
+  {
+    "text": "Not everything worth doing is worth doing well.",
+    "author": "Tom West"
+  },
+  { "text": "Peace comes from thinking.", "author": "N.S.A" }
 ]
