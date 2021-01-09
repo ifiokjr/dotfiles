@@ -67,6 +67,8 @@ echo "\e[32m[DOT]\e[36m copying brew files ... \e[39m\n"
 cp -rf Brewfile $HOME/.Brewfile > /dev/null 2>&1
 
 if [[ $OSTYPE == darwin* ]]; then
+  # A fix for old installations
+  /usr/bin/find "$(brew --prefix)/Caskroom/"*'/.metadata' -type f -name '*.rb' -print0 | /usr/bin/xargs -0 /usr/bin/perl -i -pe 's/depends_on macos: \[.*?\]//gsm;s/depends_on macos: .*//g'
   cp -rf Brewfile.mac $HOME/.Brewfile.mac > /dev/null 2>&1
 fi
 
