@@ -1,0 +1,43 @@
+# Make the typescript compiler use eslint and prettier for formatting instead of dprint. Relies on a pnpm implementation.
+
+[[language]]
+name = "javascript"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "typescript"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "jsx"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "tsx"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "markdown"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "json"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "jsonc"
+formatter = { command = 'prettierd', args = ["%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "yaml"
+formatter = { command = "prettierd", args = ["%{buffer_name}"] }
+auto-format = true
+
+# formatter = { command = "bash", args = ["-c", "eslint --fix --stdin --stdin-filename %{buffer_name} | prettierd %{buffer_name} " ] }

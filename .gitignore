@@ -1,0 +1,57 @@
+# Nix build outputs and artifacts
+Configs/nix_macos/.config/nix/result
+Configs/nix_macos/.config/nix/.devenv/
+Configs/nix_macos/.config/nix/.devenv.flake.nix
+
+# Backup directories and files (timestamped backups)
+*.backup.*
+**/*.backup.*
+*.yazelix-backup
+**/*.yazelix-backup
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Helix runtime state (managed by tuckr, not tracked)
+**/.helix/recent-files.txt
+**/.helix/*.log
+**/debug.log
+
+# Cache and state directories
+.cache/
+.local/state/
+**/.devenv/
+**/.devenv.flake.nix
+
+# Log files
+logs/
+*.log
+
+# User-specific configuration (should not be in dotfiles)
+**/yazelix.toml
+**/yazelix.nix
+
+# Environment files with secrets
+.env
+.env.*
+*.env
+**/.env
+**/.env.*
+
+# Build artifacts
+**/target/
+node_modules/
+
+# Temporary files
+*.tmp
+*.temp
+.*.tmp

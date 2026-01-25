@@ -1,0 +1,366 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Repository Overview
+
+This is a **Tuckr-managed dotfiles repository** that uses symlinks to deploy configuration files to the home directory. The repository is located at `~/Developer/.dotfiles` but Tuckr expects it at platform-specific locations (e.g., `~/Library/Application Support/dotfiles` on macOS), so `setup-tuckr-symlink.sh` creates the necessary symlink.
+
+**Key characteristics:**
+- Platform-aware deployment (macOS, Linux, BSD, Windows)
+- Modular configuration groups
+- Hook-based automation
+- Nix-first philosophy with reproducible environments
+- Heavy integration with Yazelix (terminal IDE combining Yazi + Zellij + Helix)
+
+## Initial Setup
+
+### Automated Setup (Recommended)
+
+The easiest way to set up your environment is using the automated setup script:
+
+```bash
+# Remote installation (on a new machine)
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup.sh | bash
+
+# Or clone first, then run locally
+git clone https://github.com/ifiokjr/dotfiles.git ~/Developer/.dotfiles
+cd ~/Developer/.dotfiles
+./setup
+```
+
+The setup script will:
+1. Install Determinate Nix (if not present)
+2. Clone the dotfiles repository (if running remotely)
+3. Set up Tuckr symlinks via `setup-tuckr-symlink.sh`
+4. Automatically deploy all configuration groups
+5. Clean up temporary packages
+
+**Options:**
+- `--cwd PATH` - Clone dotfiles to custom path (default: `~/Developer/.dotfiles`)
+- `--groups GROUPS` - Deploy only specific comma-separated groups (otherwise deploys all)
+- `--skip-nix` - Skip Nix installation if already installed
+- `--help` - Show help message
+
+### Manual Setup
+
+If you prefer manual setup:
+
+```bash
+# First time setup - creates platform-specific symlink
+./setup-tuckr-symlink.sh
+
+# Deploy configuration groups
+tuckr add zsh_macos nix_macos     # Core system configs (macOS only)
+tuckr add dprint direnv kdl lazygit  # Development tools
+tuckr set yazelix                 # Terminal IDE (runs pre-hook to verify dependencies)
+tuckr add zellij                  # Terminal multiplexer
+
+# Verify deployment
+tuckr status
+```
+
+## Common Commands
+
+### Tuckr Commands
+```bash
+tuckr add <group>              # Deploy a configuration group (create symlinks)
+tuckr add --force <group>      # Deploy with overwrite of existing files
+tuckr rm <group>               # Remove symlinks for a group
+tuckr set <group>              # Deploy and run hooks (preferred for groups with hooks)
+tuckr status                   # Check deployment status of all groups
+```
+
+### Nix Commands (macOS)
+```bash
+# Rebuild Darwin system configuration (automatically runs via post_nix_macos hook)
+sudo darwin-rebuild switch --flake ~/.config/nix
+
+# Or let the hook handle it
+tuckr set nix_macos
+```
+
+### Configuration Updates
+Since files are symlinked, edits are immediate:
+```bash
+# Edit via symlink in home directory
+vim ~/.zshrc
+
+# Or edit directly in Configs directory
+vim ~/Library/Application\ Support/dotfiles/Configs/zsh_macos/.zshrc
+
+# Changes are reflected instantly (same file via symlink)
+```
+
+## Configuration Groups
+
+The repository contains 8 configuration groups organized in `Configs/`:
+
+| Group | Files | Platform | Purpose | Hook |
+|-------|-------|----------|---------|------|
+| **yazelix** | 320 | All | Terminal IDE (Yazi + Zellij + Helix) | `pre_yazelix` |
+| **nix_macos** | 6 | macOS | Darwin system configuration with Nix flakes | `post_nix_macos` |
+| **zsh_macos** | 1 | macOS | Zsh shell configuration | `post_zsh_macos` |
+| **zellij** | 4 | All | Terminal multiplexer config & layouts | None |
+| **direnv** | 1 | All | Directory-specific environment variables | None |
+| **dprint** | 1 | All | Multi-language code formatter | None |
+| **kdl** | 1 | All | KDL document formatter | None |
+| **lazygit** | 1 | All | Git TUI configuration | None |
+
+**Platform-specific groups** (suffixed with `_macos`, `_linux`, etc.) only deploy on matching platforms.
+
+## Architecture
+
+### Directory Structure
+```
+~/Developer/.dotfiles/
+├── Configs/                    # Configuration groups
+│   ├── yazelix/               # Terminal IDE (95% of repository)
+│   ├── nix_macos/             # Nix Darwin system config
+│   ├── zsh_macos/             # Zsh shell config
+│   ├── zellij/                # Terminal multiplexer
+│   ├── direnv/                # Environment management
+│   ├── dprint/                # Code formatter
+│   ├── kdl/                   # KDL formatter
+│   └── lazygit/               # Git TUI
+├── Hooks/                      # Pre/post deployment scripts
+│   ├── post_nix_macos         # Rebuilds Darwin after Nix changes
+│   ├── pre_yazelix            # Verifies yazelix dependencies
+│   └── post_zsh_macos         # Reminds to reload shell
+├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
+└── README.md                   # Full documentation
+```
+
+### Deployment Pattern
+Each group follows XDG Base Directory conventions:
+```
+Configs/[group]/
+├── .config/[tool]/           # Deploys to ~/.config/[tool]/
+│   └── [config files]
+└── [root files]              # Deploys to ~/
+```
+
+Example: `Configs/dprint/dprint.json` → `~/dprint.json`
+
+### Hooks System
+Hooks are executable bash scripts in `Hooks/` directory:
+
+- **`pre_<group>`** - Runs before symlinking files
+- **`post_<group>`** - Runs after symlinking files
+- **`rm_<group>`** - Runs during removal (none currently used)
+
+**Active hooks:**
+1. **`post_nix_macos`** - Automatically rebuilds Darwin configuration after Nix config deployment
+2. **`pre_yazelix`** - Checks for required dependencies (zellij, yazi, hx) before yazelix deployment
+3. **`post_zsh_macos`** - Reminds user to reload shell after zsh config deployment
+
+## Yazelix Terminal IDE
+
+Yazelix comprises 320 of 335 total files (95% of the repository) and deserves special attention.
+
+### What is Yazelix?
+An integrated terminal IDE combining:
+- **Yazi** - File manager sidebar with Lua plugins
+- **Zellij** - Terminal multiplexer for pane orchestration (KDL config)
+- **Helix** - Text editor (with Neovim support as alternative)
+
+### Key Features
+- Multi-shell support (Bash, Fish, Zsh, Nushell)
+- Smart pane orchestration (auto-detects editor instances)
+- "Reveal in sidebar" integration (`Alt+Y` to show current file in Yazi)
+- TOML-based user configuration with intelligent merging
+- Nix devenv for reproducible environment
+- Bundled plugins (git, auto-layout, status bar)
+
+### Yazelix Structure
+```
+Configs/yazelix/.config/yazelix/
+├── devenv.nix                # Nix devenv configuration (replaced old flake.nix)
+├── yazelix_default.toml      # Default configuration template
+├── bash/, fish/, zsh/        # Shell-specific configs
+├── nushell/                  # Nushell configs and scripts
+│   ├── config/              # Nushell configuration
+│   ├── modules/             # Reusable Nushell modules
+│   └── scripts/             # Utility scripts
+│       ├── integrations/    # Editor/tool integrations
+│       ├── setup/          # Setup and initialization
+│       └── utils/          # Helper utilities
+├── yazi/                    # File manager config
+│   ├── init.lua            # Yazi initialization
+│   ├── keymap.toml         # Yazi keybindings
+│   ├── theme.toml          # Yazi theme
+│   └── plugins/            # Bundled Lua plugins
+├── zellij/                  # Terminal multiplexer config
+│   ├── config.kdl          # Main configuration (KDL format)
+│   └── layouts/            # Pane layout definitions (KDL format)
+├── terminal_configs/        # Terminal emulator configs
+│   ├── ghostty/
+│   └── wezterm/
+├── home_manager/            # Home Manager Nix module
+└── docs/                    # Comprehensive documentation
+```
+
+### Yazelix Development Notes
+
+**CRITICAL: File Naming Convention**
+- Yazelix uses **underscores (`_`)** for ALL file and directory names, never hyphens (`-`)
+- Examples: `yazelix_default.toml`, `start_yazelix.nu`, `home_manager/`, `terminal_emulators/`
+- This is consistent throughout the codebase
+
+**Configuration Management:**
+1. User config: `yazelix.toml` (if exists, user-created)
+2. Default config: `yazelix_default.toml` (template)
+3. TOML sections merge intelligently without conflicts
+
+**Nushell Development - CRITICAL:**
+- **Escape parentheses in string interpolation:** Use `\(` and `\)` (single backslash)
+  - ✅ Correct: `$"Checking pane \(editor\)"`
+  - ❌ Wrong: `$"Checking pane \\(editor\\)"` - tries to execute command
+  - ❌ Wrong: `$"Checking pane (editor)"` - executes command substitution
+- Unescaped parentheses trigger command substitution
+- "Command not found" errors in strings usually indicate incorrect escaping
+
+## Nix System Configuration (macOS)
+
+The `nix_macos` group contains a complete Nix Darwin system configuration with integrated Home Manager.
+
+### Key Files
+- **`flake.nix`** - Main flake defining Darwin and Home Manager configurations
+- **`darwin.nix`** - Darwin-specific system settings
+- **`home.nix`** - Home Manager user configuration
+
+### Features
+- User-specific configurations (currently configured for `ifiokjr`)
+- Nix Homebrew integration with declarative tap management
+- Integrated Home Manager (no separate invocation needed)
+- Yazelix Home Manager module integration via path reference
+
+### Build Commands
+```bash
+# Primary method (on macOS)
+darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+
+# Alternative with auto-detection (impure)
+darwin-rebuild switch --flake ~/.config/nix# --impure
+
+# Standalone Home Manager (Linux or standalone)
+home-manager switch --flake ~/.config/nix#username@system
+# Example: home-manager switch --flake ~/.config/nix#ifiokjr@x86_64-linux
+```
+
+### Adding New Users
+Edit `flake.nix` and add new configurations:
+```nix
+darwinConfigurations.newuser = mkDarwinConfig {
+  system = "aarch64-darwin";
+  username = "newuser";
+};
+```
+
+## Development Workflow
+
+### Adding a New Configuration Group
+```bash
+# Create group directory structure
+cd ~/Library/Application\ Support/dotfiles
+mkdir -p Configs/newtool/.config/newtool
+
+# Add config files (mirror home directory structure)
+# Files in Configs/newtool/.config/newtool/ → ~/.config/newtool/
+# Files in Configs/newtool/ root → ~/ root
+
+# Deploy the group
+tuckr add newtool
+```
+
+### Creating Hooks
+```bash
+# Create hook script in Hooks/ directory
+vim ~/Library/Application\ Support/dotfiles/Hooks/post_newtool
+
+# Make executable
+chmod +x ~/Library/Application\ Support/dotfiles/Hooks/post_newtool
+
+# Hook runs automatically when using `tuckr set newtool`
+```
+
+### Testing Changes
+Since configurations are symlinked, changes are live immediately:
+1. Edit config file (in Configs/ or via home directory symlink)
+2. Changes take effect instantly
+3. Commit changes to git when satisfied
+4. For Nix changes, the `post_nix_macos` hook rebuilds the system automatically
+
+## Important Patterns
+
+### Platform Detection
+Groups with suffixes (`_macos`, `_linux`, `_windows`) only deploy on matching platforms. This prevents incompatible configs on multi-platform setups.
+
+### Symlink Bootstrap
+The `setup-tuckr-symlink.sh` script is crucial for initial setup:
+1. Detects platform (macOS, Linux, BSD, Windows)
+2. Verifies dotfiles exist at `~/Developer/.dotfiles`
+3. Creates platform-specific symlink (e.g., `~/Library/Application Support/dotfiles` → `~/Developer/.dotfiles`)
+4. Handles existing symlinks and collision detection
+5. Provides colored output for user feedback
+
+### Hook Execution Flow
+```
+User runs: tuckr set <group>
+    ↓
+Pre-hook runs (if exists) - verify preconditions
+    ↓
+Tuckr creates symlinks
+    ↓
+Post-hook runs (if exists) - apply configurations, rebuild systems
+    ↓
+Complete
+```
+
+### Configuration Layering (Yazelix)
+1. `yazelix_default.toml` provides sensible defaults
+2. User creates `yazelix.toml` for overrides
+3. TOML sections merge automatically
+4. User settings take precedence
+
+## Troubleshooting
+
+### Symlink Conflicts
+```bash
+# Force overwrite existing files
+tuckr add --force <group>
+```
+
+### Hook Not Running
+```bash
+# Ensure hooks are executable
+chmod +x ~/Library/Application\ Support/dotfiles/Hooks/*
+```
+
+### Nix Flake Issues
+```bash
+# Manually rebuild Darwin configuration
+sudo darwin-rebuild switch --flake ~/.config/nix
+
+# Or use the hook
+tuckr set nix_macos
+```
+
+### Platform Mismatch
+If a group won't deploy, check if it's platform-specific:
+- Groups suffixed with `_macos` only deploy on macOS
+- Groups suffixed with `_linux` only deploy on Linux
+
+## Migration Notes
+
+This repository was migrated from GNU Stow. Key differences:
+
+| Feature | GNU Stow | Tuckr |
+|---------|----------|-------|
+| Structure | Package root | Configs/ subdirectory |
+| Ignore files | `.stow-*-ignore` | None (clean repo) |
+| Hooks | Not supported | Pre/post/rm hooks |
+| Platform support | Manual scripting | Built-in suffix detection |
+| Configuration | Command-line flags | Convention-based |
+
+Migration artifacts are preserved in `.migration/` directory for reference but are not deployed.

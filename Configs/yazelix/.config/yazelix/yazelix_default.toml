@@ -1,0 +1,355 @@
+# Yazelix Configuration (TOML format)
+# yazelix.toml will be automatically copied from yazelix_toml if not found during launch. But you can manually copy it to yazelix.toml too.
+# yazelix.toml is gitignored so you can pull updates without conflicts
+#
+# Note: All configuration changes require restarting Yazelix to take effect.
+# Package changes (like enabling packs) will automatically trigger a rebuild when detected.
+
+[core]
+# See docs/package_sizes.md for details
+recommended_deps = true       # Productivity tools (~350MB): lazygit, atuin, carapace, markdown-oxide
+yazi_extensions = true        # File preview support (~125MB): p7zip, jq, fd, ripgrep, poppler
+yazi_media = false            # Media processing (~1GB): ffmpeg, imagemagick
+debug_mode = false            # Enable verbose debug logging in the shellHook
+skip_welcome_screen = false   # When true, welcome info is logged instead of displayed
+show_macchina_on_welcome = true  # Show system info on welcome screen (uses macchina)
+
+# Build cores configuration for Nix builds (default: "max_minus_one")
+# Controls how many CPU cores devenv uses for parallel builds
+# Options:
+# - "max":           Use all available CPU cores (fastest, may impact system responsiveness)
+# - "max_minus_one": Use all cores minus one (recommended - balances speed with system responsiveness)
+# - "half":          Use half of available cores (conservative, leaves plenty of headroom)
+# - Custom number:   Specify exact core count, e.g., "8" or "4"
+build_cores = "max_minus_one"
+
+[helix]
+# Helix build mode (choose ONE):
+# - "release": Use latest Helix release from nixpkgs (recommended for first-time users)
+# - "source":  Use Helix flake from repository (bleeding edge, recommended for most users)
+mode = "release"
+
+# Helix runtime path (advanced users only)
+# ONLY set this if editor_command points to a custom Helix build
+# The runtime MUST exactly match your Helix binary version to avoid errors
+#
+# Common scenarios:
+# • Development build: "/home/user/helix/runtime"
+# • Custom install: "/opt/helix/share/helix/runtime"
+# • System package: "/usr/share/helix/runtime"
+#
+# To find your runtime: ls $(dirname $(which hx))/../share/helix/runtime
+# If this path doesn't exist, your Helix may be incompatible
+# runtime_path = "/path/to/custom/helix/runtime"
+
+[editor]
+# editor_command options:
+# • null (recommended): Use yazelix's Nix-provided Helix
+#   - Eliminates runtime conflicts with existing Helix installations
+#   - Binary and runtime are perfectly matched
+#   - Full yazelix integration features (reveal in sidebar, same-instance opening, pane detection)
+#
+# • "nvim": Use Neovim (first-class support)
+#   - Full yazelix integration features (reveal in sidebar, same-instance opening, pane detection)
+#   - Requires keybinding setup - see docs/neovim_keybindings.md
+#   - Works with your existing Neovim configuration
+#
+# • "hx": Use your system Helix from PATH
+#   - Requires setting helix_runtime_path to match your Helix version
+#   - Full yazelix integration if runtime matches
+#   - Use this if you have a custom Helix build you prefer
+#
+# • Other editors: "vim", "nano", "emacs", "kak", etc.
+#   - Basic integration only (new panes, tab naming)
+#   - No advanced features (reveal in sidebar, same-instance opening)
+#   - Works reliably but with limited yazelix-specific functionality
+command = ""  # Leave empty to use yazelix's helix (recommended), or set to "nvim", "hx", "vim", etc.
+
+# Enable or disable the Yazi sidebar (default: true)
+# When false, Yazelix uses clean, full-screen layouts with on-demand file picking
+# When true, Yazelix uses persistent sidebar layouts for IDE-like workflow
+# You can access Yazi manually with `yazi` command or `Ctrl+y` in Helix
+enable_sidebar = true
+
+[shell]
+# Default shell for Zellij: "nu", "bash", "fish", or "zsh" (default: "nu")
+# Note: fish and zsh are only installed if set as default_shell or included in extra_shells
+default_shell = "nu"
+
+# Extra shells to install beyond nu/bash (default: [])
+# Only install additional shells if you plan to use them
+extra_shells = [
+  # "fish",
+  # "zsh",
+]
+
+# Atuin shell history integration (default: false)
+# Provides smart shell history with sync capabilities
+enable_atuin = false
+
+[terminal]
+# Terminal emulator preference + install list (ordered)
+# The first entry is the primary terminal used for launch; the rest are fallbacks.
+# Options: "ghostty", "wezterm", "kitty", "alacritty", "foot" (Linux-only)
+#
+# Ghostty installation:
+# - Linux: Provided by Yazelix via Nix
+# - macOS: Install via Homebrew: `brew install --cask ghostty`
+#   (Nix package doesn't support macOS due to app bundle limitations)
+#
+# Auto-detection fallback order matches this list.
+# WezTerm is the recommended fallback (works on both platforms, best image preview)
+terminals = [
+  "ghostty",
+  # "wezterm",
+  # "kitty",
+  # "alacritty",
+  # "foot",
+]
+
+# Manage terminals via Nix (default: true)
+# - true: Yazelix installs and wraps terminals listed above
+# - false: Yazelix does not install terminals; it only uses the list as preference
+manage_terminals = true
+
+# Terminal config mode (how Yazelix handles terminal emulator configs)
+# Options:
+# - "auto":   Prefer the user's config if present; otherwise use Yazelix's config
+# - "user":   Always use the user's config paths
+# - "yazelix": Always use Yazelix-provided configs under ~/.config/yazelix/configs/terminal_emulators
+config_mode = "yazelix"
+
+# Cursor trail preset
+# None: "none"
+# Mono-color: "blaze", "snow", "cosmic", "ocean", "forest", "sunset"
+# Duo-color: "neon", "eclipse", "dusk", "orchid", "reef"
+# Extreme: "party"
+# Special: "random" (chooses any Ghostty preset except "none" and "party")
+# Supported by Ghostty and Kitty: "snow"
+# In short: pick ghostty for cool cursor trails
+cursor_trail = "random"
+
+# Terminal transparency level (default: "medium")
+# Options: "none", "very_low", "low", "medium", "high", "very_high", "super_high"
+# - "none":       No transparency (opacity = 1.0)
+# - "very_low":   Minimal transparency (opacity = 0.95)
+# - "low":        Light transparency (opacity = 0.90)
+# - "medium":     Medium transparency (opacity = 0.85)
+# - "high":       High transparency (opacity = 0.80)
+# - "very_high":  Very high transparency (opacity = 0.70)
+# - "super_high": Maximum transparency (opacity = 0.60)
+transparency = "medium"
+
+[zellij]
+# Disable Zellij tips popup on startup (default: true)
+# It is recommended to set this to false, so you learn more about zellij
+disable_tips = true
+
+# Enable rounded corners for Zellij pane frames (default: true)
+rounded_corners = true
+
+# Enable Kitty keyboard protocol in Zellij (default: false)
+# Disable if dead keys stop working in your terminal (e.g. Ghostty)
+support_kitty_keyboard_protocol = false
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CROSS-COMPATIBLE THEMES (Zellij + Yazi + Helix)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# These 9 themes work across all three programs (accounting for name variations):
+#
+#   catppuccin-frappe, catppuccin-latte, catppuccin-macchiato,
+#   dracula, gruvbox-dark, kanagawa, nord, ayu-dark, tokyo-night
+#
+# For consistent theming, set the same theme in:
+#   - [zellij] theme (below)
+#   - [yazi] theme (further down)
+#   - Helix: Add to ~/.config/helix/config.toml → theme = "dracula"
+#
+# Note: Helix uses underscores in theme names (e.g., catppuccin_frappe)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Zellij theme (default: "default")
+# Special: "random" - picks a different random theme on every yazelix restart
+# Dark themes (28): ansi, ao, atelier-sulphurpool, ayu_mirage, ayu_dark, catppuccin-frappe,
+#   catppuccin-macchiato, cyber-noir, blade-runner, retro-wave, dracula, everforest-dark,
+#   gruvbox-dark, iceberg-dark, kanagawa, lucario, menace, molokai-dark, night-owl, nightfox,
+#   nord, one-half-dark, onedark, solarized-dark, tokyo-night-dark, tokyo-night-storm,
+#   tokyo-night, vesper
+# Light themes (9): ayu_light, catppuccin-latte, everforest-light, gruvbox-light,
+#   iceberg-light, dayfox, pencil-light, solarized-light, tokyo-night-light
+# See: https://zellij.dev/documentation/theme-list.html
+theme = "default"
+
+# Zjstatus widget tray (right side of status bar)
+# Available widgets: "layout", "editor", "shell", "term", "cpu", "ram"
+# Comment out any line to hide that widget
+widget_tray = [
+  "layout",  # Swap layout widget
+  "editor",  # Active editor
+  "shell",   # Active shell
+  "term",    # Terminal emulator
+  "cpu",     # CPU usage
+  "ram",     # RAM usage
+]
+
+# Zellij persistent session configuration
+# When true, Yazelix will use zellij attach with the specified session name
+# When false, Yazelix will create a new session each time
+persistent_sessions = false
+
+# Session name for persistent sessions (default: "yazelix")
+# This name will be used when creating or attaching to persistent sessions
+session_name = "yazelix"
+
+[yazi]
+# Plugins to load (core plugins auto-layout and sidebar-status are always loaded)
+#
+# Bundled plugins (shipped with yazelix, always available):
+#   - git: Git status integration (shows file changes in listings)
+#   - starship: Display Starship prompt in Yazi header (shows git branch, venv, etc.)
+#   - lazygit: Launch lazygit from yazi (invoked via 'gl' keybinding, not loaded in init.lua)
+#
+# To add external plugins:
+#   1. Install with yazi's package manager: ya pkg add owner/repo
+#   2. Add plugin name to the list below (without .yazi extension)
+#
+# Examples:
+#   ya pkg add XYenon/clipboard.yazi    → plugins = ["git", "starship", "clipboard"]
+#   ya pkg add yazi-rs/plugins:session  → plugins = ["git", "starship", "session"]
+#
+# Browse available plugins: https://yazi-rs.github.io/docs/resources
+#
+# To disable bundled plugins: plugins = []
+plugins = [
+  "git",
+  "starship",
+]
+
+# Yazi theme (flavor) configuration
+# Special options: "random-dark" (picks from 19 dark themes), "random-light" (picks from 5 light themes)
+# Available flavors (25 total: 1 default + 19 dark + 5 light):
+#   Default: "default"
+#   Dark themes (19): "catppuccin-mocha", "catppuccin-frappe", "catppuccin-macchiato",
+#                     "dracula", "gruvbox-dark", "tokyo-night", "kanagawa", "kanagawa-dragon",
+#                     "rose-pine", "rose-pine-moon", "flexoki-dark", "bluloco-dark",
+#                     "ayu-dark", "everforest-medium", "ashen", "neon", "nord", "synthwave84", "monokai"
+#   Light themes (5): "catppuccin-latte", "kanagawa-lotus", "rose-pine-dawn",
+#                     "flexoki-light", "bluloco-light"
+# Browse flavors: https://github.com/yazi-rs/flavors
+theme = "default"
+
+# Sort files by
+# Options: "alphabetical", "natural", "modified", "created", "size"
+sort_by = "alphabetical"
+
+[ascii]
+# Options:
+# - "static":   Show static ASCII art
+# - "animated": Show animated ASCII art (opt-in for faster startup)
+mode = "static"
+
+[packs]
+# Enable packs by name (see packs.declarations below)
+enabled = [
+  # "config",
+  # "file-management",
+  # "git",
+  # "jj",
+  # "python",
+  # "rust",
+  # "rust_extra",
+  # "nix",
+  # "ts",
+  # "go",
+  # "go_extra",
+  # "kotlin",
+]
+
+# Add individual packages here if you don't want entire packs
+# Tip: If you only need one tool from a pack, add it here instead
+#
+# Note: Package names must exist in nixpkgs
+# Search packages at: https://search.nixos.org/packages
+user_packages = [
+  # "gleam",
+]
+
+[packs.declarations]
+# Pack declarations are lists of nixpkgs package names (supports dotted paths).
+# Pack packages always resolve against the configured nixpkgs input (currently unstable).
+# Uncomment entries below to build your own packs.
+
+# Tool packs
+config = [
+  "mpls", # Markdown Preview LSP
+  "yaml-language-server", # YAML language server
+]
+
+file-management = [
+  "ouch", # Archive handling
+  "erdtree", # Tree view with file sizes
+  "serpl", # Search/replace CLI
+]
+
+git = [
+  "onefetch", # Repo summary and stats
+  "gh", # GitHub CLI
+  "prek", # Prettier git commit logs
+]
+
+jj = [
+  "jujutsu", # Jujutsu VCS (jj)
+  "lazyjj", # LazyGit-style TUI for jj
+  "jjui", # TUI for Jujutsu VCS
+]
+
+# Language packs
+python = [
+  "ruff", # Fast Python linter/formatter
+  "uv", # Ultra-fast Python package manager
+  "ty", # Fast Python type checker
+  "python3Packages.ipython", # Enhanced Python REPL
+]
+
+rust = [
+  "cargo-edit", # Add/remove/upgrade Rust deps
+  "cargo-watch", # Rebuild on file changes
+  "cargo-audit", # Security audit for Rust deps
+]
+
+rust_extra = [
+  "cargo-update", # Update installed cargo binaries
+  "cargo-binstall", # Faster install of Rust tools
+  "cargo-nextest", # Next-gen Rust test runner
+]
+
+nix = [
+  "nil", # Nix language server
+  "nixd", # Nix language server with diagnostics
+  "nixfmt", # Nix formatter
+]
+
+ts = [
+  "nodePackages.typescript-language-server", # TypeScript language server (LSP)
+  "biome", # JS/TS formatter and linter
+  "oxlint", # Fast JS/TS linter
+  "bun", # JS runtime, bundler, and test runner
+]
+
+go = [
+  "gopls", # Go language server (LSP)
+  "golangci-lint", # Fast Go linter aggregator
+]
+
+go_extra = [
+  "delve", # Go debugger
+  "air", # Live reload for Go
+  "govulncheck", # Go vulnerability scanner
+]
+
+kotlin = [
+  "kotlin-language-server", # Kotlin language server (LSP)
+  "ktlint", # Kotlin linter/formatter
+  "detekt", # Kotlin static analysis
+  "gradle", # Build tool for Kotlin/JVM
+]

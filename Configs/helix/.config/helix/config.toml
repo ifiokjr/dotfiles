@@ -1,0 +1,273 @@
+## Set the theme
+theme = "ayu_dark"
+
+[editor]
+bufferline = "multiple"
+color-modes = true
+completion-replace = true
+completion-timeout = 5
+# end-of-line-diagnostics = "hint"
+line-number = "relative"
+mouse = true # works better with zellij for isolating selections
+shell = ["bash", "-c"]
+
+[editor.statusline]
+center = ["file-type"]
+
+[editor.inline-diagnostics]
+## Minimum severity to show a diagnostic on the primary cursor's line.
+## Note that `cursor-line` diagnostics are hidden in insert mode.
+# cursor-line = "error"
+## Minimum severity to show a diagnostic on other lines:
+# other-lines = "error"
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.auto-pairs]
+'(' = ')'
+'{' = '}'
+'[' = ']'
+'"' = '"'
+"'" = "'"
+'`' = '`'
+'<' = '>'
+
+[editor.file-picker]
+hidden = false
+
+[editor.soft-wrap]
+enable = true
+
+[keys.normal]
+## Move selection up
+C-k = "@X\"mydgk\"mP"
+## Move selection down
+C-j = "@X\"mydgj\"mP"
+## Copy the current line / selection to the previous line.
+C-h = "@X\"my\"mP"
+## Copy the current line / selection to the line after.
+C-l = "@X\"my\"mp"
+## Yank diagnostics to the currently active register
+Y = ":yank-diagnostic"
+## Save the current buffer
+C-s = ":w"
+## Reload the configuration
+C-r = ":config-reload"
+## Reload the lsp
+M = ":lsp-restart"
+## Reveals the file from the Helix buffer in Yazi
+A-y = ":sh nu ~/.config/yazelix/nushell/scripts/reveal_in_yazi.nu \"%{buffer_name}\""
+A-Y = ":sh echo 'buffer_name: %{buffer_name}, cursor_line: %{cursor_line}, line_ending: %{line_ending}, cursor_column: %{cursor_column}, language: %{language}, selection: %{selection}'"
+d = "delete_selection_noyank"
+A-d = "delete_selection"
+c = "change_selection_noyank"
+A-c = "change_selection"
+
+[keys.select]
+## Move selection up
+C-k = "@X\"mdgk\"mP"
+## Move selection down
+C-j = "@X\"mdgj\"mP"
+## Copy the current line / selection to the previous line.
+C-h = "@X\"my\"mP"
+## Copy the current line / selection to the line after.
+C-l = "@X\"my\"mp"
+## Yank diagnostics to the currently active register
+Y = ":yank-diagnostic"
+## Save the current buffer
+C-s = ":w"
+## Reload the configuration
+C-r = ":config-reload"
+
+M = ":lsp-restart"
+## Reveals the file from the Helix buffer in Yazi
+A-y = ":sh nu ~/.config/yazelix/nushell/scripts/reveal_in_yazi.nu \"%{buffer_name}\""
+A-Y = ":sh echo 'buffer_name: %{buffer_name}, cursor_line: %{cursor_line}, line_ending: %{line_ending}, cursor_column: %{cursor_column}, language: %{language}, selection: %{selection}'"
+d = "delete_selection_noyank"
+A-d = "delete_selection"
+c = "change_selection_noyank"
+A-c = "change_selection"
+
+[keys.insert]
+## Move to the start of the line
+C-a = "goto_line_start"
+## Move to the end of the line in insert mode.
+C-e = "insert_at_line_end"
+
+[keys.normal.space]
+## Toggle soft wrap
+W = ":toggle soft-wrap.enable"
+A = ":toggle auto-format"
+n = ":new"
+"." = ":recentf-open-files"
+
+[keys.normal."["]
+j = "jump_backward"
+x = "extend_line_above"
+
+[keys.normal."]"]
+j = "jump_forward"
+x = "extend_line_below"
+
+[keys.normal.space."`"]
+# camelCase
+c = "@|ccase -t camel<ret>"
+## UPPER CASE
+U = "@|ccase -t upper<ret>"
+## lower case
+l = "@|ccase -t lower<ret>"
+## Title Case
+t = "@|ccase -t title<ret>"
+## tOGGLE cASE
+A = "@|ccase -t toggle<ret>"
+## PascalCase
+P = "@|ccase -t pascal<ret>"
+## UpperCamelCase
+C = "@|ccase -t uppercamel<ret>"
+## snake_case
+s = "@|ccase -t snake<ret>"
+## UPPER_SNAKE_CASE
+S = "@|ccase -t uppersnake<ret>"
+## kebab-case
+k = "@|ccase -t kebab<ret>"
+## UPPER-KEBAB-CASE
+K = "@|ccase -t upperkebab<ret>"
+## Train-Case
+T = "@|ccase -t train<ret>"
+## flatcase
+f = "@|ccase -t flat<ret>"
+## UPPERFLATCASE
+u = "@|ccase -t upperflat<ret>"
+## aLtErNaTiNg CaSe
+a = "@|ccase -t alternating<ret>"
+## RANDOm cAsE
+r = "@|ccase -t random<ret>"
+## PseUdO rAnDoM cASe
+p = "@|ccase -t pseudorandom<ret>"
+
+[keys.normal.space.o]
+## Open the helix `config.toml`
+c = ":o ~/.config/helix/config.toml"
+## Open the nix darwin`config.toml`
+d = ":o ~/.config/nix/"
+## Open the helix `init.scm`
+i = ":o ~/.config/helix/init.scm"
+## Open the helix `helix.scm`
+h = ":o ~/.config/helix/helix.scm"
+## Open the helix `languages.toml`
+l = ":o ~/.config/helix/languages.toml"
+## Open the .zshrc file
+Z = ":o ~/.zshrc"
+
+[keys.normal.space.o.z]
+## Open the zellij/config.kdl
+c = ":o ~/.config/zellij/config.kdl"
+## Open the zellij/layouts folder
+l = ":o ~/.config/zellij/layouts/"
+
+[keys.normal.space.o.y]
+## Open the yazi config
+c = ":o ~/.config/yazelix/yazi/yazi.toml"
+## Open the yazi keymap
+k = ":o ~/.config/yazelix/yazi/keymap.toml"
+## Open the yazi theme
+y = ":o ~/.config/yazelix/yazi/theme.toml"
+
+[keys.select.ret]
+s = ["split_selection_on_newline", ":sort", "merge_selections"]
+## A better finder using scooter
+f = [":scooter"]
+## A better finder using scooter
+F = [":scooter-new"]
+## Open find and replace within the helix editor
+r = [
+	":write-all",
+	":new",
+	":insert-output serpl >/dev/tty",
+	":set mouse false",
+	":set mouse true",
+	":buffer-close!",
+	":redraw",
+	":reload-all",
+]
+## Open Git in a zellij floating pane
+g = ":! zellij run --floating --close-on-exit --name \"git\" -- lazygit"
+## Open gemini in a zellij floating pane
+G = ":! zellij run --floating --close-on-exit --name \"gemini\" -- gemini -m gemini-2.5-flash"
+## Open file finder in a zellij floating pane
+R = ":! zellij run --floating --close-on-exit --name \"find-and-replace\" -- serpl"
+## Open terminal in a zellij floating pane
+t = ":! zellij run --floating --close-on-exit --name \"quick-terminal\""
+
+[keys.normal.ret]
+s = ["split_selection_on_newline", ":sort", "merge_selections"]
+## A better finder using scooter
+f = [":scooter"]
+## A better finder using scooter
+F = [":scooter-new"]
+## Open find and replace within the helix editor
+r = [
+	":write-all",
+	":new",
+	":insert-output serpl >/dev/tty",
+	":set mouse false",
+	":set mouse true",
+	":buffer-close!",
+	":redraw",
+	":reload-all",
+]
+## Open Git in a zellij floating pane
+g = ":! zellij run --floating --close-on-exit --name \"git\" -- lazygit"
+## Open gemini in a zellij floating pane
+G = ":! zellij run --floating --close-on-exit --name \"gemini\" -- gemini -m gemini-2.5-flash"
+## Open file finder in a zellij floating pane
+R = ":! zellij run --floating --close-on-exit --name \"find-and-replace\" -- serpl"
+## Open terminal in a zellij floating pane
+t = ":! zellij run --floating --close-on-exit --name \"quick-terminal\""
+
+[keys.normal.ret.b]
+## Close the current buffer only if saved.
+c = ":buffer-close"
+## Close the current buffer even if unsaved.
+C = ":buffer-close!"
+## Close all saved buffers.
+a = ":buffer-close-all"
+## Force close all buffers.
+A = ":buffer-close-all!"
+## Close all other buffers.
+o = ":buffer-close-others"
+## Force close all other buffers.
+O = ":buffer-close-others!"
+## Save buffers before closing
+w = { c = ":write-buffer-close", C = ":write-buffer-close!" }
+q = { c = ":quit", C = ":quit!", a = ":quit-all", A = ":quit-all!" }
+
+[keys.select.ret.b]
+## Close the current buffer only if saved.
+c = ":buffer-close"
+## Close the current buffer even if unsaved.
+C = ":buffer-close!"
+## Close all saved buffers.
+a = ":buffer-close-all"
+## Force close all buffers.
+A = ":buffer-close-all!"
+## Close all other buffers.
+o = ":buffer-close-others"
+## Force close all other buffers.
+O = ":buffer-close-others!"
+## Save buffers before closing
+w = { c = ":write-buffer-close", C = ":write-buffer-close!" }
+q = { c = ":quit", C = ":quit!", a = ":quit-all", A = ":quit-all!" }
+
+[keys.normal.ret.q]
+## Quit the current window only if saved.
+c = ":quit"
+## Quit the current buffer even if unsaved.
+C = ":quit!"
+## Quit all saved buffers.
+a = ":quit-all"
+## Force close all buffers.
+A = ":quit-all!"

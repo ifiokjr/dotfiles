@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Rebuild Darwin configuration after nix config changes
+echo "Rebuilding Darwin configuration..."
+sudo darwin-rebuild switch --flake "$HOME/.config/nix"

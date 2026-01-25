@@ -1,0 +1,212 @@
+#!/usr/bin/env bash
+# Install custom Helix editor with Steel plugin system
+#
+# This script:
+# - Clones/updates the Helix fork with Steel event system support
+# - Builds Helix with the Steel plugin ecosystem
+# - Installs the steel language, language server, and package manager
+# - Creates a symlink at ~/.local/bin/hx for easy access
+# - Creates a symlink at ~/.config/helix/runtime to the custom runtime
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_info() {
+    echo -e "${BLUE}==>${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+print_warn() {
+    echo -e "${YELLOW}!${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+# Configuration
+HELIX_DIR="$HOME/.custom-helix"
+HELIX_BIN="$HOME/.local/bin/hx"
+HELIX_RUNTIME_SRC="$HOME/.custom-helix/runtime"
+HELIX_RUNTIME_DEST="$HOME/.config/helix/runtime"
+REPO_URL="https://github.com/mattwparas/helix"
+BRANCH="steel-event-system"
+
+# Check if required tools are installed
+check_requirements() {
+    print_info "Checking requirements..."
+
+    local missing_tools=()
+
+    if ! command -v git >/dev/null 2>&1; then
+        missing_tools+=("git")
+    fi
+
+    if ! command -v cargo >/dev/null 2>&1; then
+        missing_tools+=("cargo (Rust)")
+    fi
+
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        print_error "Missing required tools: ${missing_tools[*]}"
+        print_info "Please install the missing tools and try again."
+        exit 1
+    fi
+
+    print_success "All requirements met"
+}
+
+# Clone or update the repository
+setup_repository() {
+    if [ -d "$HELIX_DIR" ]; then
+        print_info "Repository exists at $HELIX_DIR"
+        print_info "Updating to latest $BRANCH..."
+
+        cd "$HELIX_DIR"
+
+        # Fetch latest changes
+        git fetch origin
+
+        # Check if we're on the correct branch
+        current_branch=$(git rev-parse --abbrev-ref HEAD)
+        if [ "$current_branch" != "$BRANCH" ]; then
+            print_warn "Currently on branch '$current_branch', switching to '$BRANCH'..."
+            git checkout "$BRANCH"
+        fi
+
+        # Pull latest changes
+        if git pull origin "$BRANCH"; then
+            print_success "Repository updated successfully"
+        else
+            print_error "Failed to update repository"
+            exit 1
+        fi
+    else
+        print_info "Cloning repository to $HELIX_DIR..."
+
+        if git clone --branch "$BRANCH" "$REPO_URL" "$HELIX_DIR"; then
+            print_success "Repository cloned successfully"
+            cd "$HELIX_DIR"
+        else
+            print_error "Failed to clone repository"
+            exit 1
+        fi
+    fi
+}
+
+# Create symlinks for binary and runtime
+setup_symlinks() {
+    local bin_dir="$HOME/.local/bin"
+    local config_dir="$HOME/.config/helix"
+    local target_bin="$HELIX_DIR/target/release/hx"
+
+    # Ensure ~/.local/bin exists
+    if [ ! -d "$bin_dir" ]; then
+        print_info "Creating directory: $bin_dir"
+        mkdir -p "$bin_dir"
+    fi
+
+    # Ensure ~/.config/helix exists
+    if [ ! -d "$config_dir" ]; then
+        print_info "Creating directory: $config_dir"
+        mkdir -p "$config_dir"
+    fi
+
+    # Setup binary symlink
+    if [ -L "$HELIX_BIN" ]; then
+        print_info "Removing existing symlink at $HELIX_BIN"
+        rm -f "$HELIX_BIN"
+    elif [ -e "$HELIX_BIN" ]; then
+        print_warn "File exists at $HELIX_BIN (not a symlink)"
+        print_warn "Please remove it manually if you want to create the symlink"
+        return 1
+    fi
+
+    print_info "Creating symlink: $HELIX_BIN -> $target_bin"
+    if ln -sf "$target_bin" "$HELIX_BIN"; then
+        print_success "Binary symlink created successfully"
+    else
+        print_error "Failed to create binary symlink"
+        return 1
+    fi
+
+    # Setup runtime symlink (overwrite if exists)
+    if [ -e "$HELIX_RUNTIME_DEST" ] || [ -L "$HELIX_RUNTIME_DEST" ]; then
+        print_info "Removing existing runtime at $HELIX_RUNTIME_DEST"
+        rm -rf "$HELIX_RUNTIME_DEST"
+    fi
+
+    print_info "Creating symlink: $HELIX_RUNTIME_DEST -> $HELIX_RUNTIME_SRC"
+    if ln -sf "$HELIX_RUNTIME_SRC" "$HELIX_RUNTIME_DEST"; then
+        print_success "Runtime symlink created successfully"
+        print_info "You can now run: hx"
+    else
+        print_error "Failed to create runtime symlink"
+        return 1
+    fi
+}
+
+# Build and install Helix with Steel
+build_helix() {
+    print_info "Building Helix with Steel plugin system..."
+    print_info "This will install:"
+    echo "  • hx executable with Steel support"
+    echo "  • steel language"
+    echo "  • steel language server"
+    echo "  • dylib installer for dependencies"
+    echo "  • forge package manager"
+    echo ""
+
+    cd "$HELIX_DIR"
+
+    if cargo xtask steel; then
+        print_success "Helix built successfully with Steel ecosystem"
+        echo ""
+
+        # Create symlinks for binary and runtime
+        setup_symlinks
+
+        echo ""
+        print_info "Installation complete!"
+        print_info "Binary: $HELIX_DIR/target/release/hx"
+        print_info "Binary symlink: $HELIX_BIN"
+        print_info "Runtime: $HELIX_RUNTIME_SRC"
+        print_info "Runtime symlink: $HELIX_RUNTIME_DEST"
+        echo ""
+        print_info "Next steps:"
+        echo "  1. Configuration files will be auto-generated at:"
+        echo "     ~/.config/helix/helix.scm"
+        echo "     ~/.config/helix/init.scm"
+        echo ""
+        echo "  2. (Optional) Create a cogs directory for community libraries:"
+        echo "     mkdir -p ~/.config/helix/cogs"
+        echo ""
+        echo "  3. Ensure ~/.local/bin is in your PATH (already configured in .zshrc)"
+    else
+        print_error "Failed to build Helix"
+        exit 1
+    fi
+}
+
+# Main execution
+main() {
+    print_info "Installing custom Helix editor with Steel plugin system"
+    echo ""
+
+    check_requirements
+    setup_repository
+    build_helix
+
+    echo ""
+    print_success "Installation complete!"
+}
+
+main "$@"

@@ -1,0 +1,20 @@
+// Yazelix-specific overrides
+ 
+// override these in zellij/personal/user_config.kdl
+ 
+// Use Yazelix's custom layouts (yzx_side.kdl or yzx_no_side.kdl)
+default_layout "yazelix"
+
+// Clipboard command is now set dynamically based on platform (pbcopy on macOS, wl-copy on Linux)
+// See nushell/scripts/setup/zellij_config_merger.nu for implementation
+// Override in configs/zellij/personal/user_config.kdl if needed
+
+// Use configured editor (via EDITOR env var) for viewing scrollback history when pressing Ctrl+Alt+s
+// scrollback_editor defaults to $EDITOR when not specified
+
+// Enable session serialization for workspace recovery
+session_serialization true
+pane_viewport_serialization true
+
+// Remove pane borders - required for zjstatus plugin to display properly
+pane_frames false

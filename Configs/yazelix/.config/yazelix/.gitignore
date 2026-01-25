@@ -1,0 +1,24 @@
+# Old locations (kept for backward compatibility during migration)
+logs/*
+nushell/initializers
+shells/bash/initializers
+shells/fish/initializers
+shells/zsh/initializers
+
+# New XDG-compliant state directory (local machine state, not tracked)
+.local/
+
+# devenv generated files and cache
+.devenv/
+.devenv.flake.nix
+
+# User configuration
+yazelix.nix
+yazelix.toml
+helix_custom/
+configs/yazi/user/*
+!configs/yazi/user/README.md
+configs/yazi/personal/
+configs/zellij/personal/*
+!configs/zellij/personal/README.md
+configs/zellij/zjstatus.wasm

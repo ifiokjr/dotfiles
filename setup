@@ -1,0 +1,427 @@
+#!/usr/bin/env bash
+#
+# Dotfiles Setup Script
+#
+# This script sets up your development environment by:
+# 1. Installing Determinate Nix (if not present)
+# 2. Cloning the dotfiles repository (if not present)
+# 3. Setting up Tuckr symlinks
+# 4. Deploying configuration groups
+#
+# Usage:
+#   Local:  ./setup.sh [options]
+#   Remote: curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup.sh | bash
+#
+# Options:
+#   --cwd PATH          Clone dotfiles to PATH (default: ~/Developer/.dotfiles)
+#   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
+#   --skip-nix          Skip Nix installation (use if already installed)
+#   --help              Show this help message
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Configuration
+DOTFILES_REPO="https://github.com/ifiokjr/dotfiles.git"
+DEFAULT_DOTFILES_DIR="$HOME/Developer/.dotfiles"
+DOTFILES_DIR=""
+DEPLOY_GROUPS=""
+SKIP_NIX=false
+
+# Track what we install for cleanup
+INSTALLED_GIT=false
+INSTALLED_TUCKR=false
+
+# Print functions
+print_header() {
+    echo -e "${BOLD}${CYAN}==>${NC} ${BOLD}$1${NC}"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+print_info() {
+    echo -e "${BLUE}→${NC} $1"
+}
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --cwd)
+                DOTFILES_DIR="$2"
+                shift 2
+                ;;
+            --groups)
+                DEPLOY_GROUPS="$2"
+                shift 2
+                ;;
+            --skip-nix)
+                SKIP_NIX=true
+                shift
+                ;;
+            --help)
+                sed -n '2,16p' "$0" | sed 's/^# //'
+                exit 0
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                echo "Run with --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+
+    # Set default if not specified
+    if [ -z "$DOTFILES_DIR" ]; then
+        DOTFILES_DIR="$DEFAULT_DOTFILES_DIR"
+    fi
+}
+
+# Detect platform
+detect_platform() {
+    case "$(uname -s)" in
+        Darwin*)
+            PLATFORM="macos"
+            ;;
+        Linux*)
+            PLATFORM="linux"
+            ;;
+        CYGWIN*|MINGW*|MSYS*|MINGW32*|MINGW64*)
+            PLATFORM="windows"
+            ;;
+        FreeBSD*|OpenBSD*|NetBSD*)
+            PLATFORM="bsd"
+            ;;
+        *)
+            print_error "Unknown platform: $(uname -s)"
+            exit 1
+            ;;
+    esac
+    print_info "Platform detected: $PLATFORM"
+}
+
+# Check if we're running from within the repo
+check_if_in_repo() {
+    if [ -f "$(dirname "$0")/setup-tuckr-symlink.sh" ] && [ -d "$(dirname "$0")/Configs" ]; then
+        DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
+        print_info "Running from within dotfiles repository: $DOTFILES_DIR"
+        return 0
+    fi
+    return 1
+}
+
+# Install Nix using Determinate Systems installer
+install_nix() {
+    if [ "$SKIP_NIX" = true ]; then
+        print_info "Skipping Nix installation (--skip-nix flag provided)"
+        return 0
+    fi
+
+    if command -v nix &> /dev/null; then
+        print_success "Nix is already installed"
+        return 0
+    fi
+
+    print_header "Installing Determinate Nix"
+
+    if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- install; then
+        print_error "Failed to install Nix"
+        exit 1
+    fi
+
+    # Source nix
+    if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+        # shellcheck disable=SC1091
+        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+    fi
+
+    print_success "Nix installed successfully"
+}
+
+# Check if a command exists
+command_exists() {
+    command -v "$1" &> /dev/null
+}
+
+# Install git via nix profile if needed
+install_git() {
+    if command_exists git; then
+        print_success "Git is already available"
+        return 0
+    fi
+
+    print_header "Installing git temporarily"
+
+    if ! nix profile install nixpkgs#git; then
+        print_error "Failed to install git"
+        exit 1
+    fi
+
+    INSTALLED_GIT=true
+    print_success "Git installed"
+}
+
+# Install tuckr via nix profile if needed
+install_tuckr() {
+    if command_exists tuckr; then
+        print_success "Tuckr is already available"
+        return 0
+    fi
+
+    print_header "Installing tuckr temporarily"
+
+    if ! nix profile install nixpkgs#tuckr; then
+        print_error "Failed to install tuckr"
+        exit 1
+    fi
+
+    INSTALLED_TUCKR=true
+    print_success "Tuckr installed"
+}
+
+# Clone the dotfiles repository
+clone_dotfiles() {
+    if [ -d "$DOTFILES_DIR/.git" ]; then
+        print_success "Dotfiles repository already exists at $DOTFILES_DIR"
+        return 0
+    fi
+
+    print_header "Cloning dotfiles repository"
+    print_info "Destination: $DOTFILES_DIR"
+
+    # Create parent directory if it doesn't exist
+    mkdir -p "$(dirname "$DOTFILES_DIR")"
+
+    if ! git clone "$DOTFILES_REPO" "$DOTFILES_DIR"; then
+        print_error "Failed to clone dotfiles repository"
+        exit 1
+    fi
+
+    print_success "Dotfiles cloned successfully"
+}
+
+# Setup Tuckr symlink
+setup_tuckr_symlink() {
+    print_header "Setting up Tuckr symlink"
+
+    cd "$DOTFILES_DIR"
+
+    if ! ./setup-tuckr-symlink.sh; then
+        print_error "Failed to setup Tuckr symlink"
+        exit 1
+    fi
+
+    print_success "Tuckr symlink configured"
+}
+
+# Ask user for confirmation
+ask_yes_no() {
+    local prompt="$1"
+    local response
+
+    while true; do
+        read -rp "$(echo -e "${CYAN}?${NC} $prompt [y/N]: ")" response
+        case "$response" in
+            [Yy]|[Yy][Ee][Ss])
+                return 0
+                ;;
+            [Nn]|[Nn][Oo]|"")
+                return 1
+                ;;
+            *)
+                print_warning "Please answer yes or no"
+                ;;
+        esac
+    done
+}
+
+# Deploy configuration groups
+deploy_groups() {
+    print_header "Deploying configuration groups"
+
+    cd "$DOTFILES_DIR"
+
+    # If specific groups are specified via --groups flag
+    if [ -n "$DEPLOY_GROUPS" ]; then
+        IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
+        for group in "${GROUPS[@]}"; do
+            print_info "Deploying group: $group"
+            if [[ "$group" == "yazelix" ]] || [[ "$group" == "nix_macos" ]] || [[ "$group" == "zsh_macos" ]]; then
+                tuckr set "$group" || print_warning "Failed to deploy $group (hook may have failed)"
+            else
+                tuckr add "$group" || print_warning "Failed to deploy $group"
+            fi
+        done
+        return 0
+    fi
+
+    # Get all available groups from Configs directory
+    local all_groups=()
+    if [ -d "Configs" ]; then
+        while IFS= read -r -d '' dir; do
+            local group_name
+            group_name=$(basename "$dir")
+            all_groups+=("$group_name")
+        done < <(find Configs -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+    fi
+
+    if [ ${#all_groups[@]} -eq 0 ]; then
+        print_warning "No configuration groups found in Configs/"
+        return 1
+    fi
+
+    print_info "Found ${#all_groups[@]} configuration groups"
+    echo ""
+
+    # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
+    local hook_groups=("yazelix" "nix_macos" "zsh_macos")
+
+    # Deploy all groups automatically
+    for group in "${all_groups[@]}"; do
+        # Check if this group has a hook
+        local has_hook=false
+        for hook_group in "${hook_groups[@]}"; do
+            if [[ "$group" == "$hook_group" ]]; then
+                has_hook=true
+                break
+            fi
+        done
+
+        # Special handling for nix_macos
+        if [[ "$group" == "nix_macos" ]]; then
+            echo ""
+            print_header "Nix Darwin Configuration"
+            echo -e "${YELLOW}Note:${NC} nix_macos deployment will run 'darwin-rebuild switch' which requires sudo"
+            print_info "This may take several minutes..."
+            echo ""
+
+            if ! tuckr set "$group" 2>&1; then
+                print_warning "Failed to deploy $group (this is expected if darwin-rebuild fails on first run)"
+            else
+                print_success "Deployed $group"
+            fi
+            continue
+        fi
+
+        # Deploy the group
+        if [ "$has_hook" = true ]; then
+            print_info "Deploying $group (with hooks)"
+            if ! tuckr set "$group" 2>&1; then
+                print_warning "Failed to deploy $group (hook may have failed or dependencies missing)"
+            else
+                print_success "Deployed $group"
+            fi
+        else
+            print_info "Deploying $group"
+            if ! tuckr add "$group" 2>&1; then
+                print_warning "Failed to deploy $group (may not be compatible with your platform)"
+            else
+                print_success "Deployed $group"
+            fi
+        fi
+    done
+
+    echo ""
+    print_success "Configuration deployment complete"
+}
+
+# Cleanup temporary packages
+cleanup() {
+    print_header "Cleaning up"
+
+    if [ "$INSTALLED_TUCKR" = true ]; then
+        print_info "Removing tuckr from nix profile"
+        nix profile remove '.*tuckr.*' || print_warning "Could not remove tuckr (may already be removed)"
+    fi
+
+    if [ "$INSTALLED_GIT" = true ]; then
+        print_info "Removing git from nix profile"
+        nix profile remove '.*git.*' || print_warning "Could not remove git (may already be removed)"
+    fi
+
+    print_success "Cleanup complete"
+}
+
+# Main setup flow
+main() {
+    echo ""
+    echo -e "${BOLD}${CYAN}╔════════════════════════════════════════╗${NC}"
+    echo -e "${BOLD}${CYAN}║                                        ║${NC}"
+    echo -e "${BOLD}${CYAN}║      Dotfiles Setup Script             ║${NC}"
+    echo -e "${BOLD}${CYAN}║                                        ║${NC}"
+    echo -e "${BOLD}${CYAN}╚════════════════════════════════════════╝${NC}"
+    echo ""
+
+    parse_args "$@"
+    detect_platform
+
+    # Check if we're already in the repo
+    if ! check_if_in_repo; then
+        # Not in repo, need to clone
+        install_nix
+        install_git
+        clone_dotfiles
+    else
+        # In repo, may still need Nix and Tuckr
+        if ! command_exists nix && [ "$SKIP_NIX" = false ]; then
+            install_nix
+        fi
+    fi
+
+    # Always need tuckr
+    install_tuckr
+
+    # Setup and deploy
+    setup_tuckr_symlink
+    deploy_groups
+
+    # Cleanup
+    cleanup
+
+    echo ""
+    echo -e "${GREEN}${BOLD}╔════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}${BOLD}║                                        ║${NC}"
+    echo -e "${GREEN}${BOLD}║      Setup Complete! 🎉                ║${NC}"
+    echo -e "${GREEN}${BOLD}║                                        ║${NC}"
+    echo -e "${GREEN}${BOLD}╚════════════════════════════════════════╝${NC}"
+    echo ""
+    print_info "Your dotfiles have been installed to: $DOTFILES_DIR"
+    print_info "Configuration files are now symlinked to your home directory"
+    echo ""
+    print_header "Next Steps"
+
+    if [ "$PLATFORM" = "macos" ]; then
+        echo -e "  ${CYAN}1.${NC} Restart your terminal or run: ${BOLD}source ~/.zshrc${NC}"
+        echo -e "  ${CYAN}2.${NC} Verify Tuckr status: ${BOLD}tuckr status${NC}"
+        echo -e "  ${CYAN}3.${NC} Check configuration: ${BOLD}ls -la ~ | grep '^l'${NC} (shows symlinks)"
+    else
+        echo -e "  ${CYAN}1.${NC} Restart your terminal"
+        echo -e "  ${CYAN}2.${NC} Verify Tuckr status: ${BOLD}tuckr status${NC}"
+        echo -e "  ${CYAN}3.${NC} Check configuration: ${BOLD}ls -la ~ | grep '^l'${NC} (shows symlinks)"
+    fi
+
+    echo ""
+    print_info "For more information, see: $DOTFILES_DIR/README.md"
+    echo ""
+}
+
+# Run main function
+main "$@"

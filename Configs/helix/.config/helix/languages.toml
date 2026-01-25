@@ -1,0 +1,288 @@
+[language-server.testing-ls]
+command = "testing-language-server"
+args = []
+
+[language-server.godot]
+command = "nc"
+args = ["127.0.0.1", "6005"]
+
+[language-server.steel-language-server]
+command = "steel-language-server"
+args = []
+
+[language-server.lsp-ai]
+command = "lsp-ai"
+
+[language-server.lsp-ai.config.memory]
+file_store = {}
+
+[language-server.lsp-ai.config.models.local]
+type = "ollama"
+model = "devstral"
+
+[language-server.lsp-ai.config.completion]
+model = "local"
+
+[language-server.lsp-ai.config.completion.parameters]
+max_tokens = 2048
+max_context = 4096
+
+[language-server.lsp-ai.config.completion.parameters.options]
+num_predict = 32
+
+[language-server.lsp-ai.config.completion.parameters.fim]
+start = "<|fim_start|>"
+middle = "<|fim_middle|>"
+end = "<|fim_end|>"
+
+[language-server.deno-lsp]
+command = "deno"
+args = ["lsp"]
+config = { deno = { enable = true } }
+environment = { NO_COLOR = "1" }
+required-root-patterns = ["deno.*"]
+
+[language-server.typescript-language-server]
+required-root-patterns = ["package.json"]
+
+[language-server.vscode-eslint-language-server.config]
+codeActionsOnSave = { mode = "all", "source.fixAll.eslint" = true }
+format = { enable = true }
+nodePath = ""
+quiet = false
+rulesCustomizations = []
+run = "onType"
+validate = "on"
+experimental = {}
+problems = { shortenToSingleLine = false }
+
+[language-server.vscode-eslint-language-server.config.codeAction]
+disableRuleComment = { enable = true, location = "separateLine" }
+showDocumentation = { enable = false }
+
+[language-server.kdl]
+command = "kdl-lsp"
+args = []
+
+[language-server.nil]
+command = "nil"
+
+[language-server.tailwindcss-ls]
+config = { userLanguages = { rust = "html", "*.rs" = "html" } }
+
+[language-server.rust-analyzer.config.check]
+command = "clippy"
+features = "all"
+
+[language-server.rust-analyzer.config.cargo]
+features = "all"
+targetDir = true
+
+[language-server.sqls]
+command = "sqls"
+args = ["-config", "$HOME/.config/sqls/config.yml"]
+
+[[language]]
+name = "markdown"
+indent = { tab-width = 2, unit = "\t" }
+soft-wrap = { enable = true }
+language-servers = ["marksman", "ltex-ls"]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "rust"
+language-servers = [{ name = "testing-ls", only-features = ["diagnostics"] }, "rust-analyzer", "tailwindcss-ls"]
+indent = { tab-width = 2, unit = "\t" }
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[language.auto-pairs]
+'(' = ')'
+'{' = '}'
+'[' = ']'
+# '|' = '|'
+'"' = '"'
+'`' = '`'
+# '<' = '>'
+
+[language.debugger]
+name = "lldb-dap"
+transport = "stdio"
+command = "lldb-dap"
+
+[[language.debugger.templates]]
+name = "binary"
+request = "launch"
+completion = [{ name = "binary", completion = "filename" }]
+
+[language.debugger.templates.args]
+program = "{0}"
+initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+
+[[language.debugger.templates]]
+name = "binary (terminal)"
+request = "launch"
+completion = [{ name = "binary", completion = "filename" }]
+
+[language.debugger.templates.args]
+program = "{0}"
+runInTerminal = true
+initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+
+[[language.debugger.templates]]
+name = "attach"
+request = "attach"
+completion = ["pid"]
+
+[language.debugger.templates.args]
+pid = "{0}"
+initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+
+[[language.debugger.templates]]
+name = "gdbserver attach"
+request = "attach"
+completion = [
+	{ name = "lldb connect url", default = "connect://localhost:3333" },
+	{ name = "file", completion = "filename" },
+	"pid",
+]
+
+[language.debugger.templates.args]
+attachCommands = [
+	"platform select remote-gdb-server",
+	"platform connect {0}",
+	"file {1}",
+	"attach {2}",
+]
+initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+
+[[language]]
+name = "scheme"
+language-servers = ["steel-language-server"]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "dart"
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+
+[[language]]
+name = "yaml"
+indent = { tab-width = 2, unit = " " }
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "json"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = ["vscode-json-language-server"]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "kdl"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = ["kdl"]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "toml"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = ["taplo"]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "nix"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = ["nil"]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "html"
+language-servers = ["tailwindcss-ls", "vscode-html-language-server"]
+indent = { tab-width = 2, unit = "\t" }
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "css"
+language-servers = ["tailwindcss-ls", "vscode-css-language-server"]
+indent = { tab-width = 2, unit = "\t" }
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "typescript"
+indent = { tab-width = 2, unit = "\t" }
+roots = ["deno.json", "deno.jsonc", "package.json"]
+language-servers = [
+	{ name = "testing-ls", only-features = ["diagnostics"] },
+	"typescript-language-server",
+	"vscode-eslint-language-server",
+	"deno-lsp",
+]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "tsx"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = [
+	{ name = "testing-ls", only-features = ["diagnostics"] },
+	"tailwindcss-ls",
+	"typescript-language-server",
+	"vscode-eslint-language-server",
+	"deno-lsp",
+]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "javascript"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = [
+	{ name = "testing-ls", only-features = ["diagnostics"] },
+	"typescript-language-server",
+	"vscode-eslint-language-server",
+	"deno-lsp",
+]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "jsx"
+indent = { tab-width = 2, unit = "\t" }
+language-servers = [
+	{ name = "testing-ls", only-features = ["diagnostics"] },
+	"tailwindcss-ls",
+	"typescript-language-server",
+	"vscode-eslint-language-server",
+	"deno-lsp",
+]
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "bash"
+indent = { tab-width = 2, unit = "\t" }
+formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
+auto-format = true
+
+[[language]]
+name = "gdscript"
+language-servers = ["godot"]
+
+[[language]]
+name = "godot-resource"
+language-servers = ["godot"]
+
+[language-server.gopls.config]
+gofumpt = true
+
+[[language]]
+name = "go"
+auto-format = true

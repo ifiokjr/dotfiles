@@ -1,0 +1,19 @@
+# yazi.toml
+
+[mgr]
+ratio = [1, 4, 3]
+
+[opener]
+edit = [
+  { run = 'nu ~/.config/yazelix/nushell/scripts/integrations/open_file.nu "$1"', desc = "Open File with configured editor (with Zellij integration)" },
+]
+
+[[plugin.prepend_fetchers]]
+id = "git"
+name = "*"
+run = "git"
+
+[[plugin.prepend_fetchers]]
+id = "git"
+name = "*/"
+run = "git"

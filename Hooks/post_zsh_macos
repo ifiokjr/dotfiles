@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo "✓ Zsh configuration deployed"
+echo "  Run 'source ~/.zshrc' or start a new terminal"

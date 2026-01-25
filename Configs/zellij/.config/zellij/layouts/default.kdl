@@ -1,0 +1,47 @@
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="tab-bar"
+        }
+        children
+        pane size=1 borderless=true {
+            plugin location="status-bar"
+        }
+    }
+    tab_template name="with_sidebar" {
+        pane size=1 borderless=true {
+            plugin location="tab-bar"
+        }
+        pane split_direction="vertical" {
+            children
+        }
+        pane size=1 borderless=true {
+            plugin location="status-bar"
+        }
+    }
+    with_sidebar name="default" focus=true {
+        pane name="explorer" focus=true {
+            command "env"
+            args "YAZI_CONFIG_HOME=~/.config/yazelix/yazi" "yazi"
+            size "100%"
+        }
+    }
+    tab name="terminal" split_direction="horizontal" {
+        pane split_direction="vertical" {
+            pane
+            pane
+        }
+        pane split_direction="vertical" {
+            // For now use gemini but can be updateded to claude code once money is better
+            pane name="ai" {
+                command "gemini"
+                args "-m gemini-2.5-flash"
+            }
+            // For use with lazygit
+            pane name="git" {
+                command "lazygit"
+            }
+        }
+    }
+}
+

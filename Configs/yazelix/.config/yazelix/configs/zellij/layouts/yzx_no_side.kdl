@@ -1,0 +1,265 @@
+layout {
+    tab_template name="ui" {
+        pane size=1 borderless=true {
+           plugin location="file:~/.config/yazelix/configs/zellij/zjstatus.wasm" {
+               format_left   "{mode} {tabs}"
+               format_center ""
+               format_right  "#[fg=#ff0088,bold]{session} __YAZELIX_WIDGET_TRAY__ #[fg=#00ccff,bold]YAZELIX " // {datetime}
+               format_hide_on_overlength "true"
+               format_precedence "lrc"
+               swap_layout_format "#[fg=#00ff88,bold][layout: {name}]"
+               swap_layout_hide_if_empty "true"
+               format_space  ""
+               
+               border_enabled  "false"
+               hide_frame_for_single_pane "true"
+               
+               mode_normal  "#[bg=#00ff88,fg=#000000,bold] NORMAL "
+               mode_tmux    "#[bg=#ffff00,fg=#000000,bold] TMUX "
+               mode_session "#[bg=#ff6600,fg=#000000,bold] SESSION "
+               mode_scroll  "#[bg=#ff0088,fg=#ffffff,bold] SCROLL "
+               
+               tab_normal   "#[fg=#ffff00] [{index}] {name} "
+               tab_normal_fullscreen "#[fg=#ffff00] [{index}] {name} [] "
+               tab_normal_sync       "#[fg=#ffff00] [{index}] {name} <> "
+               tab_active   "#[bg=#ff6600,fg=#000000,bold] [{index}] {name} {floating_indicator}"
+               tab_active_fullscreen "#[bg=#ff6600,fg=#000000,bold] [{index}] {name} {fullscreen_indicator}"
+               tab_active_sync       "#[bg=#ff6600,fg=#000000,bold] [{index}] {name} {sync_indicator}"
+               tab_separator ""
+               tab_rename    "#[bg=#ff6600,fg=#000000,bold] {index} {name} {floating_indicator} "
+               tab_sync_indicator       "<> "
+               tab_fullscreen_indicator "[] "
+               tab_floating_indicator   "⬚ "
+               
+               datetime        "#[fg=#bb88ff,bold] {format} "
+               datetime_format "%H:%M %d/%m"
+               
+               command_shell_command "bash -c 'echo ${YAZELIX_DEFAULT_SHELL:-$(basename $SHELL)}'"
+               
+               command_editor_command "bash -c 'basename $EDITOR'"
+               command_editor_format "#[fg=#00ff88,bold]{stdout}"
+               command_editor_interval "300"
+               command_shell_format "#[fg=#00ff88,bold]{stdout}"
+               command_shell_interval "300"
+               
+               command_term_command "nu ~/.config/yazelix/nushell/scripts/utils/detect_terminal.nu"
+               command_term_format "#[fg=#00ff88,bold]{stdout}"
+               command_term_interval "300"
+               
+               command_cpu_command "nu ~/.config/yazelix/configs/zellij/scripts/cpu_usage.nu"
+               command_cpu_format "#[fg=#ff6600][cpu {stdout}]"
+               command_cpu_interval "5"
+               
+               command_ram_command "bash -c 'macchina -o memory -m 2>/dev/null | grep -o \"[0-9]\\+%\" | head -1'"
+               command_ram_format "#[fg=#ff6600][ram {stdout}]"
+               command_ram_interval "5"
+               
+           }
+        }
+        children
+        pane size=1 borderless=true {
+           plugin location="zellij:status-bar"
+        }
+    }
+
+    default_tab_template {
+        pane size=1 borderless=true {
+           plugin location="file:~/.config/yazelix/configs/zellij/zjstatus.wasm" {
+               format_left   "{mode} {tabs}"
+               format_center ""
+               format_right  "#[fg=#ff0088,bold]{session} __YAZELIX_WIDGET_TRAY__ #[fg=#00ccff,bold]YAZELIX " // {datetime}
+               format_hide_on_overlength "true"
+               format_precedence "lrc"
+               swap_layout_format "#[fg=#00ff88,bold][layout: {name}]"
+               swap_layout_hide_if_empty "true"
+               format_space  ""
+               
+               border_enabled  "false"
+               hide_frame_for_single_pane "true"
+               
+               mode_normal  "#[bg=#00ff88,fg=#000000,bold] NORMAL "
+               mode_tmux    "#[bg=#ffff00,fg=#000000,bold] TMUX "
+               mode_session "#[bg=#ff6600,fg=#000000,bold] SESSION "
+               mode_scroll  "#[bg=#ff0088,fg=#ffffff,bold] SCROLL "
+               
+               tab_normal   "#[fg=#ffff00] [{index}] {name} "
+               tab_normal_fullscreen "#[fg=#ffff00] [{index}] {name} [] "
+               tab_normal_sync       "#[fg=#ffff00] [{index}] {name} <> "
+               tab_active   "#[bg=#ff6600,fg=#000000,bold] [{index}] {name} {floating_indicator}"
+               tab_active_fullscreen "#[bg=#ff6600,fg=#000000,bold] [{index}] {name} {fullscreen_indicator}"
+               tab_active_sync       "#[bg=#ff6600,fg=#000000,bold] [{index}] {name} {sync_indicator}"
+               tab_separator ""
+               tab_rename    "#[bg=#ff6600,fg=#000000,bold] {index} {name} {floating_indicator} "
+               tab_sync_indicator       "<> "
+               tab_fullscreen_indicator "[] "
+               tab_floating_indicator   "⬚ "
+               
+               datetime        "#[fg=#bb88ff,bold] {format} "
+               datetime_format "%H:%M %d/%m"
+               
+               command_shell_command "bash -c 'echo ${YAZELIX_DEFAULT_SHELL:-$(basename $SHELL)}'"
+               
+               command_editor_command "bash -c 'basename $EDITOR'"
+               command_editor_format "{stdout}"
+               command_editor_interval "300"
+               command_shell_format "{stdout}"
+               command_shell_interval "300"
+
+               command_term_command "nu ~/.config/yazelix/nushell/scripts/utils/detect_terminal.nu"
+               command_term_format "{stdout}"
+               command_term_interval "300"
+               
+               command_cpu_command "nu ~/.config/yazelix/configs/zellij/scripts/cpu_usage.nu"
+               command_cpu_format "#[fg=#ff6600][cpu {stdout}]"
+               command_cpu_interval "5"
+               
+               command_ram_command "bash -c 'macchina -o memory -m 2>/dev/null | grep -o \"[0-9]\\+%\" | head -1'"
+               command_ram_format "#[fg=#ff6600][ram {stdout}]"
+               command_ram_interval "5"
+               
+           }
+        }
+        pane split_direction="vertical" {
+            pane name="filemanager" {
+                command "yazi"
+            	size "100%"
+            }
+        }
+        pane size=1 borderless=true {
+           plugin location="zellij:status-bar"
+        }
+    }
+}
+
+keybinds {
+    shared {
+        // Remap only Ctrl+O due to Helix conflict (jump_backward)
+        unbind "Ctrl o"
+        bind "Ctrl Alt o" { SwitchToMode "Session"; }
+
+        // Remap only Ctrl+S due to Helix conflict (save_selection)
+        unbind "Ctrl s"
+        bind "Ctrl Alt s" { SwitchToMode "Scroll"; }
+
+        // Previously: Alt + i (in helix: shrink_selection)
+        unbind "Alt i"
+        // Move tab left (new)
+        bind "Alt Shift H" { MoveTab "Left"; }
+
+        // Previously: Alt + o (in helix: expand_selection)
+        unbind "Alt o"
+        // Move tab right (new)
+        bind "Alt Shift L" { MoveTab "Right"; }
+
+        // Previously: Alt + n (in helix: select_next_sibling)
+        bind "Alt m" { NewPane; }
+        unbind "Alt n"
+
+        // Previously: Ctrl + b (in helix: move_page_up)
+        // Alt+number: Go directly to tab 1-9 (tmux style)
+        bind "Alt 1" { GoToTab 1; }
+        bind "Alt 2" { GoToTab 2; }
+        bind "Alt 3" { GoToTab 3; }
+        bind "Alt 4" { GoToTab 4; }
+        bind "Alt 5" { GoToTab 5; }
+        bind "Alt 6" { GoToTab 6; }
+        bind "Alt 7" { GoToTab 7; }
+        bind "Alt 8" { GoToTab 8; }
+        bind "Alt 9" { GoToTab 9; }
+
+        // Not a remap, just for ease of use
+        bind "Alt Shift f" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
+
+        // Alt+q/w: Walk (focus) left/right between tabs
+        bind "Alt q" { GoToPreviousTab; }
+        bind "Alt w" { GoToNextTab; }
+
+        // Unbind Alt+( and Alt+)
+        // fixes selection cycling in helix for alacritty and wezterm
+        // does not work for kitty or ghostty
+        unbind "Alt ("
+        unbind "Alt )"
+
+        // Unbind Alt+p and Alt+Shift+p to avoid conflicts with Helix (select_previous_sibling)
+        // Original: Alt+p for TogglePaneInGroup, Alt+Shift+p for ToggleGroupMarking
+        // Rebind to Ctrl+Alt+p for pane grouping actions
+        unbind "Alt p"
+        unbind "Alt Shift p"
+        bind "Ctrl Alt p" { TogglePaneInGroup; }
+        bind "Ctrl Alt Shift p" { ToggleGroupMarking; }
+    }
+
+    shared_except "locked" {
+        // Remap Ctrl+G from Locked mode to Ctrl+Alt+G to avoid conflict with Claude Code
+        // (Ctrl+G is used by many CLIs for editing the prompt with $EDITOR)
+        unbind "Ctrl g"
+        bind "Ctrl Alt g" { SwitchToMode "Locked"; }
+    }
+
+    shared_except "pane" "locked" {
+        bind "Ctrl p" { SwitchToMode "Pane"; }
+    }
+    
+    shared_except "resize" "locked" {
+        bind "Ctrl n" { SwitchToMode "Resize"; }
+    }
+    
+    shared_except "scroll" "locked" {
+        unbind "Ctrl s"
+        bind "Ctrl Alt s" { SwitchToMode "Scroll"; }
+    }
+    
+    shared_except "session" "locked" {
+        unbind "Ctrl o"
+        bind "Ctrl Alt o" { SwitchToMode "Session"; }
+    }
+    
+    shared_except "tab" "locked" {
+        bind "Ctrl t" { SwitchToMode "Tab"; }
+    }
+    
+    shared_except "move" "locked" {
+        bind "Ctrl h" { SwitchToMode "Move"; }
+    }
+    
+    shared_except "locked" {
+        unbind "Ctrl b"
+    }
+
+    shared_except "locked" {
+        bind "Ctrl q" { Quit; }
+    }
+
+    locked {
+        bind "Ctrl Alt g" { SwitchToMode "Normal"; }
+    }
+
+    pane {
+        bind "Ctrl p" { SwitchToMode "Normal"; }
+    }
+
+    resize {
+        bind "Ctrl n" { SwitchToMode "Normal"; }
+    }
+
+    session {
+        // Exit session mode
+        unbind "Ctrl o"
+        bind "Ctrl Alt o" { SwitchToMode "Normal"; }
+    }
+
+    scroll {
+        // Exit scroll mode
+        unbind "Ctrl s"
+        bind "Ctrl Alt s" { SwitchToMode "Normal"; }
+    }
+
+    tab {
+        bind "Ctrl t" { SwitchToMode "Normal"; }
+    }
+
+    move {
+        bind "Ctrl h" { SwitchToMode "Normal"; }
+    }
+
+}
