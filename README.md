@@ -271,14 +271,49 @@ Tuckr looks for groups in `Configs/` directory. Verify:
 ls ~/Library/Application\ Support/dotfiles/Configs/
 ```
 
-### Nix Flake Issues
+### Nix Flake Update Issues
 
-After updating nix configs, rebuild Darwin:
+**Problem: "Too many open files" or "$HOME is not owned by you" errors**
+
+These errors occur when running nix commands with incorrect permissions or context.
+
+**Solution:**
+Use the built-in aliases which handle permissions correctly:
 ```bash
-sudo darwin-rebuild switch --flake ~/.config/nix
+# Update flake inputs (no sudo needed)
+update
+
+# Rebuild Darwin system (will prompt for sudo when needed)
+rebuild
 ```
 
-Or let the `post_nix_macos` hook handle it:
+If running manually:
+```bash
+# Update flake.lock (run as your user, NOT with sudo)
+nix flake update --flake ~/.config/nix
+
+# Rebuild system (darwin-rebuild will request sudo internally)
+darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+```
+
+**Why this happens:**
+- `nix flake update` should run as your user to access your Nix cache
+- Running with `sudo` changes $HOME to `/var/root` and can hit file descriptor limits
+- `darwin-rebuild` handles sudo internally for operations that need it
+
+**If "Too many open files" persists:**
+```bash
+# Check current limits
+ulimit -n
+
+# Increase file descriptor limit temporarily
+ulimit -n 10240
+
+# Or add to ~/.zshrc for permanent fix:
+ulimit -n 10240
+```
+
+Or let the `post_nix_macos` hook handle rebuilds:
 ```bash
 tuckr set nix_macos
 ```

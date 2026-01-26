@@ -72,8 +72,8 @@ export ARCHFLAGS="-arch x86_64"
 # users are encouraged to define aliases within the ZSH_CUSTOM folder.
 # For a full list of active aliases, run `alias`.
 alias s="source $HOME/.zshrc"
-alias update="sudo zsh -c \"nix flake update --flake \$HOME/.config/nix\""
-alias rebuild="sudo zsh -c \"darwin-rebuild switch --flake \$HOME/.config/nix#\$(whoami)\""
+alias update="nix flake update --flake $HOME/.config/nix"
+alias rebuild="darwin-rebuild switch --flake $HOME/.config/nix#\$(whoami)"
 alias vim="nvim"
 alias n="nvim"
 alias zj="zellij"
