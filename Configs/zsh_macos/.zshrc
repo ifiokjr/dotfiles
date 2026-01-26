@@ -9,6 +9,9 @@ DISABLE_AUTO_UPDATE="true"
 DISABLE_MAGIC_FUNCTIONS="true"
 DISABLE_UPDATE_PROMPT="true"
 
+# Increase file descriptor limit for Nix builds
+ulimit -n 10240
+
 # Fix for rust builds
 export MACOSX_DEPLOYMENT_TARGET="12.0"
 
@@ -73,7 +76,7 @@ export ARCHFLAGS="-arch x86_64"
 # For a full list of active aliases, run `alias`.
 alias s="source $HOME/.zshrc"
 alias update="nix flake update --flake $HOME/.config/nix"
-alias rebuild="sudo darwin-rebuild switch --flake ~/.config/nix#\$(whoami)"
+alias rebuild="ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#\$(whoami)"
 alias vim="nvim"
 alias n="nvim"
 alias zj="zellij"

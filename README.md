@@ -273,46 +273,62 @@ ls ~/Library/Application\ Support/dotfiles/Configs/
 
 ### Nix Flake Update Issues
 
-**Problem: "Too many open files" or "$HOME is not owned by you" errors**
+**Problem: "Too many open files" error**
 
-These errors occur when running nix commands with incorrect permissions or context.
+This error occurs when Nix hits the system's file descriptor limit during builds.
 
-**Solution:**
-Use the built-in aliases which handle permissions correctly:
+```
+error: ... could not open '.../.cache/nix/tarball-cache/...': Too many open files
+```
+
+**Solution (Automatic):**
+The dotfiles already handle this! Just use the aliases:
 ```bash
-# Update flake inputs (no sudo needed - runs as user)
+# Update flake inputs
 update
 
-# Rebuild Darwin system (includes sudo - will prompt for password)
+# Rebuild Darwin system (automatically increases ulimit before building)
 rebuild
 ```
 
-If running manually:
-```bash
-# Update flake.lock (run as your user, NOT with sudo)
-nix flake update --flake ~/.config/nix
+The `rebuild` alias increases the file descriptor limit to 10,240 before running.
+The `.zshrc` also sets `ulimit -n 10240` globally for all shell sessions.
 
-# Rebuild system (darwin-rebuild requires sudo)
-sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+**Solution (Manual rebuild):**
+```bash
+# Increase limit, then rebuild
+ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
 ```
 
 **Why this happens:**
-- `nix flake update` must run as your user to access your Nix cache at ~/.cache/nix
-- Running nix commands with sudo changes context to root, breaking paths
-- `darwin-rebuild` requires root privileges and should be run with sudo
-- The `rebuild` alias includes sudo so you don't need to type it
+- Nix builds can open thousands of files simultaneously (downloading, extracting, building)
+- macOS default limit is 256 open files (too low for large Nix builds)
+- Homebrew formula downloads in particular can exhaust the limit
+- The limit affects both user context and sudo context
 
-**If "Too many open files" persists:**
+**Check your current limit:**
 ```bash
-# Check current limits
-ulimit -n
-
-# Increase file descriptor limit temporarily
-ulimit -n 10240
-
-# Or add to ~/.zshrc for permanent fix:
-ulimit -n 10240
+ulimit -n  # Should show 10240 if using this dotfiles config
 ```
+
+**Problem: "$HOME is not owned by you" error**
+
+This happens when running `nix flake update` with sudo.
+
+**Solution:**
+Run `update` without sudo (the alias already does this correctly):
+```bash
+# Correct (no sudo)
+update
+
+# Wrong (don't do this)
+sudo update
+```
+
+**Why this happens:**
+- `nix flake update` needs access to YOUR user's Nix cache at ~/.cache/nix
+- Running with sudo changes context to root user ($HOME becomes /var/root)
+- Root can't access your user's cache, and builds may fail or use wrong paths
 
 Or let the `post_nix_macos` hook handle rebuilds:
 ```bash
