@@ -51,7 +51,7 @@
       mise
       neovim
       nixd
-      nixfmt-rfc-style
+      nixfmt
       opencode
       rustup
 
@@ -176,7 +176,7 @@
 
       # Multi-shell environment
       default_shell = "zsh";
-      extra_shells = [ "nu" ]; # Install additional shells
+      extra_shells = []; # nu/bash included by default; can add "fish" or "zsh"
 
       # Terminal preference
       terminals = [ "ghostty" ]; # Better for media previews
