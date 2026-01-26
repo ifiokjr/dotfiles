@@ -5,6 +5,10 @@
   ...
 }:
 
+let
+  # Custom packages
+  pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
+in
 {
   # Home Manager configuration for nix-darwin integration
   #
@@ -117,6 +121,9 @@
       tuckr
       uv
       zlib
+
+      # Custom packages
+      pnpm-standalone
 
       # Fonts
       nerd-fonts.fira-code

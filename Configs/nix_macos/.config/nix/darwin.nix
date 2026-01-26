@@ -35,7 +35,6 @@
       "mas"
       "ollama"
       "pinentry-mac"
-      "pnpm"
       "yamllint"
     ];
     casks = [

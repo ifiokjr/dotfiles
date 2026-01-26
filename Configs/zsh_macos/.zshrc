@@ -140,13 +140,9 @@ fi
  fi
  # End Nix
 
-# pnpm
+# pnpm (standalone version installed via Nix)
+# Global packages stored in PNPM_HOME will be added to PATH by pnpm itself
 export PNPM_HOME="$HOME/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
 
 ## Dart CLI completion (conditional load)
 [[ -f $HOME/.dart-cli-completion/zsh-config.zsh ]] && . $HOME/.dart-cli-completion/zsh-config.zsh
