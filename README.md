@@ -280,10 +280,10 @@ These errors occur when running nix commands with incorrect permissions or conte
 **Solution:**
 Use the built-in aliases which handle permissions correctly:
 ```bash
-# Update flake inputs (no sudo needed)
+# Update flake inputs (no sudo needed - runs as user)
 update
 
-# Rebuild Darwin system (will prompt for sudo when needed)
+# Rebuild Darwin system (includes sudo - will prompt for password)
 rebuild
 ```
 
@@ -292,14 +292,15 @@ If running manually:
 # Update flake.lock (run as your user, NOT with sudo)
 nix flake update --flake ~/.config/nix
 
-# Rebuild system (darwin-rebuild will request sudo internally)
-darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+# Rebuild system (darwin-rebuild requires sudo)
+sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
 ```
 
 **Why this happens:**
-- `nix flake update` should run as your user to access your Nix cache
-- Running with `sudo` changes $HOME to `/var/root` and can hit file descriptor limits
-- `darwin-rebuild` handles sudo internally for operations that need it
+- `nix flake update` must run as your user to access your Nix cache at ~/.cache/nix
+- Running nix commands with sudo changes context to root, breaking paths
+- `darwin-rebuild` requires root privileges and should be run with sudo
+- The `rebuild` alias includes sudo so you don't need to type it
 
 **If "Too many open files" persists:**
 ```bash

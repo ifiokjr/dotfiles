@@ -73,7 +73,7 @@ export ARCHFLAGS="-arch x86_64"
 # For a full list of active aliases, run `alias`.
 alias s="source $HOME/.zshrc"
 alias update="nix flake update --flake $HOME/.config/nix"
-alias rebuild="darwin-rebuild switch --flake $HOME/.config/nix#\$(whoami)"
+alias rebuild="sudo darwin-rebuild switch --flake ~/.config/nix#\$(whoami)"
 alias vim="nvim"
 alias n="nvim"
 alias zj="zellij"
