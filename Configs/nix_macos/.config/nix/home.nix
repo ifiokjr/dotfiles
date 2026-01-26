@@ -30,6 +30,7 @@
       biome
       cargo-sweep
       cargo-update
+      claude-code
       cloudflared
       deno
       devenv
@@ -37,6 +38,7 @@
       dprint
       emscripten
       evcxr
+      gemini-cli
       gh
       git
       git-filter-repo
@@ -50,6 +52,7 @@
       neovim
       nixd
       nixfmt-rfc-style
+      opencode
       rustup
 
       # Shell & Terminal
