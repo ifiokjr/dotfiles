@@ -36,6 +36,7 @@
       "ollama"
       "pinentry-mac"
       "pnpm"
+      "yamllint"
     ];
     casks = [
       "1password"
@@ -93,6 +94,8 @@
       "powershell"
       "qbittorrent"
       "racket"
+      "react-native-debugger"
+      "reactotron"
       "setapp"
       "slack"
       "steam"
@@ -158,8 +161,8 @@
   # $ darwin-rebuild changelog
   system.stateVersion = 6;
 
-  # The platform the configuration will be used on.
-  nixpkgs.hostPlatform = "aarch64-darwin";
+  # The platform is inherited from flake.nix darwinSystem configuration
+  # No need to set nixpkgs.hostPlatform here as it's set at the flake level
 
   system.defaults = {
     dock.autohide = true;

@@ -41,7 +41,11 @@
       git
       git-filter-repo
       git-lfs
+      go
+      graphite-cli
+      jdk17
       lazygit
+      maestro
       mise
       neovim
       nixd
