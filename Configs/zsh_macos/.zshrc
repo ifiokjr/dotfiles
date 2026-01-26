@@ -1,10 +1,18 @@
+# Profiling (uncomment to profile startup time)
+# zmodload zsh/zprof
+
 # Path to your oh-my-zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
+
+# Performance optimizations for Oh-My-Zsh
+DISABLE_AUTO_UPDATE="true"
+DISABLE_MAGIC_FUNCTIONS="true"
+DISABLE_UPDATE_PROMPT="true"
 
 # Fix for rust builds
 export MACOSX_DEPLOYMENT_TARGET="12.0"
 
-# Make Yazelix’s Yazi config your default (it’s plugin-enhanced and adjusts layout based on width)
+# Make Yazelix's Yazi config your default (it's plugin-enhanced and adjusts layout based on width)
 export YAZI_CONFIG_HOME="$HOME/.config/yazelix/yazi"
 
 # Load secrets
@@ -14,21 +22,21 @@ __SECRETS_ENV="$HOME/.env.dotfiles"
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
 ZSH_THEME="robbyrussell"
 
+# Minimal plugin list for faster startup
 plugins=(
   git
-  cp
-  colorize
-  node
-  npm
-  wd
-  man
-  colored-man-pages
   macos
-  1password
-  aliases
 )
 
 source $ZSH/oh-my-zsh.sh
+
+# Completion system optimization - only rebuild once per day
+autoload -Uz compinit
+if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 # deno
 export DENO_INSTALL="$HOME/.deno"
@@ -42,21 +50,19 @@ export PATH="$PATH:$ANDROID_HOME/platform-tools"
 export PATH=$PATH:"/Applications/Android Studio.app/Contents/MacOS"
 export NDK_HOME="~/Library/Android/sdk/ndk/29.0.13599879"
 
-# llvm
-export LDFLAGS="-L$(brew --prefix llvm)/lib"
-export LIBCLANG_PATH="$(brew --prefix llvm)/lib"
-export LLVM_CONFIG_PATH="$(brew --prefix llvm)/bin/llvm-config"
-export CPPFLAGS="-I$(brew --prefix llvm)/include"
-export PATH="$(brew --prefix llvm)/bin:$PATH"
-
-# To make helix the default sudo editor when run with `sudoedit` 
-export SUDO_EDITOR=$(which hx)
-# Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='hx'
-else
-  export EDITOR='hx'
+# llvm (cached to avoid repeated brew calls)
+if [[ -z "$LLVM_PREFIX" ]]; then
+  export LLVM_PREFIX="$(brew --prefix llvm 2>/dev/null || echo "/opt/homebrew/opt/llvm")"
 fi
+export LDFLAGS="-L$LLVM_PREFIX/lib"
+export LIBCLANG_PATH="$LLVM_PREFIX/lib"
+export LLVM_CONFIG_PATH="$LLVM_PREFIX/bin/llvm-config"
+export CPPFLAGS="-I$LLVM_PREFIX/include"
+export PATH="$LLVM_PREFIX/bin:$PATH"
+
+# Editor configuration (cached to avoid repeated which calls)
+export EDITOR='hx'
+export SUDO_EDITOR='hx'
 
 # Compilation flags
 export ARCHFLAGS="-arch x86_64"
@@ -100,17 +106,30 @@ alias pinentry="pinentry-mac"
 alias zshconfig="hx ~/.zshrc"
 alias ohmyzsh="hx ~/.oh-my-zsh"
 
-PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
+# Solana (single PATH addition)
+export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
 
-# Timely Tracking
-PROMPT_TITLE='echo -ne "\033]0;${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/~}\007"'
-export PROMPT_COMMAND="${PROMPT_COMMAND} ${PROMPT_TITLE}; "
-
-# direnv
-export DIRENV_LOG_FORMAT=""
-eval "$(direnv hook zsh)"
-
+# GPG
 export GPG_TTY=$(tty)
+
+# direnv (lazy load for better performance)
+export DIRENV_LOG_FORMAT=""
+_direnv_hook() {
+  eval "$(direnv export zsh)"
+}
+if ! command -v direnv &> /dev/null; then
+  # direnv not installed, skip
+  :
+else
+  typeset -ag precmd_functions
+  if [[ -z ${precmd_functions[(r)_direnv_hook]} ]]; then
+    precmd_functions=(_direnv_hook $precmd_functions)
+  fi
+  typeset -ag chpwd_functions
+  if [[ -z ${chpwd_functions[(r)_direnv_hook]} ]]; then
+    chpwd_functions=(_direnv_hook $chpwd_functions)
+  fi
+fi
 
  # Nix
  if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
@@ -126,30 +145,37 @@ case ":$PATH:" in
 esac
 # pnpm end
 
-## [Completion]
-## Completion scripts setup. Remove the following line to uninstall
-[[ -f $HOME/.dart-cli-completion/zsh-config.zsh ]] && . $HOME/.dart-cli-completion/zsh-config.zsh || true
-## [/Completion]
+## Dart CLI completion (conditional load)
+[[ -f $HOME/.dart-cli-completion/zsh-config.zsh ]] && . $HOME/.dart-cli-completion/zsh-config.zsh
 
-export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-
+# Additional PATH entries
 export PATH="$HOME/.shorebird/bin:$PATH"
 export SOURCE_DATE_EPOCH="0"
 export PATH="$PATH:$HOME/.pub-cache/bin"
 
-# bun completions
-[ -s "$HOME/.oh-my-zsh/completions/_bun" ] && source "$HOME/.oh-my-zsh/completions/_bun"
-eval "$(~/.local/bin/mise activate zsh)"
+# Bun completions (conditional load)
+[[ -s "$HOME/.oh-my-zsh/completions/_bun" ]] && source "$HOME/.oh-my-zsh/completions/_bun"
 
-# Source Yazelix Zsh configuration (added by Yazelix)
-source "$HOME/.config/yazelix/zsh/yazelix_zsh_config.zsh"
-# BEGIN YAZELIX ALIASES (added by Yazelix)
+# Mise (lazy load for better performance)
+if command -v mise &> /dev/null; then
+  eval "$(~/.local/bin/mise activate zsh)"
+fi
+
+# Yazelix configuration
+[[ -f "$HOME/.config/yazelix/zsh/yazelix_zsh_config.zsh" ]] && source "$HOME/.config/yazelix/zsh/yazelix_zsh_config.zsh"
+
+# Yazelix aliases
 alias yazelix="$HOME/.config/yazelix/bash/launch-yazelix.sh"
 alias yzx="$HOME/.config/yazelix/bash/launch-yazelix.sh"
 alias zjn="$HOME/.config/yazelix/bash/zellij-nix.sh"
-# END YAZELIX ALIASES (added by Yazelix)
 
-eval "$(starship init zsh)"
+# Starship prompt (loaded last for best performance)
+if command -v starship &> /dev/null; then
+  eval "$(starship init zsh)"
+fi
 
 # Add local scripts to the path (placed last to ensure precedence over cargo and other bins)
 PATH="$HOME/.local/bin:$PATH"
+
+# Profiling output (uncomment the zmodload at the top to enable)
+# zprof

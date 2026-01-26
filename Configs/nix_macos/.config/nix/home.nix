@@ -161,15 +161,6 @@
   programs = {
     home-manager.enable = true;
 
-    # Zsh configuration
-    zsh = {
-      enable = true;
-      autosuggestion.enable = true;
-      initExtra = ''
-        # Additional zsh configuration can go here
-      '';
-    };
-
     # Yazelix - Terminal development environment
     # Managed via home-manager module from dotfiles
     yazelix = {
