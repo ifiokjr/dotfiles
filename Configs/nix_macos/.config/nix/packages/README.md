@@ -14,7 +14,7 @@ Standalone version of pnpm that doesn't depend on Node.js, allowing you to use p
 - Supports macOS (arm64/x64) and Linux (arm64/x64)
 - Self-contained binary
 
-**Version:** 9.15.4
+**Version:** 10.28.2 (released January 26, 2026)
 
 **Usage:**
 ```nix

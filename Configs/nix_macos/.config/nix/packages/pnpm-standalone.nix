@@ -6,7 +6,7 @@ let
   # 2. Set hash to lib.fakeSha256
   # 3. Run rebuild - Nix will show the correct hash in the error
   # 4. Copy the correct hash here
-  version = "9.15.4";
+  version = "10.28.2";
 
   # Platform and architecture mapping
   platform = if stdenv.isDarwin then "macos" else "linux";
