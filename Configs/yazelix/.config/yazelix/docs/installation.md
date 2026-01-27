@@ -249,7 +249,7 @@ After installation, you can:
 - Add it to your Dock
 - Set up global keyboard shortcuts in System Settings → Keyboard → Keyboard Shortcuts
 
-For detailed macOS setup and troubleshooting, see [assets/macos/README.md](../assets/macos/README.md).
+For detailed macOS setup and troubleshooting, see [assets/macos/readme.md](../assets/macos/readme.md).
 
 ### Step 8: Using Yazelix
 
@@ -295,7 +295,7 @@ devenv shell
 ```
 
 ### Home Manager Integration
-Yazelix includes optional Home Manager support for declarative configuration management. See [home_manager/README.md](../home_manager/README.md) for setup instructions.
+Yazelix includes optional Home Manager support for declarative configuration management. See [home_manager/readme.md](../home_manager/readme.md) for setup instructions.
 
 ## What Gets Installed
 

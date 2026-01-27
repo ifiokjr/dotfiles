@@ -11,5 +11,5 @@
 3. If you previously customized `yazelix.nix`, copy those settings into `~/.config/yazelix/yazelix.toml` (Yazelix prints a warning when the legacy file is detected).
 
 ## Links
-- [README Improvements](../README.md#improvements-of-v11-over-v10)
+- [README Improvements](../readme.md#improvements-of-v11-over-v10)
 - [Full Changelog](./history.md#v11-devenv-launch-workflow-toml-first-config-and-faster-cold-starts)

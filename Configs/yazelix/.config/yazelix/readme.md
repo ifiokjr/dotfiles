@@ -204,7 +204,7 @@ If you followed [step 4 in the installation guide](./docs/installation.md#step-4
 
 ## Home Manager Integration
 
-Yazelix includes optional Home Manager support for declarative configuration management. See [home_manager/README.md](home_manager/README.md) for setup instructions.
+Yazelix includes optional Home Manager support for declarative configuration management. See [home_manager/readme.md](home_manager/readme.md) for setup instructions.
 
 ## Notes
 - `devenv shell` automatically passes through the HOME environment variable, so Yazelix can resolve user-specific paths without extra flags

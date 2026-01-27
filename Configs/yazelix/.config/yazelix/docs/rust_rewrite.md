@@ -396,7 +396,7 @@ yazelix/
 
 ### 9.1 Update Documentation
 
-- [ ] Update `README.md` with Rust migration notes
+- [ ] Update `readme.md` with Rust migration notes
 - [ ] Update `docs/installation.md` if needed
 - [ ] Update `docs/yzx_cli.md` with new Rust-powered CLI
 - [ ] Document new `--json` output options
