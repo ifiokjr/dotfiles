@@ -90,7 +90,9 @@ tuckr status
 #### `scripts`
 **Location:** `Configs/scripts/.local/bin/`
 **Deploys:** `~/.local/bin/`
-**Description:** Custom utility scripts including `install:helix:custom` for building Helix with Steel plugin support.
+**Description:** Custom utility scripts including:
+- `install:helix:custom` - Build Helix with Steel plugin support
+- `update:pnpm:version` - Automatically update pnpm-standalone to latest version
 
 ### Development Tools
 
@@ -334,6 +336,80 @@ Or let the `post_nix_macos` hook handle rebuilds:
 ```bash
 tuckr set nix_macos
 ```
+
+## Custom Nix Packages
+
+The dotfiles include custom Nix packages that aren't available in nixpkgs or have special requirements. These are located in `Configs/nix_macos/.config/nix/packages/`.
+
+### pnpm-standalone
+
+A standalone version of pnpm that doesn't depend on Node.js, allowing you to use pnpm to manage Node versions.
+
+**Why custom?** The nixpkgs pnpm package depends on Node.js, which defeats the purpose of using pnpm to manage Node versions. This custom package fetches the standalone binary directly from GitHub releases.
+
+**Supported platforms:**
+- macOS (arm64, x64)
+- Linux (arm64, x64)
+
+**Current version:** 10.28.2 (January 26, 2026)
+
+#### Updating pnpm Version
+
+**Easiest Method (Recommended):**
+
+Simply run:
+```bash
+update:pnpm:version
+```
+
+This script automatically:
+- Fetches the latest pnpm version from GitHub releases
+- Updates `pnpm-standalone.nix` with the new version
+- Detects your platform (macos-arm64, macos-x64, etc.)
+- Fetches and updates the correct hash
+- Rebuilds your Darwin configuration
+- Verifies pnpm is installed correctly
+
+**Advanced Method:**
+
+If you only need to update the hash for the current version (doesn't require sudo):
+```bash
+cd ~/.config/nix/packages
+./update-pnpm-hash.sh
+# Then run: rebuild
+```
+
+**Manual Method:**
+
+If you prefer full manual control:
+
+1. Edit `Configs/nix_macos/.config/nix/packages/pnpm-standalone.nix`
+2. Update the `version` variable (e.g., `version = "10.29.0";`)
+3. Set the hash for your platform to `lib.fakeSha256`:
+   ```nix
+   hashes = {
+     "macos-arm64" = lib.fakeSha256;  # Or whichever platform you're on
+     # ...
+   };
+   ```
+4. Run `rebuild`
+5. The build will fail with an error showing the correct hash:
+   ```
+   error: hash mismatch in fixed-output derivation '/nix/store/...'
+     specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+     got:      sha256-3NKbhDlzXW0IUJL+Yoj0vKRfdmHCNYVP9Q4Q8OvGXV8=
+   ```
+6. Copy the "got" hash and update your platform entry in `pnpm-standalone.nix`
+7. Run `rebuild` again
+
+**Troubleshooting:**
+
+If any script fails:
+- Check the output for error messages
+- Verify you have internet access (scripts need to fetch from GitHub)
+- Try the manual method above
+
+For more details about the custom package system, see `Configs/nix_macos/.config/nix/packages/README.md`.
 
 ## Resources
 

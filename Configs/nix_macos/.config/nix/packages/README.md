@@ -31,6 +31,28 @@ in
 ```
 
 **Updating:**
+
+*Easiest method (recommended):*
+```bash
+update:pnpm:version
+```
+
+This automatically:
+- Fetches the latest pnpm version from GitHub releases
+- Updates the version in pnpm-standalone.nix
+- Detects your platform (macos-arm64, macos-x64, etc.)
+- Fetches and updates the correct hash using `nix-prefetch-url`
+- Rebuilds your Darwin configuration
+- Verifies pnpm is working
+
+*Hash-only update (if version is already updated):*
+```bash
+cd ~/.config/nix/packages
+./update-pnpm-hash.sh  # Uses nix-prefetch-url, doesn't require sudo
+# Then run: rebuild
+```
+
+*Manual method:*
 1. Edit `pnpm-standalone.nix` and change the `version` variable
 2. Set the hash for your platform to `lib.fakeSha256`
 3. Run `rebuild`
