@@ -1,0 +1,8 @@
+# Runtime directory (should be symlinked by install:helix:custom)
+.config/helix/runtime
+
+# Helix state files
+.config/helix/.helix/
+.config/helix/recent-files.txt
+.config/helix/*.log
+.config/helix/debug.log

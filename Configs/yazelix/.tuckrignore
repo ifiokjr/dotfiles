@@ -1,0 +1,7 @@
+# Home-manager generated symlinks
+.config/yazelix/yazelix.toml
+
+# Backup files
+.config/yazelix.backup.*
+.config/yazelix/*.backup
+.config/yazelix/*.yazelix-backup
