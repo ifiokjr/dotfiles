@@ -1,4 +1,9 @@
-{ stdenv, fetchurl, autoPatchelfHook, lib }:
+{
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
+  lib,
+}:
 
 let
   # To update version:
@@ -15,7 +20,7 @@ let
   # SHA256 hashes for different platforms
   # Using fakeSha256 initially - Nix will provide correct hash on first build
   hashes = {
-    "macos-arm64" = lib.fakeSha256;
+    "macos-arm64" = "sha256-OKI79T2Ri1GS9x7Vjm35YJ2keHkPibIMpfRcPNRtHSw=";
     "macos-x64" = lib.fakeSha256;
     "linux-arm64" = lib.fakeSha256;
     "linux-x64" = lib.fakeSha256;
@@ -23,7 +28,8 @@ let
 
   platformKey = "${platform}-${arch}";
 
-in stdenv.mkDerivation {
+in
+stdenv.mkDerivation {
   pname = "pnpm-standalone";
   inherit version;
 
@@ -34,6 +40,7 @@ in stdenv.mkDerivation {
 
   dontUnpack = true;
   dontBuild = true;
+  dontStrip = stdenv.isDarwin; # Stripping crashes on macOS with standalone binaries
 
   nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
 
@@ -51,7 +58,12 @@ in stdenv.mkDerivation {
     description = "Fast, disk space efficient package manager (standalone version without Node.js dependency)";
     homepage = "https://pnpm.io/";
     license = licenses.mit;
-    platforms = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    platforms = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
     maintainers = [ ];
     mainProgram = "pnpm";
   };
