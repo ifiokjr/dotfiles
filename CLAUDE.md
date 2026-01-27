@@ -94,7 +94,7 @@ vim ~/Library/Application\ Support/dotfiles/Configs/zsh_macos/.zshrc
 
 ## Configuration Groups
 
-The repository contains 8 configuration groups organized in `Configs/`:
+The repository contains 9 configuration groups organized in `Configs/`:
 
 | Group | Files | Platform | Purpose | Hook |
 |-------|-------|----------|---------|------|
@@ -102,6 +102,7 @@ The repository contains 8 configuration groups organized in `Configs/`:
 | **nix_macos** | 6 | macOS | Darwin system configuration with Nix flakes | `post_nix_macos` |
 | **zsh_macos** | 1 | macOS | Zsh shell configuration | `post_zsh_macos` |
 | **zellij** | 4 | All | Terminal multiplexer config & layouts | None |
+| **claude** | 1 | All | Claude Code settings (attribution, etc.) | None |
 | **direnv** | 1 | All | Directory-specific environment variables | None |
 | **dprint** | 1 | All | Multi-language code formatter | None |
 | **kdl** | 1 | All | KDL document formatter | None |
@@ -119,6 +120,7 @@ The repository contains 8 configuration groups organized in `Configs/`:
 │   ├── nix_macos/             # Nix Darwin system config
 │   ├── zsh_macos/             # Zsh shell config
 │   ├── zellij/                # Terminal multiplexer
+│   ├── claude/                # Claude Code settings
 │   ├── direnv/                # Environment management
 │   ├── dprint/                # Code formatter
 │   ├── kdl/                   # KDL formatter
@@ -128,7 +130,7 @@ The repository contains 8 configuration groups organized in `Configs/`:
 │   ├── pre_yazelix            # Verifies yazelix dependencies
 │   └── post_zsh_macos         # Reminds to reload shell
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
-└── README.md                   # Full documentation
+└── readme.md                   # Full documentation
 ```
 
 ### Deployment Pattern
@@ -322,6 +324,22 @@ Complete
 2. User creates `yazelix.toml` for overrides
 3. TOML sections merge automatically
 4. User settings take precedence
+
+## File Naming Conventions
+
+### Documentation Files
+- **All documentation files must be lowercase**: Use `readme.md`, `changelog.md`, `license`, etc.
+- **Never use capitalized names**: Do not use `README.md`, `CHANGELOG.md`, `LICENSE`
+- This applies to all markdown files and documentation throughout the repository
+- License files should be named `license` (no extension)
+
+### Examples
+- ✅ `readme.md` - Correct
+- ❌ `README.md` - Wrong
+- ✅ `license` - Correct
+- ❌ `LICENSE` - Wrong
+- ✅ `Configs/yazelix/.config/yazelix/readme.md` - Correct
+- ❌ `Configs/yazelix/.config/yazelix/README.md` - Wrong
 
 ## Git Commit Conventions
 

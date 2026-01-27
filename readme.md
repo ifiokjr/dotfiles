@@ -94,6 +94,11 @@ tuckr status
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `update:pnpm:version` - Automatically update pnpm-standalone to latest version
 
+#### `claude`
+**Location:** `Configs/claude/.config/claude/`
+**Deploys:** `~/.config/claude/`
+**Description:** Claude Code settings including attribution preferences.
+
 ### Development Tools
 
 #### `nix_macos` (Platform-specific)
@@ -409,13 +414,13 @@ If any script fails:
 - Verify you have internet access (scripts need to fetch from GitHub)
 - Try the manual method above
 
-For more details about the custom package system, see `Configs/nix_macos/.config/nix/packages/README.md`.
+For more details about the custom package system, see `Configs/nix_macos/.config/nix/packages/readme.md`.
 
 ## Resources
 
 - [Tuckr Documentation](https://raphgl.github.io/Tuckr/)
 - [Tuckr GitHub](https://github.com/RaphGL/Tuckr)
-- [Yazelix Documentation](~/.config/yazelix/README.md)
+- [Yazelix Documentation](~/.config/yazelix/readme.md)
 
 ## Backup
 
