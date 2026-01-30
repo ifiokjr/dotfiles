@@ -92,7 +92,8 @@ tuckr status
 **Deploys:** `~/.local/bin/`
 **Description:** Custom utility scripts including:
 - `install:helix:custom` - Build Helix with Steel plugin support
-- `update:pnpm:version` - Automatically update pnpm-standalone to latest version
+- `update:pnpm:version` - Automatically update pnpm-standalone to latest version (also installs latest Node.js)
+- `update:node` - Update Node.js to latest version using pnpm env
 
 #### `claude`
 **Location:** `Configs/claude/.config/claude/`
@@ -374,6 +375,7 @@ This script automatically:
 - Fetches and updates the correct hash
 - Rebuilds your Darwin configuration
 - Verifies pnpm is installed correctly
+- Installs the latest Node.js version using pnpm env
 
 **Advanced Method:**
 
@@ -413,6 +415,34 @@ If any script fails:
 - Check the output for error messages
 - Verify you have internet access (scripts need to fetch from GitHub)
 - Try the manual method above
+
+### Node.js Version Management
+
+Since pnpm-standalone doesn't depend on Node.js, you can use pnpm itself to manage Node.js versions. This gives you full control over which Node.js version to use.
+
+**Update Node.js to latest version:**
+```bash
+update:node
+```
+
+This script uses `pnpm env use --global latest` to install and activate the latest stable Node.js version.
+
+**Manual Node.js management:**
+```bash
+# Install latest Node.js
+pnpm env use --global latest
+
+# Install specific version
+pnpm env use --global 20
+
+# List installed versions
+pnpm env list
+
+# Remove a version
+pnpm env remove --global 18
+```
+
+**Note:** The `update:pnpm:version` script automatically installs the latest Node.js after updating pnpm, so you typically don't need to run `update:node` separately.
 
 For more details about the custom package system, see `Configs/nix_macos/.config/nix/packages/readme.md`.
 
