@@ -141,8 +141,15 @@ fi
  # End Nix
 
 # pnpm (standalone version installed via Nix)
-# Global packages stored in PNPM_HOME will be added to PATH by pnpm itself
-export PNPM_HOME="$HOME/Library/pnpm"
+# Set PNPM_HOME based on platform (XDG Base Directory spec compliant)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  export PNPM_HOME="$HOME/Library/pnpm"
+else
+  # Linux/BSD/Windows: use XDG-compliant location
+  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+fi
+# Add pnpm global bin directory to PATH
+export PATH="$PNPM_HOME:$PATH"
 
 ## Dart CLI completion (conditional load)
 [[ -f $HOME/.dart-cli-completion/zsh-config.zsh ]] && . $HOME/.dart-cli-completion/zsh-config.zsh
