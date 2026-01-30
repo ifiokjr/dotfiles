@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+#
+# Update Node.js to the latest version using pnpm env
+#
+# This script uses pnpm's built-in Node.js management to install
+# and activate the latest stable version of Node.js globally.
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+print_info() {
+    echo -e "${BLUE}==>${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+}
+
+print_warn() {
+    echo -e "${YELLOW}!${NC} $1"
+}
+
+# Check if pnpm is available
+if ! command -v pnpm &> /dev/null; then
+    print_error "pnpm is not installed or not in PATH"
+    echo ""
+    print_info "Make sure pnpm is installed and run 'source ~/.zshrc' to update PATH"
+    exit 1
+fi
+
+print_info "Current Node.js version:"
+if command -v node &> /dev/null; then
+    NODE_CURRENT=$(node --version)
+    echo "  $NODE_CURRENT"
+else
+    echo "  No Node.js installation found"
+fi
+
+echo ""
+print_info "Installing latest Node.js version via pnpm..."
+echo ""
+
+# Use pnpm env to install and activate latest Node.js
+if pnpm env use --global latest; then
+    echo ""
+    print_success "Node.js updated successfully!"
+    echo ""
+    print_info "New Node.js version:"
+    NODE_NEW=$(node --version)
+    echo "  $NODE_NEW"
+    echo ""
+    print_info "npm version:"
+    NPM_VERSION=$(npm --version)
+    echo "  v$NPM_VERSION"
+    echo ""
+    print_success "Done! Node.js is ready to use."
+else
+    print_error "Failed to update Node.js"
+    echo ""
+    print_info "Try running manually: pnpm env use --global latest"
+    exit 1
+fi
