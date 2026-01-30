@@ -141,6 +141,23 @@ if bash "$UPDATE_HASH_SCRIPT"; then
         if command -v pnpm &> /dev/null; then
             PNPM_VERSION=$(pnpm --version)
             print_success "pnpm is installed: version $PNPM_VERSION"
+
+            echo ""
+            print_info "Installing latest Node.js via pnpm..."
+            echo ""
+
+            # Install latest Node.js using pnpm env
+            if pnpm env use --global latest 2>&1; then
+                echo ""
+                if command -v node &> /dev/null; then
+                    NODE_VERSION=$(node --version)
+                    print_success "Node.js is ready: version $NODE_VERSION"
+                fi
+            else
+                echo ""
+                print_warn "Failed to install Node.js automatically"
+                print_info "You can install it manually with: pnpm env use --global latest"
+            fi
         else
             print_warn "pnpm command not found in PATH. You may need to restart your shell."
         fi
