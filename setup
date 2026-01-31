@@ -321,6 +321,59 @@ deploy_groups() {
             continue
         fi
 
+        # Special handling for helix - offer to install custom build
+        if [[ "$group" == "helix" ]]; then
+            # Deploy config first
+            if [ "$has_hook" = true ]; then
+                print_info "Deploying $group (with hooks)"
+                if ! tuckr set "$group" 2>&1; then
+                    print_warning "Failed to deploy $group (hook may have failed or dependencies missing)"
+                else
+                    print_success "Deployed $group"
+                fi
+            else
+                print_info "Deploying $group"
+                if ! tuckr add "$group" 2>&1; then
+                    print_warning "Failed to deploy $group (may not be compatible with your platform)"
+                else
+                    print_success "Deployed $group"
+                fi
+            fi
+
+            # Ask about custom Helix installation
+            echo ""
+            print_header "Custom Helix with Steel Plugin System"
+            echo -e "${YELLOW}Note:${NC} The helix config has been deployed, but you need the custom Helix binary to use Steel plugins"
+            print_info "This will:"
+            echo "  • Clone/update the Helix Steel fork (mattwparas/helix)"
+            echo "  • Build Helix with Steel plugin support (requires Rust/cargo)"
+            echo "  • Install Steel language server and package manager"
+            echo "  • This process takes 5-10 minutes"
+            echo ""
+
+            if ask_yes_no "Would you like to install custom Helix with Steel support now?"; then
+                print_info "Installing custom Helix..."
+                echo ""
+
+                # Check if install:helix:custom script exists
+                local helix_install_script="$DOTFILES_DIR/Configs/scripts/.local/bin/install:helix:custom"
+                if [ -f "$helix_install_script" ]; then
+                    if bash "$helix_install_script"; then
+                        print_success "Custom Helix installed successfully"
+                    else
+                        print_warning "Failed to install custom Helix (you can run 'install:helix:custom' manually later)"
+                    fi
+                else
+                    print_warning "install:helix:custom script not found (you can run it manually after setup)"
+                fi
+            else
+                print_info "Skipping custom Helix installation"
+                print_info "You can install it later by running: install:helix:custom"
+            fi
+            echo ""
+            continue
+        fi
+
         # Deploy the group
         if [ "$has_hook" = true ]; then
             print_info "Deploying $group (with hooks)"
