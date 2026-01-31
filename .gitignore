@@ -53,6 +53,9 @@ logs/
 *.env
 **/.env
 **/.env.*
+# But allow .example files to be tracked
+!.env.*.example
+!**/.env.*.example
 
 # Build artifacts and dependencies
 # Rust
