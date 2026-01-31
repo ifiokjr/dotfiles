@@ -94,6 +94,7 @@ tuckr status
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `update:pnpm:version` - Automatically update pnpm-standalone to latest version (also installs latest Node.js)
 - `update:node` - Update Node.js to latest version using pnpm env
+- `setup:env` - Interactive environment variables setup (API keys, tokens)
 
 #### `claude`
 **Location:** `Configs/claude/.config/claude/`
@@ -205,6 +206,46 @@ vim ~/.zshrc
 
 # Changes are automatically reflected (same file via symlink)
 ```
+
+### Environment Variables Setup
+
+Configure API keys and tokens for various services using the interactive setup script:
+
+```bash
+setup:env
+```
+
+**What it does:**
+- Guides you through setting up each API key/token interactively
+- Provides descriptions and links for obtaining each key
+- Creates/updates `~/.env.dotfiles` with your values
+- Sets secure file permissions (600 - read/write for user only)
+- Backs up existing file before updating
+- Allows you to skip any keys you don't need
+
+**Supported environment variables:**
+- **GITHUB_TOKEN** - GitHub personal access token ([Get it](https://github.com/settings/tokens/new))
+- **OPENAI_API_KEY** - OpenAI API key for GPT, DALL-E, etc. ([Get it](https://platform.openai.com/api-keys))
+- **ANTHROPIC_API_KEY** - Anthropic Claude API key ([Get it](https://console.anthropic.com/settings/keys))
+- **DISCORD_TOKEN** - Discord bot token ([Get it](https://discord.com/developers/applications))
+- **GOOGLE_API_KEY** - Google Cloud API key ([Get it](https://console.cloud.google.com/apis/credentials))
+- **REPLICATE_API_TOKEN** - Replicate AI token ([Get it](https://replicate.com/account/api-tokens))
+- **HUGGING_FACE_TOKEN** - Hugging Face access token ([Get it](https://huggingface.co/settings/tokens))
+
+**Features:**
+- Shows masked current values when updating
+- Confirms each value before saving
+- Option to keep existing values
+- Creates automatic backups with timestamp
+
+**Manual setup:**
+You can also edit `~/.env.dotfiles` directly:
+```bash
+vim ~/.env.dotfiles
+# Then reload: source ~/.zshrc
+```
+
+**Note:** The `.env.dotfiles` file is automatically created from a template when you first deploy the `zsh_macos` group via the post-deployment hook.
 
 ### Removing a Configuration
 
