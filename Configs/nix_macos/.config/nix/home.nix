@@ -36,6 +36,7 @@ in
       cargo-update
       claude-code
       code-cursor
+      cursor-cli
       cloudflared
       deno
       devenv
