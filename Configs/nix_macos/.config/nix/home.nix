@@ -35,6 +35,7 @@ in
       cargo-sweep
       cargo-update
       claude-code
+      code-cursor
       cloudflared
       deno
       devenv
