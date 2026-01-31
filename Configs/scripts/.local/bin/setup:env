@@ -77,23 +77,25 @@ prompt_for_value() {
     local current_value="${4:-}"
     local value=""
 
-    echo ""
-    print_header "$var_name"
-    echo -e "${BOLD}Description:${NC} $description"
-    echo -e "${BOLD}Get it from:${NC} ${CYAN}$url${NC}"
-    echo ""
+    # All informational output goes to stderr so it's not captured by command substitution
+    echo "" >&2
+    print_header "$var_name" >&2
+    echo -e "${BOLD}Description:${NC} $description" >&2
+    echo -e "${BOLD}Get it from:${NC} ${CYAN}$url${NC}" >&2
+    echo "" >&2
 
     if [ -n "$current_value" ]; then
         # Mask the current value for security
         local masked_value="${current_value:0:4}...${current_value: -4}"
-        print_info "Current value: $masked_value"
-        echo ""
+        print_info "Current value: $masked_value" >&2
+        echo "" >&2
         read -p "$(echo -e "${CYAN}?${NC} Keep current value? [Y/n]: ")" keep_current
         case "$keep_current" in
             [Nn]|[Nn][Oo])
                 # Continue to prompt for new value
                 ;;
             *)
+                # Only the actual value goes to stdout
                 echo "$current_value"
                 return 0
                 ;;
@@ -104,21 +106,24 @@ prompt_for_value() {
         read -p "$(echo -e "${CYAN}?${NC} Enter $var_name (or press Enter to skip): ")" value
 
         if [ -z "$value" ]; then
-            print_warning "Skipping $var_name (will be empty)"
+            print_warning "Skipping $var_name (will be empty)" >&2
+            echo "" >&2
+            # Return empty string to stdout
             echo ""
             return 0
         fi
 
         # Confirm the value
-        echo ""
-        print_info "You entered: ${value:0:20}..." # Show first 20 chars only
+        echo "" >&2
+        print_info "You entered: ${value:0:20}..." >&2 # Show first 20 chars only
         read -p "$(echo -e "${CYAN}?${NC} Is this correct? [Y/n]: ")" confirm
         case "$confirm" in
             [Nn]|[Nn][Oo])
-                echo "Let's try again..."
+                echo "Let's try again..." >&2
                 continue
                 ;;
             *)
+                # Only the actual value goes to stdout
                 echo "$value"
                 return 0
                 ;;
