@@ -2,6 +2,13 @@
 Configs/nix_macos/.config/nix/result
 Configs/nix_macos/.config/nix/.devenv/
 Configs/nix_macos/.config/nix/.devenv.flake.nix
+**/result
+**/result-*
+**/flake.lock
+.direnv/
+**/.direnv/
+.nix-defexpr/
+.nix-channels
 
 # Backup directories and files (timestamped backups)
 *.backup.*
@@ -47,9 +54,60 @@ logs/
 **/.env
 **/.env.*
 
-# Build artifacts
+# Build artifacts and dependencies
+# Rust
 **/target/
+Cargo.lock
+
+# Node.js / JavaScript / TypeScript
 node_modules/
+**/node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.npm/
+.yarn/
+.pnpm-store/
+.pnpm-debug.log
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+out/
+**/out/
+.next/
+.nuxt/
+.output/
+.vercel/
+.turbo/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Go
+go.sum
+vendor/
+
+# Java
+*.class
+*.jar
+*.war
+.gradle/
+build.gradle.kts
+
+# IDE and editors
+.vscode/
+.idea/
+*.iml
 
 # Temporary files
 *.tmp
