@@ -20,27 +20,10 @@
 
 ;; Load the keymaps and recent files packages.
 (require "mattwparas-helix-package/cogs/keymaps.scm")
-; (require "mattwparas-helix-package/cogs/recentf.scm")
 
 ;; Start the recent files snapshotting in the background.
+
 ; (recentf-snapshot)
-
-;; Load the gemini package, which provides the AI suggestion tool.
-;; This makes the functions defined in `cogs/gemini.scm` available.
-(require "cogs/gemini.scm")
-
-;; Export functions to be available as Helix commands.
-;; These functions can be invoked directly from the Helix command prompt (e.g., `:shx`).
-(provide shx
-         git-add
-         open-helix-scm
-         open-init-scm
-         select-model
-         make-gemini-request
-         accept-suggestion
-         temporary
-         remove-current-inlay
-         suggest)
 
 (require "scooter/scooter.scm")
 

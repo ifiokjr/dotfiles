@@ -21,12 +21,6 @@
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
-    yazelix-hm = {
-      # Path is relative to this flake.nix
-      # Works on both macOS and Linux since yazelix is in dotfiles
-      url = "path:../../../yazelix/.config/yazelix/home_manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
@@ -39,7 +33,6 @@
       homebrew-core,
       homebrew-cask,
       homebrew-bundle,
-      yazelix-hm,
     }:
     let
       # Helper function to create configurations for a specific user
@@ -95,10 +88,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.${username} = {
-                imports = [
-                  ./home.nix
-                  yazelix-hm.homeManagerModules.default
-                ];
+                imports = [ ./home.nix ];
                 home.username = username;
                 home.homeDirectory = "/Users/${username}";
               };
@@ -129,7 +119,6 @@
 
           modules = [
             ./home.nix
-            yazelix-hm.homeManagerModules.default
             {
               home = {
                 homeDirectory = finalHomeDirectory;
@@ -140,84 +129,63 @@
           ];
         };
 
-      # Dynamically detect the current user from environment when using --impure
-      # Falls back to "default" if USER env var is not set
-      currentUser = builtins.getEnv "USER";
-      defaultUsername = if currentUser != "" then currentUser else "default";
+      # Load machine-specific configuration from machine.nix
+      # This file should be created from machine.nix.example and is gitignored
+      #
+      # Try multiple locations to handle different evaluation contexts:
+      # 1. ./machine.nix (relative to flake)
+      # 2. ${self}/machine.nix (absolute path via self)
+      machineConfigPath =
+        let
+          relPath = ./machine.nix;
+          absPath = "${self}/machine.nix";
+        in
+        if builtins.pathExists relPath then
+          relPath
+        else if builtins.pathExists absPath then
+          absPath
+        else
+          null;
+
+      machineConfig =
+        if machineConfigPath != null then
+          import machineConfigPath
+        else
+          throw ''
+            machine.nix not found!
+
+            Checked locations:
+              - ./machine.nix (relative to flake)
+              - ${self}/machine.nix (absolute path)
+
+            Please create machine.nix from the template:
+              cp machine.nix.example machine.nix
+
+            Or run: generate-machine-config
+
+            Then edit machine.nix with your username and system architecture.
+          '';
     in
     {
-      # Build darwin flake using one of these methods:
+      # Build darwin flake using:
+      #   darwin-rebuild switch --flake ~/.config/nix
       #
-      # macOS (darwin-rebuild):
-      #   Method 1 (Recommended): darwin-rebuild switch --flake .#$(whoami)
-      #   Method 2 (Impure): darwin-rebuild switch --flake .# --impure
+      # Or use the rebuild script:
+      #   rebuild
       #
-      # Linux or standalone home-manager:
-      #   home-manager switch --flake .#username@system
-      #   Example: home-manager switch --flake .#alice@x86_64-linux
-      #
-      # Note: On macOS with darwin-rebuild, home-manager is integrated,
-      # so you only need to run darwin-rebuild.
+      # The configuration is read from machine.nix (not tracked in git)
 
-      # ===== Darwin Configurations (macOS with integrated home-manager) =====
-
-      # Default configuration (works with --impure for auto-detection)
-      darwinConfigurations.${defaultUsername} = mkDarwinConfig {
-        system = "aarch64-darwin";
-        username = defaultUsername;
+      # Default configuration loaded from machine.nix
+      darwinConfigurations.default = mkDarwinConfig {
+        system = machineConfig.system;
+        username = machineConfig.username;
       };
 
-      # Named darwin configurations
-      # Add your own users here:
-      darwinConfigurations.ifiokjr = mkDarwinConfig {
-        system = "aarch64-darwin";
-        username = "ifiokjr";
-      };
-
-      # Uncomment and add more users as needed:
-      # darwinConfigurations.alice = mkDarwinConfig {
-      #   system = "aarch64-darwin";
-      #   username = "alice";
-      # };
-      #
-      # darwinConfigurations.bob = mkDarwinConfig {
-      #   system = "x86_64-darwin";  # Intel Mac
-      #   username = "bob";
-      # };
-
-      # ===== Standalone Home Manager Configurations (for Linux or standalone use) =====
-
-      # Default standalone configuration (works with --impure)
-      homeConfigurations."${defaultUsername}@aarch64-darwin" = makeHomeManagerConfiguration {
-        system = "aarch64-darwin";
-        username = defaultUsername;
-      };
-
-      homeConfigurations."${defaultUsername}@x86_64-linux" = makeHomeManagerConfiguration {
-        system = "x86_64-linux";
-        username = defaultUsername;
-      };
-
-      homeConfigurations."${defaultUsername}@aarch64-linux" = makeHomeManagerConfiguration {
-        system = "aarch64-linux";
-        username = defaultUsername;
-      };
-
-      # Named standalone configurations
-      homeConfigurations."ifiokjr@aarch64-darwin" = makeHomeManagerConfiguration {
-        system = "aarch64-darwin";
-        username = "ifiokjr";
-      };
-
-      homeConfigurations."ifiokjr@x86_64-linux" = makeHomeManagerConfiguration {
-        system = "x86_64-linux";
-        username = "ifiokjr";
-      };
-
-      # Add more as needed:
-      # homeConfigurations."alice@x86_64-linux" = makeHomeManagerConfiguration {
-      #   system = "x86_64-linux";
-      #   username = "alice";
-      # };
+      # Standalone home-manager configuration (for Linux or non-Darwin use)
+      homeConfigurations."${machineConfig.username}@${machineConfig.system}" =
+        makeHomeManagerConfiguration {
+          system = machineConfig.system;
+          username = machineConfig.username;
+        };
     };
 }

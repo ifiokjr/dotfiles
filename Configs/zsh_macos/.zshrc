@@ -76,7 +76,8 @@ export ARCHFLAGS="-arch x86_64"
 # For a full list of active aliases, run `alias`.
 alias s="source $HOME/.zshrc"
 alias update="nix flake update --flake $HOME/.config/nix"
-alias rebuild="ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#\$(whoami)"
+# rebuild command is now available as a script in ~/.local/bin/rebuild
+# No alias needed - it's in PATH
 alias vim="nvim"
 alias n="nvim"
 alias zj="zellij"

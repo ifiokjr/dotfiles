@@ -1,0 +1,14 @@
+# Machine-specific configuration
+# Copy this file to machine.nix and customize for your machine
+# machine.nix is gitignored and will not be committed
+{
+  # Your username on this machine
+  username = "yourusername";
+
+  # System architecture
+  # Options: "aarch64-darwin" (Apple Silicon) or "x86_64-darwin" (Intel)
+  system = "aarch64-darwin";
+
+  # Optional: Machine hostname (for documentation)
+  hostname = "your-machine-name";
+}

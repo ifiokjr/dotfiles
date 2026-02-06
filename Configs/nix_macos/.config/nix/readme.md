@@ -1,6 +1,6 @@
 # Nix Darwin + Home Manager Configuration
 
-This is a portable nix-darwin configuration with home-manager integration that can be used across multiple macOS systems without hardcoding usernames or system-specific paths.
+This is a portable nix-darwin configuration with home-manager integration that uses a machine-specific configuration file (`machine.nix`) to manage per-machine settings.
 
 ## Getting Started with Darwin Rebuild
 
@@ -22,33 +22,49 @@ If you're new to nix-darwin, here's what you need to know:
    experimental-features = nix-command flakes
    ```
 
-3. **Install nix-darwin** using this configuration:
-   ```bash
-   # Clone or navigate to this configuration directory
-   cd ~/.config/nix  # or wherever you have this config
+3. **Create your machine configuration**:
 
+   Auto-generate (recommended):
+   ```bash
+   generate-machine-config
+   ```
+
+   Or create manually:
+   ```bash
+   cd ~/.config/nix
+   cp machine.nix.example machine.nix
+   # Edit machine.nix with your username and system architecture
+   ```
+
+4. **Install nix-darwin** using this configuration:
+   ```bash
    # First-time installation
-   nix run nix-darwin -- switch --flake .#$(whoami)
+   nix run nix-darwin -- switch --flake ~/.config/nix
    ```
 
-4. **After first installation**, use `darwin-rebuild` directly:
+5. **After first installation**, use the `rebuild` command:
    ```bash
-   sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+   rebuild
    ```
+
+   The `rebuild` command will auto-generate machine.nix if it doesn't exist.
 
    This will apply both your system configuration (darwin) and user configuration (home-manager) in one command!
 
-### Common Darwin Rebuild Commands
+### Common Commands
 
 ```bash
-# Apply configuration changes
-sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+# Apply configuration changes (recommended)
+rebuild
+
+# Or use darwin-rebuild directly
+sudo darwin-rebuild switch --flake ~/.config/nix
 
 # Build without activating (test the configuration)
-darwin-rebuild build --flake ~/.config/nix#$(whoami)
+darwin-rebuild build --flake ~/.config/nix
 
 # Check what would change without applying
-darwin-rebuild build --flake ~/.config/nix#$(whoami) && nix store diff-closures /run/current-system ./result
+darwin-rebuild build --flake ~/.config/nix && nix store diff-closures /run/current-system ./result
 
 # List all generations
 darwin-rebuild --list-generations
@@ -57,28 +73,37 @@ darwin-rebuild --list-generations
 sudo darwin-rebuild --rollback
 ```
 
-### Recommended Aliases
+### Rebuild Script
 
-Add these to your `~/.zshrc` or `~/.bashrc` for convenience:
+The `rebuild` command is a convenient wrapper that:
+- Auto-generates `machine.nix` if it doesn't exist (using `generate-machine-config`)
+- Displays your current configuration
+- Increases file descriptor limits for Nix builds
+- Runs darwin-rebuild with the correct flags
+- Provides clear error messages
 
-```bash
-alias update="sudo zsh -c \"nix flake update --flake \$HOME/.config/nix\""
-alias rebuild="sudo zsh -c \"darwin-rebuild switch --flake \$HOME/.config/nix#\$(whoami)\""
-```
+### Generate Machine Config Script
 
-Then you can simply run `rebuild` to apply your configuration changes!
+The `generate-machine-config` command auto-detects and creates `machine.nix`:
+- Detects username from `$USER`
+- Detects system architecture from `uname`
+- Detects hostname from `scutil --get ComputerName` (macOS) or `hostname`
+- Creates `~/.config/nix/machine.nix` with detected values
+- Use `--force` to overwrite existing configuration
+- Use `--output FILE` to write to a different location
 
-**Note**: With the integrated home-manager setup, you only need to run `darwin-rebuild` - it will automatically apply both system and home-manager configurations together.
+**Note**: With the integrated home-manager setup, you only need to run `rebuild` - it will automatically apply both system and home-manager configurations together.
 
 ## Features
 
-- **Dynamic User Detection**: Automatically detects the current user with `--impure` flag
-- **Pure Flake Support**: Can also work in pure mode with a default configuration
+- **Machine-Specific Configuration**: Uses gitignored `machine.nix` for per-machine settings
+- **No Impure Evaluation**: Pure flake evaluation with reliable configuration
 - **Cross-Platform Home Manager**: User packages and settings in `home.nix` work on both macOS and Linux
 - **Integrated Mode (macOS)**: Home-manager integrated with nix-darwin for one-command updates
 - **Standalone Mode (Linux)**: Separate home-manager configurations for Linux systems
 - **Homebrew Integration** (macOS only): Uses nix-homebrew for declarative Homebrew management
-- **System Architecture Detection**: Supports aarch64-darwin, x86_64-darwin, x86_64-linux, and aarch64-linux
+- **System Architecture Support**: Works with aarch64-darwin (Apple Silicon), x86_64-darwin (Intel), x86_64-linux, and aarch64-linux
+- **Convenient Rebuild Script**: Simple `rebuild` command handles all the complexity
 
 ## Quick Start on a New System
 
@@ -96,101 +121,61 @@ experimental-features = nix-command flakes
 
 ### macOS Setup
 
-3. Install nix-darwin:
+3. Create your machine configuration:
 ```bash
-nix run nix-darwin -- switch --flake /path/to/this/directory#
+cd ~/.config/nix  # or wherever you cloned this repo
+cp machine.nix.example machine.nix
+# Edit machine.nix with your username and system architecture
+```
+
+4. Install nix-darwin:
+```bash
+nix run nix-darwin -- switch --flake ~/.config/nix
+```
+
+5. Use the rebuild command:
+```bash
+rebuild
 ```
 
 ### Linux Setup
 
-3. Install home-manager standalone:
+3. Create your machine configuration:
 ```bash
-# No additional system setup needed, just use home-manager directly
-# See "Initial Setup" below for Linux-specific commands
+cd ~/.config/nix
+cp machine.nix.example machine.nix
+# Edit machine.nix with your username and system (e.g., x86_64-linux)
 ```
 
-### Initial Setup
-
-#### macOS - Method 1: Using the Helper Script (Easiest)
-
-The repository includes an `apply.sh` helper script that simplifies the process:
-
+4. Install home-manager standalone:
 ```bash
-# Navigate to this directory
-cd ~/.config/nix  # or wherever you cloned this repo
-
-# Apply both darwin and home-manager configurations
-./apply.sh
-
-# See all options
-./apply.sh --help
+nix run nixpkgs#home-manager -- switch --flake ~/.config/nix#$(whoami)@x86_64-linux
 ```
 
-#### macOS - Method 2: Auto-detect Current User (Manual)
+### Machine Configuration
 
-This method automatically detects your username using the `--impure` flag:
-
-```bash
-# Navigate to this directory
-cd ~/.config/nix  # or wherever you cloned this repo
-
-# Apply darwin configuration (includes home-manager)
-darwin-rebuild switch --flake .# --impure
-```
-
-#### Linux - Standalone Home Manager
-
-For Linux systems, use home-manager standalone:
-
-```bash
-# Navigate to this directory
-cd ~/.config/nix  # or wherever you cloned this repo
-
-# Apply home-manager configuration
-# Format: username@system
-home-manager switch --flake .#$(whoami)@x86_64-linux
-
-# For ARM Linux (e.g., Raspberry Pi, ARM servers)
-home-manager switch --flake .#$(whoami)@aarch64-linux
-
-# Or with auto-detection (impure mode)
-home-manager switch --flake .#$(whoami)@$(nix eval --impure --raw --expr 'builtins.currentSystem')
-```
-
-#### Method 3: Pure Flake with Default Configuration
-
-If you want to use pure evaluation (without `--impure`), you can use the default configuration:
-
-```bash
-# This uses the "default" configuration name
-darwin-rebuild switch --flake .#default
-
-# For home-manager
-nix run nixpkgs#home-manager -- switch --flake .#default
-```
-
-#### Method 4: Create a Named Configuration
-
-For pure evaluation with your specific username, edit `flake.nix` and add your configuration:
+The `machine.nix` file contains your machine-specific settings:
 
 ```nix
-# In the outputs section, add:
-homeConfigurations.yourusername = mkHomeConfig "yourusername";
-darwinConfigurations.yourusername = mkDarwinConfig "yourusername";
+{
+  username = "yourusername";
+  system = "aarch64-darwin";  # or "x86_64-darwin", "x86_64-linux", "aarch64-linux"
+  hostname = "your-machine-name";  # optional, for documentation
+}
 ```
 
-Then apply it:
-
-```bash
-darwin-rebuild switch --flake .#yourusername
-nix run nixpkgs#home-manager -- switch --flake .#yourusername
-```
+This file is gitignored and never committed to the repository, making it safe to have different configurations on each machine
 
 ## Configuration Files
 
+- **machine.nix**: Machine-specific configuration (gitignored)
+  - Contains username, system architecture, and hostname
+  - Created from `machine.nix.example` on each machine
+  - Never committed to git
 - **flake.nix**: Main flake configuration with inputs and outputs
-  - Exports `darwinConfigurations` for macOS (with integrated home-manager)
-  - Exports `homeConfigurations` for standalone use (Linux or macOS)
+  - Reads configuration from `machine.nix`
+  - Exports `darwinConfigurations.default` for macOS
+  - Exports `homeConfigurations` for standalone use
 - **darwin.nix**: macOS system-level configuration (system settings, homebrew, macOS-specific packages)
 - **home.nix**: User-level home-manager configuration (CLI tools, development packages, shell config)
   - Works on both macOS and Linux
@@ -207,11 +192,11 @@ nix flake update
 ### Apply Updates
 
 ```bash
-# With auto-detection
-darwin-rebuild switch --flake .# --impure
+# Recommended: use the rebuild command
+rebuild
 
-# Or with specific configuration
-darwin-rebuild switch --flake .#yourusername
+# Or use darwin-rebuild directly
+sudo darwin-rebuild switch --flake ~/.config/nix
 ```
 
 ## Architecture
@@ -286,19 +271,22 @@ This organization maximizes portability while keeping macOS system management cl
 
 ```bash
 # Check flake syntax
-nix flake check
+nix flake check ~/.config/nix
 
 # Show flake outputs
-nix flake show
+nix flake show ~/.config/nix
 
 # Rebuild system configuration (includes home-manager)
-darwin-rebuild switch --flake .#$(whoami)
+rebuild
+
+# Or use darwin-rebuild directly
+sudo darwin-rebuild switch --flake ~/.config/nix
 
 # List generations
 darwin-rebuild --list-generations
 
 # Rollback
-darwin-rebuild --rollback
+sudo darwin-rebuild --rollback
 ```
 
 ### Linux
@@ -322,18 +310,31 @@ home-manager --rollback
 
 ## Troubleshooting
 
-### "User not found" or incorrect username
+### "machine.nix not found" error
 
-Make sure you're using the `--impure` flag if relying on auto-detection:
+The `machine.nix` file is required but not tracked in git. Create it from the template:
 ```bash
-darwin-rebuild switch --flake .# --impure
+cd ~/.config/nix
+cp machine.nix.example machine.nix
+# Edit with your username and system architecture
+```
+
+### "Failed to read username or system" error
+
+Check that your `machine.nix` is properly formatted:
+```nix
+{
+  username = "yourusername";  # Must be in quotes
+  system = "aarch64-darwin";  # Must be in quotes
+  hostname = "optional";
+}
 ```
 
 ### Home Manager activation fails
 
-Make sure home-manager is installed:
+Make sure home-manager is installed and integrated:
 ```bash
-nix run nixpkgs#home-manager -- switch --flake .# --impure
+sudo darwin-rebuild switch --flake ~/.config/nix
 ```
 
 ### Homebrew packages not installing
@@ -342,12 +343,13 @@ Make sure you've run `darwin-rebuild` at least once, which sets up nix-homebrew 
 
 ## Migration from Old Setup
 
-If you're migrating from a setup with hardcoded usernames:
+If you're migrating from a setup that used `--impure` or hardcoded usernames:
 
 1. Pull the latest changes to this configuration
-2. Run `nix flake check` to verify syntax
-3. Apply with `darwin-rebuild switch --flake .# --impure`
-4. Your existing packages and settings will be preserved
+2. Create `machine.nix` from the example template
+3. Edit `machine.nix` with your username and system
+4. Run `rebuild` to apply the configuration
+5. Your existing packages and settings will be preserved
 
 ## References
 

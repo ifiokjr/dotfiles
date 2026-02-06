@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
 # Rebuild Darwin configuration after nix config changes
 echo "Rebuilding Darwin configuration..."
-sudo darwin-rebuild switch --flake "$HOME/.config/nix"
+
+# Use the rebuild script if available, otherwise fall back to direct command
+if command -v rebuild &> /dev/null; then
+    rebuild
+else
+    # Fallback - use the script directly
+    "$HOME/.local/bin/rebuild"
+fi
