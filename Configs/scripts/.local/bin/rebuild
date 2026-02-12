@@ -156,7 +156,8 @@ fi
 print_info "Rebuilding nix-darwin configuration..."
 echo ""
 
-if sudo darwin-rebuild switch --flake "$NIX_CONFIG"; then
+# Explicitly use #default to avoid darwin-rebuild appending username
+if sudo darwin-rebuild switch --flake "$NIX_CONFIG#default"; then
     echo ""
     print_success "Configuration rebuilt successfully!"
     print_info "Both system (darwin) and user (home-manager) configurations have been updated."

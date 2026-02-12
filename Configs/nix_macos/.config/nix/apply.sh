@@ -45,8 +45,8 @@ echo ""
 # Increase file descriptor limit for Nix builds
 ulimit -n 10240
 
-# Use the rebuild script
-if sudo darwin-rebuild switch --flake "$SCRIPT_DIR"; then
+# Use the rebuild script with explicit #default
+if sudo darwin-rebuild switch --flake "$SCRIPT_DIR#default"; then
     print_info "Configuration applied successfully!"
     print_info "Both system (darwin) and user (home-manager) configurations have been updated."
     print_info "You may need to restart your shell for some changes to take effect."

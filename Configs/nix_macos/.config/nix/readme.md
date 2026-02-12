@@ -39,7 +39,7 @@ If you're new to nix-darwin, here's what you need to know:
 4. **Install nix-darwin** using this configuration:
    ```bash
    # First-time installation
-   nix run nix-darwin -- switch --flake ~/.config/nix
+   nix run nix-darwin -- switch --flake ~/.config/nix#default
    ```
 
 5. **After first installation**, use the `rebuild` command:
@@ -58,7 +58,7 @@ If you're new to nix-darwin, here's what you need to know:
 rebuild
 
 # Or use darwin-rebuild directly
-sudo darwin-rebuild switch --flake ~/.config/nix
+sudo darwin-rebuild switch --flake ~/.config/nix#default
 
 # Build without activating (test the configuration)
 darwin-rebuild build --flake ~/.config/nix
@@ -196,7 +196,7 @@ nix flake update
 rebuild
 
 # Or use darwin-rebuild directly
-sudo darwin-rebuild switch --flake ~/.config/nix
+sudo darwin-rebuild switch --flake ~/.config/nix#default
 ```
 
 ## Architecture
@@ -280,7 +280,7 @@ nix flake show ~/.config/nix
 rebuild
 
 # Or use darwin-rebuild directly
-sudo darwin-rebuild switch --flake ~/.config/nix
+sudo darwin-rebuild switch --flake ~/.config/nix#default
 
 # List generations
 darwin-rebuild --list-generations
