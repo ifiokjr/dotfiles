@@ -1,9 +1,0 @@
-inputs:
-  nixpkgs:
-    url: github:NixOS/nixpkgs/nixos-unstable
-  helix:
-    url: github:helix-editor/helix
-  nixgl:
-    url: github:guibou/nixGL
-  zjstatus:
-    url: github:dj95/zjstatus
