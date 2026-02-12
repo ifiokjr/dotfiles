@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-# Verify yazelix dependencies are available
-echo "Checking Yazelix dependencies..."
-for cmd in zellij yazi hx; do
-  if ! command -v $cmd &> /dev/null; then
-    echo "Warning: $cmd not found. Install via Nix or yazelix flake."
-  fi
-done
