@@ -59,13 +59,12 @@ tuckr status
 
 ### Shell & Terminal
 
-#### `zsh_macos` (Platform-specific)
-**Location:** `Configs/zsh_macos/`
-**Deploys:** `~/.zshrc`
-**Description:** Zsh shell configuration with yazelix integration and macOS-specific settings.
-**Platform:** macOS only (won't deploy on Linux/Windows)
+#### `nushell`
+**Location:** `Configs/nushell/.config/nushell/`
+**Deploys:** `~/.config/nushell/`
+**Description:** Nushell shell configuration including env.nu, config.nu, login.nu, and custom modules (secrets, direnv).
 
-**Hook:** `post_zsh_macos` - Reminds you to reload shell after deployment
+**Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
 #### `yazelix`
 **Location:** `Configs/yazelix/.config/yazelix/`
@@ -73,12 +72,15 @@ tuckr status
 **Description:** Integrated terminal environment combining Yazi (file manager), Zellij (multiplexer), and Helix (editor). Contains 82 files including shell configs, plugins, layouts, and scripts.
 **Note:** Kept as single group due to interdependencies between components.
 
-**Hook:** `pre_yazelix` - Verifies dependencies (zellij, yazi, hx) are installed
-
 #### `zellij`
 **Location:** `Configs/zellij/.config/zellij/`
 **Deploys:** `~/.config/zellij/`
 **Description:** Zellij terminal multiplexer configuration and layouts.
+
+#### `ghostty`
+**Location:** `Configs/ghostty/.config/ghostty/`
+**Deploys:** `~/.config/ghostty/`
+**Description:** Ghostty terminal emulator configuration.
 
 ### Editors
 
@@ -140,8 +142,7 @@ Tuckr supports hooks that run at different stages of deployment:
 ### Active Hooks
 
 - **`post_nix_macos`**: Runs `darwin-rebuild switch` after nix config changes
-- **`pre_yazelix`**: Checks for yazelix dependencies (zellij, yazi, hx)
-- **`post_zsh_macos`**: Reminds you to reload shell configuration
+- **`post_nushell`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
 
 ### Hook Naming Convention
 
@@ -166,7 +167,8 @@ curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/se
 # (The setup script handles this automatically)
 
 # Deploy core groups
-tuckr add zsh_macos nix_macos
+tuckr set nushell
+tuckr add nix_macos
 
 # Deploy development tools
 tuckr add dprint direnv kdl lazygit
@@ -199,10 +201,10 @@ Dotfiles are symlinked, so changes are immediate:
 
 ```bash
 # Edit file directly in Configs directory
-vim ~/Library/Application\ Support/dotfiles/Configs/zsh_macos/.zshrc
+vim ~/Library/Application\ Support/dotfiles/Configs/nushell/.config/nushell/config.nu
 
 # Or edit via symlink in home directory
-vim ~/.zshrc
+vim ~/.config/nushell/config.nu
 
 # Changes are automatically reflected (same file via symlink)
 ```
@@ -242,10 +244,10 @@ setup:env
 You can also edit `~/.env.dotfiles` directly:
 ```bash
 vim ~/.env.dotfiles
-# Then reload: source ~/.zshrc
+# Then open a new terminal to reload
 ```
 
-**Note:** The `.env.dotfiles` file is automatically created from a template when you first deploy the `zsh_macos` group via the post-deployment hook.
+**Note:** The `.env.dotfiles` file is automatically created from a template when you first deploy the `nushell` group via the post-deployment hook.
 
 ### Removing a Configuration
 
@@ -261,7 +263,6 @@ rm -rf ~/Library/Application\ Support/dotfiles/Configs/groupname
 
 Groups with `_macos`, `_linux`, or `_windows` suffixes only deploy on matching platforms:
 
-- `zsh_macos` - Only deploys on macOS
 - `nix_macos` - Only deploys on macOS (uses nix-darwin)
 
 This prevents incompatible configs from being deployed when cloning to different systems.
@@ -341,7 +342,7 @@ rebuild
 ```
 
 The `rebuild` alias increases the file descriptor limit to 10,240 before running.
-The `.zshrc` also sets `ulimit -n 10240` globally for all shell sessions.
+The shell configuration sets `ulimit -n 10240` for build sessions.
 
 **Solution (Manual rebuild):**
 ```bash

@@ -51,7 +51,8 @@ If you prefer manual setup:
 ./setup-tuckr-symlink.sh
 
 # Deploy configuration groups
-tuckr add zsh_macos nix_macos     # Core system configs (macOS only)
+tuckr set nushell                    # Shell config (runs hooks)
+tuckr add nix_macos                  # Core system configs (macOS only)
 tuckr add dprint direnv kdl lazygit  # Development tools
 tuckr set yazelix                 # Terminal IDE (runs pre-hook to verify dependencies)
 tuckr add zellij                  # Terminal multiplexer
@@ -84,23 +85,24 @@ tuckr set nix_macos
 Since files are symlinked, edits are immediate:
 ```bash
 # Edit via symlink in home directory
-vim ~/.zshrc
+vim ~/.config/nushell/config.nu
 
 # Or edit directly in Configs directory
-vim ~/Library/Application\ Support/dotfiles/Configs/zsh_macos/.zshrc
+vim ~/Library/Application\ Support/dotfiles/Configs/nushell/.config/nushell/config.nu
 
 # Changes are reflected instantly (same file via symlink)
 ```
 
 ## Configuration Groups
 
-The repository contains 9 configuration groups organized in `Configs/`:
+The repository contains 10 configuration groups organized in `Configs/`:
 
 | Group | Files | Platform | Purpose | Hook |
 |-------|-------|----------|---------|------|
-| **yazelix** | 320 | All | Terminal IDE (Yazi + Zellij + Helix) | `pre_yazelix` |
+| **yazelix** | 320 | All | Terminal IDE (Yazi + Zellij + Helix) | None |
 | **nix_macos** | 6 | macOS | Darwin system configuration with Nix flakes | `post_nix_macos` |
-| **zsh_macos** | 1 | macOS | Zsh shell configuration | `post_zsh_macos` |
+| **nushell** | 6 | All | Nushell shell configuration & modules | `post_nushell` |
+| **ghostty** | 1 | All | Ghostty terminal emulator config | None |
 | **zellij** | 4 | All | Terminal multiplexer config & layouts | None |
 | **claude** | 1 | All | Claude Code settings (attribution, etc.) | None |
 | **direnv** | 1 | All | Directory-specific environment variables | None |
@@ -118,7 +120,8 @@ The repository contains 9 configuration groups organized in `Configs/`:
 ├── Configs/                    # Configuration groups
 │   ├── yazelix/               # Terminal IDE (95% of repository)
 │   ├── nix_macos/             # Nix Darwin system config
-│   ├── zsh_macos/             # Zsh shell config
+│   ├── nushell/               # Nushell shell config
+│   ├── ghostty/               # Ghostty terminal config
 │   ├── zellij/                # Terminal multiplexer
 │   ├── claude/                # Claude Code settings
 │   ├── direnv/                # Environment management
@@ -127,8 +130,7 @@ The repository contains 9 configuration groups organized in `Configs/`:
 │   └── lazygit/               # Git TUI
 ├── Hooks/                      # Pre/post deployment scripts
 │   ├── post_nix_macos         # Rebuilds Darwin after Nix changes
-│   ├── pre_yazelix            # Verifies yazelix dependencies
-│   └── post_zsh_macos         # Reminds to reload shell
+│   └── post_nushell           # Generates vendor autoload, sets default shell
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
 └── readme.md                   # Full documentation
 ```
@@ -153,8 +155,7 @@ Hooks are executable bash scripts in `Hooks/` directory:
 
 **Active hooks:**
 1. **`post_nix_macos`** - Automatically rebuilds Darwin configuration after Nix config deployment
-2. **`pre_yazelix`** - Checks for required dependencies (zellij, yazi, hx) before yazelix deployment
-3. **`post_zsh_macos`** - Reminds user to reload shell after zsh config deployment
+2. **`post_nushell`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
 ## Yazelix Terminal IDE
 
@@ -371,7 +372,7 @@ All commits in this repository **must** follow the [Conventional Commits](https:
 Use relevant scope based on what's being modified:
 - **nix**: Nix configuration (darwin.nix, home.nix, flake.nix, custom packages)
 - **yazelix**: Yazelix terminal IDE configs
-- **zsh**: Zsh shell configuration
+- **nushell**: Nushell shell configuration
 - **scripts**: Custom utility scripts
 - **helix**: Helix editor configuration
 - **tuckr**: Tuckr configuration or hooks
