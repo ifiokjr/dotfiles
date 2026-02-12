@@ -143,6 +143,13 @@ cd ~/.config/nix && nix flake lock
 This is your old system configuration. The new flake uses `default` instead.
 Just run `rebuild` - it will switch to the new configuration.
 
+### "darwinConfigurations.USERNAME.system not found"
+Darwin-rebuild auto-appends your username when no config is specified.
+The `rebuild` script now explicitly uses `#default`:
+```bash
+sudo darwin-rebuild switch --flake ~/.config/nix#default
+```
+
 ## Benefits
 
 1. **No --impure flag** - Pure evaluation is faster and more reliable
