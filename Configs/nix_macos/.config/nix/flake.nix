@@ -130,15 +130,21 @@
         };
 
       # Load machine-specific configuration from machine.nix
-      # This file is gitignored and lives alongside the flake in the dotfiles repo
-      # It gets symlinked to ~/.config/nix/ by Tuckr
+      # This file is gitignored and should exist at the flake location
       #
-      # We use a relative path ./machine.nix which references the file in the
-      # flake's directory (the dotfiles repo), avoiding issues with environment
-      # variables not being available during pure evaluation
+      # Since machine.nix is gitignored, it won't be copied to the Nix store.
+      # We use impure evaluation to read from DARWIN_USER_CONFIG_DIR (set by rebuild script)
+      # or fall back to the flake's directory via self.outPath + "/machine.nix"
       loadMachineConfig =
         let
-          configPath = ./machine.nix;
+          # Use DARWIN_USER_CONFIG_DIR if set (passed through sudo by rebuild script)
+          # Falls back to self.outPath for backwards compatibility
+          configDir = builtins.getEnv "DARWIN_USER_CONFIG_DIR";
+          configPath =
+            if configDir != "" then
+              configDir + "/machine.nix"
+            else
+              self.outPath + "/machine.nix";
         in
         if builtins.pathExists configPath then
           import configPath
@@ -156,16 +162,20 @@
               3. Then edit machine.nix with your settings
 
             The file is gitignored and specific to each machine.
+
+            Note: This requires --impure flag since machine.nix is gitignored.
+            Use --skip-check with the rebuild script to bypass flake check.
           '';
     in
     {
       # Build darwin flake using:
-      #   darwin-rebuild switch --flake ~/.config/nix
+      #   sudo DARWIN_USER_CONFIG_DIR=~/.config/nix darwin-rebuild switch --flake ~/.config/nix --impure
       #
-      # Or use the rebuild script:
+      # Or use the rebuild script (recommended):
       #   rebuild
       #
-      # The configuration is read from machine.nix (not tracked in git)
+      # The configuration is read from machine.nix in DARWIN_USER_CONFIG_DIR.
+      # --impure flag is required to read gitignored machine.nix via env var.
 
       # Default configuration loaded from machine.nix
       darwinConfigurations.default =
