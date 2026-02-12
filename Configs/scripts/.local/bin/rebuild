@@ -16,6 +16,32 @@ print_success() { echo -e "${GREEN}✓${NC} $1"; }
 print_error() { echo -e "${RED}✗${NC} $1"; }
 print_warn() { echo -e "${YELLOW}!${NC} $1"; }
 
+# Parse command line arguments first to handle --help early
+SKIP_CHECK=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help|-h)
+            echo "Usage: rebuild [OPTIONS]"
+            echo ""
+            echo "Rebuild nix-darwin configuration from machine.nix"
+            echo ""
+            echo "Options:"
+            echo "  --skip-check    Skip flake check before rebuilding"
+            echo "  --help, -h      Show this help message"
+            exit 0
+            ;;
+        --skip-check)
+            SKIP_CHECK=true
+            shift
+            ;;
+        *)
+            print_error "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
 # Configuration paths
 # machine.nix should be in the actual flake directory (dotfiles repo)
 # Find where the flake actually lives
@@ -124,31 +150,7 @@ echo "  Username: $USERNAME"
 echo "  System: $SYSTEM"
 echo ""
 
-# Parse command line arguments
-SKIP_CHECK=false
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --skip-check)
-            SKIP_CHECK=true
-            shift
-            ;;
-        --help|-h)
-            echo "Usage: rebuild [OPTIONS]"
-            echo ""
-            echo "Rebuild nix-darwin configuration from machine.nix"
-            echo ""
-            echo "Options:"
-            echo "  --skip-check    Skip flake check before rebuilding"
-            echo "  --help, -h      Show this help message"
-            exit 0
-            ;;
-        *)
-            print_error "Unknown option: $1"
-            echo "Use --help for usage information"
-            exit 1
-            ;;
-    esac
-done
+# Arguments already parsed above
 
 # Check flake validity (unless skipped)
 if [ "$SKIP_CHECK" = false ]; then
