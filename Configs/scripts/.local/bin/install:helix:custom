@@ -189,7 +189,7 @@ build_helix() {
         echo "  2. (Optional) Create a cogs directory for community libraries:"
         echo "     mkdir -p ~/.config/helix/cogs"
         echo ""
-        echo "  3. Ensure ~/.local/bin is in your PATH (already configured in .zshrc)"
+        echo "  3. Ensure ~/.local/bin is in your PATH (already configured in env.nu)"
     else
         print_error "Failed to build Helix"
         exit 1

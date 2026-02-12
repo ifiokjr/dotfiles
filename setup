@@ -264,7 +264,7 @@ deploy_groups() {
         IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
         for group in "${GROUPS[@]}"; do
             print_info "Deploying group: $group"
-            if [[ "$group" == "yazelix" ]] || [[ "$group" == "nix_macos" ]] || [[ "$group" == "zsh_macos" ]]; then
+            if [[ "$group" == "yazelix" ]] || [[ "$group" == "nix_macos" ]] || [[ "$group" == "nushell" ]]; then
                 tuckr set "$group" || print_warning "Failed to deploy $group (hook may have failed)"
             else
                 tuckr add "$group" || print_warning "Failed to deploy $group"
@@ -292,7 +292,7 @@ deploy_groups() {
     echo ""
 
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("yazelix" "nix_macos" "zsh_macos")
+    local hook_groups=("yazelix" "nix_macos" "nushell")
 
     # Deploy all groups automatically
     for group in "${all_groups[@]}"; do
@@ -462,7 +462,7 @@ main() {
     print_header "Next Steps"
 
     if [ "$PLATFORM" = "macos" ]; then
-        echo -e "  ${CYAN}1.${NC} Restart your terminal or run: ${BOLD}source ~/.zshrc${NC}"
+        echo -e "  ${CYAN}1.${NC} Open a new terminal window"
         echo -e "  ${CYAN}2.${NC} Verify Tuckr status: ${BOLD}tuckr status${NC}"
         echo -e "  ${CYAN}3.${NC} Check configuration: ${BOLD}ls -la ~ | grep '^l'${NC} (shows symlinks)"
     else

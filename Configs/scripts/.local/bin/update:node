@@ -34,7 +34,7 @@ print_warn() {
 if ! command -v pnpm &> /dev/null; then
     print_error "pnpm is not installed or not in PATH"
     echo ""
-    print_info "Make sure pnpm is installed and run 'source ~/.zshrc' to update PATH"
+    print_info "Make sure pnpm is installed and open a new terminal to update PATH"
     exit 1
 fi
 

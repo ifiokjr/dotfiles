@@ -160,6 +160,15 @@ if [ "$SKIP_CHECK" = false ]; then
     fi
 fi
 
+# Back up /etc files that nix-darwin needs to manage (one-time)
+for f in /etc/shells; do
+    if [ -f "$f" ] && [ ! -f "$f.before-nix-darwin" ]; then
+        print_info "Backing up $f to $f.before-nix-darwin"
+        sudo mv "$f" "$f.before-nix-darwin"
+        print_success "Backed up $f"
+    fi
+done
+
 # Rebuild darwin configuration
 print_info "Rebuilding nix-darwin configuration..."
 echo ""

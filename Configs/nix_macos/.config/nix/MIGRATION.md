@@ -6,7 +6,7 @@
 - ❌ `--impure` flag requirement (pure flake evaluation now)
 - ❌ yazelix home-manager integration (removed due to issues)
 - ❌ Username-specific flake outputs (e.g., `darwinConfigurations.ifiokjr`)
-- ❌ `rebuild` alias in .zshrc (now a proper script)
+- ❌ `rebuild` alias (now a proper script in ~/.local/bin)
 
 ### Added
 - ✅ `machine.nix` - Machine-specific configuration file (gitignored)

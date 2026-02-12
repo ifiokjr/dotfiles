@@ -159,8 +159,8 @@ i = ":o ~/.config/helix/init.scm"
 h = ":o ~/.config/helix/helix.scm"
 ## Open the helix `languages.toml`
 l = ":o ~/.config/helix/languages.toml"
-## Open the .zshrc file
-Z = ":o ~/.zshrc"
+## Open the nushell config
+Z = ":o ~/.config/nushell/config.nu"
 
 [keys.normal.space.o.z]
 ## Open the zellij/config.kdl

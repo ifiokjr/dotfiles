@@ -225,7 +225,7 @@ EOF
 
     echo ""
     print_header "Next Steps"
-    echo -e "  ${CYAN}1.${NC} Reload your shell: ${BOLD}source ~/.zshrc${NC}"
+    echo -e "  ${CYAN}1.${NC} Open a new terminal window to reload environment"
     echo -e "  ${CYAN}2.${NC} Your environment variables are now available"
     echo -e "  ${CYAN}3.${NC} To update values later, run: ${BOLD}setup:env${NC}"
 
