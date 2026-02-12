@@ -67,8 +67,7 @@ in
       nushell
       starship
       zellij
-      zsh-autosuggestions
-      zsh-syntax-highlighting
+      zoxide
 
       # File Management
       exiftool
@@ -107,10 +106,12 @@ in
 
       # System Utilities
       act
+      bottom
       cachix
       coreutils
       curl
       diffutils
+      dust
       gnumake
       gzip
       nix-prefetch
@@ -119,6 +120,7 @@ in
       protobuf
       scooter
       sqld
+      tealdeer
       tuckr
       uv
       zlib
@@ -154,17 +156,7 @@ in
   # Environment variables
   home.sessionVariables = {
     EDITOR = "hx";
-  }
-  // lib.optionalAttrs pkgs.stdenv.isDarwin {
-    # LLVM/Clang configuration (for macOS with Homebrew)
-    LDFLAGS = "-L$(brew --prefix llvm)/lib";
-    LIBCLANG_PATH = "$(brew --prefix llvm)/lib";
-    LLVM_CONFIG_PATH = "$(brew --prefix llvm)/bin/llvm-config";
-    CPPFLAGS = "-I$(brew --prefix llvm)/include";
   };
-
-  # Add LLVM to PATH on macOS
-  home.sessionPath = lib.optionals pkgs.stdenv.isDarwin [ "$(brew --prefix llvm)/bin" ];
 
   programs = {
     home-manager.enable = true;
