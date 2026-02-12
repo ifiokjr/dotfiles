@@ -1,0 +1,5 @@
+macos-option-as-alt = left
+macos-titlebar-style = transparent
+copy-on-select = clipboard
+fullscreen = true
+window-padding-y = 10,0
