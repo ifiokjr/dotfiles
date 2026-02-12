@@ -106,7 +106,6 @@
       "whatsapp"
       "zed"
       "zoom"
-      "steipete/tap/peekaboo"
     ];
   };
 
