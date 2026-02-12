@@ -130,26 +130,15 @@
         };
 
       # Load machine-specific configuration from machine.nix
-      # This file is gitignored and deployed via Tuckr to ~/.config/nix/machine.nix
+      # This file is gitignored and lives alongside the flake in the dotfiles repo
+      # It gets symlinked to ~/.config/nix/ by Tuckr
       #
-      # Function to load machine config - lazy evaluation
-      # This avoids issues with HOME not being available during flake evaluation
+      # We use a relative path ./machine.nix which references the file in the
+      # flake's directory (the dotfiles repo), avoiding issues with environment
+      # variables not being available during pure evaluation
       loadMachineConfig =
         let
-          # Try multiple approaches to find the config
-          # 1. If HOME is set, use $HOME/.config/nix/machine.nix
-          # 2. Try USER-based path as fallback
-          homeDir = builtins.getEnv "HOME";
-          userName = builtins.getEnv "USER";
-          configPath =
-            if homeDir != "" then
-              "${homeDir}/.config/nix/machine.nix"
-            else if userName != "" then
-              # Fallback for macOS when HOME isn't set
-              "/Users/${userName}/.config/nix/machine.nix"
-            else
-              # Last resort - will likely fail but provides clear error
-              "~/.config/nix/machine.nix";
+          configPath = ./machine.nix;
         in
         if builtins.pathExists configPath then
           import configPath
@@ -157,16 +146,14 @@
           throw ''
             machine.nix not found!
 
-            Tried: ${configPath}
-            HOME: ${homeDir}
-            USER: ${userName}
+            Expected location: ${toString configPath}
 
             This file should be created from machine.nix.example.
 
             To fix this:
               1. Run: generate-machine-config
-              2. Or manually: cp ~/.config/nix/machine.nix.example ~/.config/nix/machine.nix
-              3. Then edit ~/.config/nix/machine.nix with your settings
+              2. Or manually: cp machine.nix.example machine.nix (in this directory)
+              3. Then edit machine.nix with your settings
 
             The file is gitignored and specific to each machine.
           '';

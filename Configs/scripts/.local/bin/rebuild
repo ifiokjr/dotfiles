@@ -17,8 +17,14 @@ print_error() { echo -e "${RED}✗${NC} $1"; }
 print_warn() { echo -e "${YELLOW}!${NC} $1"; }
 
 # Configuration paths
-# machine.nix should be in the deployed location (symlinked by Tuckr)
-NIX_CONFIG="$HOME/.config/nix"
+# machine.nix should be in the actual flake directory (dotfiles repo)
+# Find where the flake actually lives
+if [ -L "$HOME/.config/nix" ]; then
+    # If it's a symlink, get the actual path to the dotfiles repo
+    NIX_CONFIG=$(readlink -f "$HOME/.config/nix" 2>/dev/null || greadlink -f "$HOME/.config/nix" 2>/dev/null || readlink "$HOME/.config/nix")
+else
+    NIX_CONFIG="$HOME/.config/nix"
+fi
 MACHINE_CONFIG="$NIX_CONFIG/machine.nix"
 MACHINE_EXAMPLE="$NIX_CONFIG/machine.nix.example"
 

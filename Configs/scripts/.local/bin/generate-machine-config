@@ -17,7 +17,14 @@ print_error() { echo -e "${RED}✗${NC} $1"; }
 print_warn() { echo -e "${YELLOW}!${NC} $1"; }
 
 # Configuration paths
-NIX_CONFIG="${NIX_CONFIG_DIR:-$HOME/.config/nix}"
+# Find the dotfiles nix config directory (where the flake.nix is)
+if [ -L "$HOME/.config/nix" ]; then
+    # If it's a symlink, get the actual path
+    NIX_CONFIG=$(readlink -f "$HOME/.config/nix" 2>/dev/null || greadlink -f "$HOME/.config/nix" 2>/dev/null || readlink "$HOME/.config/nix")
+else
+    # Otherwise use the direct path
+    NIX_CONFIG="${NIX_CONFIG_DIR:-$HOME/.config/nix}"
+fi
 MACHINE_CONFIG="$NIX_CONFIG/machine.nix"
 
 # Parse arguments
