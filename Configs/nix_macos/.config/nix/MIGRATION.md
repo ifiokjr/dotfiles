@@ -76,7 +76,7 @@ generate-machine-config --output custom.nix  # Custom location
 ```nix
 {
   darwinConfigurations.default = {
-    # Reads from machine.nix
+    # Reads from ~/.config/nix/machine.nix (deployed location)
     username = "ifiokjr";
     system = "aarch64-darwin";
   };
@@ -86,6 +86,13 @@ generate-machine-config --output custom.nix  # Custom location
   };
 }
 ```
+
+## Important: machine.nix Location
+
+The flake reads `machine.nix` from `~/.config/nix/machine.nix` (the deployed location), NOT from the dotfiles repo. This ensures:
+- Each machine has its own configuration
+- Changes take effect immediately after running `generate-machine-config`
+- No need to manually sync between dotfiles and deployed location
 
 ## Machine.nix Format
 

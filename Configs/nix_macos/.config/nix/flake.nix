@@ -130,40 +130,28 @@
         };
 
       # Load machine-specific configuration from machine.nix
-      # This file should be created from machine.nix.example and is gitignored
+      # This file is gitignored and deployed via Tuckr to ~/.config/nix/machine.nix
       #
-      # Try multiple locations to handle different evaluation contexts:
-      # 1. ./machine.nix (relative to flake)
-      # 2. ${self}/machine.nix (absolute path via self)
-      machineConfigPath =
-        let
-          relPath = ./machine.nix;
-          absPath = "${self}/machine.nix";
-        in
-        if builtins.pathExists relPath then
-          relPath
-        else if builtins.pathExists absPath then
-          absPath
-        else
-          null;
+      # We read from the HOME environment variable to get the deployed location
+      # This ensures we always read from the symlinked location, not the dotfiles repo
+      homeDir = builtins.getEnv "HOME";
+      machineConfigPath = "${homeDir}/.config/nix/machine.nix";
 
       machineConfig =
-        if machineConfigPath != null then
+        if builtins.pathExists machineConfigPath then
           import machineConfigPath
         else
           throw ''
-            machine.nix not found!
+            machine.nix not found at: ${machineConfigPath}
 
-            Checked locations:
-              - ./machine.nix (relative to flake)
-              - ${self}/machine.nix (absolute path)
+            This file should be created from machine.nix.example and deployed via Tuckr.
 
-            Please create machine.nix from the template:
-              cp machine.nix.example machine.nix
+            To fix this:
+              1. Run: generate-machine-config
+              2. Or manually: cp ~/.config/nix/machine.nix.example ~/.config/nix/machine.nix
+              3. Then edit ~/.config/nix/machine.nix with your settings
 
-            Or run: generate-machine-config
-
-            Then edit machine.nix with your username and system architecture.
+            The file is gitignored and specific to each machine.
           '';
     in
     {

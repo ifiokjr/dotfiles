@@ -89,6 +89,7 @@
       "obs"
       "ollama-app"
       "orbstack"
+      "peekabo"
       "podman-desktop"
       "powershell"
       "qbittorrent"
@@ -106,6 +107,9 @@
       "whatsapp"
       "zed"
       "zoom"
+    ];
+    taps = [
+      "steipete/tap/peekaboo"
     ];
   };
 
