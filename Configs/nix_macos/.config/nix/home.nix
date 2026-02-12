@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   lib,
   ...
@@ -169,41 +168,5 @@ in
 
   programs = {
     home-manager.enable = true;
-
-    # Yazelix - Terminal development environment
-    # Managed via home-manager module from dotfiles
-    yazelix = {
-      enable = true;
-
-      # Dependency control for specific use cases
-      recommended_deps = false; # Productivity tools like lazygit, atuin
-      yazi_extensions = true; # File preview support
-      yazi_media = true; # Enable heavy media processing (~1GB)
-
-      # Build Helix from source for latest features
-      helix_mode = "source";
-
-      # Multi-shell environment
-      default_shell = "zsh";
-      extra_shells = []; # nu/bash included by default; can add "fish" or "zsh"
-
-      # Terminal preference
-      terminals = [ "ghostty" ]; # Better for media previews
-      manage_terminals = false;
-
-      # Editor configuration
-      editor_command = "hx"; # Alternative: Use system Helix (requires helix_runtime_path)
-      helix_runtime_path = "${config.home.homeDirectory}/.config/helix/runtime";
-
-      # Development-friendly settings
-      debug_mode = true; # Enable verbose logging
-      skip_welcome_screen = false; # Show welcome screen
-      ascii_art_mode = "static"; # Static ASCII art for faster startup
-      show_macchina_on_welcome = true;
-
-      # Persistent sessions for long-running work
-      persistent_sessions = true;
-      session_name = "main-dev";
-    };
   };
 }
