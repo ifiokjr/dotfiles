@@ -132,19 +132,36 @@
       # Load machine-specific configuration from machine.nix
       # This file is gitignored and deployed via Tuckr to ~/.config/nix/machine.nix
       #
-      # We read from the HOME environment variable to get the deployed location
-      # This ensures we always read from the symlinked location, not the dotfiles repo
-      homeDir = builtins.getEnv "HOME";
-      machineConfigPath = "${homeDir}/.config/nix/machine.nix";
-
-      machineConfig =
-        if builtins.pathExists machineConfigPath then
-          import machineConfigPath
+      # Function to load machine config - lazy evaluation
+      # This avoids issues with HOME not being available during flake evaluation
+      loadMachineConfig =
+        let
+          # Try multiple approaches to find the config
+          # 1. If HOME is set, use $HOME/.config/nix/machine.nix
+          # 2. Try USER-based path as fallback
+          homeDir = builtins.getEnv "HOME";
+          userName = builtins.getEnv "USER";
+          configPath =
+            if homeDir != "" then
+              "${homeDir}/.config/nix/machine.nix"
+            else if userName != "" then
+              # Fallback for macOS when HOME isn't set
+              "/Users/${userName}/.config/nix/machine.nix"
+            else
+              # Last resort - will likely fail but provides clear error
+              "~/.config/nix/machine.nix";
+        in
+        if builtins.pathExists configPath then
+          import configPath
         else
           throw ''
-            machine.nix not found at: ${machineConfigPath}
+            machine.nix not found!
 
-            This file should be created from machine.nix.example and deployed via Tuckr.
+            Tried: ${configPath}
+            HOME: ${homeDir}
+            USER: ${userName}
+
+            This file should be created from machine.nix.example.
 
             To fix this:
               1. Run: generate-machine-config
@@ -164,16 +181,27 @@
       # The configuration is read from machine.nix (not tracked in git)
 
       # Default configuration loaded from machine.nix
-      darwinConfigurations.default = mkDarwinConfig {
-        system = machineConfig.system;
-        username = machineConfig.username;
-      };
-
-      # Standalone home-manager configuration (for Linux or non-Darwin use)
-      homeConfigurations."${machineConfig.username}@${machineConfig.system}" =
-        makeHomeManagerConfiguration {
+      darwinConfigurations.default =
+        let
+          machineConfig = loadMachineConfig;
+        in
+        mkDarwinConfig {
           system = machineConfig.system;
           username = machineConfig.username;
+        };
+
+      # Standalone home-manager configuration (for Linux or non-Darwin use)
+      # Only evaluated when explicitly requested
+      homeConfigurations =
+        let
+          machineConfig = loadMachineConfig;
+        in
+        {
+          "${machineConfig.username}@${machineConfig.system}" =
+            makeHomeManagerConfiguration {
+              system = machineConfig.system;
+              username = machineConfig.username;
+            };
         };
     };
 }
