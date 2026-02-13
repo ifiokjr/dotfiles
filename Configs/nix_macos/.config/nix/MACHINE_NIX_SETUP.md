@@ -3,6 +3,7 @@
 ## Overview
 
 `machine.nix` is a gitignored, machine-specific configuration file that stores settings unique to each machine:
+
 - Username
 - System architecture (aarch64-darwin, x86_64-darwin, x86_64-linux, aarch64-linux)
 - Hostname (for documentation)
@@ -10,12 +11,14 @@
 ## File Locations
 
 ### Deployed Location (Used by Flake)
+
 - **Path**: `~/.config/nix/machine.nix`
 - **Purpose**: The flake reads from this location
 - **Created by**: `generate-machine-config` script or Tuckr post_up hook
 - **Managed by**: Tuckr symlinks OR direct file
 
 ### Dotfiles Repository (Template)
+
 - **Path**: `Configs/nix_macos/.config/nix/machine.nix.example`
 - **Purpose**: Template for new machines
 - **Status**: Tracked in git, copied/symlinked by Tuckr
@@ -23,6 +26,7 @@
 ## How It Works
 
 ### 1. Flake Evaluation
+
 ```nix
 # flake.nix reads from deployed location
 homeDir = builtins.getEnv "HOME";
@@ -32,6 +36,7 @@ machineConfigPath = "${homeDir}/.config/nix/machine.nix";
 The flake always reads from `$HOME/.config/nix/machine.nix`, regardless of where the flake itself is evaluated from.
 
 ### 2. File Creation
+
 When you run `rebuild` or `generate-machine-config` for the first time:
 
 1. Script checks if `~/.config/nix/machine.nix` exists
@@ -41,7 +46,9 @@ When you run `rebuild` or `generate-machine-config` for the first time:
    - Hostname from `scutil --get ComputerName` (macOS) or `hostname`
 
 ### 3. Tuckr Integration
+
 The `post_up_nix_macos` hook ensures `machine.nix` exists after deployment:
+
 - Runs after Tuckr deploys nix_macos group
 - Creates machine.nix if missing
 - Uses `generate-machine-config` if available
@@ -51,11 +58,13 @@ The `post_up_nix_macos` hook ensures `machine.nix` exists after deployment:
 ### Create machine.nix (First Time)
 
 **Auto-generate (recommended)**:
+
 ```bash
 generate-machine-config
 ```
 
 **Manual creation**:
+
 ```bash
 cp ~/.config/nix/machine.nix.example ~/.config/nix/machine.nix
 # Edit with your settings
@@ -114,6 +123,7 @@ Changes take effect immediately - no need to sync files.
 ## Why This Approach?
 
 ### Advantages
+
 1. **Per-machine configuration**: Each machine has its own settings
 2. **No git conflicts**: File is gitignored, never committed
 3. **Works with Tuckr**: Deploys alongside other nix configs
@@ -121,6 +131,7 @@ Changes take effect immediately - no need to sync files.
 5. **Auto-detection**: Scripts detect correct values automatically
 
 ### Alternative Approaches Considered
+
 - **--impure flag**: Unreliable, doesn't work consistently
 - **Hardcoded usernames**: Doesn't work across machines
 - **Environment variables**: Not available during pure evaluation
@@ -129,34 +140,41 @@ Changes take effect immediately - no need to sync files.
 ## Troubleshooting
 
 ### "machine.nix not found"
+
 Run: `generate-machine-config`
 
 ### Wrong username/system detected
+
 Edit manually: `nano ~/.config/nix/machine.nix`
 
 ### Changes not taking effect
+
 1. Verify file exists: `cat ~/.config/nix/machine.nix`
 2. Check flake reads it: `nix eval ~/.config/nix#darwinConfigurations --apply 'x: builtins.attrNames x'`
 3. Rebuild: `rebuild`
 
 ### File is a symlink vs real file
+
 Both work! Tuckr may create a symlink if the file exists in the repo, or it may be a real file created by `generate-machine-config`. The flake reads from the deployed location either way.
 
 ## Scripts
 
 ### `generate-machine-config`
+
 - Auto-detects username, system, hostname
 - Creates `~/.config/nix/machine.nix`
 - Use `--force` to overwrite
 - Use `--output FILE` for custom location
 
 ### `rebuild`
+
 - Checks for machine.nix, creates if missing
 - Shows current configuration
 - Rebuilds darwin/home-manager
 - Use `--skip-check` to skip flake check
 
 ### `post_up_nix_macos` (Hook)
+
 - Runs after Tuckr deployment
 - Ensures machine.nix exists
 - Auto-generates if missing

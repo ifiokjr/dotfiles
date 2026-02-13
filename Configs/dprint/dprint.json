@@ -76,7 +76,9 @@
 		"**/fixtures",
 		"**/snapshots",
 		"**/target",
-		"**/node_modules"
+		"**/node_modules",
+		"**/*.scm",
+		"**/login.nu"
 	],
 	"plugins": [
 		"https://plugins.dprint.dev/typescript-0.95.11.wasm",

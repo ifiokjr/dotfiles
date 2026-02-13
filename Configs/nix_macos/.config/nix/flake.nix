@@ -140,11 +140,7 @@
           # Use DARWIN_USER_CONFIG_DIR if set (passed through sudo by rebuild script)
           # Falls back to self.outPath for backwards compatibility
           configDir = builtins.getEnv "DARWIN_USER_CONFIG_DIR";
-          configPath =
-            if configDir != "" then
-              configDir + "/machine.nix"
-            else
-              self.outPath + "/machine.nix";
+          configPath = if configDir != "" then configDir + "/machine.nix" else self.outPath + "/machine.nix";
         in
         if builtins.pathExists configPath then
           import configPath
@@ -194,11 +190,10 @@
           machineConfig = loadMachineConfig;
         in
         {
-          "${machineConfig.username}@${machineConfig.system}" =
-            makeHomeManagerConfiguration {
-              system = machineConfig.system;
-              username = machineConfig.username;
-            };
+          "${machineConfig.username}@${machineConfig.system}" = makeHomeManagerConfiguration {
+            system = machineConfig.system;
+            username = machineConfig.username;
+          };
         };
     };
 }

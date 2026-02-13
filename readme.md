@@ -21,6 +21,7 @@ cd ~/path/to/dotfiles
 The setup script handles everything: Nix installation, repository cloning, Tuckr configuration, and automatic deployment of all configuration groups.
 
 **Setup Script Options:**
+
 - `--groups <groups>` - Deploy only specific groups (comma-separated, otherwise deploys all)
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
@@ -62,80 +63,67 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 ### Shell & Terminal
 
 #### `nushell`
-**Location:** `Configs/nushell/.config/nushell/`
-**Deploys:** `~/.config/nushell/`
-**Description:** Nushell shell configuration including env.nu, config.nu, login.nu, and custom modules (secrets, direnv).
+
+**Location:** `Configs/nushell/.config/nushell/` **Deploys:** `~/.config/nushell/` **Description:** Nushell shell configuration including env.nu, config.nu, login.nu, and custom modules (secrets, direnv).
 
 **Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
 #### `yazelix`
-**Location:** `Configs/yazelix/.config/yazelix/`
-**Deploys:** `~/.config/yazelix/`
-**Description:** Integrated terminal environment combining Yazi (file manager), Zellij (multiplexer), and Helix (editor). Contains 82 files including shell configs, plugins, layouts, and scripts.
-**Note:** Kept as single group due to interdependencies between components.
+
+**Location:** `Configs/yazelix/.config/yazelix/` **Deploys:** `~/.config/yazelix/` **Description:** Integrated terminal environment combining Yazi (file manager), Zellij (multiplexer), and Helix (editor). Contains 82 files including shell configs, plugins, layouts, and scripts. **Note:** Kept as single group due to interdependencies between components.
 
 #### `zellij`
-**Location:** `Configs/zellij/.config/zellij/`
-**Deploys:** `~/.config/zellij/`
-**Description:** Zellij terminal multiplexer configuration and layouts.
+
+**Location:** `Configs/zellij/.config/zellij/` **Deploys:** `~/.config/zellij/` **Description:** Zellij terminal multiplexer configuration and layouts.
 
 #### `ghostty`
-**Location:** `Configs/ghostty/.config/ghostty/`
-**Deploys:** `~/.config/ghostty/`
-**Description:** Ghostty terminal emulator configuration.
+
+**Location:** `Configs/ghostty/.config/ghostty/` **Deploys:** `~/.config/ghostty/` **Description:** Ghostty terminal emulator configuration.
 
 ### Editors
 
 #### `helix`
-**Location:** `Configs/helix/.config/helix/`
-**Deploys:** `~/.config/helix/`
-**Description:** Helix editor configuration including config.toml, languages.toml, and Steel plugin scripts (helix.scm, init.scm). Runtime symlink is documented but managed separately.
+
+**Location:** `Configs/helix/.config/helix/` **Deploys:** `~/.config/helix/` **Description:** Helix editor configuration including config.toml, languages.toml, and Steel plugin scripts (helix.scm, init.scm). Runtime symlink is documented but managed separately.
 
 #### `scripts`
-**Location:** `Configs/scripts/.local/bin/`
-**Deploys:** `~/.local/bin/`
-**Description:** Custom utility scripts including:
+
+**Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
+
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `update:pnpm:version` - Automatically update pnpm-standalone to latest version (also installs latest Node.js)
 - `update:node` - Update Node.js to latest version using pnpm env
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
 
 #### `claude`
-**Location:** `Configs/claude/.config/claude/`
-**Deploys:** `~/.config/claude/`
-**Description:** Claude Code settings including attribution preferences.
+
+**Location:** `Configs/claude/.config/claude/` **Deploys:** `~/.config/claude/` **Description:** Claude Code settings including attribution preferences.
 
 ### Development Tools
 
 #### `nix_macos` (Platform-specific)
-**Location:** `Configs/nix_macos/.config/nix/`
-**Deploys:** `~/.config/nix/`
-**Description:** Nix Darwin system configuration including flake.nix, darwin.nix, and home.nix.
-**Platform:** macOS only (Darwin-specific)
+
+**Location:** `Configs/nix_macos/.config/nix/` **Deploys:** `~/.config/nix/` **Description:** Nix Darwin system configuration including flake.nix, darwin.nix, and home.nix. **Platform:** macOS only (Darwin-specific)
 
 **Hook:** `post_nix_macos` - Automatically rebuilds Darwin configuration after deployment
 
 #### `direnv`
-**Location:** `Configs/direnv/.config/direnv/`
-**Deploys:** `~/.config/direnv/`
-**Description:** Directory-specific environment variable management.
+
+**Location:** `Configs/direnv/.config/direnv/` **Deploys:** `~/.config/direnv/` **Description:** Directory-specific environment variable management.
 
 #### `dprint`
-**Location:** `Configs/dprint/`
-**Deploys:** `~/dprint.json`
-**Description:** Code formatter configuration for multiple languages.
+
+**Location:** `Configs/dprint/` **Deploys:** `~/dprint.json` **Description:** Code formatter configuration for multiple languages.
 
 #### `kdl`
-**Location:** `Configs/kdl/.config/kdl/`
-**Deploys:** `~/.config/kdl/`
-**Description:** KDL document formatter configuration.
+
+**Location:** `Configs/kdl/.config/kdl/` **Deploys:** `~/.config/kdl/` **Description:** KDL document formatter configuration.
 
 ### Git Tools
 
 #### `lazygit`
-**Location:** `Configs/lazygit/.config/lazygit/`
-**Deploys:** `~/.config/lazygit/`
-**Description:** Terminal UI for git commands configuration.
+
+**Location:** `Configs/lazygit/.config/lazygit/` **Deploys:** `~/.config/lazygit/` **Description:** Terminal UI for git commands configuration.
 
 ## Hooks System
 
@@ -159,11 +147,13 @@ All hooks must be executable (`chmod +x Hooks/*`).
 ### Initial Setup (New Machine)
 
 **Using the automated setup script (recommended):**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 ```
 
 **Or manually with Tuckr:**
+
 ```bash
 # First, ensure the repository is cloned and Tuckr symlink is set up
 # (The setup script handles this automatically)
@@ -219,6 +209,7 @@ setup:env
 ```
 
 **What it does:**
+
 - Guides you through setting up each API key/token interactively
 - Provides descriptions and links for obtaining each key
 - Creates/updates `~/.env.dotfiles` with your values
@@ -227,6 +218,7 @@ setup:env
 - Allows you to skip any keys you don't need
 
 **Supported environment variables:**
+
 - **GITHUB_TOKEN** - GitHub personal access token ([Get it](https://github.com/settings/tokens/new))
 - **OPENAI_API_KEY** - OpenAI API key for GPT, DALL-E, etc. ([Get it](https://platform.openai.com/api-keys))
 - **ANTHROPIC_API_KEY** - Anthropic Claude API key ([Get it](https://console.anthropic.com/settings/keys))
@@ -236,13 +228,14 @@ setup:env
 - **HUGGING_FACE_TOKEN** - Hugging Face access token ([Get it](https://huggingface.co/settings/tokens))
 
 **Features:**
+
 - Shows masked current values when updating
 - Confirms each value before saving
 - Option to keep existing values
 - Creates automatic backups with timestamp
 
-**Manual setup:**
-You can also edit `~/.env.dotfiles` directly:
+**Manual setup:** You can also edit `~/.env.dotfiles` directly:
+
 ```bash
 vim ~/.env.dotfiles
 # Then open a new terminal to reload
@@ -272,17 +265,18 @@ This prevents incompatible configs from being deployed when cloning to different
 
 This repository was migrated from GNU Stow. Key differences:
 
-| Feature | Stow | Tuckr |
-|---------|------|-------|
-| Structure | Package root | Configs/ subdirectory |
-| Ignore files | `.stow-*-ignore` | None (keep repo clean) |
-| Hooks | Not supported | Pre/post/rm hooks |
-| Platform support | Manual scripting | Built-in suffix detection |
-| Configuration | Command-line flags | Convention-based |
+| Feature          | Stow               | Tuckr                     |
+| ---------------- | ------------------ | ------------------------- |
+| Structure        | Package root       | Configs/ subdirectory     |
+| Ignore files     | `.stow-*-ignore`   | None (keep repo clean)    |
+| Hooks            | Not supported      | Pre/post/rm hooks         |
+| Platform support | Manual scripting   | Built-in suffix detection |
+| Configuration    | Command-line flags | Convention-based          |
 
 ## Access Location
 
 Tuckr expects dotfiles at a platform-specific path. The `setup-tuckr-symlink.sh` script creates a symlink:
+
 ```
 ~/Library/Application Support/dotfiles → <your-dotfiles-repo>  (macOS)
 ~/.config/dotfiles → <your-dotfiles-repo>                      (Linux/BSD)
@@ -293,6 +287,7 @@ You can edit files from either location (they're the same directory via symlink)
 ## Migration Artifacts
 
 The `.migration/` directory contains files from the GNU Stow setup:
+
 - `.stow-global-ignore` - Old stow ignore patterns
 - `.stow-local-ignore` - Old stow ignore patterns
 - `.env.dotfiles.example` - Template for environment variables
@@ -304,6 +299,7 @@ These are kept for reference but not deployed by tuckr.
 ### Symlink Conflicts
 
 If you see errors about existing files:
+
 ```bash
 # Use force to overwrite
 tuckr add --force <group>
@@ -312,6 +308,7 @@ tuckr add --force <group>
 ### Hook Not Running
 
 Ensure hooks are executable (from your dotfiles repo root):
+
 ```bash
 chmod +x Hooks/*
 ```
@@ -319,6 +316,7 @@ chmod +x Hooks/*
 ### Group Not Found
 
 Tuckr looks for groups in `Configs/` directory. Verify (from your dotfiles repo root):
+
 ```bash
 ls Configs/
 ```
@@ -333,8 +331,8 @@ This error occurs when Nix hits the system's file descriptor limit during builds
 error: ... could not open '.../.cache/nix/tarball-cache/...': Too many open files
 ```
 
-**Solution (Automatic):**
-The dotfiles already handle this! Just use the aliases:
+**Solution (Automatic):** The dotfiles already handle this! Just use the aliases:
+
 ```bash
 # Update flake inputs
 update
@@ -343,22 +341,24 @@ update
 rebuild
 ```
 
-The `rebuild` alias increases the file descriptor limit to 10,240 before running.
-The shell configuration sets `ulimit -n 10240` for build sessions.
+The `rebuild` alias increases the file descriptor limit to 10,240 before running. The shell configuration sets `ulimit -n 10240` for build sessions.
 
 **Solution (Manual rebuild):**
+
 ```bash
 # Increase limit, then rebuild
 ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
 ```
 
 **Why this happens:**
+
 - Nix builds can open thousands of files simultaneously (downloading, extracting, building)
 - macOS default limit is 256 open files (too low for large Nix builds)
 - Homebrew formula downloads in particular can exhaust the limit
 - The limit affects both user context and sudo context
 
 **Check your current limit:**
+
 ```bash
 ulimit -n  # Should show 10240 if using this dotfiles config
 ```
@@ -367,8 +367,8 @@ ulimit -n  # Should show 10240 if using this dotfiles config
 
 This happens when running `nix flake update` with sudo.
 
-**Solution:**
-Run `update` without sudo (the alias already does this correctly):
+**Solution:** Run `update` without sudo (the alias already does this correctly):
+
 ```bash
 # Correct (no sudo)
 update
@@ -378,11 +378,13 @@ sudo update
 ```
 
 **Why this happens:**
+
 - `nix flake update` needs access to YOUR user's Nix cache at ~/.cache/nix
 - Running with sudo changes context to root user ($HOME becomes /var/root)
 - Root can't access your user's cache, and builds may fail or use wrong paths
 
 Or let the `post_nix_macos` hook handle rebuilds:
+
 ```bash
 tuckr set nix_macos
 ```
@@ -398,6 +400,7 @@ A standalone version of pnpm that doesn't depend on Node.js, allowing you to use
 **Why custom?** The nixpkgs pnpm package depends on Node.js, which defeats the purpose of using pnpm to manage Node versions. This custom package fetches the standalone binary directly from GitHub releases.
 
 **Supported platforms:**
+
 - macOS (arm64, x64)
 - Linux (arm64, x64)
 
@@ -408,11 +411,13 @@ A standalone version of pnpm that doesn't depend on Node.js, allowing you to use
 **Easiest Method (Recommended):**
 
 Simply run:
+
 ```bash
 update:pnpm:version
 ```
 
 This script automatically:
+
 - Fetches the latest pnpm version from GitHub releases
 - Updates `pnpm-standalone.nix` with the new version
 - Detects your platform (macos-arm64, macos-x64, etc.)
@@ -424,6 +429,7 @@ This script automatically:
 **Advanced Method:**
 
 If you only need to update the hash for the current version (doesn't require sudo):
+
 ```bash
 cd ~/.config/nix/packages
 ./update-pnpm-hash.sh
@@ -456,6 +462,7 @@ If you prefer full manual control:
 **Troubleshooting:**
 
 If any script fails:
+
 - Check the output for error messages
 - Verify you have internet access (scripts need to fetch from GitHub)
 - Try the manual method above
@@ -465,6 +472,7 @@ If any script fails:
 Since pnpm-standalone doesn't depend on Node.js, you can use pnpm itself to manage Node.js versions. This gives you full control over which Node.js version to use.
 
 **Update Node.js to latest version:**
+
 ```bash
 update:node
 ```
@@ -472,6 +480,7 @@ update:node
 This script uses `pnpm env use --global latest` to install and activate the latest stable Node.js version.
 
 **Manual Node.js management:**
+
 ```bash
 # Install latest Node.js
 pnpm env use --global latest
@@ -499,6 +508,7 @@ For more details about the custom package system, see `Configs/nix_macos/.config
 ## Backup
 
 A backup of the pre-migration setup exists at:
+
 ```
 ~/.dotfiles.backup.pre-tuckr
 ```

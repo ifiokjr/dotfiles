@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is a **Tuckr-managed dotfiles repository** that uses symlinks to deploy configuration files to the home directory. The repo can be cloned anywhere on disk. Tuckr expects dotfiles at platform-specific locations (e.g., `~/Library/Application Support/dotfiles` on macOS), so `setup-tuckr-symlink.sh` auto-detects the repo location and creates the necessary symlink.
 
 **Key characteristics:**
+
 - Platform-aware deployment (macOS, Linux, BSD, Windows)
 - Modular configuration groups
 - Hook-based automation
@@ -30,6 +31,7 @@ cd ~/path/to/dotfiles
 ```
 
 The setup script will:
+
 1. Install Determinate Nix (if not present)
 2. Clone the dotfiles repository (if running remotely)
 3. Set up Tuckr symlinks via `setup-tuckr-symlink.sh`
@@ -37,6 +39,7 @@ The setup script will:
 5. Clean up temporary packages
 
 **Options:**
+
 - `--cwd PATH` - Clone dotfiles to custom path (default: current directory or `~/Developer/.dotfiles`)
 - `--groups GROUPS` - Deploy only specific comma-separated groups (otherwise deploys all)
 - `--skip-nix` - Skip Nix installation if already installed
@@ -64,6 +67,7 @@ tuckr status
 ## Common Commands
 
 ### Tuckr Commands
+
 ```bash
 tuckr add <group>              # Deploy a configuration group (create symlinks)
 tuckr add --force <group>      # Deploy with overwrite of existing files
@@ -73,6 +77,7 @@ tuckr status                   # Check deployment status of all groups
 ```
 
 ### Nix Commands (macOS)
+
 ```bash
 # Rebuild Darwin system configuration (automatically runs via post_nix_macos hook)
 sudo darwin-rebuild switch --flake ~/.config/nix
@@ -82,7 +87,9 @@ tuckr set nix_macos
 ```
 
 ### Configuration Updates
+
 Since files are symlinked, edits are immediate:
+
 ```bash
 # Edit via symlink in home directory
 vim ~/.config/nushell/config.nu
@@ -97,24 +104,25 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 The repository contains 10 configuration groups organized in `Configs/`:
 
-| Group | Files | Platform | Purpose | Hook |
-|-------|-------|----------|---------|------|
-| **yazelix** | 320 | All | Terminal IDE (Yazi + Zellij + Helix) | None |
-| **nix_macos** | 6 | macOS | Darwin system configuration with Nix flakes | `post_nix_macos` |
-| **nushell** | 6 | All | Nushell shell configuration & modules | `post_nushell` |
-| **ghostty** | 1 | All | Ghostty terminal emulator config | None |
-| **zellij** | 4 | All | Terminal multiplexer config & layouts | None |
-| **claude** | 1 | All | Claude Code settings (attribution, etc.) | None |
-| **direnv** | 1 | All | Directory-specific environment variables | None |
-| **dprint** | 1 | All | Multi-language code formatter | None |
-| **kdl** | 1 | All | KDL document formatter | None |
-| **lazygit** | 1 | All | Git TUI configuration | None |
+| Group         | Files | Platform | Purpose                                     | Hook             |
+| ------------- | ----- | -------- | ------------------------------------------- | ---------------- |
+| **yazelix**   | 320   | All      | Terminal IDE (Yazi + Zellij + Helix)        | None             |
+| **nix_macos** | 6     | macOS    | Darwin system configuration with Nix flakes | `post_nix_macos` |
+| **nushell**   | 6     | All      | Nushell shell configuration & modules       | `post_nushell`   |
+| **ghostty**   | 1     | All      | Ghostty terminal emulator config            | None             |
+| **zellij**    | 4     | All      | Terminal multiplexer config & layouts       | None             |
+| **claude**    | 1     | All      | Claude Code settings (attribution, etc.)    | None             |
+| **direnv**    | 1     | All      | Directory-specific environment variables    | None             |
+| **dprint**    | 1     | All      | Multi-language code formatter               | None             |
+| **kdl**       | 1     | All      | KDL document formatter                      | None             |
+| **lazygit**   | 1     | All      | Git TUI configuration                       | None             |
 
 **Platform-specific groups** (suffixed with `_macos`, `_linux`, etc.) only deploy on matching platforms.
 
 ## Architecture
 
 ### Directory Structure
+
 ```
 <dotfiles-repo>/
 ├── Configs/                    # Configuration groups
@@ -136,7 +144,9 @@ The repository contains 10 configuration groups organized in `Configs/`:
 ```
 
 ### Deployment Pattern
+
 Each group follows XDG Base Directory conventions:
+
 ```
 Configs/[group]/
 ├── .config/[tool]/           # Deploys to ~/.config/[tool]/
@@ -147,6 +157,7 @@ Configs/[group]/
 Example: `Configs/dprint/dprint.json` → `~/dprint.json`
 
 ### Hooks System
+
 Hooks are executable bash scripts in `Hooks/` directory:
 
 - **`pre_<group>`** - Runs before symlinking files
@@ -154,6 +165,7 @@ Hooks are executable bash scripts in `Hooks/` directory:
 - **`rm_<group>`** - Runs during removal (none currently used)
 
 **Active hooks:**
+
 1. **`post_nix_macos`** - Automatically rebuilds Darwin configuration after Nix config deployment
 2. **`post_nushell`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
@@ -162,12 +174,15 @@ Hooks are executable bash scripts in `Hooks/` directory:
 Yazelix comprises 320 of 335 total files (95% of the repository) and deserves special attention.
 
 ### What is Yazelix?
+
 An integrated terminal IDE combining:
+
 - **Yazi** - File manager sidebar with Lua plugins
 - **Zellij** - Terminal multiplexer for pane orchestration (KDL config)
 - **Helix** - Text editor (with Neovim support as alternative)
 
 ### Key Features
+
 - Multi-shell support (Bash, Fish, Zsh, Nushell)
 - Smart pane orchestration (auto-detects editor instances)
 - "Reveal in sidebar" integration (`Alt+Y` to show current file in Yazi)
@@ -176,6 +191,7 @@ An integrated terminal IDE combining:
 - Bundled plugins (git, auto-layout, status bar)
 
 ### Yazelix Structure
+
 ```
 Configs/yazelix/.config/yazelix/
 ├── devenv.nix                # Nix devenv configuration (replaced old flake.nix)
@@ -206,16 +222,19 @@ Configs/yazelix/.config/yazelix/
 ### Yazelix Development Notes
 
 **CRITICAL: File Naming Convention**
+
 - Yazelix uses **underscores (`_`)** for ALL file and directory names, never hyphens (`-`)
 - Examples: `yazelix_default.toml`, `start_yazelix.nu`, `home_manager/`, `terminal_emulators/`
 - This is consistent throughout the codebase
 
 **Configuration Management:**
+
 1. User config: `yazelix.toml` (if exists, user-created)
 2. Default config: `yazelix_default.toml` (template)
 3. TOML sections merge intelligently without conflicts
 
 **Nushell Development - CRITICAL:**
+
 - **Escape parentheses in string interpolation:** Use `\(` and `\)` (single backslash)
   - ✅ Correct: `$"Checking pane \(editor\)"`
   - ❌ Wrong: `$"Checking pane \\(editor\\)"` - tries to execute command
@@ -228,17 +247,20 @@ Configs/yazelix/.config/yazelix/
 The `nix_macos` group contains a complete Nix Darwin system configuration with integrated Home Manager.
 
 ### Key Files
+
 - **`flake.nix`** - Main flake defining Darwin and Home Manager configurations
 - **`darwin.nix`** - Darwin-specific system settings
 - **`home.nix`** - Home Manager user configuration
 
 ### Features
+
 - User-specific configurations (currently configured for `ifiokjr`)
 - Nix Homebrew integration with declarative tap management
 - Integrated Home Manager (no separate invocation needed)
 - Yazelix Home Manager module integration via path reference
 
 ### Build Commands
+
 ```bash
 # Primary method (on macOS)
 darwin-rebuild switch --flake ~/.config/nix#$(whoami)
@@ -252,7 +274,9 @@ home-manager switch --flake ~/.config/nix#username@system
 ```
 
 ### Adding New Users
+
 Edit `flake.nix` and add new configurations:
+
 ```nix
 darwinConfigurations.newuser = mkDarwinConfig {
   system = "aarch64-darwin";
@@ -263,6 +287,7 @@ darwinConfigurations.newuser = mkDarwinConfig {
 ## Development Workflow
 
 ### Adding a New Configuration Group
+
 ```bash
 # Create group directory structure (from your dotfiles repo root)
 mkdir -p Configs/newtool/.config/newtool
@@ -276,6 +301,7 @@ tuckr add newtool
 ```
 
 ### Creating Hooks
+
 ```bash
 # Create hook script in Hooks/ directory (from your dotfiles repo root)
 vim Hooks/post_newtool
@@ -287,7 +313,9 @@ chmod +x Hooks/post_newtool
 ```
 
 ### Testing Changes
+
 Since configurations are symlinked, changes are live immediately:
+
 1. Edit config file (in Configs/ or via home directory symlink)
 2. Changes take effect instantly
 3. Commit changes to git when satisfied
@@ -296,10 +324,13 @@ Since configurations are symlinked, changes are live immediately:
 ## Important Patterns
 
 ### Platform Detection
+
 Groups with suffixes (`_macos`, `_linux`, `_windows`) only deploy on matching platforms. This prevents incompatible configs on multi-platform setups.
 
 ### Symlink Bootstrap
+
 The `setup-tuckr-symlink.sh` script is crucial for initial setup:
+
 1. Auto-detects the repo location from its own directory (or accepts a path argument)
 2. Detects platform (macOS, Linux, BSD, Windows)
 3. Creates platform-specific symlink (e.g., `~/Library/Application Support/dotfiles` → `<dotfiles-repo>`)
@@ -307,6 +338,7 @@ The `setup-tuckr-symlink.sh` script is crucial for initial setup:
 5. Provides colored output for user feedback
 
 ### Hook Execution Flow
+
 ```
 User runs: tuckr set <group>
     ↓
@@ -320,6 +352,7 @@ Complete
 ```
 
 ### Configuration Layering (Yazelix)
+
 1. `yazelix_default.toml` provides sensible defaults
 2. User creates `yazelix.toml` for overrides
 3. TOML sections merge automatically
@@ -328,12 +361,14 @@ Complete
 ## File Naming Conventions
 
 ### Documentation Files
+
 - **All documentation files must be lowercase**: Use `readme.md`, `changelog.md`, `license`, etc.
 - **Never use capitalized names**: Do not use `README.md`, `CHANGELOG.md`, `LICENSE`
 - This applies to all markdown files and documentation throughout the repository
 - License files should be named `license` (no extension)
 
 ### Examples
+
 - ✅ `readme.md` - Correct
 - ❌ `README.md` - Wrong
 - ✅ `license` - Correct
@@ -346,6 +381,7 @@ Complete
 All commits in this repository **must** follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
 ### Commit Message Format
+
 ```
 <type>(<scope>): <subject>
 
@@ -355,6 +391,7 @@ All commits in this repository **must** follow the [Conventional Commits](https:
 ```
 
 ### Types
+
 - **feat**: New feature for the user
 - **fix**: Bug fix for the user
 - **docs**: Documentation only changes
@@ -368,7 +405,9 @@ All commits in this repository **must** follow the [Conventional Commits](https:
 - **revert**: Reverts a previous commit
 
 ### Scopes
+
 Use relevant scope based on what's being modified:
+
 - **nix**: Nix configuration (darwin.nix, home.nix, flake.nix, custom packages)
 - **yazelix**: Yazelix terminal IDE configs
 - **nushell**: Nushell shell configuration
@@ -379,6 +418,7 @@ Use relevant scope based on what's being modified:
 - **setup**: Setup scripts
 
 ### Examples
+
 ```
 feat(nix): add pnpm-standalone custom package
 
@@ -408,7 +448,9 @@ chore(tuckr): add .tuckrignore files for autogenerated content
 ```
 
 ### Breaking Changes
+
 For breaking changes, add `!` after the type/scope:
+
 ```
 feat(nix)!: remove deprecated nixfmt-rfc-style package
 
@@ -416,13 +458,17 @@ BREAKING CHANGE: nixfmt-rfc-style has been removed, use nixfmt instead
 ```
 
 ### Multi-line Commits
+
 For significant changes, use the body to explain:
+
 - What changed and why
 - Any side effects or implications
 - Migration steps if needed
 
 ### When Claude Code Makes Commits
+
 When using Claude Code to make commits, ensure:
+
 1. Commit messages follow this format
 2. Type and scope are accurate
 3. Subject is clear and concise (50 chars or less)
@@ -431,18 +477,21 @@ When using Claude Code to make commits, ensure:
 ## Troubleshooting
 
 ### Symlink Conflicts
+
 ```bash
 # Force overwrite existing files
 tuckr add --force <group>
 ```
 
 ### Hook Not Running
+
 ```bash
 # Ensure hooks are executable (from your dotfiles repo root)
 chmod +x Hooks/*
 ```
 
 ### Nix Flake Issues
+
 ```bash
 # Manually rebuild Darwin configuration
 sudo darwin-rebuild switch --flake ~/.config/nix
@@ -452,7 +501,9 @@ tuckr set nix_macos
 ```
 
 ### Platform Mismatch
+
 If a group won't deploy, check if it's platform-specific:
+
 - Groups suffixed with `_macos` only deploy on macOS
 - Groups suffixed with `_linux` only deploy on Linux
 
@@ -460,12 +511,12 @@ If a group won't deploy, check if it's platform-specific:
 
 This repository was migrated from GNU Stow. Key differences:
 
-| Feature | GNU Stow | Tuckr |
-|---------|----------|-------|
-| Structure | Package root | Configs/ subdirectory |
-| Ignore files | `.stow-*-ignore` | None (clean repo) |
-| Hooks | Not supported | Pre/post/rm hooks |
-| Platform support | Manual scripting | Built-in suffix detection |
-| Configuration | Command-line flags | Convention-based |
+| Feature          | GNU Stow           | Tuckr                     |
+| ---------------- | ------------------ | ------------------------- |
+| Structure        | Package root       | Configs/ subdirectory     |
+| Ignore files     | `.stow-*-ignore`   | None (clean repo)         |
+| Hooks            | Not supported      | Pre/post/rm hooks         |
+| Platform support | Manual scripting   | Built-in suffix detection |
+| Configuration    | Command-line flags | Convention-based          |
 
 Migration artifacts are preserved in `.migration/` directory for reference but are not deployed.

@@ -2,26 +2,21 @@
 #
 # Shared utilities for resolving nix config paths and parsing machine.nix.
 # Usage: use nu_modules/nix_config.nu
-
 # Resolve the actual nix config directory (follows symlinks)
-export def config-dir []: nothing -> string {
+export def config-dir [] {
     let nix_config_link = $"($env.HOME)/.config/nix"
     $nix_config_link | path expand
 }
-
 # Path to machine.nix
-export def machine-config-path []: nothing -> string {
-    $"(config-dir)/machine.nix"
-}
-
+export def machine-config-path [] { $"(config-dir)/machine.nix" }
 # Parse machine.nix and return {username, system, hostname} record.
 # machine.nix is a simple Nix attrset (not a module), so we extract
 # values with regex rather than invoking the nix evaluator.
 export def parse-machine-config [] {
     let path = (machine-config-path)
-    if not ($path | path exists) {
-        error make { msg: $"machine.nix not found at: ($path)" }
-    }
+    if not ($path | path exists) { error make {
+        msg: $"machine.nix not found at: ($path)"
+    } }
     let content = (open $path --raw)
     # `parse --regex` returns a table; `.get capture0.0` grabs the first match
     let username = ($content | parse --regex 'username = "([^"]+)"' | get capture0.0)
@@ -29,8 +24,10 @@ export def parse-machine-config [] {
     # hostname is optional — older machine.nix files may not have it
     let hostname = try {
         $content | parse --regex 'hostname = "([^"]+)"' | get capture0.0
-    } catch {
-        ""
+    } catch { "" }
+    {
+        username: $username
+        system: $system
+        hostname: $hostname
     }
-    { username: $username, system: $system, hostname: $hostname }
 }

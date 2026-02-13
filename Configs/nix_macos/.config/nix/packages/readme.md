@@ -9,6 +9,7 @@ This directory contains custom Nix derivations for packages that need special ha
 Standalone version of pnpm that doesn't depend on Node.js, allowing you to use pnpm to manage Node versions.
 
 **Features:**
+
 - No Node.js dependency (unlike nixpkgs pnpm)
 - Fetches directly from GitHub releases
 - Supports macOS (arm64/x64) and Linux (arm64/x64)
@@ -17,6 +18,7 @@ Standalone version of pnpm that doesn't depend on Node.js, allowing you to use p
 **Version:** 10.28.2 (released January 26, 2026)
 
 **Usage:**
+
 ```nix
 # In home.nix
 let
@@ -32,12 +34,14 @@ in
 
 **Updating:**
 
-*Easiest method (recommended):*
+_Easiest method (recommended):_
+
 ```bash
 update:pnpm:version
 ```
 
 This automatically:
+
 - Fetches the latest pnpm version from GitHub releases
 - Updates the version in pnpm-standalone.nix
 - Detects your platform (macos-arm64, macos-x64, etc.)
@@ -45,14 +49,16 @@ This automatically:
 - Rebuilds your Darwin configuration
 - Verifies pnpm is working
 
-*Hash-only update (if version is already updated):*
+_Hash-only update (if version is already updated):_
+
 ```bash
 cd ~/.config/nix/packages
 ./update-pnpm-hash.sh  # Uses nix-prefetch-url, doesn't require sudo
 # Then run: rebuild
 ```
 
-*Manual method:*
+_Manual method:_
+
 1. Edit `pnpm-standalone.nix` and change the `version` variable
 2. Set the hash for your platform to `lib.fakeSha256`
 3. Run `rebuild`
@@ -61,11 +67,13 @@ cd ~/.config/nix/packages
 6. Run `rebuild` again
 
 Example error:
+
 ```
 error: hash mismatch in fixed-output derivation '/nix/store/...':
   specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
   got:      sha256-3NKbhDlzXW0IUJL+Yoj0vKRfdmHCNYVP9Q4Q8OvGXV8=
 ```
+
 Copy the "got" hash to the appropriate platform in the `hashes` attribute set.
 
 ## Adding New Custom Packages
@@ -79,6 +87,7 @@ Copy the "got" hash to the appropriate platform in the `hashes` attribute set.
 ## Why Custom Packages?
 
 Custom packages are useful when:
+
 - Package isn't in nixpkgs
 - nixpkgs version has unwanted dependencies
 - Need specific version or build configuration

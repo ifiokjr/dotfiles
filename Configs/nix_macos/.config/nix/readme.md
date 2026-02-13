@@ -76,6 +76,7 @@ sudo darwin-rebuild --rollback
 ### Rebuild Script
 
 The `rebuild` command is a convenient wrapper that:
+
 - Auto-generates `machine.nix` if it doesn't exist (using `generate-machine-config`)
 - Displays your current configuration
 - Increases file descriptor limits for Nix builds
@@ -85,6 +86,7 @@ The `rebuild` command is a convenient wrapper that:
 ### Generate Machine Config Script
 
 The `generate-machine-config` command auto-detects and creates `machine.nix`:
+
 - Detects username from `$USER`
 - Detects system architecture from `uname`
 - Detects hostname from `scutil --get ComputerName` (macOS) or `hostname`
@@ -110,11 +112,13 @@ The `generate-machine-config` command auto-detects and creates `machine.nix`:
 ### Prerequisites
 
 1. Install Nix with flakes enabled:
+
 ```bash
 sh <(curl -L https://nixos.org/nix/install)
 ```
 
 2. Enable flakes in `~/.config/nix/nix.conf`:
+
 ```
 experimental-features = nix-command flakes
 ```
@@ -122,6 +126,7 @@ experimental-features = nix-command flakes
 ### macOS Setup
 
 3. Create your machine configuration:
+
 ```bash
 cd ~/.config/nix  # or wherever you cloned this repo
 cp machine.nix.example machine.nix
@@ -129,11 +134,13 @@ cp machine.nix.example machine.nix
 ```
 
 4. Install nix-darwin:
+
 ```bash
 nix run nix-darwin -- switch --flake ~/.config/nix
 ```
 
 5. Use the rebuild command:
+
 ```bash
 rebuild
 ```
@@ -141,6 +148,7 @@ rebuild
 ### Linux Setup
 
 3. Create your machine configuration:
+
 ```bash
 cd ~/.config/nix
 cp machine.nix.example machine.nix
@@ -148,6 +156,7 @@ cp machine.nix.example machine.nix
 ```
 
 4. Install home-manager standalone:
+
 ```bash
 nix run nixpkgs#home-manager -- switch --flake ~/.config/nix#$(whoami)@x86_64-linux
 ```
@@ -206,12 +215,14 @@ sudo darwin-rebuild switch --flake ~/.config/nix#default
 This configuration supports two deployment modes:
 
 #### 1. Integrated Mode (macOS)
+
 - nix-darwin manages both system-level and user-level configurations
 - home-manager is integrated as a nix-darwin module
 - Running `darwin-rebuild` applies both system and home configurations together
 - Recommended for macOS systems
 
 #### 2. Standalone Mode (Linux or macOS)
+
 - home-manager runs independently
 - Only user-level packages and configurations are managed
 - Ideal for Linux systems or macOS systems without nix-darwin
@@ -237,16 +248,19 @@ This organization maximizes portability while keeping macOS system management cl
 ### Adding Packages
 
 **User packages** (recommended - works on macOS and Linux):
+
 - Edit `home.nix`
 - Add to `home.packages`
 - These packages work on both macOS and Linux
 
 **System packages** (macOS only, requires system integration):
+
 - Edit `darwin.nix`
 - Add to `environment.systemPackages`
 - Only for packages that need system-level integration
 
 **Homebrew packages** (macOS only):
+
 - Edit `darwin.nix`
 - Add to `homebrew.brews` or `homebrew.casks`
 - For macOS GUI apps and tools not available in nixpkgs
@@ -254,6 +268,7 @@ This organization maximizes portability while keeping macOS system management cl
 ### Environment Variables
 
 **User-specific** (recommended - cross-platform):
+
 - Edit `home.nix`
 - Add to `home.sessionVariables`
 - Works on both macOS and Linux
@@ -261,6 +276,7 @@ This organization maximizes portability while keeping macOS system management cl
 ### Shell Configuration
 
 **Zsh, Bash, Fish** (cross-platform):
+
 - Edit `home.nix`
 - Configure under `programs.zsh`, `programs.bash`, or `programs.fish`
 - Works on both macOS and Linux
@@ -313,6 +329,7 @@ home-manager --rollback
 ### "machine.nix not found" error
 
 The `machine.nix` file is required but not tracked in git. Create it from the template:
+
 ```bash
 cd ~/.config/nix
 cp machine.nix.example machine.nix
@@ -322,6 +339,7 @@ cp machine.nix.example machine.nix
 ### "Failed to read username or system" error
 
 Check that your `machine.nix` is properly formatted:
+
 ```nix
 {
   username = "yourusername";  # Must be in quotes
@@ -333,6 +351,7 @@ Check that your `machine.nix` is properly formatted:
 ### Home Manager activation fails
 
 Make sure home-manager is installed and integrated:
+
 ```bash
 sudo darwin-rebuild switch --flake ~/.config/nix
 ```

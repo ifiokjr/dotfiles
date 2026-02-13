@@ -42,9 +42,7 @@ stdenv.mkDerivation {
   dontBuild = true;
   dontStrip = true; # Bundled binaries (node, rg) are pre-stripped
 
-  nativeBuildInputs =
-    [ makeWrapper ]
-    ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  nativeBuildInputs = [ makeWrapper ] ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
 
   installPhase = ''
     runHook preInstall

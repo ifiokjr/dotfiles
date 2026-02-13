@@ -128,7 +128,11 @@
   programs.zsh.enable = true;
 
   # Register nushell as a valid login shell (adds to /etc/shells)
-  environment.shells = with pkgs; [ bashInteractive zsh nushell ];
+  environment.shells = with pkgs; [
+    bashInteractive
+    zsh
+    nushell
+  ];
 
   # Set XDG_CONFIG_HOME so nushell uses ~/.config/nushell/ on macOS
   # (without this, nushell defaults to ~/Library/Application Support/nushell/)

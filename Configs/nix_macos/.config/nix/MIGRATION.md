@@ -3,12 +3,14 @@
 ## What Changed
 
 ### Removed
+
 - ❌ `--impure` flag requirement (pure flake evaluation now)
 - ❌ yazelix home-manager integration (removed due to issues)
 - ❌ Username-specific flake outputs (e.g., `darwinConfigurations.ifiokjr`)
 - ❌ `rebuild` alias (now a proper script in ~/.local/bin)
 
 ### Added
+
 - ✅ `machine.nix` - Machine-specific configuration file (gitignored)
 - ✅ `machine.nix.example` - Template for new machines
 - ✅ `generate-machine-config` - Auto-generates machine.nix
@@ -41,6 +43,7 @@
 ### Regular Updates
 
 Just run:
+
 ```bash
 rebuild
 ```
@@ -50,6 +53,7 @@ No flags, no username, no --impure. It just works!
 ## Commands Available
 
 ### `rebuild`
+
 - Auto-generates `machine.nix` if missing
 - Shows current configuration before rebuilding
 - Handles all darwin-rebuild complexity
@@ -62,6 +66,7 @@ rebuild --help         # Show help
 ```
 
 ### `generate-machine-config`
+
 - Auto-detects username, system, hostname
 - Creates ~/.config/nix/machine.nix
 
@@ -90,6 +95,7 @@ generate-machine-config --output custom.nix  # Custom location
 ## Important: machine.nix Location
 
 The flake reads `machine.nix` from `~/.config/nix/machine.nix` (the deployed location), NOT from the dotfiles repo. This ensures:
+
 - Each machine has its own configuration
 - Changes take effect immediately after running `generate-machine-config`
 - No need to manually sync between dotfiles and deployed location
@@ -130,22 +136,26 @@ The flake reads `machine.nix` from `~/.config/nix/machine.nix` (the deployed loc
 ## Troubleshooting
 
 ### "machine.nix not found"
+
 Run: `generate-machine-config`
 
 ### "Permission denied on flake.lock"
+
 The flake.lock was created by root. Fix:
+
 ```bash
 sudo rm ~/.config/nix/flake.lock
 cd ~/.config/nix && nix flake lock
 ```
 
 ### "Configuration 'bring-the-heat-yo' not found"
-This is your old system configuration. The new flake uses `default` instead.
-Just run `rebuild` - it will switch to the new configuration.
+
+This is your old system configuration. The new flake uses `default` instead. Just run `rebuild` - it will switch to the new configuration.
 
 ### "darwinConfigurations.USERNAME.system not found"
-Darwin-rebuild auto-appends your username when no config is specified.
-The `rebuild` script now explicitly uses `#default`:
+
+Darwin-rebuild auto-appends your username when no config is specified. The `rebuild` script now explicitly uses `#default`:
+
 ```bash
 sudo darwin-rebuild switch --flake ~/.config/nix#default
 ```
