@@ -2,7 +2,7 @@
 #
 # Parses KEY=VALUE lines from the secrets file and loads them into the
 # environment. Handles quoted values, comments, and blank lines.
-export def load [] {
+export def --env load [] {
     let secrets_file = $"($env.HOME)/.env.dotfiles"
     if not ($secrets_file | path exists) { return }
     let env_vars = (

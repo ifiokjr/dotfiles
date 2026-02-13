@@ -50,7 +50,7 @@ jobs:
 
       - name: Format check (dprint)
         run: |
-          dprint check
+          dprint check --config Configs/dprint/dprint.json
 
   test:
     name: Test (${{ matrix.os }})
@@ -90,6 +90,8 @@ jobs:
           nix profile install nixpkgs#nushell
           nu Configs/scripts/.local/bin/generate-machine-config \
             --output Configs/nix_macos/.config/nix/machine.nix
+          # git-add so Nix includes it when copying source to the store
+          git add --force Configs/nix_macos/.config/nix/machine.nix
 
       - name: Nix flake check
         run: |
