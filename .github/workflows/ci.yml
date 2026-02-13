@@ -27,6 +27,13 @@ jobs:
           nix profile install nixpkgs#dprint
           nix profile install nixpkgs#nufmt
           nix profile install nixpkgs#nixfmt
+          nix profile install nixpkgs#kdlfmt
+
+      - name: Set up formatter configs
+        run: |
+          # kdlfmt needs its config at ~/.config/kdl/kdlfmt.kdl
+          mkdir -p ~/.config/kdl
+          cp Configs/kdl/.config/kdl/kdlfmt.kdl ~/.config/kdl/kdlfmt.kdl
 
       - name: Shellcheck bash scripts
         run: |
