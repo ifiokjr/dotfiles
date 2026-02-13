@@ -1,0 +1,124 @@
+#!/usr/bin/env nu
+# Run local CI checks before pushing
+# Mirrors the GitHub Actions CI workflow to catch failures early
+
+use nu_modules/print_utils.nu *
+
+def main [
+    --fix # Auto-fix formatting issues instead of just checking
+] {
+    let dotfiles_root = ($env.FILE_PWD | path join "../../../.." | path expand)
+    let dprint_config = ($dotfiles_root | path join "Configs/dprint/dprint.json")
+    let nix_config = ($dotfiles_root | path join "Configs/nix/.config/nix")
+    mut failed = false
+
+    header "Local CI Checks"
+    print ""
+
+    # 1. dprint format check
+    info "Checking formatting (dprint)..."
+    if $fix {
+        let result = do -i { ^dprint fmt --config $dprint_config }
+        if ($env.LAST_EXIT_CODE == 0) {
+            success "Formatting fixed"
+        } else {
+            err "dprint fmt failed"
+            $failed = true
+        }
+    } else {
+        let result = do -i { ^dprint check --config $dprint_config }
+        if ($env.LAST_EXIT_CODE != 0) {
+            err "Formatting check failed — run `ci_check --fix` or `dprint fmt`"
+            $failed = true
+        } else {
+            success "Formatting OK"
+        }
+    }
+
+    # 2. Shellcheck
+    info "Running shellcheck..."
+    let shell_files = [
+        ($dotfiles_root | path join "setup")
+        ($dotfiles_root | path join "setup-tuckr-symlink.sh")
+    ]
+    let hook_files = (glob ($dotfiles_root | path join "Hooks/*"))
+    let all_shell_files = ($shell_files | append $hook_files)
+
+    let result = do -i { ^shellcheck ...$all_shell_files }
+    if ($env.LAST_EXIT_CODE != 0) {
+        err "Shellcheck failed"
+        $failed = true
+    } else {
+        success "Shellcheck OK"
+    }
+
+    # 3. Nushell syntax check
+    info "Checking nushell scripts (nu-check)..."
+    let nu_files = (glob ($dotfiles_root | path join "**/*.nu") | where { |f| not ($f | str contains ".git/") })
+    mut nu_failed = false
+    for f in $nu_files {
+        let result = do -i { ^nu -c $"nu-check --as-module '($f)'" }
+        if ($env.LAST_EXIT_CODE != 0) {
+            err $"  nu-check failed: ($f)"
+            $nu_failed = true
+        }
+    }
+
+    let script_files = (glob ($dotfiles_root | path join "Configs/scripts/.local/bin/*"))
+    for f in $script_files {
+        if ($f | path type) == "file" {
+            let first_line = (open $f --raw | lines | first)
+            if ($first_line | str contains "#!/usr/bin/env nu") {
+                let result = do -i { ^nu -c $"nu-check '($f)'" }
+                if ($env.LAST_EXIT_CODE != 0) {
+                    err $"  nu-check failed: ($f)"
+                    $nu_failed = true
+                }
+            }
+        }
+    }
+
+    if $nu_failed {
+        $failed = true
+    } else {
+        success "Nushell syntax OK"
+    }
+
+    # 4. Nix flake check (only if nix files have changed)
+    info "Checking nix flake..."
+    let machine_nix = ($nix_config | path join "machine.nix")
+    if not ($machine_nix | path exists) {
+        info "  Generating temporary machine.nix for check..."
+        let result = do -i {
+            ^nu ($dotfiles_root | path join "Configs/scripts/.local/bin/generate-machine-config") --output $machine_nix
+        }
+    }
+
+    # Need to git-add machine.nix temporarily so nix can see it
+    let needs_cleanup = not (do -i { ^git -C $dotfiles_root ls-files $machine_nix } | complete | get stdout | str trim | is-not-empty)
+    if $needs_cleanup {
+        do -i { ^git -C $dotfiles_root add --force $machine_nix }
+    }
+
+    let result = do -i { ^nix flake check $nix_config --impure --no-build }
+    if ($env.LAST_EXIT_CODE != 0) {
+        err "Nix flake check failed"
+        $failed = true
+    } else {
+        success "Nix flake check OK"
+    }
+
+    # Cleanup: unstage machine.nix if we added it
+    if $needs_cleanup {
+        do -i { ^git -C $dotfiles_root reset HEAD $machine_nix }
+    }
+
+    # Summary
+    print ""
+    if $failed {
+        err "Some checks failed — fix issues before pushing"
+        exit 1
+    } else {
+        success "All checks passed!"
+    }
+}

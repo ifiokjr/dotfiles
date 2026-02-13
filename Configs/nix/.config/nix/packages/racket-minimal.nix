@@ -48,8 +48,14 @@ stdenv.mkDerivation {
   meta = with lib; {
     description = "Programmable programming language (minimal distribution, pre-built)";
     homepage = "https://racket-lang.org/";
-    license = with licenses; [ asl20 mit ];
-    platforms = [ "x86_64-darwin" "aarch64-darwin" ];
+    license = with licenses; [
+      asl20
+      mit
+    ];
+    platforms = [
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
     mainProgram = "racket";
   };
 }
