@@ -126,6 +126,7 @@ let path_append = [
     $"($env.ANDROID_HOME)/platform-tools"
     "/Applications/Android Studio.app/Contents/MacOS"
     $"($env.HOME)/.pub-cache/bin"
+    "/usr/local/bin"
 ]
 
 $env.PATH = ($path_prepend | append $env.PATH | append $path_append | uniq)

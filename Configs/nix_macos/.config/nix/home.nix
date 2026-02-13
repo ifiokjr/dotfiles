@@ -34,6 +34,7 @@ in
       cargo-sweep
       cargo-update
       claude-code
+      spec-kit
       code-cursor
       cursor-cli
       cloudflared

@@ -38,6 +38,32 @@
               ':scooter-new ; Open a new instance of find and replacing removing the previous instance
               ))))
 
+;; CodeCompanion AI plugin
+(require "/Users/ifiokjr/Developer/projects/helix/codecompanion/codecompanion.scm")
+
+;; Configure CodeCompanion
+;; Option 1: Store your API key in a file (one line, no newline)
+;;   echo -n "sk-proj-..." > ~/.openai-api-key
+;; Option 2: Run manually via :evalp
+;;   (codecompanion-setup (hash 'provider "openai" 'api_key "sk-proj-..."))
+(let ([key-file "/Users/ifiokjr/.openai-api-key"])
+  (when (path-exists? key-file)
+    (codecompanion-setup
+      (hash 'provider "openai"
+            'api_key (trim (call-with-input-file key-file
+                            (lambda (f) (read-port-to-string f))))))))
+
+;; Keybindings: ret+a for AI prompt, ret+A for quick improve
+(add-global-keybinding
+ (hash
+  "normal"
+  (hash "ret"
+        (hash "a"
+              ':codecompanion-inline ; Select code then press ret+a for AI transform
+              "A"
+              ':codecompanion-quick ; Select code then press ret+A for quick improve
+              ))))
+
 ; ;; Set up global keybindings for the Gemini plugin.
 ; ;; These keybindings allow users to interact with the auto-suggestion feature.
 ; (add-global-keybinding (hash "normal"
