@@ -1,8 +1,8 @@
 #!/usr/bin/env nu
-# Update Node.js to the latest version using pnpm env
+# Update Node.js to the latest LTS version using pnpm env
 #
 # This script uses pnpm's built-in Node.js management to install
-# and activate the latest stable version of Node.js globally.
+# and activate the latest LTS (Long Term Support) version of Node.js globally.
 
 use nu_modules/print_utils.nu *
 
@@ -24,10 +24,10 @@ def main [] {
     }
 
     print ""
-    info "Installing latest Node.js version via pnpm..."
+    info "Installing latest LTS Node.js version via pnpm..."
     print ""
 
-    let result = do -i { ^pnpm env use --global latest }
+    let result = do -i { ^pnpm env use --global lts }
     if ($env.LAST_EXIT_CODE == 0) {
         print ""
         success "Node.js updated successfully!"
@@ -44,7 +44,7 @@ def main [] {
     } else {
         err "Failed to update Node.js"
         print ""
-        info "Try running manually: pnpm env use --global latest"
+        info "Try running manually: pnpm env use --global lts"
         exit 1
     }
 }
