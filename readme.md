@@ -52,8 +52,9 @@ tuckr status
 <dotfiles-repo>/
 ├── Configs/          # Dotfiles organized by program/group
 ├── Hooks/            # Pre/post deployment scripts
-├── Secrets/          # Encrypted files (not currently used)
-└── .migration/       # Old stow files and templates
+├── tests/            # Docker integration tests
+├── setup             # Automated setup script
+└── Dockerfile        # Linux integration test container
 ```
 
 The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a platform-specific symlink from Tuckr's expected location to your actual repo path.
@@ -68,10 +69,6 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 **Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
-#### `yazelix`
-
-**Location:** `Configs/yazelix/.config/yazelix/` **Deploys:** `~/.config/yazelix/` **Description:** Integrated terminal environment combining Yazi (file manager), Zellij (multiplexer), and Helix (editor). Contains 82 files including shell configs, plugins, layouts, and scripts. **Note:** Kept as single group due to interdependencies between components.
-
 #### `zellij`
 
 **Location:** `Configs/zellij/.config/zellij/` **Deploys:** `~/.config/zellij/` **Description:** Zellij terminal multiplexer configuration and layouts.
@@ -84,16 +81,21 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 #### `helix`
 
-**Location:** `Configs/helix/.config/helix/` **Deploys:** `~/.config/helix/` **Description:** Helix editor configuration including config.toml, languages.toml, and Steel plugin scripts (helix.scm, init.scm). Runtime symlink is documented but managed separately.
+**Location:** `Configs/helix/.config/helix/` **Deploys:** `~/.config/helix/` **Description:** Helix editor configuration including config.toml, languages.toml, languages/ directory, and Steel plugin scripts (helix.scm, init.scm).
 
 #### `scripts`
 
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
-- `install:helix:custom` - Build Helix with Steel plugin support
+- `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux)
+- `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:pnpm:version` - Automatically update pnpm-standalone to latest version (also installs latest Node.js)
+- `update:cursor:version` - Update cursor-cli to the latest version
 - `update:node` - Update Node.js to latest version using pnpm env
+- `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
+- `commands` - List all custom scripts with descriptions
+- `test_scripts` - Run the test suite for nushell scripts
 
 #### `claude`
 
@@ -132,6 +134,7 @@ Tuckr supports hooks that run at different stages of deployment:
 ### Active Hooks
 
 - **`post_nix`**: Runs `rebuild` after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux)
+- **`post_up_nix`**: Ensures machine.nix exists after deployment, auto-generates if missing
 - **`post_nushell`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
 
 ### Hook Naming Convention
@@ -166,7 +169,6 @@ tuckr add nix
 tuckr add dprint direnv kdl lazygit
 
 # Deploy terminal environment
-tuckr set yazelix  # Uses set to run dependency check hook
 tuckr add zellij
 
 # Verify everything
@@ -282,16 +284,6 @@ Tuckr expects dotfiles at a platform-specific path. The `setup-tuckr-symlink.sh`
 
 You can edit files from either location (they're the same directory via symlink).
 
-## Migration Artifacts
-
-The `.migration/` directory contains files from the GNU Stow setup:
-
-- `.stow-global-ignore` - Old stow ignore patterns
-- `.stow-local-ignore` - Old stow ignore patterns
-- `.env.dotfiles.example` - Template for environment variables
-
-These are kept for reference but not deployed by tuckr.
-
 ## Troubleshooting
 
 ### Symlink Conflicts
@@ -335,24 +327,23 @@ error: ... could not open '.../.cache/nix/tarball-cache/...': Too many open file
 # Update flake inputs
 update
 
-# Rebuild Darwin system (automatically increases ulimit before building)
+# Rebuild system (automatically increases ulimit before building on macOS)
 rebuild
 ```
 
-The `rebuild` alias increases the file descriptor limit to 10,240 before running. The shell configuration sets `ulimit -n 10240` for build sessions.
+The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS.
 
-**Solution (Manual rebuild):**
+**Solution (Manual rebuild on macOS):**
 
 ```bash
 # Increase limit, then rebuild
-ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#$(whoami)
+ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#default --impure
 ```
 
 **Why this happens:**
 
 - Nix builds can open thousands of files simultaneously (downloading, extracting, building)
 - macOS default limit is 256 open files (too low for large Nix builds)
-- Homebrew formula downloads in particular can exhaust the limit
 - The limit affects both user context and sudo context
 
 **Check your current limit:**
@@ -402,7 +393,7 @@ A standalone version of pnpm that doesn't depend on Node.js, allowing you to use
 - macOS (arm64, x64)
 - Linux (arm64, x64)
 
-**Current version:** 10.28.2 (January 26, 2026)
+**Current version:** Check `Configs/nix/.config/nix/packages/pnpm-standalone.nix` for the latest version.
 
 #### Updating pnpm Version
 
@@ -420,7 +411,7 @@ This script automatically:
 - Updates `pnpm-standalone.nix` with the new version
 - Detects your platform (macos-arm64, macos-x64, etc.)
 - Fetches and updates the correct hash
-- Rebuilds your Darwin configuration
+- Rebuilds your system configuration
 - Verifies pnpm is installed correctly
 - Installs the latest Node.js version using pnpm env
 
@@ -497,18 +488,25 @@ pnpm env remove --global 18
 
 For more details about the custom package system, see `Configs/nix/.config/nix/packages/readme.md`.
 
+## Testing
+
+### Docker Integration Test
+
+A Docker-based integration test validates the full setup + rebuild flow on Linux:
+
+```bash
+docker build -t dotfiles-test . && docker run --rm dotfiles-test
+```
+
+This builds an Ubuntu 24.04 container, runs the setup script, triggers `home-manager switch` via `rebuild`, and verifies the result.
+
+### Script Tests
+
+```bash
+nu Configs/scripts/.local/bin/test_scripts
+```
+
 ## Resources
 
 - [Tuckr Documentation](https://raphgl.github.io/Tuckr/)
 - [Tuckr GitHub](https://github.com/RaphGL/Tuckr)
-- [Yazelix Documentation](~/.config/yazelix/readme.md)
-
-## Backup
-
-A backup of the pre-migration setup exists at:
-
-```
-~/.dotfiles.backup.pre-tuckr
-```
-
-This contains the original GNU Stow structure and can be safely deleted once you've verified the migration.
