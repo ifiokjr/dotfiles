@@ -19,7 +19,7 @@
 
 ### Dotfiles Repository (Template)
 
-- **Path**: `Configs/nix_macos/.config/nix/machine.nix.example`
+- **Path**: `Configs/nix/.config/nix/machine.nix.example`
 - **Purpose**: Template for new machines
 - **Status**: Tracked in git, copied/symlinked by Tuckr
 
@@ -47,9 +47,9 @@ When you run `rebuild` or `generate-machine-config` for the first time:
 
 ### 3. Tuckr Integration
 
-The `post_up_nix_macos` hook ensures `machine.nix` exists after deployment:
+The `post_up_nix` hook ensures `machine.nix` exists after deployment:
 
-- Runs after Tuckr deploys nix_macos group
+- Runs after Tuckr deploys nix group
 - Creates machine.nix if missing
 - Uses `generate-machine-config` if available
 
@@ -90,10 +90,10 @@ Changes take effect immediately - no need to sync files.
 
 1. Clone dotfiles and deploy with Tuckr:
    ```bash
-   tuckr add nix_macos
+   tuckr add nix
    ```
 
-2. The `post_up_nix_macos` hook will create machine.nix automatically
+2. The `post_up_nix` hook will create machine.nix automatically
 
 3. Or run manually:
    ```bash
@@ -173,7 +173,7 @@ Both work! Tuckr may create a symlink if the file exists in the repo, or it may 
 - Rebuilds darwin/home-manager
 - Use `--skip-check` to skip flake check
 
-### `post_up_nix_macos` (Hook)
+### `post_up_nix` (Hook)
 
 - Runs after Tuckr deployment
 - Ensures machine.nix exists

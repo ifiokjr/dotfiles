@@ -101,11 +101,11 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 ### Development Tools
 
-#### `nix_macos` (Platform-specific)
+#### `nix`
 
-**Location:** `Configs/nix_macos/.config/nix/` **Deploys:** `~/.config/nix/` **Description:** Nix Darwin system configuration including flake.nix, darwin.nix, and home.nix. **Platform:** macOS only (Darwin-specific)
+**Location:** `Configs/nix/.config/nix/` **Deploys:** `~/.config/nix/` **Description:** Nix system configuration including flake.nix, darwin.nix, and home.nix. Uses nix-darwin on macOS, standalone home-manager on Linux.
 
-**Hook:** `post_nix_macos` - Automatically rebuilds Darwin configuration after deployment
+**Hook:** `post_nix` - Automatically rebuilds system configuration after deployment
 
 #### `direnv`
 
@@ -131,7 +131,7 @@ Tuckr supports hooks that run at different stages of deployment:
 
 ### Active Hooks
 
-- **`post_nix_macos`**: Runs `darwin-rebuild switch` after nix config changes
+- **`post_nix`**: Runs `rebuild` after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux)
 - **`post_nushell`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
 
 ### Hook Naming Convention
@@ -160,7 +160,7 @@ curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/se
 
 # Deploy core groups
 tuckr set nushell
-tuckr add nix_macos
+tuckr add nix
 
 # Deploy development tools
 tuckr add dprint direnv kdl lazygit
@@ -255,11 +255,9 @@ rm -rf Configs/groupname
 
 ## Platform-Specific Groups
 
-Groups with `_macos`, `_linux`, or `_windows` suffixes only deploy on matching platforms:
+The `nix` group deploys on all platforms, using nix-darwin on macOS and standalone home-manager on Linux.
 
-- `nix_macos` - Only deploys on macOS (uses nix-darwin)
-
-This prevents incompatible configs from being deployed when cloning to different systems.
+Other groups with `_macos`, `_linux`, or `_windows` suffixes only deploy on matching platforms.
 
 ## Tuckr vs Stow
 
@@ -383,15 +381,15 @@ sudo update
 - Running with sudo changes context to root user ($HOME becomes /var/root)
 - Root can't access your user's cache, and builds may fail or use wrong paths
 
-Or let the `post_nix_macos` hook handle rebuilds:
+Or let the `post_nix` hook handle rebuilds:
 
 ```bash
-tuckr set nix_macos
+tuckr set nix
 ```
 
 ## Custom Nix Packages
 
-The dotfiles include custom Nix packages that aren't available in nixpkgs or have special requirements. These are located in `Configs/nix_macos/.config/nix/packages/`.
+The dotfiles include custom Nix packages that aren't available in nixpkgs or have special requirements. These are located in `Configs/nix/.config/nix/packages/`.
 
 ### pnpm-standalone
 
@@ -440,7 +438,7 @@ cd ~/.config/nix/packages
 
 If you prefer full manual control:
 
-1. Edit `Configs/nix_macos/.config/nix/packages/pnpm-standalone.nix`
+1. Edit `Configs/nix/.config/nix/packages/pnpm-standalone.nix`
 2. Update the `version` variable (e.g., `version = "10.29.0";`)
 3. Set the hash for your platform to `lib.fakeSha256`:
    ```nix
@@ -497,7 +495,7 @@ pnpm env remove --global 18
 
 **Note:** The `update:pnpm:version` script automatically installs the latest Node.js after updating pnpm, so you typically don't need to run `update:node` separately.
 
-For more details about the custom package system, see `Configs/nix_macos/.config/nix/packages/readme.md`.
+For more details about the custom package system, see `Configs/nix/.config/nix/packages/readme.md`.
 
 ## Resources
 

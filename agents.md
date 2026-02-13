@@ -55,7 +55,7 @@ If you prefer manual setup:
 
 # Deploy configuration groups
 tuckr set nushell                    # Shell config (runs hooks)
-tuckr add nix_macos                  # Core system configs (macOS only)
+tuckr add nix                        # Nix system configs (all platforms)
 tuckr add dprint direnv kdl lazygit  # Development tools
 tuckr set yazelix                 # Terminal IDE (runs pre-hook to verify dependencies)
 tuckr add zellij                  # Terminal multiplexer
@@ -76,14 +76,15 @@ tuckr set <group>              # Deploy and run hooks (preferred for groups with
 tuckr status                   # Check deployment status of all groups
 ```
 
-### Nix Commands (macOS)
+### Nix Commands
 
 ```bash
-# Rebuild Darwin system configuration (automatically runs via post_nix_macos hook)
-sudo darwin-rebuild switch --flake ~/.config/nix
+# Rebuild system configuration (automatically runs via post_nix hook)
+# macOS: darwin-rebuild switch, Linux: home-manager switch
+rebuild
 
 # Or let the hook handle it
-tuckr set nix_macos
+tuckr set nix
 ```
 
 ### Configuration Updates
@@ -107,7 +108,7 @@ The repository contains 10 configuration groups organized in `Configs/`:
 | Group         | Files | Platform | Purpose                                     | Hook             |
 | ------------- | ----- | -------- | ------------------------------------------- | ---------------- |
 | **yazelix**   | 320   | All      | Terminal IDE (Yazi + Zellij + Helix)        | None             |
-| **nix_macos** | 6     | macOS    | Darwin system configuration with Nix flakes | `post_nix_macos` |
+| **nix**       | 6     | All      | System configuration with Nix flakes        | `post_nix`       |
 | **nushell**   | 6     | All      | Nushell shell configuration & modules       | `post_nushell`   |
 | **ghostty**   | 1     | All      | Ghostty terminal emulator config            | None             |
 | **zellij**    | 4     | All      | Terminal multiplexer config & layouts       | None             |
@@ -127,7 +128,7 @@ The repository contains 10 configuration groups organized in `Configs/`:
 <dotfiles-repo>/
 ├── Configs/                    # Configuration groups
 │   ├── yazelix/               # Terminal IDE (95% of repository)
-│   ├── nix_macos/             # Nix Darwin system config
+│   ├── nix/                   # Nix system config (darwin + home-manager)
 │   ├── nushell/               # Nushell shell config
 │   ├── ghostty/               # Ghostty terminal config
 │   ├── zellij/                # Terminal multiplexer
@@ -137,7 +138,7 @@ The repository contains 10 configuration groups organized in `Configs/`:
 │   ├── kdl/                   # KDL formatter
 │   └── lazygit/               # Git TUI
 ├── Hooks/                      # Pre/post deployment scripts
-│   ├── post_nix_macos         # Rebuilds Darwin after Nix changes
+│   ├── post_nix               # Rebuilds system after Nix changes
 │   └── post_nushell           # Generates vendor autoload, sets default shell
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
 └── readme.md                   # Full documentation
@@ -166,7 +167,7 @@ Hooks are executable bash scripts in `Hooks/` directory:
 
 **Active hooks:**
 
-1. **`post_nix_macos`** - Automatically rebuilds Darwin configuration after Nix config deployment
+1. **`post_nix`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
 2. **`post_nushell`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
 ## Yazelix Terminal IDE
@@ -242,9 +243,9 @@ Configs/yazelix/.config/yazelix/
 - Unescaped parentheses trigger command substitution
 - "Command not found" errors in strings usually indicate incorrect escaping
 
-## Nix System Configuration (macOS)
+## Nix System Configuration
 
-The `nix_macos` group contains a complete Nix Darwin system configuration with integrated Home Manager.
+The `nix` group contains a complete Nix system configuration with integrated Home Manager (nix-darwin on macOS, standalone home-manager on Linux).
 
 ### Key Files
 
@@ -319,7 +320,7 @@ Since configurations are symlinked, changes are live immediately:
 1. Edit config file (in Configs/ or via home directory symlink)
 2. Changes take effect instantly
 3. Commit changes to git when satisfied
-4. For Nix changes, the `post_nix_macos` hook rebuilds the system automatically
+4. For Nix changes, the `post_nix` hook rebuilds the system automatically
 
 ## Important Patterns
 
@@ -493,11 +494,11 @@ chmod +x Hooks/*
 ### Nix Flake Issues
 
 ```bash
-# Manually rebuild Darwin configuration
-sudo darwin-rebuild switch --flake ~/.config/nix
+# Rebuild system configuration (cross-platform)
+rebuild
 
 # Or use the hook
-tuckr set nix_macos
+tuckr set nix
 ```
 
 ### Platform Mismatch

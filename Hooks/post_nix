@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Rebuild Darwin configuration after nix config changes
-echo "Rebuilding Darwin configuration..."
+# Rebuild system configuration after nix config changes
+echo "Rebuilding system configuration..."
 
 # Use the rebuild script if available, otherwise fall back to direct command
 if command -v rebuild &> /dev/null; then

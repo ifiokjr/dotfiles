@@ -1,0 +1,11 @@
+.git
+result
+result-*
+.devenv
+.devenv.flake.nix
+node_modules
+target/
+.direnv
+.cache
+*.log
+.DS_Store

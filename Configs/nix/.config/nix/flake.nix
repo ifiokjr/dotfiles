@@ -1,5 +1,5 @@
 {
-  description = "Darwin system flake";
+  description = "System flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -133,13 +133,13 @@
       # This file is gitignored and should exist at the flake location
       #
       # Since machine.nix is gitignored, it won't be copied to the Nix store.
-      # We use impure evaluation to read from DARWIN_USER_CONFIG_DIR (set by rebuild script)
+      # We use impure evaluation to read from NIX_USER_CONFIG_DIR (set by rebuild script)
       # or fall back to the flake's directory via self.outPath + "/machine.nix"
       loadMachineConfig =
         let
-          # Use DARWIN_USER_CONFIG_DIR if set (passed through sudo by rebuild script)
+          # Use NIX_USER_CONFIG_DIR if set (passed through sudo by rebuild script)
           # Falls back to self.outPath for backwards compatibility
-          configDir = builtins.getEnv "DARWIN_USER_CONFIG_DIR";
+          configDir = builtins.getEnv "NIX_USER_CONFIG_DIR";
           configPath = if configDir != "" then configDir + "/machine.nix" else self.outPath + "/machine.nix";
         in
         if builtins.pathExists configPath then
@@ -165,12 +165,12 @@
     in
     {
       # Build darwin flake using:
-      #   sudo DARWIN_USER_CONFIG_DIR=~/.config/nix darwin-rebuild switch --flake ~/.config/nix --impure
+      #   sudo NIX_USER_CONFIG_DIR=~/.config/nix darwin-rebuild switch --flake ~/.config/nix --impure
       #
       # Or use the rebuild script (recommended):
       #   rebuild
       #
-      # The configuration is read from machine.nix in DARWIN_USER_CONFIG_DIR.
+      # The configuration is read from machine.nix in NIX_USER_CONFIG_DIR.
       # --impure flag is required to read gitignored machine.nix via env var.
 
       # Default configuration loaded from machine.nix

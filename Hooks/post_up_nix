@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Post-up hook for nix_macos group
+# Post-up hook for nix group
 # Ensures machine.nix exists after deployment
 
 set -e

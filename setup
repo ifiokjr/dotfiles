@@ -281,7 +281,7 @@ deploy_groups() {
         IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
         for group in "${GROUPS[@]}"; do
             print_info "Deploying group: $group"
-            if [[ "$group" == "yazelix" ]] || [[ "$group" == "nix_macos" ]] || [[ "$group" == "nushell" ]]; then
+            if [[ "$group" == "yazelix" ]] || [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
                 tuckr set "$group" || print_warning "Failed to deploy $group (hook may have failed)"
             else
                 tuckr add "$group" || print_warning "Failed to deploy $group"
@@ -309,7 +309,7 @@ deploy_groups() {
     echo ""
 
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("yazelix" "nix_macos" "nushell")
+    local hook_groups=("yazelix" "nix" "nushell")
 
     # Deploy all groups automatically
     for group in "${all_groups[@]}"; do
@@ -322,21 +322,21 @@ deploy_groups() {
             fi
         done
 
-        # Special handling for nix_macos — skip on non-macOS platforms
-        if [[ "$group" == "nix_macos" ]]; then
-            if [[ "$PLATFORM" != "macos" ]]; then
-                print_info "Skipping $group (macOS-only group, current platform: $PLATFORM)"
-                continue
-            fi
-
+        # Special handling for nix — cross-platform deployment
+        if [[ "$group" == "nix" ]]; then
             echo ""
-            print_header "Nix Darwin Configuration"
-            echo -e "${YELLOW}Note:${NC} nix_macos deployment will run 'darwin-rebuild switch' which requires sudo"
+            if [[ "$PLATFORM" == "macos" ]]; then
+                print_header "Nix Darwin Configuration"
+                echo -e "${YELLOW}Note:${NC} nix deployment will run 'darwin-rebuild switch' which requires sudo"
+            else
+                print_header "Nix Home Manager Configuration"
+                echo -e "${YELLOW}Note:${NC} nix deployment will run 'home-manager switch'"
+            fi
             print_info "This may take several minutes..."
             echo ""
 
             if ! tuckr set "$group" 2>&1; then
-                print_warning "Failed to deploy $group (this is expected if darwin-rebuild fails on first run)"
+                print_warning "Failed to deploy $group (this is expected if rebuild fails on first run)"
             else
                 print_success "Deployed $group"
             fi

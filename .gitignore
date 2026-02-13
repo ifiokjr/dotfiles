@@ -1,7 +1,7 @@
 # Nix build outputs and artifacts
-Configs/nix_macos/.config/nix/result
-Configs/nix_macos/.config/nix/.devenv/
-Configs/nix_macos/.config/nix/.devenv.flake.nix
+Configs/nix/.config/nix/result
+Configs/nix/.config/nix/.devenv/
+Configs/nix/.config/nix/.devenv.flake.nix
 **/result
 **/result-*
 **/flake.lock

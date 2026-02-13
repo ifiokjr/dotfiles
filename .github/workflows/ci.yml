@@ -96,10 +96,19 @@ jobs:
         run: |
           nix profile install nixpkgs#nushell
           nu Configs/scripts/.local/bin/generate-machine-config \
-            --output Configs/nix_macos/.config/nix/machine.nix
+            --output Configs/nix/.config/nix/machine.nix
           # git-add so Nix includes it when copying source to the store
-          git add --force Configs/nix_macos/.config/nix/machine.nix
+          git add --force Configs/nix/.config/nix/machine.nix
 
       - name: Nix flake check
         run: |
-          nix flake check ./Configs/nix_macos/.config/nix --impure --no-build
+          nix flake check ./Configs/nix/.config/nix --impure --no-build
+
+  docker-integration:
+    name: Docker Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run Docker integration test
+        run: docker build -t dotfiles-test . && docker run --rm dotfiles-test

@@ -128,8 +128,8 @@ def main [
     info "Running rebuild to install the update..."
     print ""
 
-    let rebuild_cmd = "ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#default --impure"
-    let rebuild_result = do -i { ^bash -c $rebuild_cmd }
+    # Use the cross-platform rebuild script
+    let rebuild_result = do -i { ^rebuild }
     if ($env.LAST_EXIT_CODE == 0) {
         print ""
         success $"cursor-cli updated to ($latest_version)!"

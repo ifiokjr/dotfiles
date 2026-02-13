@@ -122,10 +122,8 @@ def main [] {
         info $"Running rebuild to install pnpm ($latest_version)..."
         print ""
 
-        # Rebuild via bash -c: ulimit raises file descriptor limit for nix builds,
-        # sudo is needed for darwin-rebuild, --impure for gitignored machine.nix
-        let rebuild_cmd = $"ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#default --impure"
-        let rebuild_result = do -i { ^bash -c $rebuild_cmd }
+        # Use the cross-platform rebuild script
+        let rebuild_result = do -i { ^rebuild }
         if ($env.LAST_EXIT_CODE == 0) {
             print ""
             success $"pnpm successfully updated to version ($latest_version)!"
