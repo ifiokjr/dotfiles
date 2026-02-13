@@ -33,24 +33,34 @@ $env.config = {
     }
 
     hooks: {
+        # Direnv integration - loads/unloads environment variables when
+        # entering/leaving directories with .envrc files (e.g. devenv).
+        # Based on: https://direnv.net/docs/hook.html
         env_change: {
             PWD: [{ ||
-                # Direnv hook - runs on directory change
-                if (which direnv | is-not-empty) {
-                    try {
-                        let direnv_out = (^direnv export json | from json --objects | default {})
-                        if ($direnv_out | is-not-empty) {
-                            # Handle PATH specially - convert string back to list
-                            let new_env = if ($direnv_out | get -o PATH | is-not-empty) {
-                                let path_list = ($direnv_out | get PATH | split row (char esep))
-                                $direnv_out | merge { PATH: $path_list }
-                            } else {
-                                $direnv_out
-                            }
-                            $new_env | load-env
-                        }
-                    }
+                # Skip if direnv is not installed
+                if (which direnv | is-empty) { return }
+
+                # Ask direnv what env vars changed for the new directory.
+                # `direnv export json` returns JSON when changes exist, or
+                # empty string when nothing changed — `default {}` handles that.
+                let direnv_out = (direnv export json | from json | default {})
+
+                # Nothing to do when direnv reports no changes
+                if ($direnv_out | is-empty) { return }
+
+                # Direnv returns PATH as a colon-separated string, but nushell
+                # requires PATH to be a list. Convert it before loading so that
+                # command lookups continue to work.
+                let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
+                    let path_as_list = ($direnv_out | get PATH | split row (char esep))
+                    $direnv_out | merge { PATH: $path_as_list }
+                } else {
+                    $direnv_out
                 }
+
+                # Apply all environment variable changes from direnv
+                $env_to_load | load-env
             }]
         }
     }
@@ -429,6 +439,40 @@ def c [...paths: string] {
         ^open -a "Cursor" .
     } else {
         $paths | each { |p| ^open -a "Cursor" $p }
+    }
+}
+
+# Directory history (like oh-my-zsh 'd' command)
+# `d` shows recent directories numbered 0-9 (0 is always ~).
+# `d <n>` jumps to directory at that index.
+def --env d [
+    index?: int  # Jump to directory at this index
+] {
+    let zoxide_dirs = (
+        ^zoxide query -l -s
+        | lines
+        | where { |l| ($l | str trim | is-not-empty) }
+        | each { |l|
+            let parts = ($l | str trim | split row " " | where { $in | is-not-empty })
+            ($parts | skip 1 | str join " ")
+        }
+        | where { |p| ($p | path exists) and ($p != $env.HOME) }
+        | first 9
+    )
+    let dirs = ([$env.HOME] | append $zoxide_dirs)
+
+    if ($index != null) {
+        if $index >= 0 and $index < ($dirs | length) {
+            cd ($dirs | get $index)
+        } else {
+            print $"(ansi red)Invalid index:(ansi reset) ($index) \(0-($dirs | length | $in - 1)\)"
+        }
+        return
+    }
+
+    $dirs | enumerate | each { |r|
+        let display = ($r.item | str replace $env.HOME "~")
+        print $"(ansi cyan)($r.index)(ansi reset)\t($display)"
     }
 }
 
