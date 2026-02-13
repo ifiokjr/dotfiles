@@ -12,7 +12,7 @@ export def --env load [] {
         } | each { |line|
             let eq_pos = ($line | str index-of "=")
             if ($eq_pos == -1) { return null }
-            let key = ($line | str substring 0..$eq_pos | str trim)
+            let key = ($line | str substring 0..<$eq_pos | str trim)
             let value = ($line
                 | str substring ($eq_pos + 1)..
                 | str trim
