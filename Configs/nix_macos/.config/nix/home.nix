@@ -7,6 +7,7 @@
 let
   # Custom packages
   pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
+  cursor-cli-custom = pkgs.callPackage ./packages/cursor-cli.nix { };
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -36,7 +37,7 @@ in
       claude-code
       spec-kit
       code-cursor
-      cursor-cli
+      cursor-cli-custom
       cloudflared
       deno
       devenv

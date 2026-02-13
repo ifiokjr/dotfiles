@@ -40,11 +40,13 @@ fi
 # Generate vendor autoload scripts using nushell to resolve the correct data dir
 # (on macOS without XDG_DATA_HOME, this is ~/Library/Application Support/nushell/)
 if [ -x "$NU_PATH" ]; then
+    # shellcheck disable=SC2016
     VENDOR_AUTOLOAD_DIR=$("$NU_PATH" -c '$nu.data-dir | path join "vendor/autoload"')
     mkdir -p "$VENDOR_AUTOLOAD_DIR"
 
     # Generate starship init (per https://starship.rs/guide/)
     if command -v starship &> /dev/null; then
+        # shellcheck disable=SC2016
         "$NU_PATH" -c 'starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")'
         echo -e "${GREEN}✓${NC} Generated starship.nu"
     else
@@ -77,6 +79,7 @@ if [ -x "$NU_PATH" ]; then
 
     # Generate zoxide init
     if command -v zoxide &> /dev/null; then
+        # shellcheck disable=SC2016
         "$NU_PATH" -c 'zoxide init nushell | save -f ($nu.data-dir | path join "vendor/autoload/zoxide.nu")'
         echo -e "${GREEN}✓${NC} Generated zoxide.nu"
     else

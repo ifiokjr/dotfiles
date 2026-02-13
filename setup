@@ -105,7 +105,7 @@ detect_platform() {
         Linux*)
             PLATFORM="linux"
             ;;
-        CYGWIN*|MINGW*|MSYS*|MINGW32*|MINGW64*)
+        CYGWIN*|MINGW32*|MINGW64*|MINGW*|MSYS*)
             PLATFORM="windows"
             ;;
         FreeBSD*|OpenBSD*|NetBSD*)

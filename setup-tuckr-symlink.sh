@@ -34,7 +34,7 @@ detect_platform() {
             PLATFORM="linux"
             TUCKR_LOCATION="$HOME/.config/dotfiles"
             ;;
-        CYGWIN*|MINGW*|MSYS*|MINGW32*|MINGW64*)
+        CYGWIN*|MINGW32*|MINGW64*|MINGW*|MSYS*)
             PLATFORM="windows"
             TUCKR_LOCATION="$HOME/AppData/Roaming/dotfiles"
             ;;
