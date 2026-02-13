@@ -35,10 +35,9 @@ in
       cargo-sweep
       cargo-update
       claude-code
-      spec-kit
+      cloudflared
       code-cursor
       cursor-cli-custom
-      cloudflared
       deno
       devenv
       direnv
@@ -61,6 +60,7 @@ in
       nixfmt
       opencode
       rustup
+      spec-kit
 
       # Shell & Terminal
       bashInteractive
