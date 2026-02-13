@@ -38,7 +38,7 @@ stdenv.mkDerivation {
     sha256 = hashes.${platformKey} or lib.fakeSha256;
   };
 
-  sourceRoot = ".";
+  sourceRoot = "dist-package";
   dontBuild = true;
   dontStrip = true; # Bundled binaries (node, rg) are pre-stripped
 
@@ -53,6 +53,7 @@ stdenv.mkDerivation {
 
     # Make binaries executable
     chmod +x $out/lib/cursor-cli/cursor-agent
+    chmod +x $out/lib/cursor-cli/cursor-askpass
     chmod +x $out/lib/cursor-cli/node
     chmod +x $out/lib/cursor-cli/rg
     chmod +x $out/lib/cursor-cli/cursorsandbox
