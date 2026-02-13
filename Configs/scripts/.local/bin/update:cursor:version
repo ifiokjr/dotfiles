@@ -89,7 +89,7 @@ def main [
         info $"Prefetching ($platform.key)..."
 
         let hash = try {
-            ^nix-prefetch-url --unpack $url out+err>| lines | last | str trim
+            ^nix-prefetch-url $url out+err>| lines | last | str trim
         } catch {
             err $"Failed to prefetch ($platform.key)"
             info "Restoring backup..."

@@ -21,10 +21,10 @@ let
   arch = if stdenv.isAarch64 then "arm64" else "x64";
 
   hashes = {
-    "darwin-arm64" = "sha256-VVmPZot+SIrcB5rbI/4vdWKWUg6oPpgD8gwcTi8uaTo=";
-    "darwin-x64" = "sha256-Xl/0rpx6gSTS9fkalxw/TLzB7g50uTA14oGpaUdewaA=";
-    "linux-x64" = "sha256-QqmDE0yoA+ydmM7G9KnDF2SZxDuzl5mBNJSMPBXCRX0=";
-    "linux-arm64" = "sha256-CaG6WHrOJtuws+IDXt1/Sis+WQywkp9XHJvB3n4QRTo=";
+    "darwin-arm64" = "sha256-R5kEfd84IaUXuN+PIzpGD1NGPzD6xxM9NAXAAt6d0N8=";
+    "darwin-x64" = "sha256-G23LC7Sl1GjfaECndSuyCxHK4drkJKG3B1U2k5SAHJA=";
+    "linux-x64" = "sha256-Nj6q11iaa++b5stsEu1eBRAYUFRPft84XcHuTCZL5D0=";
+    "linux-arm64" = "sha256-6oajVZw599vzy2c1olEzoIlqbmfZRK1atb85fiR72y0=";
   };
 
   platformKey = "${os}-${arch}";
