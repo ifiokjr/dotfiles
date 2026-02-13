@@ -3,7 +3,12 @@
 # Tuckr Platform Symlink Setup
 #
 # This script creates a platform-specific symlink from the expected tuckr location
-# to the actual dotfiles repository in ~/Developer/.dotfiles
+# to the actual dotfiles repository (auto-detected from this script's location).
+#
+# Usage:
+#   ./setup-tuckr-symlink.sh [DOTFILES_DIR]
+#
+# If DOTFILES_DIR is not provided, defaults to the directory containing this script.
 #
 # Tuckr expects dotfiles in different locations per platform:
 #   - macOS:       ~/Library/Application Support/dotfiles
@@ -20,8 +25,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Dotfiles repository location (canonical source)
-DOTFILES_REPO="$HOME/Developer/.dotfiles"
+# Dotfiles repository location: use first argument if provided, otherwise
+# auto-detect from this script's directory (it lives at the repo root).
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+DOTFILES_REPO="${1:-$SCRIPT_DIR}"
 
 # Detect platform and set target symlink location
 detect_platform() {

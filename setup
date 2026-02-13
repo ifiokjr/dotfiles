@@ -13,7 +13,7 @@
 #   Remote: curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup.sh | bash
 #
 # Options:
-#   --cwd PATH          Clone dotfiles to PATH (default: ~/Developer/.dotfiles)
+#   --cwd PATH          Clone dotfiles to PATH (default: current directory or ~/Developer/.dotfiles)
 #   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
 #   --skip-nix          Skip Nix installation (use if already installed)
 #   --help              Show this help message
@@ -241,9 +241,7 @@ clone_dotfiles() {
 setup_tuckr_symlink() {
     print_header "Setting up Tuckr symlink"
 
-    cd "$DOTFILES_DIR"
-
-    if ! ./setup-tuckr-symlink.sh; then
+    if ! "$DOTFILES_DIR/setup-tuckr-symlink.sh" "$DOTFILES_DIR"; then
         print_error "Failed to setup Tuckr symlink"
         exit 1
     fi

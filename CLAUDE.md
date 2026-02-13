@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a **Tuckr-managed dotfiles repository** that uses symlinks to deploy configuration files to the home directory. The repository is located at `~/Developer/.dotfiles` but Tuckr expects it at platform-specific locations (e.g., `~/Library/Application Support/dotfiles` on macOS), so `setup-tuckr-symlink.sh` creates the necessary symlink.
+This is a **Tuckr-managed dotfiles repository** that uses symlinks to deploy configuration files to the home directory. The repo can be cloned anywhere on disk. Tuckr expects dotfiles at platform-specific locations (e.g., `~/Library/Application Support/dotfiles` on macOS), so `setup-tuckr-symlink.sh` auto-detects the repo location and creates the necessary symlink.
 
 **Key characteristics:**
 - Platform-aware deployment (macOS, Linux, BSD, Windows)
@@ -23,9 +23,9 @@ The easiest way to set up your environment is using the automated setup script:
 # Remote installation (on a new machine)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup.sh | bash
 
-# Or clone first, then run locally
-git clone https://github.com/ifiokjr/dotfiles.git ~/Developer/.dotfiles
-cd ~/Developer/.dotfiles
+# Or clone anywhere, then run locally
+git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
+cd ~/path/to/dotfiles
 ./setup
 ```
 
@@ -37,7 +37,7 @@ The setup script will:
 5. Clean up temporary packages
 
 **Options:**
-- `--cwd PATH` - Clone dotfiles to custom path (default: `~/Developer/.dotfiles`)
+- `--cwd PATH` - Clone dotfiles to custom path (default: current directory or `~/Developer/.dotfiles`)
 - `--groups GROUPS` - Deploy only specific comma-separated groups (otherwise deploys all)
 - `--skip-nix` - Skip Nix installation if already installed
 - `--help` - Show help message
@@ -87,8 +87,8 @@ Since files are symlinked, edits are immediate:
 # Edit via symlink in home directory
 vim ~/.config/nushell/config.nu
 
-# Or edit directly in Configs directory
-vim ~/Library/Application\ Support/dotfiles/Configs/nushell/.config/nushell/config.nu
+# Or edit directly in your dotfiles repo
+vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 # Changes are reflected instantly (same file via symlink)
 ```
@@ -116,7 +116,7 @@ The repository contains 10 configuration groups organized in `Configs/`:
 
 ### Directory Structure
 ```
-~/Developer/.dotfiles/
+<dotfiles-repo>/
 ├── Configs/                    # Configuration groups
 │   ├── yazelix/               # Terminal IDE (95% of repository)
 │   ├── nix_macos/             # Nix Darwin system config
@@ -264,8 +264,7 @@ darwinConfigurations.newuser = mkDarwinConfig {
 
 ### Adding a New Configuration Group
 ```bash
-# Create group directory structure
-cd ~/Library/Application\ Support/dotfiles
+# Create group directory structure (from your dotfiles repo root)
 mkdir -p Configs/newtool/.config/newtool
 
 # Add config files (mirror home directory structure)
@@ -278,11 +277,11 @@ tuckr add newtool
 
 ### Creating Hooks
 ```bash
-# Create hook script in Hooks/ directory
-vim ~/Library/Application\ Support/dotfiles/Hooks/post_newtool
+# Create hook script in Hooks/ directory (from your dotfiles repo root)
+vim Hooks/post_newtool
 
 # Make executable
-chmod +x ~/Library/Application\ Support/dotfiles/Hooks/post_newtool
+chmod +x Hooks/post_newtool
 
 # Hook runs automatically when using `tuckr set newtool`
 ```
@@ -301,9 +300,9 @@ Groups with suffixes (`_macos`, `_linux`, `_windows`) only deploy on matching pl
 
 ### Symlink Bootstrap
 The `setup-tuckr-symlink.sh` script is crucial for initial setup:
-1. Detects platform (macOS, Linux, BSD, Windows)
-2. Verifies dotfiles exist at `~/Developer/.dotfiles`
-3. Creates platform-specific symlink (e.g., `~/Library/Application Support/dotfiles` → `~/Developer/.dotfiles`)
+1. Auto-detects the repo location from its own directory (or accepts a path argument)
+2. Detects platform (macOS, Linux, BSD, Windows)
+3. Creates platform-specific symlink (e.g., `~/Library/Application Support/dotfiles` → `<dotfiles-repo>`)
 4. Handles existing symlinks and collision detection
 5. Provides colored output for user feedback
 
@@ -439,8 +438,8 @@ tuckr add --force <group>
 
 ### Hook Not Running
 ```bash
-# Ensure hooks are executable
-chmod +x ~/Library/Application\ Support/dotfiles/Hooks/*
+# Ensure hooks are executable (from your dotfiles repo root)
+chmod +x Hooks/*
 ```
 
 ### Nix Flake Issues

@@ -12,9 +12,9 @@ Set up your entire environment with one command:
 # Remote installation (fastest way to get started)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
-# Or clone first, then run locally
-git clone https://github.com/ifiokjr/dotfiles.git ~/Developer/.dotfiles
-cd ~/Developer/.dotfiles
+# Or clone anywhere you like, then run locally
+git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
+cd ~/path/to/dotfiles
 ./setup
 ```
 
@@ -22,7 +22,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 
 **Setup Script Options:**
 - `--groups <groups>` - Deploy only specific groups (comma-separated, otherwise deploys all)
-- `--cwd <path>` - Clone to custom location (default: ~/Developer/.dotfiles)
+- `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--help` - Show help
 
@@ -48,12 +48,14 @@ tuckr status
 ## Directory Structure
 
 ```
-~/Library/Application Support/dotfiles/
+<dotfiles-repo>/
 ├── Configs/          # Dotfiles organized by program/group
 ├── Hooks/            # Pre/post deployment scripts
 ├── Secrets/          # Encrypted files (not currently used)
 └── .migration/       # Old stow files and templates
 ```
+
+The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a platform-specific symlink from Tuckr's expected location to your actual repo path.
 
 ## Available Groups
 
@@ -184,8 +186,7 @@ tuckr status
 ### Adding a New Dotfile
 
 ```bash
-# Create group directory structure
-cd ~/Library/Application\ Support/dotfiles
+# Create group directory structure (from your dotfiles repo root)
 mkdir -p Configs/newtool/.config/newtool
 
 # Add your config files to Configs/newtool/
@@ -200,8 +201,8 @@ tuckr add newtool
 Dotfiles are symlinked, so changes are immediate:
 
 ```bash
-# Edit file directly in Configs directory
-vim ~/Library/Application\ Support/dotfiles/Configs/nushell/.config/nushell/config.nu
+# Edit file directly in your dotfiles repo
+vim Configs/nushell/.config/nushell/config.nu
 
 # Or edit via symlink in home directory
 vim ~/.config/nushell/config.nu
@@ -255,8 +256,8 @@ vim ~/.env.dotfiles
 # Remove symlinks for a group
 tuckr rm groupname
 
-# To delete the group entirely
-rm -rf ~/Library/Application\ Support/dotfiles/Configs/groupname
+# To delete the group entirely (from your dotfiles repo root)
+rm -rf Configs/groupname
 ```
 
 ## Platform-Specific Groups
@@ -281,12 +282,13 @@ This repository was migrated from GNU Stow. Key differences:
 
 ## Access Location
 
-For easier access, a symlink exists at:
+Tuckr expects dotfiles at a platform-specific path. The `setup-tuckr-symlink.sh` script creates a symlink:
 ```
-~/Developer/.dotfiles → ~/Library/Application Support/dotfiles
+~/Library/Application Support/dotfiles → <your-dotfiles-repo>  (macOS)
+~/.config/dotfiles → <your-dotfiles-repo>                      (Linux/BSD)
 ```
 
-Use whichever path is more convenient.
+You can edit files from either location (they're the same directory via symlink).
 
 ## Migration Artifacts
 
@@ -309,16 +311,16 @@ tuckr add --force <group>
 
 ### Hook Not Running
 
-Ensure hooks are executable:
+Ensure hooks are executable (from your dotfiles repo root):
 ```bash
-chmod +x ~/Library/Application\ Support/dotfiles/Hooks/*
+chmod +x Hooks/*
 ```
 
 ### Group Not Found
 
-Tuckr looks for groups in `Configs/` directory. Verify:
+Tuckr looks for groups in `Configs/` directory. Verify (from your dotfiles repo root):
 ```bash
-ls ~/Library/Application\ Support/dotfiles/Configs/
+ls Configs/
 ```
 
 ### Nix Flake Update Issues
