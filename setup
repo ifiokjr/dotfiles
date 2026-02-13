@@ -39,6 +39,7 @@ SKIP_NIX=false
 # Track what we install for cleanup
 INSTALLED_GIT=false
 INSTALLED_TUCKR=false
+INSTALLED_NUSHELL=false
 
 # Print functions
 print_header() {
@@ -195,6 +196,24 @@ install_tuckr() {
 
     INSTALLED_TUCKR=true
     print_success "Tuckr installed"
+}
+
+# Install nushell via nix profile if needed (scripts require it)
+install_nushell() {
+    if command_exists nu; then
+        print_success "Nushell is already available"
+        return 0
+    fi
+
+    print_header "Installing nushell temporarily"
+
+    if ! nix profile install nixpkgs#nushell; then
+        print_error "Failed to install nushell"
+        exit 1
+    fi
+
+    INSTALLED_NUSHELL=true
+    print_success "Nushell installed"
 }
 
 # Clone the dotfiles repository
@@ -358,7 +377,7 @@ deploy_groups() {
                 # Check if install:helix:custom script exists
                 local helix_install_script="$DOTFILES_DIR/Configs/scripts/.local/bin/install:helix:custom"
                 if [ -f "$helix_install_script" ]; then
-                    if bash "$helix_install_script"; then
+                    if nu "$helix_install_script"; then
                         print_success "Custom Helix installed successfully"
                     else
                         print_warning "Failed to install custom Helix (you can run 'install:helix:custom' manually later)"
@@ -405,6 +424,11 @@ cleanup() {
         nix profile remove '.*tuckr.*' || print_warning "Could not remove tuckr (may already be removed)"
     fi
 
+    if [ "$INSTALLED_NUSHELL" = true ]; then
+        print_info "Removing nushell from nix profile"
+        nix profile remove '.*nushell.*' || print_warning "Could not remove nushell (may already be removed)"
+    fi
+
     if [ "$INSTALLED_GIT" = true ]; then
         print_info "Removing git from nix profile"
         nix profile remove '.*git.*' || print_warning "Could not remove git (may already be removed)"
@@ -439,8 +463,9 @@ main() {
         fi
     fi
 
-    # Always need tuckr
+    # Always need tuckr and nushell
     install_tuckr
+    install_nushell
 
     # Setup and deploy
     setup_tuckr_symlink
