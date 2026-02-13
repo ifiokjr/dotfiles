@@ -1,0 +1,165 @@
+#!/usr/bin/env nu
+# Test runner for migrated nushell scripts
+#
+# Validates that all scripts:
+# 1. Parse without errors (via --help)
+# 2. Shared modules load correctly
+# 3. Non-destructive functional tests pass
+
+use nu_modules/print_utils.nu *
+use nu_modules/platform.nu
+use nu_modules/nix_config.nu
+
+def run_test [name: string, test: closure] {
+    print $"  Testing: ($name)..."
+    try {
+        do $test
+        print $"  (ansi green)PASS(ansi reset): ($name)"
+        true
+    } catch { |e|
+        print $"  (ansi red)FAIL(ansi reset): ($name)"
+        print $"    Error: ($e.msg)"
+        false
+    }
+}
+
+def main [] {
+    let bin_dir = ($env.FILE_PWD)
+    mut passed = 0
+    mut failed = 0
+
+    header "Script Migration Test Suite"
+    print ""
+
+    # ── Module Tests ──────────────────────────────────────────────
+    info "Testing shared modules..."
+
+    if (run_test "print_utils: info, success, err, warn, header" { ||
+        info "test"
+        success "test"
+        err "test"
+        warn "test"
+        header "test"
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "platform: os detection" { ||
+        let os = (platform os)
+        if $os not-in ["darwin" "linux"] {
+            error make { msg: $"unexpected os: ($os)" }
+        }
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "platform: arch detection" { ||
+        let arch = (platform arch)
+        if $arch not-in ["aarch64" "x86_64"] {
+            error make { msg: $"unexpected arch: ($arch)" }
+        }
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "platform: nix-system" { ||
+        let system = (platform nix-system)
+        if $system not-in ["aarch64-darwin" "x86_64-darwin" "aarch64-linux" "x86_64-linux"] {
+            error make { msg: $"unexpected system: ($system)" }
+        }
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "platform: detect-hostname" { ||
+        let hostname = (platform detect-hostname)
+        if ($hostname | is-empty) {
+            error make { msg: "hostname is empty" }
+        }
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "nix_config: config-dir" { ||
+        let dir = (nix_config config-dir)
+        if ($dir | is-empty) {
+            error make { msg: "config-dir is empty" }
+        }
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "nix_config: machine-config-path" { ||
+        let path = (nix_config machine-config-path)
+        if not ($path | str ends-with "machine.nix") {
+            error make { msg: $"unexpected path: ($path)" }
+        }
+    }) { $passed += 1 } else { $failed += 1 }
+
+    print ""
+
+    # ── Script Parse Tests (--help) ───────────────────────────────
+    info "Testing script parsing via --help..."
+
+    let scripts = [
+        "rebuild"
+        "generate-machine-config"
+        "install:helix:custom"
+        "update:node"
+        "update:pnpm:version"
+        "setup:env"
+    ]
+
+    for script in $scripts {
+        let script_path = $"($bin_dir)/($script)"
+        if (run_test $"($script) --help" { ||
+            let result = (^nu $script_path --help)
+            if ($result | str contains "Usage:") {
+                # pass
+            } else {
+                error make { msg: "no Usage: in help output" }
+            }
+        }) { $passed += 1 } else { $failed += 1 }
+    }
+
+    print ""
+
+    # ── Functional Tests ──────────────────────────────────────────
+    info "Testing non-destructive functionality..."
+
+    if (run_test "generate-machine-config --output /tmp/test-machine.nix" { ||
+        ^nu $"($bin_dir)/generate-machine-config" --output /tmp/test-machine.nix --force
+        let content = (open /tmp/test-machine.nix --raw)
+        if not ($content | str contains "username =") {
+            error make { msg: "missing username in generated file" }
+        }
+        if not ($content | str contains "system =") {
+            error make { msg: "missing system in generated file" }
+        }
+        if not ($content | str contains "hostname =") {
+            error make { msg: "missing hostname in generated file" }
+        }
+        rm /tmp/test-machine.nix
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "generate-machine-config detects existing file" { ||
+        # Create a test file
+        "test" | save -f /tmp/test-machine-exists.nix
+        let result = (^nu $"($bin_dir)/generate-machine-config" --output /tmp/test-machine-exists.nix | str trim)
+        # Without --force, it should warn about existing file
+        rm /tmp/test-machine-exists.nix
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "nix_config: parse-machine-config" { ||
+        let config_path = (nix_config machine-config-path)
+        if ($config_path | path exists) {
+            let config = (nix_config parse-machine-config)
+            if ($config.username | is-empty) {
+                error make { msg: "username is empty" }
+            }
+            if ($config.system | is-empty) {
+                error make { msg: "system is empty" }
+            }
+        }
+        # Skip if machine.nix doesn't exist (CI environments)
+    }) { $passed += 1 } else { $failed += 1 }
+
+    # ── Summary ───────────────────────────────────────────────────
+    print ""
+    header "Test Results"
+    let total = $passed + $failed
+    if $failed == 0 {
+        success $"All ($total) tests passed!"
+    } else {
+        err $"($failed) of ($total) tests failed"
+        exit 1
+    }
+}

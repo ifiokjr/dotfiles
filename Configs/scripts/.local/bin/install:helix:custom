@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nu
 # Install custom Helix editor with Steel plugin system
 #
 # This script:
@@ -8,205 +8,162 @@
 # - Creates a symlink at ~/.local/bin/hx for easy access
 # - Creates a symlink at ~/.config/helix/runtime to the custom runtime
 
-set -e
+use nu_modules/print_utils.nu *
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+def check_requirements [] {
+    info "Checking requirements..."
 
-print_info() {
-    echo -e "${BLUE}==>${NC} $1"
-}
+    let missing = (
+        ["git" "cargo"]
+        | where { |tool| (which $tool | is-empty) }
+    )
 
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-print_warn() {
-    echo -e "${YELLOW}!${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
-
-# Configuration
-HELIX_DIR="$HOME/.custom-helix"
-HELIX_BIN="$HOME/.local/bin/hx"
-HELIX_RUNTIME_SRC="$HOME/.custom-helix/runtime"
-HELIX_RUNTIME_DEST="$HOME/.config/helix/runtime"
-REPO_URL="https://github.com/mattwparas/helix"
-BRANCH="steel-event-system"
-
-# Check if required tools are installed
-check_requirements() {
-    print_info "Checking requirements..."
-
-    local missing_tools=()
-
-    if ! command -v git >/dev/null 2>&1; then
-        missing_tools+=("git")
-    fi
-
-    if ! command -v cargo >/dev/null 2>&1; then
-        missing_tools+=("cargo (Rust)")
-    fi
-
-    if [ ${#missing_tools[@]} -gt 0 ]; then
-        print_error "Missing required tools: ${missing_tools[*]}"
-        print_info "Please install the missing tools and try again."
+    if ($missing | is-not-empty) {
+        err $"Missing required tools: ($missing | str join ', ')"
+        info "Please install the missing tools and try again."
         exit 1
-    fi
+    }
 
-    print_success "All requirements met"
+    success "All requirements met"
 }
 
-# Clone or update the repository
-setup_repository() {
-    if [ -d "$HELIX_DIR" ]; then
-        print_info "Repository exists at $HELIX_DIR"
-        print_info "Updating to latest $BRANCH..."
+def setup_repository [helix_dir: string, repo_url: string, branch: string] {
+    if ($helix_dir | path exists) {
+        info $"Repository exists at ($helix_dir)"
+        info $"Updating to latest ($branch)..."
 
-        cd "$HELIX_DIR"
+        cd $helix_dir
 
         # Fetch latest changes
-        git fetch origin
+        ^git fetch origin
 
         # Check if we're on the correct branch
-        current_branch=$(git rev-parse --abbrev-ref HEAD)
-        if [ "$current_branch" != "$BRANCH" ]; then
-            print_warn "Currently on branch '$current_branch', switching to '$BRANCH'..."
-            git checkout "$BRANCH"
-        fi
+        let current_branch = (^git rev-parse --abbrev-ref HEAD | str trim)
+        if $current_branch != $branch {
+            warn $"Currently on branch '($current_branch)', switching to '($branch)'..."
+            ^git checkout $branch
+        }
 
         # Pull latest changes
-        if git pull origin "$BRANCH"; then
-            print_success "Repository updated successfully"
-        else
-            print_error "Failed to update repository"
+        let pull_result = do -i { ^git pull origin $branch }
+        if ($env.LAST_EXIT_CODE == 0) {
+            success "Repository updated successfully"
+        } else {
+            err "Failed to update repository"
             exit 1
-        fi
-    else
-        print_info "Cloning repository to $HELIX_DIR..."
+        }
+    } else {
+        info $"Cloning repository to ($helix_dir)..."
 
-        if git clone --branch "$BRANCH" "$REPO_URL" "$HELIX_DIR"; then
-            print_success "Repository cloned successfully"
-            cd "$HELIX_DIR"
-        else
-            print_error "Failed to clone repository"
+        let clone_result = do -i { ^git clone --branch $branch $repo_url $helix_dir }
+        if ($env.LAST_EXIT_CODE == 0) {
+            success "Repository cloned successfully"
+            cd $helix_dir
+        } else {
+            err "Failed to clone repository"
             exit 1
-        fi
-    fi
+        }
+    }
 }
 
-# Create symlinks for binary and runtime
-setup_symlinks() {
-    local bin_dir="$HOME/.local/bin"
-    local config_dir="$HOME/.config/helix"
-    local target_bin="$HELIX_DIR/target/release/hx"
+def setup_symlinks [helix_dir: string, helix_bin: string, runtime_src: string, runtime_dest: string] {
+    let bin_dir = ($helix_bin | path dirname)
+    let config_dir = ($runtime_dest | path dirname)
+    let target_bin = $"($helix_dir)/target/release/hx"
 
-    # Ensure ~/.local/bin exists
-    if [ ! -d "$bin_dir" ]; then
-        print_info "Creating directory: $bin_dir"
-        mkdir -p "$bin_dir"
-    fi
-
-    # Ensure ~/.config/helix exists
-    if [ ! -d "$config_dir" ]; then
-        print_info "Creating directory: $config_dir"
-        mkdir -p "$config_dir"
-    fi
+    # Ensure directories exist
+    if not ($bin_dir | path exists) {
+        info $"Creating directory: ($bin_dir)"
+        mkdir $bin_dir
+    }
+    if not ($config_dir | path exists) {
+        info $"Creating directory: ($config_dir)"
+        mkdir $config_dir
+    }
 
     # Setup binary symlink
-    if [ -L "$HELIX_BIN" ]; then
-        print_info "Removing existing symlink at $HELIX_BIN"
-        rm -f "$HELIX_BIN"
-    elif [ -e "$HELIX_BIN" ]; then
-        print_warn "File exists at $HELIX_BIN (not a symlink)"
-        print_warn "Please remove it manually if you want to create the symlink"
-        return 1
-    fi
+    if ($helix_bin | path type) == "symlink" {
+        info $"Removing existing symlink at ($helix_bin)"
+        rm -f $helix_bin
+    } else if ($helix_bin | path exists) {
+        warn $"File exists at ($helix_bin) \(not a symlink\)"
+        warn "Please remove it manually if you want to create the symlink"
+        return
+    }
 
-    print_info "Creating symlink: $HELIX_BIN -> $target_bin"
-    if ln -sf "$target_bin" "$HELIX_BIN"; then
-        print_success "Binary symlink created successfully"
-    else
-        print_error "Failed to create binary symlink"
-        return 1
-    fi
+    info $"Creating symlink: ($helix_bin) -> ($target_bin)"
+    ^ln -sf $target_bin $helix_bin
+    success "Binary symlink created successfully"
 
     # Setup runtime symlink (overwrite if exists)
-    if [ -e "$HELIX_RUNTIME_DEST" ] || [ -L "$HELIX_RUNTIME_DEST" ]; then
-        print_info "Removing existing runtime at $HELIX_RUNTIME_DEST"
-        rm -rf "$HELIX_RUNTIME_DEST"
-    fi
+    if ($runtime_dest | path exists) or (($runtime_dest | path type) == "symlink") {
+        info $"Removing existing runtime at ($runtime_dest)"
+        rm -rf $runtime_dest
+    }
 
-    print_info "Creating symlink: $HELIX_RUNTIME_DEST -> $HELIX_RUNTIME_SRC"
-    if ln -sf "$HELIX_RUNTIME_SRC" "$HELIX_RUNTIME_DEST"; then
-        print_success "Runtime symlink created successfully"
-        print_info "You can now run: hx"
-    else
-        print_error "Failed to create runtime symlink"
-        return 1
-    fi
+    info $"Creating symlink: ($runtime_dest) -> ($runtime_src)"
+    ^ln -sf $runtime_src $runtime_dest
+    success "Runtime symlink created successfully"
+    info "You can now run: hx"
 }
 
-# Build and install Helix with Steel
-build_helix() {
-    print_info "Building Helix with Steel plugin system..."
-    print_info "This will install:"
-    echo "  • hx executable with Steel support"
-    echo "  • steel language"
-    echo "  • steel language server"
-    echo "  • dylib installer for dependencies"
-    echo "  • forge package manager"
-    echo ""
+def build_helix [helix_dir: string, helix_bin: string, runtime_src: string, runtime_dest: string] {
+    info "Building Helix with Steel plugin system..."
+    info "This will install:"
+    print "  • hx executable with Steel support"
+    print "  • steel language"
+    print "  • steel language server"
+    print "  • dylib installer for dependencies"
+    print "  • forge package manager"
+    print ""
 
-    cd "$HELIX_DIR"
+    cd $helix_dir
 
-    if cargo xtask steel; then
-        print_success "Helix built successfully with Steel ecosystem"
-        echo ""
+    let build_result = do -i { ^cargo xtask steel }
+    if ($env.LAST_EXIT_CODE == 0) {
+        success "Helix built successfully with Steel ecosystem"
+        print ""
 
         # Create symlinks for binary and runtime
-        setup_symlinks
+        setup_symlinks $helix_dir $helix_bin $runtime_src $runtime_dest
 
-        echo ""
-        print_info "Installation complete!"
-        print_info "Binary: $HELIX_DIR/target/release/hx"
-        print_info "Binary symlink: $HELIX_BIN"
-        print_info "Runtime: $HELIX_RUNTIME_SRC"
-        print_info "Runtime symlink: $HELIX_RUNTIME_DEST"
-        echo ""
-        print_info "Next steps:"
-        echo "  1. Configuration files will be auto-generated at:"
-        echo "     ~/.config/helix/helix.scm"
-        echo "     ~/.config/helix/init.scm"
-        echo ""
-        echo "  2. (Optional) Create a cogs directory for community libraries:"
-        echo "     mkdir -p ~/.config/helix/cogs"
-        echo ""
-        echo "  3. Ensure ~/.local/bin is in your PATH (already configured in env.nu)"
-    else
-        print_error "Failed to build Helix"
+        print ""
+        info "Installation complete!"
+        info $"Binary: ($helix_dir)/target/release/hx"
+        info $"Binary symlink: ($helix_bin)"
+        info $"Runtime: ($runtime_src)"
+        info $"Runtime symlink: ($runtime_dest)"
+        print ""
+        info "Next steps:"
+        print "  1. Configuration files will be auto-generated at:"
+        print "     ~/.config/helix/helix.scm"
+        print "     ~/.config/helix/init.scm"
+        print ""
+        print "  2. (Optional) Create a cogs directory for community libraries:"
+        print "     mkdir -p ~/.config/helix/cogs"
+        print ""
+        print "  3. Ensure ~/.local/bin is in your PATH (already configured in env.nu)"
+    } else {
+        err "Failed to build Helix"
         exit 1
-    fi
+    }
 }
 
-# Main execution
-main() {
-    print_info "Installing custom Helix editor with Steel plugin system"
-    echo ""
+def main [] {
+    let helix_dir = $"($env.HOME)/.custom-helix"
+    let helix_bin = $"($env.HOME)/.local/bin/hx"
+    let runtime_src = $"($env.HOME)/.custom-helix/runtime"
+    let runtime_dest = $"($env.HOME)/.config/helix/runtime"
+    let repo_url = "https://github.com/mattwparas/helix"
+    let branch = "steel-event-system"
+
+    info "Installing custom Helix editor with Steel plugin system"
+    print ""
 
     check_requirements
-    setup_repository
-    build_helix
+    setup_repository $helix_dir $repo_url $branch
+    build_helix $helix_dir $helix_bin $runtime_src $runtime_dest
 
-    echo ""
-    print_success "Installation complete!"
+    print ""
+    success "Installation complete!"
 }
-
-main "$@"

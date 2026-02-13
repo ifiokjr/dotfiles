@@ -1,237 +1,181 @@
-#!/usr/bin/env bash
-#
+#!/usr/bin/env nu
 # Interactive environment setup script
 #
 # This script helps you configure your .env.dotfiles file by
 # interactively prompting for each API key and token with
 # instructions on where to obtain them.
 
-set -e
+use nu_modules/print_utils.nu *
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
-
-print_header() {
-    echo -e "${BOLD}${CYAN}==>${NC} ${BOLD}$1${NC}"
+# Mask a value for display (show first 4 and last 4 chars)
+def mask_value [value: string]: nothing -> string {
+    if ($value | str length) <= 8 {
+        "****"
+    } else {
+        let first = ($value | str substring 0..4)
+        let last = ($value | str substring (-4)..)
+        $"($first)...($last)"
+    }
 }
 
-print_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
+# Prompt for a single env variable value
+def prompt_for_value [
+    var_name: string
+    description: string
+    url: string
+    current_value: string = ""
+] {
+    print ""
+    header $var_name
+    print $"(ansi attr_bold)Description:(ansi reset) ($description)"
+    print $"(ansi attr_bold)Get it from:(ansi reset) (ansi cyan)($url)(ansi reset)"
+    print ""
 
-print_error() {
-    echo -e "${RED}✗${NC} $1"
-}
+    if ($current_value | is-not-empty) {
+        let masked = (mask_value $current_value)
+        info $"Current value: ($masked)"
+        print ""
+        let keep = (input $"(ansi cyan)?(ansi reset) Keep current value? [Y/n]: ")
+        if ($keep | str downcase) not-in ["n" "no"] {
+            return $current_value
+        }
+    }
 
-print_info() {
-    echo -e "${BLUE}→${NC} $1"
-}
+    loop {
+        let value = (input $"(ansi cyan)?(ansi reset) Enter ($var_name) \(or press Enter to skip\): ")
 
-print_warning() {
-    echo -e "${YELLOW}!${NC} $1"
-}
-
-# Configuration
-ENV_FILE="$HOME/.env.dotfiles"
-BACKUP_FILE="${ENV_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
-
-# Check if .env.dotfiles exists
-check_existing_env() {
-    if [ -f "$ENV_FILE" ]; then
-        echo ""
-        print_warning "Found existing .env.dotfiles file"
-        print_info "Location: $ENV_FILE"
-        echo ""
-
-        read -p "$(echo -e "${CYAN}?${NC} Do you want to update it? (This will create a backup) [y/N]: ")" response
-        case "$response" in
-            [Yy]|[Yy][Ee][Ss])
-                # Create backup
-                cp "$ENV_FILE" "$BACKUP_FILE"
-                print_success "Backup created: $BACKUP_FILE"
-
-                # Load existing values
-                # shellcheck disable=SC1090
-                source "$ENV_FILE"
-                return 0
-                ;;
-            *)
-                print_info "Exiting without changes"
-                exit 0
-                ;;
-        esac
-    fi
-}
-
-# Prompt for a value
-prompt_for_value() {
-    local var_name="$1"
-    local description="$2"
-    local url="$3"
-    local current_value="${4:-}"
-    local value=""
-
-    # All informational output goes to stderr so it's not captured by command substitution
-    echo "" >&2
-    print_header "$var_name" >&2
-    echo -e "${BOLD}Description:${NC} $description" >&2
-    echo -e "${BOLD}Get it from:${NC} ${CYAN}$url${NC}" >&2
-    echo "" >&2
-
-    if [ -n "$current_value" ]; then
-        # Mask the current value for security
-        local masked_value="${current_value:0:4}...${current_value: -4}"
-        print_info "Current value: $masked_value" >&2
-        echo "" >&2
-        read -p "$(echo -e "${CYAN}?${NC} Keep current value? [Y/n]: ")" keep_current
-        case "$keep_current" in
-            [Nn]|[Nn][Oo])
-                # Continue to prompt for new value
-                ;;
-            *)
-                # Only the actual value goes to stdout
-                echo "$current_value"
-                return 0
-                ;;
-        esac
-    fi
-
-    while true; do
-        read -p "$(echo -e "${CYAN}?${NC} Enter $var_name (or press Enter to skip): ")" value
-
-        if [ -z "$value" ]; then
-            print_warning "Skipping $var_name (will be empty)" >&2
-            echo "" >&2
-            # Return empty string to stdout
-            echo ""
-            return 0
-        fi
+        if ($value | is-empty) {
+            warn $"Skipping ($var_name) \(will be empty\)"
+            print ""
+            return ""
+        }
 
         # Confirm the value
-        echo "" >&2
-        print_info "You entered: ${value:0:20}..." >&2 # Show first 20 chars only
-        read -p "$(echo -e "${CYAN}?${NC} Is this correct? [Y/n]: ")" confirm
-        case "$confirm" in
-            [Nn]|[Nn][Oo])
-                echo "Let's try again..." >&2
-                continue
-                ;;
-            *)
-                # Only the actual value goes to stdout
-                echo "$value"
-                return 0
-                ;;
-        esac
-    done
+        print ""
+        let display = if ($value | str length) > 20 {
+            $"($value | str substring 0..20)..."
+        } else {
+            $value
+        }
+        info $"You entered: ($display)"
+        let confirm = (input $"(ansi cyan)?(ansi reset) Is this correct? [Y/n]: ")
+        if ($confirm | str downcase) not-in ["n" "no"] {
+            return $value
+        }
+        print "Let's try again..."
+    }
 }
 
-# Main setup flow
-main() {
-    echo ""
-    echo -e "${BOLD}${CYAN}╔════════════════════════════════════════╗${NC}"
-    echo -e "${BOLD}${CYAN}║                                        ║${NC}"
-    echo -e "${BOLD}${CYAN}║    Environment Setup Assistant        ║${NC}"
-    echo -e "${BOLD}${CYAN}║                                        ║${NC}"
-    echo -e "${BOLD}${CYAN}╚════════════════════════════════════════╝${NC}"
-    echo ""
+# Parse existing .env.dotfiles into a record
+def parse_env_file [path: string] {
+    if not ($path | path exists) {
+        return {}
+    }
+    open $path
+    | lines
+    | where { |line|
+        let trimmed = ($line | str trim)
+        ($trimmed | is-not-empty) and (not ($trimmed | str starts-with "#"))
+    }
+    | each { |line|
+        let eq_pos = ($line | str index-of "=")
+        if ($eq_pos == -1) { return null }
+        let key = ($line | str substring 0..$eq_pos | str trim)
+        let value = ($line
+            | str substring ($eq_pos + 1)..
+            | str trim
+            | str replace -r '^"(.*)"$' '$1'
+            | str replace -r "^'(.*)'$" '$1')
+        { $key: $value }
+    }
+    | where { $in != null }
+    | reduce --fold {} { |it, acc| $acc | merge $it }
+}
 
-    print_info "This script will help you set up your environment variables"
-    print_info "File: $ENV_FILE"
+def main [] {
+    print ""
+    print $"(ansi cyan_bold)╔════════════════════════════════════════╗(ansi reset)"
+    print $"(ansi cyan_bold)║                                        ║(ansi reset)"
+    print $"(ansi cyan_bold)║    Environment Setup Assistant        ║(ansi reset)"
+    print $"(ansi cyan_bold)║                                        ║(ansi reset)"
+    print $"(ansi cyan_bold)╚════════════════════════════════════════╝(ansi reset)"
+    print ""
 
-    check_existing_env
+    let env_file = $"($env.HOME)/.env.dotfiles"
+    let backup_file = $"($env_file).backup.(date now | format date '%Y%m%d_%H%M%S')"
 
-    echo ""
-    print_header "Let's configure your environment variables"
-    print_info "You can skip any value by pressing Enter"
+    info "This script will help you set up your environment variables"
+    info $"File: ($env_file)"
 
-    # GitHub Token
-    GITHUB_TOKEN=$(prompt_for_value \
-        "GITHUB_TOKEN" \
-        "Personal access token for GitHub API access (repos, packages, etc.)" \
-        "https://github.com/settings/tokens/new" \
-        "$GITHUB_TOKEN")
+    # Check if .env.dotfiles exists
+    mut existing = {}
+    if ($env_file | path exists) {
+        print ""
+        warn "Found existing .env.dotfiles file"
+        info $"Location: ($env_file)"
+        print ""
 
-    # OpenAI API Key
-    OPENAI_API_KEY=$(prompt_for_value \
-        "OPENAI_API_KEY" \
-        "API key for OpenAI services (GPT, DALL-E, Whisper, etc.)" \
-        "https://platform.openai.com/api-keys" \
-        "$OPENAI_API_KEY")
+        let response = (input $"(ansi cyan)?(ansi reset) Do you want to update it? \(This will create a backup\) [y/N]: ")
+        if ($response | str downcase) not-in ["y" "yes"] {
+            info "Exiting without changes"
+            return
+        }
 
-    # Anthropic API Key (Claude)
-    ANTHROPIC_API_KEY=$(prompt_for_value \
-        "ANTHROPIC_API_KEY" \
-        "API key for Anthropic Claude AI services" \
-        "https://console.anthropic.com/settings/keys" \
-        "$ANTHROPIC_API_KEY")
+        # Create backup
+        cp $env_file $backup_file
+        success $"Backup created: ($backup_file)"
 
-    # Discord Token
-    DISCORD_TOKEN=$(prompt_for_value \
-        "DISCORD_TOKEN" \
-        "Bot token for Discord bot applications" \
-        "https://discord.com/developers/applications" \
-        "$DISCORD_TOKEN")
+        # Load existing values
+        $existing = (parse_env_file $env_file)
+    }
 
-    # Google API Key
-    GOOGLE_API_KEY=$(prompt_for_value \
-        "GOOGLE_API_KEY" \
-        "API key for Google services (Maps, Cloud, Gemini, etc.)" \
-        "https://console.cloud.google.com/apis/credentials" \
-        "$GOOGLE_API_KEY")
+    print ""
+    header "Let's configure your environment variables"
+    info "You can skip any value by pressing Enter"
 
-    # Replicate API Token
-    REPLICATE_API_TOKEN=$(prompt_for_value \
-        "REPLICATE_API_TOKEN" \
-        "API token for Replicate AI model hosting and inference" \
-        "https://replicate.com/account/api-tokens" \
-        "$REPLICATE_API_TOKEN")
+    # Define all environment variables to configure
+    let env_vars = [
+        { name: "GITHUB_TOKEN", desc: "Personal access token for GitHub API access \(repos, packages, etc.\)", url: "https://github.com/settings/tokens/new" }
+        { name: "OPENAI_API_KEY", desc: "API key for OpenAI services \(GPT, DALL-E, Whisper, etc.\)", url: "https://platform.openai.com/api-keys" }
+        { name: "ANTHROPIC_API_KEY", desc: "API key for Anthropic Claude AI services", url: "https://console.anthropic.com/settings/keys" }
+        { name: "DISCORD_TOKEN", desc: "Bot token for Discord bot applications", url: "https://discord.com/developers/applications" }
+        { name: "GOOGLE_API_KEY", desc: "API key for Google services \(Maps, Cloud, Gemini, etc.\)", url: "https://console.cloud.google.com/apis/credentials" }
+        { name: "REPLICATE_API_TOKEN", desc: "API token for Replicate AI model hosting and inference", url: "https://replicate.com/account/api-tokens" }
+        { name: "HUGGING_FACE_TOKEN", desc: "Access token for Hugging Face model hub and inference API", url: "https://huggingface.co/settings/tokens" }
+    ]
 
-    # Hugging Face Token
-    HUGGING_FACE_TOKEN=$(prompt_for_value \
-        "HUGGING_FACE_TOKEN" \
-        "Access token for Hugging Face model hub and inference API" \
-        "https://huggingface.co/settings/tokens" \
-        "$HUGGING_FACE_TOKEN")
+    # Prompt for each variable
+    mut values = {}
+    for var in $env_vars {
+        let current = ($existing | get -o $var.name | default "")
+        let new_val = (prompt_for_value $var.name $var.desc $var.url $current)
+        $values = ($values | merge { ($var.name): $new_val })
+    }
 
     # Write to file
-    echo ""
-    print_header "Saving configuration"
+    print ""
+    header "Saving configuration"
 
-    cat > "$ENV_FILE" <<EOF
-GITHUB_TOKEN="$GITHUB_TOKEN"
-OPENAI_API_KEY="$OPENAI_API_KEY"
-ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
-DISCORD_TOKEN="$DISCORD_TOKEN"
-GOOGLE_API_KEY="$GOOGLE_API_KEY"
-REPLICATE_API_TOKEN="$REPLICATE_API_TOKEN"
-HUGGING_FACE_TOKEN="$HUGGING_FACE_TOKEN"
-EOF
+    let content = ($values | items { |k, v| $'($k)="($v)"' } | str join "\n")
+    $content | save -f $env_file
 
     # Set secure permissions
-    chmod 600 "$ENV_FILE"
+    ^chmod 600 $env_file
 
-    print_success "Environment file created: $ENV_FILE"
-    print_success "File permissions set to 600 (read/write for user only)"
+    success $"Environment file created: ($env_file)"
+    success "File permissions set to 600 \(read/write for user only\)"
 
-    if [ -f "$BACKUP_FILE" ]; then
-        print_info "Backup available at: $BACKUP_FILE"
-    fi
+    if ($backup_file | path exists) {
+        info $"Backup available at: ($backup_file)"
+    }
 
-    echo ""
-    print_header "Next Steps"
-    echo -e "  ${CYAN}1.${NC} Open a new terminal window to reload environment"
-    echo -e "  ${CYAN}2.${NC} Your environment variables are now available"
-    echo -e "  ${CYAN}3.${NC} To update values later, run: ${BOLD}setup:env${NC}"
+    print ""
+    header "Next Steps"
+    print $"  (ansi cyan)1.(ansi reset) Open a new terminal window to reload environment"
+    print $"  (ansi cyan)2.(ansi reset) Your environment variables are now available"
+    print $"  (ansi cyan)3.(ansi reset) To update values later, run: (ansi attr_bold)setup:env(ansi reset)"
 
-    echo ""
-    print_success "Setup complete!"
-    echo ""
+    print ""
+    success "Setup complete!"
+    print ""
 }
-
-main "$@"
