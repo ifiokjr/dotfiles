@@ -8,6 +8,7 @@ let
   # Custom packages
   pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
   cursor-cli-custom = pkgs.callPackage ./packages/cursor-cli.nix { };
+  racket-minimal-custom = pkgs.callPackage ./packages/racket-minimal.nix { };
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -59,6 +60,7 @@ in
       nixd
       nixfmt
       opencode
+      racket-minimal-custom
       rustup
       spec-kit
 
@@ -156,6 +158,11 @@ in
     #   org.gradle.daemon.idletimeout=3600000
     # '';
   };
+
+  # Activation scripts
+  home.activation.installRacketPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ${racket-minimal-custom}/bin/raco pkg install --skip-installed --auto --scope user fmt
+  '';
 
   # Environment variables
   home.sessionVariables = {
