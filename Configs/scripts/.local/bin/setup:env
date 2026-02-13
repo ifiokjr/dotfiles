@@ -1,5 +1,5 @@
 #!/usr/bin/env nu
-# Interactive environment setup script
+# Configure API keys and tokens interactively
 #
 # This script helps you configure your .env.dotfiles file by
 # interactively prompting for each API key and token with

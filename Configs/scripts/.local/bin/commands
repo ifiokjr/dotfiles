@@ -1,0 +1,31 @@
+#!/usr/bin/env nu
+# List all custom scripts with descriptions
+
+use nu_modules/print_utils.nu *
+
+def main [] {
+    let bin_dir = ($env.FILE_PWD)
+
+    # Find all nushell scripts (files with #!/usr/bin/env nu shebang)
+    let scripts = (ls $bin_dir
+        | where type == "file"
+        | get name
+        | each { |file|
+            let first_line = (open $file --raw | lines | first)
+            if ($first_line == "#!/usr/bin/env nu") {
+                let name = ($file | path basename)
+                # Parse first comment line after shebang as description
+                let desc = (open $file --raw | lines | skip 1
+                    | take while { |l| $l starts-with "#" }
+                    | first
+                    | str replace --regex '^#\s*' '')
+                { command: $name, description: $desc }
+            }
+        }
+        | compact
+        | sort-by command)
+
+    header "Custom Scripts (~/.local/bin)"
+    print ""
+    $scripts | print
+}

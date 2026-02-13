@@ -1,5 +1,5 @@
 #!/usr/bin/env nu
-# Test runner for migrated nushell scripts
+# Run test suite for custom scripts and modules
 #
 # Validates that all scripts:
 # 1. Parse without errors (via --help)
@@ -90,6 +90,7 @@ def main [] {
     info "Testing script parsing via --help..."
 
     let scripts = [
+        "commands"
         "rebuild"
         "generate-machine-config"
         "install:helix:custom"
