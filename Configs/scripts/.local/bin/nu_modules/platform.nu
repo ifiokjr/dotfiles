@@ -8,7 +8,8 @@ export def os []: nothing -> string {
     (sys host).name | if $in == "Darwin" { "darwin" } else { "linux" }
 }
 
-# Detect architecture in nix format
+# Detect architecture in nix format.
+# macOS reports "arm64" while Linux reports "aarch64" — normalize to nix convention.
 export def arch []: nothing -> string {
     let machine = (uname).machine
     match $machine {
@@ -23,7 +24,9 @@ export def nix-system []: nothing -> string {
     $"(arch)-(os)"
 }
 
-# Detect hostname (macOS uses scutil, Linux uses sys host)
+# Detect hostname.
+# macOS: prefer `scutil --get ComputerName` (user-friendly name like "John's MacBook")
+# Linux: fall back to `sys host` which reads /etc/hostname
 export def detect-hostname []: nothing -> string {
     if (os) == "darwin" {
         try {

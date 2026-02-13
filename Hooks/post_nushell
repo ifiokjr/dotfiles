@@ -30,9 +30,15 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     fi
 fi
 
+# Locate the nushell binary: nix-darwin puts it at /run/current-system/sw/bin/nu,
+# but on Linux (or standalone nix) it may only be on PATH via `which`.
+NU_PATH="/run/current-system/sw/bin/nu"
+if [ ! -x "$NU_PATH" ]; then
+    NU_PATH="$(command -v nu 2>/dev/null || true)"
+fi
+
 # Generate vendor autoload scripts using nushell to resolve the correct data dir
 # (on macOS without XDG_DATA_HOME, this is ~/Library/Application Support/nushell/)
-NU_PATH="/run/current-system/sw/bin/nu"
 if [ -x "$NU_PATH" ]; then
     VENDOR_AUTOLOAD_DIR=$("$NU_PATH" -c '$nu.data-dir | path join "vendor/autoload"')
     mkdir -p "$VENDOR_AUTOLOAD_DIR"
@@ -82,8 +88,19 @@ fi
 
 # Set nushell as default shell via chsh
 if [ -x "$NU_PATH" ]; then
-    CURRENT_SHELL=$(dscl . -read /Users/"$USER" UserShell 2>/dev/null | awk '{print $2}')
+    # Detect current shell: macOS uses dscl (Directory Service), Linux uses /etc/passwd
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        CURRENT_SHELL=$(dscl . -read /Users/"$USER" UserShell 2>/dev/null | awk '{print $2}')
+    else
+        CURRENT_SHELL=$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)
+    fi
+
     if [ "$CURRENT_SHELL" != "$NU_PATH" ]; then
+        # Ensure nu is in /etc/shells (required by chsh on most systems)
+        if ! grep -qx "$NU_PATH" /etc/shells 2>/dev/null; then
+            echo -e "${YELLOW}!${NC} Adding $NU_PATH to /etc/shells"
+            echo "$NU_PATH" | sudo tee -a /etc/shells > /dev/null
+        fi
         echo -e "${BLUE}→${NC} Setting default shell to nushell..."
         chsh -s "$NU_PATH"
         echo -e "${GREEN}✓${NC} Default shell set to $NU_PATH"
@@ -91,7 +108,7 @@ if [ -x "$NU_PATH" ]; then
         echo -e "${BLUE}→${NC} Default shell is already nushell"
     fi
 else
-    echo -e "${YELLOW}!${NC} $NU_PATH not found, skipping chsh"
+    echo -e "${YELLOW}!${NC} Nushell not found, skipping chsh"
 fi
 
 # Setup .env.dotfiles from example if it doesn't exist

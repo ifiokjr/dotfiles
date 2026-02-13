@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-format:
+    name: Lint & Format (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install tools
+        run: |
+          nix profile install nixpkgs#nushell
+          nix profile install nixpkgs#shellcheck
+          nix profile install nixpkgs#shfmt
+          nix profile install nixpkgs#dprint
+          nix profile install nixpkgs#nufmt
+
+      - name: Shellcheck bash scripts
+        run: |
+          shellcheck setup setup-tuckr-symlink.sh Hooks/*
+
+      - name: Validate nushell scripts (nu-check)
+        run: |
+          # Check .nu module files
+          for f in $(find . -name '*.nu' -not -path './.git/*'); do
+            echo "Checking: $f"
+            nu -c "nu-check --as-module '$f'"
+          done
+
+          # Check nushell scripts without .nu extension (have #!/usr/bin/env nu shebang)
+          for f in Configs/scripts/.local/bin/*; do
+            if [ -f "$f" ] && head -1 "$f" | grep -q '#!/usr/bin/env nu'; then
+              echo "Checking: $f"
+              nu -c "nu-check '$f'"
+            fi
+          done
+
+      - name: Format check (dprint)
+        run: |
+          dprint check
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Install nushell
+        run: nix profile install nixpkgs#nushell
+
+      - name: Run test suite
+        run: |
+          nu Configs/scripts/.local/bin/test_scripts
+
+      - name: Verify generate-machine-config (cross-platform)
+        run: |
+          nu Configs/scripts/.local/bin/generate-machine-config --output /tmp/test-machine.nix
+          cat /tmp/test-machine.nix
+          rm /tmp/test-machine.nix
+
+  nix-check:
+    name: Nix Flake Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Generate machine.nix for CI
+        run: |
+          nix profile install nixpkgs#nushell
+          nu Configs/scripts/.local/bin/generate-machine-config \
+            --output Configs/nix_macos/.config/nix/machine.nix
+
+      - name: Nix flake check
+        run: |
+          nix flake check Configs/nix_macos/.config/nix --impure --no-build

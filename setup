@@ -324,8 +324,13 @@ deploy_groups() {
             fi
         done
 
-        # Special handling for nix_macos
+        # Special handling for nix_macos — skip on non-macOS platforms
         if [[ "$group" == "nix_macos" ]]; then
+            if [[ "$PLATFORM" != "macos" ]]; then
+                print_info "Skipping $group (macOS-only group, current platform: $PLATFORM)"
+                continue
+            fi
+
             echo ""
             print_header "Nix Darwin Configuration"
             echo -e "${YELLOW}Note:${NC} nix_macos deployment will run 'darwin-rebuild switch' which requires sudo"
@@ -337,6 +342,16 @@ deploy_groups() {
             else
                 print_success "Deployed $group"
             fi
+            continue
+        fi
+
+        # Skip platform-specific groups that don't match the current platform
+        if [[ "$group" == *_macos ]] && [[ "$PLATFORM" != "macos" ]]; then
+            print_info "Skipping $group (macOS-only, current platform: $PLATFORM)"
+            continue
+        fi
+        if [[ "$group" == *_linux ]] && [[ "$PLATFORM" != "linux" ]]; then
+            print_info "Skipping $group (Linux-only, current platform: $PLATFORM)"
             continue
         fi
 

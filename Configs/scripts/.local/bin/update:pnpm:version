@@ -88,7 +88,10 @@ def main [] {
         | str replace --regex 'version = "[^"]+"' $'version = "($latest_version)"'
     )
 
-    # Reset all hashes to lib.fakeSha256
+    # Reset all platform hashes to lib.fakeSha256 (a nix builtin sentinel).
+    # When nix tries to build with fakeSha256 it fails and prints the correct
+    # hash in the error message. The update-pnpm-hash.sh script captures these
+    # errors and patches the file with the real hashes.
     let updated = (
         $updated
         | str replace --regex '"macos-arm64" = "[^"]*"' '"macos-arm64" = lib.fakeSha256'
@@ -107,7 +110,8 @@ def main [] {
     info "Running update-pnpm-hash.sh to fetch correct hash..."
     print ""
 
-    # Run the hash update script
+    # Run the bash hash update script (it triggers nix builds that fail with
+    # fakeSha256, parses the "got:" hash from stderr, and patches the .nix file)
     let hash_result = do -i { ^bash $update_hash_script }
     if ($env.LAST_EXIT_CODE == 0) {
         # Clean up the version backup
@@ -118,7 +122,8 @@ def main [] {
         info $"Running rebuild to install pnpm ($latest_version)..."
         print ""
 
-        # Run rebuild (requires sudo) with ulimit workaround
+        # Rebuild via bash -c: ulimit raises file descriptor limit for nix builds,
+        # sudo is needed for darwin-rebuild, --impure for gitignored machine.nix
         let rebuild_cmd = $"ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#default --impure"
         let rebuild_result = do -i { ^bash -c $rebuild_cmd }
         if ($env.LAST_EXIT_CODE == 0) {
@@ -158,6 +163,8 @@ def main [] {
             exit 1
         }
     } else {
+        # Hash update failed — roll back to the backed-up .nix file so the
+        # derivation stays buildable with the previous version's hashes
         err "Hash update failed!"
         print ""
         info "Restoring backup..."

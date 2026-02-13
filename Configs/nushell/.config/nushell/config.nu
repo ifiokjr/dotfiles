@@ -103,6 +103,54 @@ alias rd = rmdir
 alias nushellconfig = hx $"($nu.default-config-dir)/config.nu"
 
 # ---------------------------------------------------------------------------
+# Rust / Cargo
+# ---------------------------------------------------------------------------
+
+alias cr = cargo run
+alias cb = cargo build
+alias ct = cargo test
+alias cch = cargo check
+alias ccl = cargo clippy
+alias cf = cargo fmt
+alias cw = cargo watch -x run
+
+# ---------------------------------------------------------------------------
+# pnpm / Node.js
+# ---------------------------------------------------------------------------
+
+alias p = pnpm
+alias pi = pnpm install
+alias pd = pnpm dev
+alias pb = pnpm build
+alias pt = pnpm test
+alias px = pnpm exec
+alias pa = pnpm add
+alias pad = pnpm add -D
+alias pr = pnpm run
+
+# ---------------------------------------------------------------------------
+# Docker / Compose
+# ---------------------------------------------------------------------------
+
+alias dk = docker
+alias dkc = docker compose
+alias dkcu = docker compose up -d
+alias dkcd = docker compose down
+alias dkcl = docker compose logs -f
+alias dkce = docker compose exec
+alias dkps = docker ps
+
+# ---------------------------------------------------------------------------
+# Nix / Devenv
+# ---------------------------------------------------------------------------
+
+alias nr = rebuild
+alias nfc = nix flake check --flake ~/.config/nix
+alias nfu = nix flake update --flake ~/.config/nix
+alias ns = nix search nixpkgs
+alias de = devenv up
+
+# ---------------------------------------------------------------------------
 # File listing (lsd)
 # ---------------------------------------------------------------------------
 
@@ -477,8 +525,10 @@ def --env d [
 }
 
 # ---------------------------------------------------------------------------
-# Startup time
+# Startup time (only shown when DOTFILES_DEBUG is set)
 # ---------------------------------------------------------------------------
 
-let elapsed = ((date now) - $env._SHELL_START)
-print $"(ansi blue)→(ansi reset) Shell loaded in ($elapsed | format duration ms)"
+if ($env | get -o DOTFILES_DEBUG | is-not-empty) {
+    let elapsed = ((date now) - $env._SHELL_START)
+    print $"(ansi blue)→(ansi reset) Shell loaded in ($elapsed | format duration ms)"
+}

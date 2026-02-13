@@ -84,7 +84,9 @@ in
       # Text Processing
       jq
       kdlfmt
+      nufmt
       serpl
+      shellcheck
       shfmt
       taplo
 

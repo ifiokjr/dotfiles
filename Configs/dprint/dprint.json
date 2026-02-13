@@ -37,6 +37,12 @@
 				]
 			},
 			{
+				"command": "nufmt --stdin",
+				"exts": [
+					"nu"
+				]
+			},
+			{
 				"command": "dartfmt {{file_path}}",
 				"exts": [
 					"dart"

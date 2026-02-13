@@ -66,6 +66,8 @@ def setup_repository [helix_dir: string, repo_url: string, branch: string] {
     }
 }
 
+# Create symlinks so the custom-built hx binary is on PATH (~/.local/bin/hx)
+# and helix finds its runtime directory (~/.config/helix/runtime -> source checkout)
 def setup_symlinks [helix_dir: string, helix_bin: string, runtime_src: string, runtime_dest: string] {
     let bin_dir = ($helix_bin | path dirname)
     let config_dir = ($runtime_dest | path dirname)
@@ -108,6 +110,9 @@ def setup_symlinks [helix_dir: string, helix_bin: string, runtime_src: string, r
 }
 
 def build_helix [helix_dir: string, helix_bin: string, runtime_src: string, runtime_dest: string] {
+    # Steel is an embeddable Scheme (Lisp) dialect that the Helix fork uses for
+    # scripting/plugin support. `cargo xtask steel` builds the full ecosystem:
+    # the hx binary, Steel language runtime, LSP server, and package manager.
     info "Building Helix with Steel plugin system..."
     info "This will install:"
     print "  • hx executable with Steel support"

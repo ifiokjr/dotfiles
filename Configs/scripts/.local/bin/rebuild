@@ -77,19 +77,25 @@ def main [
     print ""
 
     # Check flake validity (unless skipped)
+    # `nix flake check` validates the flake.nix outputs without building everything
     if not $skip_check {
         info "Checking flake configuration..."
+        # `do -i` suppresses the error so we can continue even if check fails
         let check_result = do -i {
+            # Pass config dir so the flake can locate gitignored machine.nix
             with-env { DARWIN_USER_CONFIG_DIR: $nix_config } {
                 ^nix flake check $nix_config --impure
             }
         }
         if ($env.LAST_EXIT_CODE != 0) {
+            # \( and \) escape parentheses in nushell string interpolation
             warn "Flake check reported issues \(continuing anyway\)"
         }
     }
 
-    # Back up /etc files that nix-darwin needs to manage (one-time)
+    # Back up /etc/shells before nix-darwin takes ownership (one-time operation).
+    # nix-darwin manages /etc/shells to add nix-installed shells; the backup
+    # preserves the original so it can be restored if nix-darwin is removed.
     if ("/etc/shells" | path exists) and (not ("/etc/shells.before-nix-darwin" | path exists)) {
         info "Backing up /etc/shells to /etc/shells.before-nix-darwin"
         ^sudo mv /etc/shells /etc/shells.before-nix-darwin
@@ -100,8 +106,13 @@ def main [
     info "Rebuilding nix-darwin configuration..."
     print ""
 
-    # Use bash wrapper for ulimit and sudo with env vars
+    # Wrap in bash -c because:
+    # 1. `ulimit -n 10240` raises macOS file descriptor limit (nix builds open many files)
+    # 2. `sudo` with inline env var (`DARWIN_USER_CONFIG_DIR`) passes the config path
+    #    through to the darwin-rebuild process so it can find gitignored machine.nix
+    # 3. `--impure` is needed because machine.nix is gitignored and read via env var
     let rebuild_cmd = $"ulimit -n 10240 && sudo DARWIN_USER_CONFIG_DIR='($nix_config)' darwin-rebuild switch --flake '($nix_config)#default' --impure"
+    # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
     let result = do -i { ^bash -c $rebuild_cmd }
 
     if ($env.LAST_EXIT_CODE == 0) {
