@@ -14,10 +14,31 @@ if [ -d "$HOME/.nix-profile/bin" ]; then
     export PATH="$HOME/.nix-profile/bin:$PATH"
 fi
 
-# Use the rebuild script if available, otherwise fall back to direct command
+# Use the rebuild script if available, otherwise fall back to direct command.
+# Skip auto-updates and flake check during hook-triggered rebuilds — the hook
+# runs after tuckr deploys files, so we just want a fast rebuild, not a full
+# update cycle. Users can run `rebuild` directly for the full experience.
 if command -v rebuild &> /dev/null; then
-    rebuild
+    rebuild --skip-updates --skip-check
 else
     # Fallback - use the script directly
-    "$HOME/.local/bin/rebuild"
+    "$HOME/.local/bin/rebuild" --skip-updates --skip-check
+fi
+
+# After rebuild, make home-manager packages available to subsequent CI steps.
+# Standalone home-manager installs packages to its own profile, which is separate
+# from ~/.nix-profile. The nix-installer-action only adds ~/.nix-profile/bin to
+# GITHUB_PATH, so home-manager packages (like raco) aren't found by later steps.
+if [ -n "$GITHUB_ACTIONS" ] && [ -n "$GITHUB_PATH" ]; then
+    HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager/home-path/bin"
+    if [ -d "$HM_PROFILE" ]; then
+        echo "$HM_PROFILE" >> "$GITHUB_PATH"
+        echo "Added home-manager profile to GITHUB_PATH: $HM_PROFILE"
+    fi
+
+    # Also source hm-session-vars.sh if available (sets HOME_MANAGER_VARS, etc.)
+    if [ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+        # shellcheck disable=SC1091
+        . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+    fi
 fi

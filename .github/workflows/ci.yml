@@ -24,11 +24,6 @@ jobs:
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm
 
-      - name: 📦 install raco fmt
-        run: |
-          nix profile add nixpkgs#racket-minimal
-          raco pkg install --skip-installed --auto --scope user fmt
-
       - name: 🔍 shellcheck bash scripts
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/*
