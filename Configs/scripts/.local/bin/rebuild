@@ -152,12 +152,21 @@ def main [
         info "Rebuilding nix-darwin configuration..."
         print ""
 
+        # On first run, `darwin-rebuild` CLI may not be installed yet.
+        # Use `nix run nix-darwin` from the flake input as fallback.
+        let darwin_cmd = if (which darwin-rebuild | is-not-empty) {
+            $"darwin-rebuild switch --flake '($nix_config)#default' --impure"
+        } else {
+            info "darwin-rebuild not found, using nix run for first-time setup..."
+            $"nix run nix-darwin/master -- switch --flake '($nix_config)#default' --impure"
+        }
+
         # Wrap in bash -c because:
         # 1. `ulimit -n 10240` raises macOS file descriptor limit (nix builds open many files)
         # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
         #    through to the darwin-rebuild process so it can find gitignored machine.nix
         # 3. `--impure` is needed because machine.nix is gitignored and read via env var
-        let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' darwin-rebuild switch --flake '($nix_config)#default' --impure"
+        let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
         # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
         let result = do -i { ^bash -c $rebuild_cmd }
 

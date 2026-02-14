@@ -348,8 +348,30 @@ deploy_groups() {
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
     local hook_groups=("nix" "nushell")
 
-    # Deploy all groups automatically
+    # Deploy scripts first — other groups' hooks depend on scripts in ~/.local/bin
+    # (e.g. post_nix calls rebuild which lives in the scripts group)
+    local has_scripts=false
+    for g in "${all_groups[@]}"; do
+        if [[ "$g" == "scripts" ]]; then
+            has_scripts=true
+            break
+        fi
+    done
+    if [ "$has_scripts" = true ]; then
+        print_info "Deploying scripts (priority)"
+        if ! tuckr add scripts 2>&1; then
+            print_warning "Failed to deploy scripts"
+        else
+            print_success "Deployed scripts"
+        fi
+    fi
+
+    # Deploy all remaining groups
     for group in "${all_groups[@]}"; do
+        # Skip scripts — already deployed above
+        if [[ "$group" == "scripts" ]]; then
+            continue
+        fi
         # Check if this group has a hook
         local has_hook=false
         for hook_group in "${hook_groups[@]}"; do

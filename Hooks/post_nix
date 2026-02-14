@@ -14,6 +14,12 @@ if [ -d "$HOME/.nix-profile/bin" ]; then
     export PATH="$HOME/.nix-profile/bin:$PATH"
 fi
 
+# Add ~/.local/bin to PATH (for rebuild, generate-machine-config, etc.
+# deployed by the scripts group which is deployed before nix)
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
 # Use the rebuild script if available, otherwise fall back to direct command.
 # Skip auto-updates and flake check during hook-triggered rebuilds — the hook
 # runs after tuckr deploys files, so we just want a fast rebuild, not a full

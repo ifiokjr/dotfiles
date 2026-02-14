@@ -21,6 +21,11 @@ if [ -d "$HOME/.nix-profile/bin" ]; then
     export PATH="$HOME/.nix-profile/bin:$PATH"
 fi
 
+# Add ~/.local/bin to PATH (for rebuild, generate-machine-config, etc.)
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
 echo -e "${GREEN}✓${NC} Nix configuration deployed"
 
 # Check if machine.nix exists in the deployed location
