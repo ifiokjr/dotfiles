@@ -37,7 +37,7 @@ $env.config = {
                     # Direnv returns PATH as a colon-separated string, but nushell
                     # requires PATH to be a list. Convert it before loading so that
                     # command lookups continue to work.
-                    let env_to_load = if ($direnv_out | get -i PATH | is-not-empty) {
+                    let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
                         let path_as_list = ($direnv_out | get PATH | split row (char esep))
                         $direnv_out | merge { PATH: $path_as_list }
                     } else { $direnv_out }
@@ -433,7 +433,7 @@ def --env d [index?: int] {
 # ---------------------------------------------------------------------------
 # Startup time (only shown when DOTFILES_DEBUG is set)
 # ---------------------------------------------------------------------------
-if ($env | get -i DOTFILES_DEBUG | is-not-empty) {
+if ($env | get -o DOTFILES_DEBUG | is-not-empty) {
     let elapsed = ((date now) - $env._SHELL_START)
     print $"(ansi blue)→(ansi reset) Shell loaded in ($elapsed | format duration ms)"
 }
