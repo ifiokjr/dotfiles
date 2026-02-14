@@ -6,9 +6,9 @@ $env._SHELL_START = (date now)
 # ---------------------------------------------------------------------------
 # When Nix env vars are missing (e.g. nushell is the login shell and
 # nix-darwin's set-environment has not run), detect and set them manually.
-if not ($env | get -o NIX_PROFILES | is-not-empty) {
+if not ($env | get -i NIX_PROFILES | is-not-empty) {
     # Replicate nix-darwin's set-environment script
-    let user = ($env | get -o USER | default "ifiokjr")
+    let user = ($env | get -i USER | default "ifiokjr")
     # Nix profiles (matches nix-darwin set-environment)
     $env.NIX_PROFILES = $"/nix/var/nix/profiles/default /run/current-system/sw /etc/profiles/per-user/($user) ($env.HOME)/.nix-profile"
     $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($user)"
@@ -27,7 +27,7 @@ if not ($env | get -o NIX_PROFILES | is-not-empty) {
         "/run/current-system/sw/bin"
         "/nix/var/nix/profiles/default/bin"
     ]
-    let current_path = if ($env | get -o PATH | is-not-empty) {
+    let current_path = if ($env | get -i PATH | is-not-empty) {
         if ($env.PATH | describe) == "string" {
             $env.PATH | split row (char esep)
         } else { $env.PATH }

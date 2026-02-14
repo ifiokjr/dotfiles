@@ -152,7 +152,7 @@ def main [] {
     # Prompt for each variable
     mut values = {}
     for var in $env_vars {
-        let current = ($existing | get -o $var.name | default "")
+        let current = ($existing | get -i $var.name | default "")
         let new_val = (prompt_for_value $var.name $var.desc $var.url $current)
         $values = ($values | merge { ($var.name): $new_val })
     }
