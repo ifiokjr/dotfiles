@@ -110,6 +110,29 @@ jobs:
         run: |
           nix flake check ./Configs/nix/.config/nix --impure --no-build
 
+  setup-test:
+    name: setup script (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: 🧪 run setup script
+        run: ./setup --skip-nix --no-confirm
+
+      - name: ✅ verify setup completed
+        run: |
+          command -v tuckr && echo "tuckr: ok"
+          command -v nu && echo "nushell: ok"
+          tuckr status
+
   docker-integration:
     name: docker integration test
     runs-on: ubuntu-latest
