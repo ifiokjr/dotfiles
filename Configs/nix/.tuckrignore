@@ -3,6 +3,7 @@
 .config/nix/result-*
 .config/nix/.devenv/
 .config/nix/.direnv/
+.config/nix/flake.lock
 
 # Backup files
 .config/nix/packages/*.backup

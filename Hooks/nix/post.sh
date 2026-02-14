@@ -177,11 +177,21 @@ fi
 # ---------------------------------------------------------------------------
 # Rebuild
 # ---------------------------------------------------------------------------
+REBUILD_EXIT=0
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Back up /etc/shells before nix-darwin takes ownership (one-time)
 	if [ -f /etc/shells ] && [ ! -f /etc/shells.before-nix-darwin ]; then
 		echo "Backing up /etc/shells to /etc/shells.before-nix-darwin"
 		sudo mv /etc/shells /etc/shells.before-nix-darwin
+	fi
+
+	# nix-homebrew manages Homebrew via nix-darwin. The activation step fails
+	# if an existing Homebrew installation has a Taps directory. Remove it so
+	# nix-homebrew can take ownership cleanly.
+	if [ -d "/opt/homebrew/Library/Taps" ]; then
+		echo "Removing existing Homebrew Taps to avoid nix-homebrew conflict..."
+		sudo rm -rf /opt/homebrew/Library/Taps
 	fi
 
 	# Build darwin-rebuild command (with nix run fallback for first-time setup)
@@ -194,8 +204,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 	REBUILD_CMD="ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${DARWIN_CMD}"
 	echo "Running: $REBUILD_CMD"
-	bash -c "$REBUILD_CMD"
-	echo "Configuration rebuilt successfully! (darwin + home-manager)"
+	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
+	if [ "$REBUILD_EXIT" -ne 0 ]; then
+		echo "WARNING: darwin-rebuild failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
+	else
+		echo "Configuration rebuilt successfully! (darwin + home-manager)"
+	fi
 else
 	# Linux: standalone home-manager switch
 	HM_FLAKE="${NIX_FLAKE_DIR}#${CFG_USERNAME}@${CFG_SYSTEM}"
@@ -209,8 +223,12 @@ else
 
 	REBUILD_CMD="${SUDO_PREFIX} USER=${CFG_USERNAME} HOME=${HOME} NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${HM_CMD}"
 	echo "Running: $REBUILD_CMD"
-	bash -c "$REBUILD_CMD"
-	echo "Configuration rebuilt successfully! (home-manager)"
+	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
+	if [ "$REBUILD_EXIT" -ne 0 ]; then
+		echo "WARNING: home-manager rebuild failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
+	else
+		echo "Configuration rebuilt successfully! (home-manager)"
+	fi
 fi
 
 # ---------------------------------------------------------------------------
@@ -256,3 +274,6 @@ if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
 		set -u
 	fi
 fi
+
+# Propagate rebuild failure so callers know the rebuild didn't fully succeed.
+exit "$REBUILD_EXIT"
