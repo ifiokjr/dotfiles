@@ -26,6 +26,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 🔍 debug GITHUB_PATH and PATH
+        run: |
+          echo "=== GITHUB_PATH file contents ==="
+          cat "$GITHUB_PATH" || echo "(empty or missing)"
+          echo ""
+          echo "=== Current PATH ==="
+          echo "$PATH" | tr ':' '\n'
+          echo ""
+          echo "=== Which checks ==="
+          which dprint || echo "dprint: NOT FOUND"
+          which shellcheck || echo "shellcheck: NOT FOUND"
+          which nu || echo "nu: NOT FOUND"
+
       - name: 🔍 shellcheck bash scripts
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/*

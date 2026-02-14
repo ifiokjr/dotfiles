@@ -583,7 +583,14 @@ main() {
     # In GitHub Actions, export current PATH entries to GITHUB_PATH so that
     # binaries installed by setup (via home-manager, nix profile, etc.) are
     # available in subsequent workflow steps.
-    if [ -n "$GITHUB_ACTIONS" ] && [ -n "$GITHUB_PATH" ]; then
+    # Use ${VAR:-} to avoid "unbound variable" errors from set -u.
+    if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
+        print_info "Exporting PATH to GITHUB_PATH for subsequent steps"
+        print_info "GITHUB_PATH file: $GITHUB_PATH"
+        print_info "Current PATH entries:"
+        echo "$PATH" | tr ':' '\n' | while read -r p; do
+            echo "  $p"
+        done
         echo "$PATH" | tr ':' '\n' >> "$GITHUB_PATH"
     fi
 }

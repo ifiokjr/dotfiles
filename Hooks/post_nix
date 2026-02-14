@@ -35,7 +35,7 @@ fi
 # Standalone home-manager installs packages to its own profile, which is separate
 # from ~/.nix-profile. The nix-installer-action only adds ~/.nix-profile/bin to
 # GITHUB_PATH, so home-manager packages (like raco) aren't found by later steps.
-if [ -n "$GITHUB_ACTIONS" ] && [ -n "$GITHUB_PATH" ]; then
+if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
     HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager/home-path/bin"
     if [ -d "$HM_PROFILE" ]; then
         echo "$HM_PROFILE" >> "$GITHUB_PATH"
