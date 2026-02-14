@@ -4,10 +4,6 @@
 .config/nix/.devenv/
 .config/nix/.direnv/
 
-# Generated during rebuild (gitignored, not managed by tuckr)
-.config/nix/machine.nix
-.config/nix/flake.lock
-
 # Backup files
 .config/nix/packages/*.backup
 .config/nix/packages/*.backup.*
