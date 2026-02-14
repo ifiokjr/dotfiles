@@ -106,7 +106,43 @@ def setup_symlinks [helix_dir: string, helix_bin: string, runtime_src: string, r
     info $"Creating symlink: ($runtime_dest) -> ($runtime_src)"
     ^ln -sf $runtime_src $runtime_dest
     success "Runtime symlink created successfully"
+
+    # Symlink steel tools from ~/.cargo/bin/ to ~/.local/bin/
+    # cargo xtask steel installs these into ~/.cargo/bin/ but they need to be
+    # on PATH via ~/.local/bin/ for global access
+    let steel_tools = ["steel" "forge" "steel-language-server"]
+    for tool in $steel_tools {
+        let cargo_bin = $"($env.HOME)/.cargo/bin/($tool)"
+        let local_bin = $"($bin_dir)/($tool)"
+        if ($cargo_bin | path exists) {
+            if ($local_bin | path exists) or (($local_bin | path type) == "symlink") {
+                rm -f $local_bin
+            }
+            ^ln -sf $cargo_bin $local_bin
+            success $"Symlinked ($tool) -> ($local_bin)"
+        } else {
+            warn $"($tool) not found at ($cargo_bin), skipping symlink"
+        }
+    }
+
     info "You can now run: hx"
+}
+
+# Install forge packages required by init.scm (splash screen, keymaps, etc.)
+def install_forge_packages [] {
+    let forge_bin = $"($env.HOME)/.local/bin/forge"
+    if not ($forge_bin | path exists) {
+        warn "forge not found, skipping package installation"
+        return
+    }
+
+    info "Installing forge packages..."
+    let result = do -i { ^$forge_bin pkg install --git https://github.com/mattwparas/helix-config.git }
+    if ($env.LAST_EXIT_CODE == 0) {
+        success "Forge packages installed successfully"
+    } else {
+        warn "Failed to install forge packages (you can run 'forge pkg install --git https://github.com/mattwparas/helix-config.git' manually)"
+    }
 }
 
 def build_helix [helix_dir: string, helix_bin: string, runtime_src: string, runtime_dest: string] {
@@ -131,6 +167,9 @@ def build_helix [helix_dir: string, helix_bin: string, runtime_src: string, runt
 
         # Create symlinks for binary and runtime
         setup_symlinks $helix_dir $helix_bin $runtime_src $runtime_dest
+
+        # Install forge packages required by init.scm
+        install_forge_packages
 
         print ""
         info "Installation complete!"

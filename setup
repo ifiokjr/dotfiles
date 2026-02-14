@@ -428,6 +428,14 @@ deploy_groups() {
                 if [ -f "$helix_install_script" ]; then
                     if nu "$helix_install_script"; then
                         print_success "Custom Helix installed successfully"
+                        # Verify steel tools are available
+                        for tool in forge steel steel-language-server; do
+                            if [ -f "$HOME/.local/bin/$tool" ]; then
+                                print_success "$tool available at ~/.local/bin/$tool"
+                            else
+                                print_warning "$tool not found at ~/.local/bin/$tool"
+                            fi
+                        done
                     else
                         print_warning "Failed to install custom Helix (you can run 'install:helix:custom' manually later)"
                     fi
