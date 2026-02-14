@@ -170,7 +170,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Back up /etc/shells before nix-darwin takes ownership (one-time)
 	if [ -f /etc/shells ] && [ ! -f /etc/shells.before-nix-darwin ]; then
 		echo "Backing up /etc/shells to /etc/shells.before-nix-darwin"
-		sudo cp /etc/shells /etc/shells.before-nix-darwin
+		sudo mv /etc/shells /etc/shells.before-nix-darwin
 	fi
 
 	# Build darwin-rebuild command (with nix run fallback for first-time setup)
@@ -231,8 +231,11 @@ if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
 	fi
 
 	# Also source hm-session-vars.sh if available (sets HOME_MANAGER_VARS, etc.)
+	# Temporarily disable nounset — the script references variables that may be unset.
 	if [ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+		set +u
 		# shellcheck disable=SC1091
 		. "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+		set -u
 	fi
 fi
