@@ -21,8 +21,7 @@ layout {
     }
     with_sidebar name="default" focus=true {
         pane name="explorer" focus=true {
-            command "env"
-            args "YAZI_CONFIG_HOME=~/.config/yazelix/yazi" "yazi"
+            command "yazi"
             size "100%"
         }
     }

@@ -58,8 +58,6 @@ C-s = ":w"
 C-r = ":config-reload"
 ## Reload the lsp
 M = ":lsp-restart"
-## Reveals the file from the Helix buffer in Yazi
-A-y = ":sh nu ~/.config/yazelix/nushell/scripts/reveal_in_yazi.nu \"%{buffer_name}\""
 A-Y = ":sh echo 'buffer_name: %{buffer_name}, cursor_line: %{cursor_line}, line_ending: %{line_ending}, cursor_column: %{cursor_column}, language: %{language}, selection: %{selection}'"
 d = "delete_selection_noyank"
 A-d = "delete_selection"
@@ -83,8 +81,6 @@ C-s = ":w"
 C-r = ":config-reload"
 
 M = ":lsp-restart"
-## Reveals the file from the Helix buffer in Yazi
-A-y = ":sh nu ~/.config/yazelix/nushell/scripts/reveal_in_yazi.nu \"%{buffer_name}\""
 A-Y = ":sh echo 'buffer_name: %{buffer_name}, cursor_line: %{cursor_line}, line_ending: %{line_ending}, cursor_column: %{cursor_column}, language: %{language}, selection: %{selection}'"
 d = "delete_selection_noyank"
 A-d = "delete_selection"
@@ -167,14 +163,6 @@ Z = ":o ~/.config/nushell/config.nu"
 c = ":o ~/.config/zellij/config.kdl"
 ## Open the zellij/layouts folder
 l = ":o ~/.config/zellij/layouts/"
-
-[keys.normal.space.o.y]
-## Open the yazi config
-c = ":o ~/.config/yazelix/yazi/yazi.toml"
-## Open the yazi keymap
-k = ":o ~/.config/yazelix/yazi/keymap.toml"
-## Open the yazi theme
-y = ":o ~/.config/yazelix/yazi/theme.toml"
 
 [keys.select.ret]
 s = ["split_selection_on_newline", ":sort", "merge_selections"]
