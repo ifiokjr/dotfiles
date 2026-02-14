@@ -325,18 +325,26 @@ deploy_groups() {
 
     cd "$DOTFILES_DIR"
 
+    # Resolve tuckr to its real nix store path. This survives nix profile
+    # removal — only the ~/.nix-profile/bin symlink is deleted, the store
+    # binary remains. We need this because tuckr is removed from the profile
+    # before nix deployment to avoid home-manager conflicts, but is still
+    # needed to deploy remaining groups.
+    local TUCKR
+    TUCKR=$(realpath "$(command -v tuckr)")
+
     # If specific groups are specified via --groups flag
     if [ -n "$DEPLOY_GROUPS" ]; then
         IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
         for group in "${GROUPS[@]}"; do
             print_info "Deploying group: $group"
             if [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
-                if ! tuckr set "$group" 2>&1; then
+                if ! "$TUCKR" set "$group" 2>&1; then
                     print_error "Failed to deploy $group"
                     DEPLOY_FAILED=true
                 fi
             else
-                if ! tuckr add "$group" 2>&1; then
+                if ! "$TUCKR" add "$group" 2>&1; then
                     print_error "Failed to deploy $group"
                     DEPLOY_FAILED=true
                 fi
@@ -377,7 +385,7 @@ deploy_groups() {
     done
     if [ "$has_scripts" = true ]; then
         print_info "Deploying scripts (priority)"
-        if ! tuckr add scripts 2>&1; then
+        if ! "$TUCKR" add scripts 2>&1; then
             print_error "Failed to deploy scripts"
             DEPLOY_FAILED=true
         else
@@ -428,7 +436,7 @@ deploy_groups() {
                 INSTALLED_NUSHELL=false
             fi
 
-            if ! tuckr set "$group" 2>&1; then
+            if ! "$TUCKR" set "$group" 2>&1; then
                 print_error "Failed to deploy $group"
                 DEPLOY_FAILED=true
             else
@@ -452,7 +460,7 @@ deploy_groups() {
             # Deploy config first
             if [ "$has_hook" = true ]; then
                 print_info "Deploying $group (with hooks)"
-                if ! tuckr set "$group" 2>&1; then
+                if ! "$TUCKR" set "$group" 2>&1; then
                     print_error "Failed to deploy $group"
                     DEPLOY_FAILED=true
                 else
@@ -460,7 +468,7 @@ deploy_groups() {
                 fi
             else
                 print_info "Deploying $group"
-                if ! tuckr add "$group" 2>&1; then
+                if ! "$TUCKR" add "$group" 2>&1; then
                     print_error "Failed to deploy $group"
                     DEPLOY_FAILED=true
                 else
@@ -513,7 +521,7 @@ deploy_groups() {
         # Deploy the group
         if [ "$has_hook" = true ]; then
             print_info "Deploying $group (with hooks)"
-            if ! tuckr set "$group" 2>&1; then
+            if ! "$TUCKR" set "$group" 2>&1; then
                 print_error "Failed to deploy $group"
                 DEPLOY_FAILED=true
             else
@@ -521,7 +529,7 @@ deploy_groups() {
             fi
         else
             print_info "Deploying $group"
-            if ! tuckr add "$group" 2>&1; then
+            if ! "$TUCKR" add "$group" 2>&1; then
                 print_error "Failed to deploy $group"
                 DEPLOY_FAILED=true
             else
