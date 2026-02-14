@@ -20,6 +20,17 @@ if [ -d "$HOME/.local/bin" ]; then
 	export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# nix-darwin activation refuses to overwrite /etc files it doesn't manage.
+# Rename any conflicting files so the first darwin-rebuild switch succeeds.
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	for f in /etc/zshenv /etc/zshrc /etc/bashrc /etc/zprofile; do
+		if [ -f "$f" ] && [ ! -L "$f" ]; then
+			echo "Renaming $f → ${f}.before-nix-darwin"
+			sudo mv "$f" "${f}.before-nix-darwin"
+		fi
+	done
+fi
+
 # Use the rebuild script if available, otherwise fall back to direct command.
 # Skip auto-updates and flake check during hook-triggered rebuilds — the hook
 # runs after tuckr deploys files, so we just want a fast rebuild, not a full
