@@ -397,6 +397,36 @@ When using Claude Code to make commits, ensure:
 3. Subject is clear and concise (50 chars or less)
 4. Body explains the "why" not just the "what"
 
+## GitHub Workflow Conventions
+
+All GitHub Actions workflow files **must** follow these naming and formatting conventions.
+
+### Naming Rules
+
+- **Workflow `name:` field**: always lowercase (e.g., `name: ci`, `name: claude code`)
+- **Job names**: always lowercase, no emoji prefix (e.g., `name: lint & format (${{ matrix.os }})`)
+- **Step names**: always lowercase, prefixed with a descriptive emoji (e.g., `name: 📥 checkout repository`)
+- Every step **must** have a `name:` field — never use bare `uses:` or `run:` without a name
+
+### Step Emoji Reference
+
+| Emoji | Action              |
+| ----- | ------------------- |
+| 📥    | checkout            |
+| 🔧    | install tools / nix |
+| 📦    | install deps        |
+| 🧪    | run tests           |
+| 🔍    | linting / checking  |
+| 🎨    | formatting          |
+| 📝    | generate files      |
+| 🏗️    | build               |
+| 🤖    | AI / automation     |
+| ✅    | verify / validate   |
+
+## Nix Commands
+
+- **Always** use `nix profile add`, **never** `nix profile install` (deprecated)
+
 ## Pre-Push Verification
 
 **MANDATORY**: Before pushing any commits to the remote, always run the local CI checks to ensure they pass. At minimum:
@@ -404,10 +434,34 @@ When using Claude Code to make commits, ensure:
 1. **Format check**: `dprint check --config Configs/dprint/dprint.json`
 2. **Shellcheck**: `shellcheck setup setup-tuckr-symlink.sh Hooks/*`
 3. **Nix flake check** (if nix files changed): Generate `machine.nix` if needed, then `nix flake check ./Configs/nix/.config/nix --impure --no-build`
+4. **Local workflow test** (optional): `act -j lint-and-format` to run CI jobs locally via Docker
 
 A convenience script is available: `nu Configs/scripts/.local/bin/ci_check`
 
 If any check fails, fix the issues before pushing. Never push code that would fail CI.
+
+### Local CI with `act`
+
+[`act`](https://github.com/nektos/act) runs GitHub Actions workflows locally using Docker.
+
+```bash
+# List available jobs
+act -l
+
+# Run a specific job
+act -j lint-and-format
+act -j test
+act -j setup-test
+
+# Run all jobs (Linux runners only — macOS jobs are skipped)
+act
+```
+
+**Limitations:**
+
+- Only Linux (`ubuntu-*`) runners are supported; macOS jobs are skipped
+- Requires Docker to be running
+- Some GitHub-specific features (secrets, permissions) may not work locally
 
 ## Troubleshooting
 
