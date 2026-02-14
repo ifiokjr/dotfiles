@@ -24,7 +24,7 @@ def main [
     }
 
     # Auto-detect values
-    let username = $env.USER
+    let username = ($env.USER? | default (^whoami | str trim))
     let system = (platform nix-system)
     let hostname = (platform detect-hostname)
 

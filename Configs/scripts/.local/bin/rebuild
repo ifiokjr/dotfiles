@@ -9,7 +9,8 @@ use nu_modules/platform.nu
 use nu_modules/nix_config.nu
 
 def main [
-    --skip-check  # Skip flake check before rebuilding
+    --skip-check    # Skip flake check before rebuilding
+    --skip-updates  # Skip auto-updating packages before rebuilding
 ] {
     let nix_config = (nix_config config-dir)
     let machine_config = $"($nix_config)/machine.nix"
@@ -32,7 +33,7 @@ def main [
             }
         } else {
             # Fallback: create directly
-            let username = $env.USER
+            let username = ($env.USER? | default (^whoami | str trim))
             let system = (platform nix-system)
             let hostname = (platform detect-hostname)
 
@@ -78,17 +79,57 @@ def main [
     print $"  System: ($config.system)"
     print ""
 
+    # Auto-update packages (unless skipped)
+    if not $skip_updates {
+        info "Checking for package updates..."
+        print ""
+
+        # Update cursor-cli
+        do -i {
+            info "Checking cursor-cli for updates..."
+            ^update:cursor:version --skip-rebuild
+        }
+        if ($env.LAST_EXIT_CODE != 0) {
+            warn "cursor-cli update check failed \(continuing\)"
+        }
+
+        # Update pnpm-standalone
+        do -i {
+            info "Checking pnpm for updates..."
+            ^update:pnpm:version --skip-rebuild
+        }
+        if ($env.LAST_EXIT_CODE != 0) {
+            warn "pnpm update check failed \(continuing\)"
+        }
+
+        # Update racket-minimal
+        do -i {
+            info "Checking racket for updates..."
+            ^update:racket:version --skip-rebuild
+        }
+        if ($env.LAST_EXIT_CODE != 0) {
+            warn "racket update check failed \(continuing\)"
+        }
+
+        print ""
+    }
+
+    # Detect root-only nix install (Docker/containers without systemd).
+    # When true, nix commands need sudo with HOME preserved.
+    # If the nix daemon socket exists (e.g. manually started), sudo is not needed.
+    let root_only_nix = (not ("/run/systemd/system" | path exists)) and (not ("/nix/var/nix/daemon-socket/socket" | path exists)) and ((^id -u | str trim) != "0")
+
+    # Build the sudo prefix for nix commands when running root-only nix.
+    # Nix binaries are symlinked to /usr/local/bin by setup, so PATH isn't needed.
+    let sudo_prefix = if $root_only_nix { "sudo" } else { "" }
+
     # Check flake validity (unless skipped)
     # `nix flake check` validates the flake.nix outputs without building everything
     if not $skip_check {
         info "Checking flake configuration..."
         # `do -i` suppresses the error so we can continue even if check fails
-        let check_result = do -i {
-            # Pass config dir so the flake can locate gitignored machine.nix
-            with-env { NIX_USER_CONFIG_DIR: $nix_config } {
-                ^nix flake check $nix_config --impure
-            }
-        }
+        let check_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake check '($nix_config)' --impure"
+        let check_result = do -i { ^bash -c $check_cmd }
         if ($env.LAST_EXIT_CODE != 0) {
             # \( and \) escape parentheses in nushell string interpolation
             warn "Flake check reported issues \(continuing anyway\)"
@@ -136,7 +177,19 @@ def main [
         print ""
 
         let hm_flake = $"($nix_config)#($config.username)@($config.system)"
-        let rebuild_cmd = $"NIX_USER_CONFIG_DIR='($nix_config)' home-manager switch --flake '($hm_flake)' --impure"
+
+        # On first run, `home-manager` CLI may not be installed yet.
+        # Use `nix run home-manager` from the flake input as fallback.
+        let hm_cmd = if (which home-manager | is-not-empty) {
+            $"home-manager switch --flake '($hm_flake)' --impure"
+        } else {
+            info "home-manager not found, using nix run for first-time setup..."
+            $"nix run home-manager -- switch --flake '($hm_flake)' --impure"
+        }
+
+        # Explicitly pass USER and HOME so home-manager activation can verify the
+        # target user. Without this, bash -c subshells may not inherit these vars.
+        let rebuild_cmd = $"($sudo_prefix) USER=($config.username) HOME=($env.HOME) NIX_USER_CONFIG_DIR='($nix_config)' ($hm_cmd)"
         let result = do -i { ^bash -c $rebuild_cmd }
 
         if ($env.LAST_EXIT_CODE == 0) {
