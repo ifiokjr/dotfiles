@@ -419,7 +419,7 @@ All GitHub Actions workflow files **must** follow these naming and formatting co
 | 🔍    | linting / checking  |
 | 🎨    | formatting          |
 | 📝    | generate files      |
-| 🏗️    | build               |
+| 🏗️     | build               |
 | 🤖    | AI / automation     |
 | ✅    | verify / validate   |
 
