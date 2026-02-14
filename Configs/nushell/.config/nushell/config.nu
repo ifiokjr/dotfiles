@@ -23,6 +23,12 @@ $env.config = {
         env_change: {
             PWD: [
                 {|| 
+                    # Directory stack — push current directory, deduplicate, cap at 10.
+                    # Mirrors zsh auto_pushd behaviour used by oh-my-zsh's `d` command.
+                    let dir = ($env.PWD | path expand)
+                    $env.DIRSTACK = ([$dir] | append ($env.DIRSTACK | where { $in != $dir }) | first 10)
+                }
+                {|| 
                     # Direnv integration - loads/unloads environment variables when
                     # entering/leaving directories with .envrc files (e.g. devenv).
                     # Based on: https://direnv.net/docs/hook.html
@@ -409,18 +415,11 @@ def c [...paths: string] {
     }
 }
 # Directory history (like oh-my-zsh 'd' command)
+# Uses a session directory stack maintained by a PWD change hook.
 # `d` shows recent directories numbered 0-9 (0 is current directory).
 # `d <n>` jumps to directory at that index.
-# Most recent directory is at 1, least recent at 9.
 def --env d [index?: int] {
-    let cwd = ($env.PWD | path expand)
-    let zoxide_dirs = (
-        ^zoxide query -l -s | lines | where { |l| ($l | str trim | is-not-empty) } | each { |l|
-            let parts = ($l | str trim | split row " " | where { $in | is-not-empty })
-            ($parts | skip 1 | str join " ")
-        } | where { |p| ($p | path exists) and (($p | path expand) != $cwd) } | first 9
-    )
-    let dirs = ([$cwd] | append $zoxide_dirs)
+    let dirs = $env.DIRSTACK
     if ($index != null) {
         if $index >= 0 and $index < ($dirs | length) { cd ($dirs | get $index) } else { print $"(ansi red)Invalid index:(ansi reset) ($index) \(0-($dirs | length | $in - 1)\)" }
         return
@@ -429,6 +428,7 @@ def --env d [index?: int] {
         let display = ($r.item | str replace $env.HOME "~")
         print $"(ansi cyan)($r.index)(ansi reset)\t($display)"
     }
+    null
 }
 # ---------------------------------------------------------------------------
 # Startup time (only shown when DOTFILES_DEBUG is set)

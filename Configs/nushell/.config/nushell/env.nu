@@ -105,3 +105,9 @@ let path_append = [
 $env.PATH = (
     $path_prepend | append $env.PATH | append $path_append | uniq
 )
+# ---------------------------------------------------------------------------
+# Directory stack (like zsh auto_pushd)
+# ---------------------------------------------------------------------------
+$env.DIRSTACK = [
+    $env.PWD
+]
