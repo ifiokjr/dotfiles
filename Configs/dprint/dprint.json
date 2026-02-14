@@ -64,6 +64,7 @@
 		"deno": true,
 		"textWrap": "never"
 	},
+	"yaml": {},
 	"excludes": [
 		"**/pnpm-lock.yaml",
 		"**/dist",
