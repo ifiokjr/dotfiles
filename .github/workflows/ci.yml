@@ -26,6 +26,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 🔧 export PATH to GITHUB_PATH
+        run: echo "$PATH" | tr ':' '\n' >> "$GITHUB_PATH"
+
       - name: 🔍 shellcheck bash scripts
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/*
@@ -92,6 +95,9 @@ jobs:
         run: ./setup --no-confirm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 export PATH to GITHUB_PATH
+        run: echo "$PATH" | tr ':' '\n' >> "$GITHUB_PATH"
 
       - name: ✅ verify setup completed
         run: |
