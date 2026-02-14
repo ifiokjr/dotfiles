@@ -38,7 +38,38 @@ fi
 # ---------------------------------------------------------------------------
 # Resolve nix config directory (follow symlinks)
 # ---------------------------------------------------------------------------
-NIX_CONFIG_DIR="$(readlink -f "$HOME/.config/nix" 2>/dev/null || echo "$HOME/.config/nix")"
+# ~/.config/nix may be a real directory (created for nix.conf before tuckr runs)
+# with tuckr-created file-level symlinks inside. Nix flake evaluation requires
+# the resolved path (inside the git repo) so it can discover the git root.
+# We follow the flake.nix symlink to find the actual directory.
+resolve_nix_config_dir() {
+	local nix_dir="$HOME/.config/nix"
+
+	# Case 1: flake.nix is a symlink (tuckr file-level symlink)
+	if [ -L "$nix_dir/flake.nix" ]; then
+		local target target_dir
+		target="$(readlink "$nix_dir/flake.nix")"
+		target_dir="$(dirname "$target")"
+		if [[ "$target_dir" = /* ]]; then
+			(cd "$target_dir" && pwd -P)
+		else
+			(cd "$nix_dir/$target_dir" && pwd -P)
+		fi
+		return
+	fi
+
+	# Case 2: ~/.config/nix itself is a symlink (tuckr dir-level symlink)
+	if [ -L "$nix_dir" ]; then
+		(cd "$nix_dir" && pwd -P)
+		return
+	fi
+
+	# Case 3: real directory, no symlinks — use as-is
+	echo "$nix_dir"
+}
+
+NIX_CONFIG_DIR="$(resolve_nix_config_dir)"
+echo "Resolved nix config directory: $NIX_CONFIG_DIR"
 MACHINE_NIX="$NIX_CONFIG_DIR/machine.nix"
 
 # ---------------------------------------------------------------------------
