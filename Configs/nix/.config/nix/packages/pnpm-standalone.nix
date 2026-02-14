@@ -21,9 +21,9 @@ let
   # Using fakeSha256 initially - Nix will provide correct hash on first build
   hashes = {
     "macos-arm64" = "sha256-okjFawqyBEPhjQyO4yB8bFZO40K9P8hpSzVpoGDOzs4=";
-    "macos-x64" = lib.fakeSha256;
-    "linux-arm64" = lib.fakeSha256;
-    "linux-x64" = lib.fakeSha256;
+    "macos-x64" = "sha256-Vph3Al6IlNiLF1b9vAZ1Mw382cAezkqyZoW6r/+o4wM=";
+    "linux-arm64" = "sha256-rnAgiIKyxSKeFD3iRU/E93iy0q6Vmi5I7Hamwm6LMSc=";
+    "linux-x64" = "sha256-L8mNsSfGEb4MEQrxG1tydZ99c2iT3dyB33O3tZsw8Vo=";
   };
 
   platformKey = "${platform}-${arch}";
@@ -43,6 +43,7 @@ stdenv.mkDerivation {
   dontStrip = stdenv.isDarwin; # Stripping crashes on macOS with standalone binaries
 
   nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  buildInputs = lib.optionals stdenv.isLinux [ stdenv.cc.cc.lib ];
 
   installPhase = ''
     runHook preInstall

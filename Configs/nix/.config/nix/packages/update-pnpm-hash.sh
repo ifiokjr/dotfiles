@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 #
-# Automatically update pnpm-standalone hash
+# Automatically update pnpm-standalone hashes for ALL platforms
 #
 # This script:
-# 1. Detects your platform (macos-arm64, macos-x64, etc.)
-# 2. Runs darwin-rebuild to get the correct hash
-# 3. Extracts the hash from the error message
-# 4. Updates pnpm-standalone.nix with the correct hash
-# 5. Runs darwin-rebuild again to complete the installation
+# 1. Reads the current version from pnpm-standalone.nix
+# 2. Fetches hashes for all 4 platforms using nix-prefetch-url
+# 3. Updates pnpm-standalone.nix with the correct hashes
 
 set -e
 
@@ -30,35 +28,6 @@ print_error() {
 	echo -e "${RED}✗${NC} $1"
 }
 
-print_warn() {
-	echo -e "${YELLOW}!${NC} $1"
-}
-
-# Detect platform
-detect_platform() {
-	local os arch
-
-	case "$(uname -s)" in
-	Darwin) os="macos" ;;
-	Linux) os="linux" ;;
-	*)
-		print_error "Unsupported OS: $(uname -s)"
-		exit 1
-		;;
-	esac
-
-	case "$(uname -m)" in
-	arm64 | aarch64) arch="arm64" ;;
-	x86_64) arch="x64" ;;
-	*)
-		print_error "Unsupported architecture: $(uname -m)"
-		exit 1
-		;;
-	esac
-
-	echo "${os}-${arch}"
-}
-
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NIX_FILE="${SCRIPT_DIR}/pnpm-standalone.nix"
@@ -68,9 +37,6 @@ if [[ ! -f "$NIX_FILE" ]]; then
 	exit 1
 fi
 
-PLATFORM=$(detect_platform)
-print_info "Detected platform: $PLATFORM"
-
 # Get version from nix file
 VERSION=$(grep 'version = ' "$NIX_FILE" | sed -E 's/.*version = "([^"]+)".*/\1/')
 if [[ -z "$VERSION" ]]; then
@@ -78,59 +44,66 @@ if [[ -z "$VERSION" ]]; then
 	exit 1
 fi
 
-print_info "Fetching pnpm version $VERSION for $PLATFORM"
-
-# Construct download URL
-PNPM_URL="https://github.com/pnpm/pnpm/releases/download/v${VERSION}/pnpm-${PLATFORM}"
-
-print_info "Fetching hash using nix-prefetch-url..."
+print_info "Fetching pnpm v$VERSION hashes for all platforms..."
 echo ""
 
-# Use nix-prefetch-url to get the correct hash
-# This is the proper Nix way and doesn't require sudo
-CORRECT_HASH=$(nix-prefetch-url --type sha256 "$PNPM_URL" 2>&1 | tail -1)
-
-if [[ -z "$CORRECT_HASH" ]]; then
-	print_error "Failed to fetch hash from $PNPM_URL"
-	exit 1
-fi
-
-# Convert to SRI format (sha256-...) if it's in the old format
-if [[ ! "$CORRECT_HASH" =~ ^sha256- ]]; then
-	print_info "Converting hash to SRI format..."
-	CORRECT_HASH=$(nix hash to-sri --type sha256 "$CORRECT_HASH")
-fi
-
-print_success "Found hash: $CORRECT_HASH"
-echo ""
+# All supported platforms
+PLATFORMS=("macos-arm64" "macos-x64" "linux-arm64" "linux-x64")
 
 # Backup the file
 cp "$NIX_FILE" "${NIX_FILE}.backup"
-print_info "Created backup: ${NIX_FILE}.backup"
 
-# Update the hash in the file
-# Replace the line with the platform hash
-if grep -q "\"${PLATFORM}\"" "$NIX_FILE"; then
-	# Use sed to replace the hash
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		# macOS sed syntax
-		sed -i '' "s|\"${PLATFORM}\" = .*|\"${PLATFORM}\" = \"${CORRECT_HASH}\";|" "$NIX_FILE"
-	else
-		# Linux sed syntax
-		sed -i "s|\"${PLATFORM}\" = .*|\"${PLATFORM}\" = \"${CORRECT_HASH}\";|" "$NIX_FILE"
+fetch_hash() {
+	local platform="$1"
+	local url="https://github.com/pnpm/pnpm/releases/download/v${VERSION}/pnpm-${platform}"
+
+	print_info "Fetching hash for $platform..."
+
+	local raw_hash
+	raw_hash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1)
+
+	if [[ -z "$raw_hash" ]]; then
+		print_error "Failed to fetch hash for $platform"
+		return 1
 	fi
-	print_success "Updated hash in pnpm-standalone.nix"
-else
-	print_error "Could not find platform entry for: $PLATFORM"
-	exit 1
-fi
+
+	# Convert to SRI format
+	local sri_hash
+	sri_hash=$(nix hash to-sri --type sha256 "$raw_hash" 2>/dev/null || nix hash convert --hash-algo sha256 --to sri "$raw_hash")
+
+	echo "$sri_hash"
+}
+
+ALL_OK=true
+
+for platform in "${PLATFORMS[@]}"; do
+	HASH=$(fetch_hash "$platform")
+	if [[ -z "$HASH" ]]; then
+		print_error "Failed to get hash for $platform"
+		ALL_OK=false
+		continue
+	fi
+
+	print_success "$platform: $HASH"
+
+	# Update the hash in the file (handle both quoted hashes and lib.fakeSha256)
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i '' "s|\"${platform}\" = .*|\"${platform}\" = \"${HASH}\";|" "$NIX_FILE"
+	else
+		sed -i "s|\"${platform}\" = .*|\"${platform}\" = \"${HASH}\";|" "$NIX_FILE"
+	fi
+done
 
 echo ""
-print_success "Hash updated successfully!"
 
-# Clean up backup
-rm "${NIX_FILE}.backup"
-print_info "Removed backup file"
+if [[ "$ALL_OK" = true ]]; then
+	rm -f "${NIX_FILE}.backup"
+	print_success "All hashes updated successfully!"
+else
+	print_error "Some hashes failed. Restoring backup."
+	mv "${NIX_FILE}.backup" "$NIX_FILE"
+	exit 1
+fi
 
 echo ""
 print_info "Run 'rebuild' to apply the changes."

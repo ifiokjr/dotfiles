@@ -37,7 +37,6 @@ in
       cargo-update
       claude-code
       cloudflared
-      code-cursor
       cursor-cli-custom
       deno
       devenv
@@ -123,6 +122,7 @@ in
       nix-prefetch
       openssh
       openssl
+      podman
       protobuf
       scooter
       sqld
@@ -141,6 +141,7 @@ in
     ++ lib.optionals pkgs.stdenv.isDarwin [
       # macOS-only packages
       cocoapods
+      code-cursor
       fvm # Flutter Version Management (macOS/Windows only)
     ];
 
@@ -161,7 +162,7 @@ in
 
   # Activation scripts
   home.activation.installRacketPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    ${racket-minimal-custom}/bin/raco pkg install --skip-installed --auto --scope user fmt
+    ${racket-minimal-custom}/bin/raco pkg install --skip-installed --auto --scope user fmt || true
   '';
 
   # Environment variables

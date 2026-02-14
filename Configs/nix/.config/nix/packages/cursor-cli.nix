@@ -14,17 +14,17 @@ let
   # 3. Set all hashes to lib.fakeSha256
   # 4. Run rebuild - Nix will show correct hashes in the error
   # 5. Copy the correct hashes here
-  version = "2026.01.28-fd13201";
+  version = "2026.02.13-41ac335";
 
   # Download URL pattern: https://downloads.cursor.com/lab/{version}/{os}/{arch}/agent-cli-package.tar.gz
   os = if stdenv.isDarwin then "darwin" else "linux";
   arch = if stdenv.isAarch64 then "arm64" else "x64";
 
   hashes = {
-    "darwin-arm64" = "sha256-R5kEfd84IaUXuN+PIzpGD1NGPzD6xxM9NAXAAt6d0N8=";
-    "darwin-x64" = "sha256-G23LC7Sl1GjfaECndSuyCxHK4drkJKG3B1U2k5SAHJA=";
-    "linux-x64" = "sha256-Nj6q11iaa++b5stsEu1eBRAYUFRPft84XcHuTCZL5D0=";
-    "linux-arm64" = "sha256-6oajVZw599vzy2c1olEzoIlqbmfZRK1atb85fiR72y0=";
+    "darwin-arm64" = "sha256-ib0ZsXVc2YqAkPuMie4kwWIFrmNcD+1vX3tcvyA/PJw=";
+    "darwin-x64" = "sha256-KcmGT6WCEc97qKqtZknFsUo9RX2SOuyjv6Jyfnrv3Os=";
+    "linux-x64" = "sha256-mJPEmBNbmsTfgt0b7abrSHJLI52WfLny5Es4uGyDwew=";
+    "linux-arm64" = "sha256-ncXdGxOYlwud4Z3w5DMOmXUZ2hEcI/q4stm0yACuvy4=";
   };
 
   platformKey = "${os}-${arch}";
@@ -43,6 +43,7 @@ stdenv.mkDerivation {
   dontStrip = true; # Bundled binaries (node, rg) are pre-stripped
 
   nativeBuildInputs = [ makeWrapper ] ++ lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  buildInputs = lib.optionals stdenv.isLinux [ stdenv.cc.cc.lib ];
 
   installPhase = ''
     runHook preInstall
@@ -56,8 +57,9 @@ stdenv.mkDerivation {
     chmod +x $out/lib/cursor-cli/cursor-askpass
     chmod +x $out/lib/cursor-cli/node
     chmod +x $out/lib/cursor-cli/rg
-    chmod +x $out/lib/cursor-cli/cursorsandbox
-    chmod +x $out/lib/cursor-cli/spawn-helper
+    # cursorsandbox and spawn-helper only exist on macOS
+    chmod +x $out/lib/cursor-cli/cursorsandbox 2>/dev/null || true
+    chmod +x $out/lib/cursor-cli/spawn-helper 2>/dev/null || true
 
     # Create bin symlinks
     ln -s $out/lib/cursor-cli/cursor-agent $out/bin/cursor-agent

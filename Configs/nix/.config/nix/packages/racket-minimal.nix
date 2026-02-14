@@ -2,6 +2,7 @@
   stdenv,
   fetchurl,
   lib,
+  autoPatchelfHook,
 }:
 
 # The upstream racket-minimal fails to build from source on macOS because the
@@ -14,10 +15,13 @@ let
   version = "9.0";
 
   arch = if stdenv.isAarch64 then "aarch64" else "x86_64";
+  os = if stdenv.isDarwin then "macosx" else "linux-buster";
 
   hashes = {
-    "aarch64" = "sha256-Iyk7oMMpLJP6NBuf7uX4kwVSBNOZI4gOYGyC0VCej/I=";
-    "x86_64" = "sha256-BRn/s02MGUqaIysM0SyeGbhznz+DZXsF3sUr9O/u2Sc=";
+    "aarch64-macosx" = "sha256-Iyk7oMMpLJP6NBuf7uX4kwVSBNOZI4gOYGyC0VCej/I=";
+    "x86_64-macosx" = "sha256-BRn/s02MGUqaIysM0SyeGbhznz+DZXsF3sUr9O/u2Sc=";
+    "aarch64-linux-buster" = "sha256-HwPIo5KUV00ysqOqIoy5+QPURxy0+kG+MuscRgTQnHM=";
+    "x86_64-linux-buster" = "sha256-FiYhLe7S5SOD0Qz6fmd1/Ty4QsCUxYQdzjV+i+moSek=";
   };
 in
 stdenv.mkDerivation {
@@ -25,15 +29,17 @@ stdenv.mkDerivation {
   inherit version;
 
   src = fetchurl {
-    url = "https://mirror.racket-lang.org/installers/${version}/racket-minimal-${version}-${arch}-macosx-cs.tgz";
-    hash = hashes.${arch};
+    url = "https://mirror.racket-lang.org/installers/${version}/racket-minimal-${version}-${arch}-${os}-cs.tgz";
+    hash = hashes."${arch}-${os}";
   };
 
   sourceRoot = "racket";
 
+  nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+
   dontBuild = true;
   dontStrip = true;
-  dontFixup = true;
+  dontFixup = stdenv.isDarwin;
 
   installPhase = ''
     runHook preInstall
@@ -55,6 +61,8 @@ stdenv.mkDerivation {
     platforms = [
       "x86_64-darwin"
       "aarch64-darwin"
+      "x86_64-linux"
+      "aarch64-linux"
     ];
     mainProgram = "racket";
   };

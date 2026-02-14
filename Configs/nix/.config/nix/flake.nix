@@ -104,7 +104,10 @@
           homeDirectory ? null,
         }:
         let
-          pkgs = nixpkgs.legacyPackages.${system};
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
           # Automatically determine home directory based on system
           finalHomeDirectory =
             if homeDirectory != null then
