@@ -3,6 +3,7 @@
   fetchurl,
   lib,
   autoPatchelfHook,
+  zlib,
 }:
 
 # The upstream racket-minimal fails to build from source on macOS because the
@@ -36,6 +37,7 @@ stdenv.mkDerivation {
   sourceRoot = "racket";
 
   nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  buildInputs = lib.optionals stdenv.isLinux [ zlib ];
 
   dontBuild = true;
   dontStrip = true;
