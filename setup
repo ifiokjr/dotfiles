@@ -150,8 +150,9 @@ install_nix() {
     print_header "Installing Determinate Nix"
 
     local nix_install_args=("install")
-    # Docker/containers lack systemd; use root-only nix install
-    if [ ! -d /run/systemd/system ]; then
+    # Linux containers lack systemd; use root-only nix install.
+    # Only applies to Linux — macOS uses launchd, not systemd.
+    if [ "$(uname -s)" = "Linux" ] && [ ! -d /run/systemd/system ]; then
         nix_install_args+=("linux" "--init" "none")
     fi
     if [ "$NO_CONFIRM" = true ]; then
@@ -172,7 +173,7 @@ install_nix() {
     # Root-only nix (--init none) puts binaries in /nix/var/nix/profiles/default/bin
     # which isn't in the default system PATH. Symlink them to /usr/local/bin so all
     # processes (including those spawned by sudo) can find nix, nix-env, etc.
-    if [ ! -d /run/systemd/system ] && [ -d /nix/var/nix/profiles/default/bin ]; then
+    if [ "$(uname -s)" = "Linux" ] && [ ! -d /run/systemd/system ] && [ -d /nix/var/nix/profiles/default/bin ]; then
         print_info "Symlinking nix binaries to /usr/local/bin for system-wide access"
         for f in /nix/var/nix/profiles/default/bin/*; do
             sudo ln -sf "$f" /usr/local/bin/
@@ -191,7 +192,7 @@ command_exists() {
 # Nix binaries are symlinked to /usr/local/bin so PATH isn't needed.
 # HOME is preserved so profile installs go to the calling user's profile.
 run_nix() {
-    if [ ! -d /run/systemd/system ] && [ "$(id -u)" -ne 0 ]; then
+    if [ "$(uname -s)" = "Linux" ] && [ ! -d /run/systemd/system ] && [ "$(id -u)" -ne 0 ]; then
         sudo HOME="$HOME" nix "$@"
     else
         nix "$@"

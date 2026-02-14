@@ -21,8 +21,23 @@ jobs:
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
 
-      - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm
+      - name: 📦 install tools
+        run: |
+          nix profile add nixpkgs#nushell
+          nix profile add nixpkgs#shellcheck
+          nix profile add nixpkgs#shfmt
+          nix profile add nixpkgs#dprint
+          nix profile add nixpkgs#nufmt
+          nix profile add nixpkgs#nixfmt
+          nix profile add nixpkgs#kdlfmt
+          nix profile add nixpkgs#racket-minimal
+          raco pkg install --skip-installed --auto --scope user fmt
+
+      - name: 🔧 set up formatter configs
+        run: |
+          # kdlfmt needs its config at ~/.config/kdl/kdlfmt.kdl
+          mkdir -p ~/.config/kdl
+          cp Configs/kdl/.config/kdl/kdlfmt.kdl ~/.config/kdl/kdlfmt.kdl
 
       - name: 🔍 shellcheck bash scripts
         run: |
