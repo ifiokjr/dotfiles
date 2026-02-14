@@ -13,8 +13,7 @@ Configs/nix/.config/nix/.devenv.flake.nix
 # Backup directories and files (timestamped backups)
 *.backup.*
 **/*.backup.*
-*.yazelix-backup
-**/*.yazelix-backup
+
 
 # macOS specific files
 .DS_Store
@@ -44,8 +43,6 @@ logs/
 *.log
 
 # User-specific configuration (should not be in dotfiles)
-**/yazelix.toml
-**/yazelix.nix
 **/machine.nix
 
 # Environment files with secrets

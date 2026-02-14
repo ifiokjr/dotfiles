@@ -12,7 +12,6 @@ This is a **Tuckr-managed dotfiles repository** that uses symlinks to deploy con
 - Modular configuration groups
 - Hook-based automation
 - Nix-first philosophy with reproducible environments
-- Heavy integration with Yazelix (terminal IDE combining Yazi + Zellij + Helix)
 
 ## Initial Setup
 
@@ -57,7 +56,6 @@ If you prefer manual setup:
 tuckr set nushell                    # Shell config (runs hooks)
 tuckr add nix                        # Nix system configs (all platforms)
 tuckr add dprint direnv kdl lazygit  # Development tools
-tuckr set yazelix                 # Terminal IDE (runs pre-hook to verify dependencies)
 tuckr add zellij                  # Terminal multiplexer
 
 # Verify deployment
@@ -103,11 +101,10 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 10 configuration groups organized in `Configs/`:
+The repository contains 9 configuration groups organized in `Configs/`:
 
 | Group       | Files | Platform | Purpose                                  | Hook           |
 | ----------- | ----- | -------- | ---------------------------------------- | -------------- |
-| **yazelix** | 320   | All      | Terminal IDE (Yazi + Zellij + Helix)     | None           |
 | **nix**     | 6     | All      | System configuration with Nix flakes     | `post_nix`     |
 | **nushell** | 6     | All      | Nushell shell configuration & modules    | `post_nushell` |
 | **ghostty** | 1     | All      | Ghostty terminal emulator config         | None           |
@@ -127,7 +124,6 @@ The repository contains 10 configuration groups organized in `Configs/`:
 ```
 <dotfiles-repo>/
 ├── Configs/                    # Configuration groups
-│   ├── yazelix/               # Terminal IDE (95% of repository)
 │   ├── nix/                   # Nix system config (darwin + home-manager)
 │   ├── nushell/               # Nushell shell config
 │   ├── ghostty/               # Ghostty terminal config
@@ -170,76 +166,13 @@ Hooks are executable bash scripts in `Hooks/` directory:
 1. **`post_nix`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
 2. **`post_nushell`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
-## Yazelix Terminal IDE
+## Nushell Development Notes
 
-Yazelix comprises 320 of 335 total files (95% of the repository) and deserves special attention.
+**CRITICAL: Escape parentheses in string interpolation:** Use `\(` and `\)` (single backslash)
 
-### What is Yazelix?
-
-An integrated terminal IDE combining:
-
-- **Yazi** - File manager sidebar with Lua plugins
-- **Zellij** - Terminal multiplexer for pane orchestration (KDL config)
-- **Helix** - Text editor (with Neovim support as alternative)
-
-### Key Features
-
-- Multi-shell support (Bash, Fish, Zsh, Nushell)
-- Smart pane orchestration (auto-detects editor instances)
-- "Reveal in sidebar" integration (`Alt+Y` to show current file in Yazi)
-- TOML-based user configuration with intelligent merging
-- Nix devenv for reproducible environment
-- Bundled plugins (git, auto-layout, status bar)
-
-### Yazelix Structure
-
-```
-Configs/yazelix/.config/yazelix/
-├── devenv.nix                # Nix devenv configuration (replaced old flake.nix)
-├── yazelix_default.toml      # Default configuration template
-├── bash/, fish/, zsh/        # Shell-specific configs
-├── nushell/                  # Nushell configs and scripts
-│   ├── config/              # Nushell configuration
-│   ├── modules/             # Reusable Nushell modules
-│   └── scripts/             # Utility scripts
-│       ├── integrations/    # Editor/tool integrations
-│       ├── setup/          # Setup and initialization
-│       └── utils/          # Helper utilities
-├── yazi/                    # File manager config
-│   ├── init.lua            # Yazi initialization
-│   ├── keymap.toml         # Yazi keybindings
-│   ├── theme.toml          # Yazi theme
-│   └── plugins/            # Bundled Lua plugins
-├── zellij/                  # Terminal multiplexer config
-│   ├── config.kdl          # Main configuration (KDL format)
-│   └── layouts/            # Pane layout definitions (KDL format)
-├── terminal_configs/        # Terminal emulator configs
-│   ├── ghostty/
-│   └── wezterm/
-├── home_manager/            # Home Manager Nix module
-└── docs/                    # Comprehensive documentation
-```
-
-### Yazelix Development Notes
-
-**CRITICAL: File Naming Convention**
-
-- Yazelix uses **underscores (`_`)** for ALL file and directory names, never hyphens (`-`)
-- Examples: `yazelix_default.toml`, `start_yazelix.nu`, `home_manager/`, `terminal_emulators/`
-- This is consistent throughout the codebase
-
-**Configuration Management:**
-
-1. User config: `yazelix.toml` (if exists, user-created)
-2. Default config: `yazelix_default.toml` (template)
-3. TOML sections merge intelligently without conflicts
-
-**Nushell Development - CRITICAL:**
-
-- **Escape parentheses in string interpolation:** Use `\(` and `\)` (single backslash)
-  - ✅ Correct: `$"Checking pane \(editor\)"`
-  - ❌ Wrong: `$"Checking pane \\(editor\\)"` - tries to execute command
-  - ❌ Wrong: `$"Checking pane (editor)"` - executes command substitution
+- ✅ Correct: `$"Checking pane \(editor\)"`
+- ❌ Wrong: `$"Checking pane \\(editor\\)"` - tries to execute command
+- ❌ Wrong: `$"Checking pane (editor)"` - executes command substitution
 - Unescaped parentheses trigger command substitution
 - "Command not found" errors in strings usually indicate incorrect escaping
 
@@ -258,7 +191,6 @@ The `nix` group contains a complete Nix system configuration with integrated Hom
 - User-specific configurations (currently configured for `ifiokjr`)
 - Nix Homebrew integration with declarative tap management
 - Integrated Home Manager (no separate invocation needed)
-- Yazelix Home Manager module integration via path reference
 
 ### Build Commands
 
@@ -352,13 +284,6 @@ Post-hook runs (if exists) - apply configurations, rebuild systems
 Complete
 ```
 
-### Configuration Layering (Yazelix)
-
-1. `yazelix_default.toml` provides sensible defaults
-2. User creates `yazelix.toml` for overrides
-3. TOML sections merge automatically
-4. User settings take precedence
-
 ## File Naming Conventions
 
 ### Documentation Files
@@ -374,8 +299,6 @@ Complete
 - ❌ `README.md` - Wrong
 - ✅ `license` - Correct
 - ❌ `LICENSE` - Wrong
-- ✅ `Configs/yazelix/.config/yazelix/readme.md` - Correct
-- ❌ `Configs/yazelix/.config/yazelix/README.md` - Wrong
 
 ## Git Commit Conventions
 
@@ -410,7 +333,6 @@ All commits in this repository **must** follow the [Conventional Commits](https:
 Use relevant scope based on what's being modified:
 
 - **nix**: Nix configuration (darwin.nix, home.nix, flake.nix, custom packages)
-- **yazelix**: Yazelix terminal IDE configs
 - **nushell**: Nushell shell configuration
 - **scripts**: Custom utility scripts
 - **helix**: Helix editor configuration
