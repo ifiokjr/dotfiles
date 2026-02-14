@@ -42,6 +42,7 @@ NO_CONFIRM=false
 INSTALLED_GIT=false
 INSTALLED_TUCKR=false
 INSTALLED_NUSHELL=false
+DEPLOY_FAILED=false
 
 # Print functions
 print_header() {
@@ -319,9 +320,15 @@ deploy_groups() {
         for group in "${GROUPS[@]}"; do
             print_info "Deploying group: $group"
             if [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
-                tuckr set "$group" || print_warning "Failed to deploy $group (hook may have failed)"
+                if ! tuckr set "$group" 2>&1; then
+                    print_error "Failed to deploy $group"
+                    DEPLOY_FAILED=true
+                fi
             else
-                tuckr add "$group" || print_warning "Failed to deploy $group"
+                if ! tuckr add "$group" 2>&1; then
+                    print_error "Failed to deploy $group"
+                    DEPLOY_FAILED=true
+                fi
             fi
         done
         return 0
@@ -360,7 +367,8 @@ deploy_groups() {
     if [ "$has_scripts" = true ]; then
         print_info "Deploying scripts (priority)"
         if ! tuckr add scripts 2>&1; then
-            print_warning "Failed to deploy scripts"
+            print_error "Failed to deploy scripts"
+            DEPLOY_FAILED=true
         else
             print_success "Deployed scripts"
         fi
@@ -395,7 +403,8 @@ deploy_groups() {
             echo ""
 
             if ! tuckr set "$group" 2>&1; then
-                print_warning "Failed to deploy $group (this is expected if rebuild fails on first run)"
+                print_error "Failed to deploy $group"
+                DEPLOY_FAILED=true
             else
                 print_success "Deployed $group"
             fi
@@ -418,14 +427,16 @@ deploy_groups() {
             if [ "$has_hook" = true ]; then
                 print_info "Deploying $group (with hooks)"
                 if ! tuckr set "$group" 2>&1; then
-                    print_warning "Failed to deploy $group (hook may have failed or dependencies missing)"
+                    print_error "Failed to deploy $group"
+                    DEPLOY_FAILED=true
                 else
                     print_success "Deployed $group"
                 fi
             else
                 print_info "Deploying $group"
                 if ! tuckr add "$group" 2>&1; then
-                    print_warning "Failed to deploy $group (may not be compatible with your platform)"
+                    print_error "Failed to deploy $group"
+                    DEPLOY_FAILED=true
                 else
                     print_success "Deployed $group"
                 fi
@@ -477,14 +488,16 @@ deploy_groups() {
         if [ "$has_hook" = true ]; then
             print_info "Deploying $group (with hooks)"
             if ! tuckr set "$group" 2>&1; then
-                print_warning "Failed to deploy $group (hook may have failed or dependencies missing)"
+                print_error "Failed to deploy $group"
+                DEPLOY_FAILED=true
             else
                 print_success "Deployed $group"
             fi
         else
             print_info "Deploying $group"
             if ! tuckr add "$group" 2>&1; then
-                print_warning "Failed to deploy $group (may not be compatible with your platform)"
+                print_error "Failed to deploy $group"
+                DEPLOY_FAILED=true
             else
                 print_success "Deployed $group"
             fi
@@ -492,6 +505,10 @@ deploy_groups() {
     done
 
     echo ""
+    if [ "$DEPLOY_FAILED" = true ]; then
+        print_error "Some groups failed to deploy (see errors above)"
+        return 1
+    fi
     print_success "Configuration deployment complete"
 }
 
@@ -549,7 +566,8 @@ main() {
 
     # Setup and deploy
     setup_tuckr_symlink
-    deploy_groups
+    local deploy_exit=0
+    deploy_groups || deploy_exit=$?
 
     # Cleanup
     cleanup
@@ -597,6 +615,12 @@ main() {
             echo "/etc/profiles/per-user/${USER:-$(whoami)}/bin"
             echo "/run/current-system/sw/bin"
         } >> "$GITHUB_PATH"
+    fi
+
+    # Exit with failure if any group deployment failed
+    if [ "$deploy_exit" -ne 0 ]; then
+        print_error "Setup completed with errors"
+        exit "$deploy_exit"
     fi
 }
 
