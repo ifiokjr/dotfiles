@@ -232,6 +232,14 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Clean up flake.lock generated during nix evaluation.
+# This file is gitignored and regenerated every rebuild. If left in the source
+# directory, tuckr status reports nix as "Not Symlinked" because the file
+# exists in the source without a corresponding symlink in ~/.config/nix/.
+# ---------------------------------------------------------------------------
+rm -f "$NIX_FLAKE_DIR/flake.lock"
+
+# ---------------------------------------------------------------------------
 # Post-rebuild: add profile paths so newly installed tools are found
 # ---------------------------------------------------------------------------
 for p in \
