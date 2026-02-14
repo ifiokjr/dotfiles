@@ -42,6 +42,29 @@ else
 	"$HOME/.local/bin/rebuild" --skip-updates --skip-check
 fi
 
+# After rebuild, add profile paths so newly installed tools (raco, etc.) are found.
+# nix-darwin installs to /etc/profiles/per-user/$USER/bin, home-manager standalone
+# installs to ~/.local/state/nix/profiles/home-manager/home-path/bin.
+for p in \
+	"/etc/profiles/per-user/${USER:-$(whoami)}/bin" \
+	"$HOME/.local/state/nix/profiles/home-manager/home-path/bin" \
+	"/run/current-system/sw/bin"; do
+	if [ -d "$p" ]; then
+		export PATH="$p:$PATH"
+	fi
+done
+
+# Install raco fmt package (needed by dprint for .scm files).
+# The home.activation script in home.nix also attempts this, but it can fail
+# silently or not run at all (e.g. when home-manager activation is skipped due
+# to nix profile conflicts). Running it here ensures visible output.
+if command -v raco &>/dev/null; then
+	echo "Installing raco fmt package..."
+	raco pkg install --skip-installed --auto --scope user fmt || echo "Warning: raco pkg install fmt failed"
+else
+	echo "Warning: raco not found after rebuild, skipping fmt package install"
+fi
+
 # After rebuild, make home-manager packages available to subsequent CI steps.
 # Standalone home-manager installs packages to its own profile, which is separate
 # from ~/.nix-profile. The nix-installer-action only adds ~/.nix-profile/bin to

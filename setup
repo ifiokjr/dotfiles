@@ -402,6 +402,21 @@ deploy_groups() {
             print_info "This may take several minutes..."
             echo ""
 
+            # Remove temporary nix profile packages before nix deployment.
+            # home-manager (or nix-darwin) will install these permanently, but
+            # if they're already in the nix profile the activation fails with
+            # "An existing package already provides the following file" conflict.
+            if [ "$INSTALLED_TUCKR" = true ]; then
+                print_info "Removing temporary tuckr to avoid nix profile conflict"
+                run_nix profile remove '.*tuckr.*' 2>/dev/null || true
+                INSTALLED_TUCKR=false
+            fi
+            if [ "$INSTALLED_NUSHELL" = true ]; then
+                print_info "Removing temporary nushell to avoid nix profile conflict"
+                run_nix profile remove '.*nushell.*' 2>/dev/null || true
+                INSTALLED_NUSHELL=false
+            fi
+
             if ! tuckr set "$group" 2>&1; then
                 print_error "Failed to deploy $group"
                 DEPLOY_FAILED=true
