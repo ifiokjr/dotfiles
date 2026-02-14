@@ -5,30 +5,30 @@ echo "Rebuilding system configuration..."
 # Source nix environment if available (needed when hook runs in a fresh shell,
 # e.g. during setup where the parent process has nix in PATH but child doesn't)
 if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
-    # shellcheck disable=SC1091
-    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+	# shellcheck disable=SC1091
+	. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 fi
 
 # Also add user nix profile to PATH (for nix profile-installed tools like nu)
 if [ -d "$HOME/.nix-profile/bin" ]; then
-    export PATH="$HOME/.nix-profile/bin:$PATH"
+	export PATH="$HOME/.nix-profile/bin:$PATH"
 fi
 
 # Add ~/.local/bin to PATH (for rebuild, generate-machine-config, etc.
 # deployed by the scripts group which is deployed before nix)
 if [ -d "$HOME/.local/bin" ]; then
-    export PATH="$HOME/.local/bin:$PATH"
+	export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Use the rebuild script if available, otherwise fall back to direct command.
 # Skip auto-updates and flake check during hook-triggered rebuilds — the hook
 # runs after tuckr deploys files, so we just want a fast rebuild, not a full
 # update cycle. Users can run `rebuild` directly for the full experience.
-if command -v rebuild &> /dev/null; then
-    rebuild --skip-updates --skip-check
+if command -v rebuild &>/dev/null; then
+	rebuild --skip-updates --skip-check
 else
-    # Fallback - use the script directly
-    "$HOME/.local/bin/rebuild" --skip-updates --skip-check
+	# Fallback - use the script directly
+	"$HOME/.local/bin/rebuild" --skip-updates --skip-check
 fi
 
 # After rebuild, make home-manager packages available to subsequent CI steps.
@@ -36,15 +36,15 @@ fi
 # from ~/.nix-profile. The nix-installer-action only adds ~/.nix-profile/bin to
 # GITHUB_PATH, so home-manager packages (like raco) aren't found by later steps.
 if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
-    HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager/home-path/bin"
-    if [ -d "$HM_PROFILE" ]; then
-        echo "$HM_PROFILE" >> "$GITHUB_PATH"
-        echo "Added home-manager profile to GITHUB_PATH: $HM_PROFILE"
-    fi
+	HM_PROFILE="$HOME/.local/state/nix/profiles/home-manager/home-path/bin"
+	if [ -d "$HM_PROFILE" ]; then
+		echo "$HM_PROFILE" >>"$GITHUB_PATH"
+		echo "Added home-manager profile to GITHUB_PATH: $HM_PROFILE"
+	fi
 
-    # Also source hm-session-vars.sh if available (sets HOME_MANAGER_VARS, etc.)
-    if [ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
-        # shellcheck disable=SC1091
-        . "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-    fi
+	# Also source hm-session-vars.sh if available (sets HOME_MANAGER_VARS, etc.)
+	if [ -f "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh" ]; then
+		# shellcheck disable=SC1091
+		. "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
+	fi
 fi

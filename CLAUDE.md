@@ -134,8 +134,8 @@ The repository contains 9 configuration groups organized in `Configs/`:
 │   ├── kdl/                   # KDL formatter
 │   └── lazygit/               # Git TUI
 ├── Hooks/                      # Pre/post deployment scripts
-│   ├── post_nix               # Rebuilds system after Nix changes
-│   └── post_nushell           # Generates vendor autoload, sets default shell
+│   ├── nix/post.sh            # Rebuilds system after Nix changes
+│   └── nushell/post.sh        # Generates vendor autoload, sets default shell
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
 └── readme.md                   # Full documentation
 ```
@@ -157,14 +157,12 @@ Example: `Configs/dprint/dprint.json` → `~/dprint.json`
 
 Hooks are executable bash scripts in `Hooks/` directory:
 
-- **`pre_<group>`** - Runs before symlinking files
-- **`post_<group>`** - Runs after symlinking files
-- **`rm_<group>`** - Runs during removal (none currently used)
+Hooks are organized as `Hooks/<group>/pre.sh`, `Hooks/<group>/post.sh`, or `Hooks/<group>/rm.sh`:
 
 **Active hooks:**
 
-1. **`post_nix`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
-2. **`post_nushell`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
+1. **`Hooks/nix/post.sh`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
+2. **`Hooks/nushell/post.sh`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 
 ## Nushell Development Notes
 
@@ -237,10 +235,11 @@ tuckr add newtool
 
 ```bash
 # Create hook script in Hooks/ directory (from your dotfiles repo root)
-vim Hooks/post_newtool
+mkdir -p Hooks/newtool
+vim Hooks/newtool/post.sh
 
 # Make executable
-chmod +x Hooks/post_newtool
+chmod +x Hooks/newtool/post.sh
 
 # Hook runs automatically when using `tuckr set newtool`
 ```
@@ -432,7 +431,7 @@ All GitHub Actions workflow files **must** follow these naming and formatting co
 **MANDATORY**: Before pushing any commits to the remote, always run the local CI checks to ensure they pass. At minimum:
 
 1. **Format check**: `dprint check --config Configs/dprint/dprint.json`
-2. **Shellcheck**: `shellcheck setup setup-tuckr-symlink.sh Hooks/*`
+2. **Shellcheck**: `shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh`
 3. **Nix flake check** (if nix files changed): Generate `machine.nix` if needed, then `nix flake check ./Configs/nix/.config/nix --impure --no-build`
 4. **Local workflow test** (optional): `act -j lint-and-format` to run CI jobs locally via Docker
 
@@ -476,7 +475,7 @@ tuckr add --force <group>
 
 ```bash
 # Ensure hooks are executable (from your dotfiles repo root)
-chmod +x Hooks/*
+chmod +x Hooks/*/post.sh
 ```
 
 ### Nix Flake Issues
