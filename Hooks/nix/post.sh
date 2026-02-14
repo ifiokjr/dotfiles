@@ -80,7 +80,13 @@ if [ -n "${GITHUB_TOKEN:-}" ]; then
 	mkdir -p "$(dirname "$USER_NIX_CONF")"
 	if [ ! -f "$USER_NIX_CONF" ] || ! grep -q "access-tokens" "$USER_NIX_CONF"; then
 		echo "access-tokens = github.com=$GITHUB_TOKEN" >>"$USER_NIX_CONF"
-		echo "Configured GitHub access token for nix"
+		echo "Configured GitHub access token in user nix.conf"
+	fi
+	# Also configure in system nix.conf so sudo operations (darwin-rebuild) can
+	# access the token. sudo changes the user context, so the user nix.conf isn't read.
+	if [ -d /etc/nix ] && ! sudo grep -q "access-tokens" /etc/nix/nix.conf 2>/dev/null; then
+		echo "access-tokens = github.com=$GITHUB_TOKEN" | sudo tee -a /etc/nix/nix.conf >/dev/null
+		echo "Configured GitHub access token in system nix.conf"
 	fi
 fi
 
