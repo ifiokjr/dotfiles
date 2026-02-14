@@ -171,6 +171,17 @@ install_nix() {
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
     fi
 
+    # Configure GitHub access token if available to avoid API rate limits when
+    # fetching nixpkgs. GitHub Actions provides GITHUB_TOKEN automatically.
+    if [ -n "${GITHUB_TOKEN:-}" ]; then
+        local nix_conf_dir="$HOME/.config/nix"
+        mkdir -p "$nix_conf_dir"
+        if ! grep -q "access-tokens" "$nix_conf_dir/nix.conf" 2>/dev/null; then
+            echo "access-tokens = github.com=$GITHUB_TOKEN" >> "$nix_conf_dir/nix.conf"
+            print_info "Configured GitHub access token for nix"
+        fi
+    fi
+
     # Root-only nix (--init none) puts binaries in /nix/var/nix/profiles/default/bin
     # which isn't in the default system PATH. Symlink them to /usr/local/bin so all
     # processes (including those spawned by sudo) can find nix, nix-env, etc.
@@ -408,12 +419,12 @@ deploy_groups() {
             # "An existing package already provides the following file" conflict.
             if [ "$INSTALLED_TUCKR" = true ]; then
                 print_info "Removing temporary tuckr to avoid nix profile conflict"
-                run_nix profile remove '.*tuckr.*' 2>/dev/null || true
+                run_nix profile remove --regex '.*tuckr.*' 2>/dev/null || true
                 INSTALLED_TUCKR=false
             fi
             if [ "$INSTALLED_NUSHELL" = true ]; then
                 print_info "Removing temporary nushell to avoid nix profile conflict"
-                run_nix profile remove '.*nushell.*' 2>/dev/null || true
+                run_nix profile remove --regex '.*nushell.*' 2>/dev/null || true
                 INSTALLED_NUSHELL=false
             fi
 
@@ -533,17 +544,17 @@ cleanup() {
 
     if [ "$INSTALLED_TUCKR" = true ]; then
         print_info "Removing tuckr from nix profile"
-        run_nix profile remove '.*tuckr.*' || print_warning "Could not remove tuckr (may already be removed)"
+        run_nix profile remove --regex '.*tuckr.*' || print_warning "Could not remove tuckr (may already be removed)"
     fi
 
     if [ "$INSTALLED_NUSHELL" = true ]; then
         print_info "Removing nushell from nix profile"
-        run_nix profile remove '.*nushell.*' || print_warning "Could not remove nushell (may already be removed)"
+        run_nix profile remove --regex '.*nushell.*' || print_warning "Could not remove nushell (may already be removed)"
     fi
 
     if [ "$INSTALLED_GIT" = true ]; then
         print_info "Removing git from nix profile"
-        run_nix profile remove '.*git.*' || print_warning "Could not remove git (may already be removed)"
+        run_nix profile remove --regex '.*git.*' || print_warning "Could not remove git (may already be removed)"
     fi
 
     print_success "Cleanup complete"

@@ -3,6 +3,7 @@
   fetchurl,
   lib,
   autoPatchelfHook,
+  openssl,
   zlib,
 }:
 
@@ -37,7 +38,10 @@ stdenv.mkDerivation {
   sourceRoot = "racket";
 
   nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
-  buildInputs = lib.optionals stdenv.isLinux [ zlib ];
+  buildInputs = lib.optionals stdenv.isLinux [
+    openssl
+    zlib
+  ];
 
   dontBuild = true;
   dontStrip = true;

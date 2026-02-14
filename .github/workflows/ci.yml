@@ -20,6 +20,8 @@ jobs:
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm
@@ -76,6 +78,8 @@ jobs:
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 📦 install nushell
         run: nix profile add nixpkgs#nushell
