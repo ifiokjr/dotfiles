@@ -16,6 +16,23 @@ def main [
     let machine_config = $"($nix_config)/machine.nix"
     let machine_example = $"($nix_config)/machine.nix.example"
 
+    # Configure GitHub access token for nix to avoid API rate limits when
+    # fetching nixpkgs. Uses GITHUB_TOKEN if available (e.g. in CI).
+    let user_nix_conf = $"($env.HOME)/.config/nix/nix.conf"
+    if ($env | get -o GITHUB_TOKEN | is-not-empty) {
+        mkdir ($user_nix_conf | path dirname)
+        let has_token = if ($user_nix_conf | path exists) {
+            (open $user_nix_conf | str contains "access-tokens")
+        } else {
+            false
+        }
+        if not $has_token {
+            let line = $"access-tokens = github.com=($env.GITHUB_TOKEN)\n"
+            $line | save --append $user_nix_conf
+            info "Configured GitHub access token for nix"
+        }
+    }
+
     # Check if machine.nix exists, create if missing
     if not ($machine_config | path exists) {
         warn $"machine.nix not found at: ($machine_config)"
