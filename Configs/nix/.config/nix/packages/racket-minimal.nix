@@ -3,6 +3,7 @@
   fetchurl,
   lib,
   autoPatchelfHook,
+  makeWrapper,
   openssl,
   zlib,
 }:
@@ -37,7 +38,10 @@ stdenv.mkDerivation {
 
   sourceRoot = "racket";
 
-  nativeBuildInputs = lib.optionals stdenv.isLinux [ autoPatchelfHook ];
+  nativeBuildInputs = lib.optionals stdenv.isLinux [
+    autoPatchelfHook
+    makeWrapper
+  ];
   buildInputs = lib.optionals stdenv.isLinux [
     openssl
     zlib
@@ -55,6 +59,15 @@ stdenv.mkDerivation {
     cp -r man $out/share/ 2>/dev/null || true
 
     runHook postInstall
+  '';
+
+  # Racket loads libssl via dlopen at runtime (FFI), which autoPatchelfHook
+  # cannot patch. Wrap the binaries with LD_LIBRARY_PATH so dlopen finds it.
+  postFixup = lib.optionalString stdenv.isLinux ''
+    for bin in racket raco; do
+      wrapProgram $out/bin/$bin \
+        --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ openssl ]}
+    done
   '';
 
   meta = with lib; {
