@@ -8,18 +8,20 @@ on:
 
 jobs:
   lint-and-format:
-    name: Lint & Format (${{ matrix.os }})
+    name: lint & format (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Install tools
+      - name: 📦 install tools
         run: |
           nix profile add nixpkgs#nushell
           nix profile add nixpkgs#shellcheck
@@ -29,17 +31,17 @@ jobs:
           nix profile add nixpkgs#nixfmt
           nix profile add nixpkgs#kdlfmt
 
-      - name: Set up formatter configs
+      - name: 🔧 set up formatter configs
         run: |
           # kdlfmt needs its config at ~/.config/kdl/kdlfmt.kdl
           mkdir -p ~/.config/kdl
           cp Configs/kdl/.config/kdl/kdlfmt.kdl ~/.config/kdl/kdlfmt.kdl
 
-      - name: Shellcheck bash scripts
+      - name: 🔍 shellcheck bash scripts
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/*
 
-      - name: Validate nushell scripts (nu-check)
+      - name: 🔍 validate nushell scripts (nu-check)
         run: |
           # Check .nu module files
           for f in $(find . -name '*.nu' -not -path './.git/*'); do
@@ -55,44 +57,48 @@ jobs:
             fi
           done
 
-      - name: Format check (dprint)
+      - name: 🎨 format check (dprint)
         run: |
           dprint check --config Configs/dprint/dprint.json
 
   test:
-    name: Test (${{ matrix.os }})
+    name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Install nushell
+      - name: 📦 install nushell
         run: nix profile add nixpkgs#nushell
 
-      - name: Run test suite
+      - name: 🧪 run test suite
         run: |
           nu Configs/scripts/.local/bin/test_scripts
 
-      - name: Verify generate-machine-config (cross-platform)
+      - name: ✅ verify generate-machine-config (cross-platform)
         run: |
           nu Configs/scripts/.local/bin/generate-machine-config --output /tmp/test-machine.nix
           cat /tmp/test-machine.nix
           rm /tmp/test-machine.nix
 
   nix-check:
-    name: Nix Flake Check
+    name: nix flake check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Generate machine.nix for CI
+      - name: 📝 generate machine.nix for ci
         run: |
           nix profile add nixpkgs#nushell
           nu Configs/scripts/.local/bin/generate-machine-config \
@@ -100,15 +106,16 @@ jobs:
           # git-add so Nix includes it when copying source to the store
           git add --force Configs/nix/.config/nix/machine.nix
 
-      - name: Nix flake check
+      - name: 🔍 nix flake check
         run: |
           nix flake check ./Configs/nix/.config/nix --impure --no-build
 
   docker-integration:
-    name: Docker Integration Test
+    name: docker integration test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
 
-      - name: Build and run Docker integration test
-        run: docker build -t dotfiles-test
+      - name: 🏗️ build and run docker integration test
+        run: docker build -t dotfiles-test .
