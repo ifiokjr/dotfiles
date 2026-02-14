@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-format:
-    name: lint & format (${{ matrix.os }})
+  lint:
+    name: lint (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -21,21 +21,13 @@ jobs:
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
 
-      - name: 📦 install tools
-        run: |
-          nix profile add nixpkgs#nushell
-          nix profile add nixpkgs#shellcheck
-          nix profile add nixpkgs#shfmt
-          nix profile add nixpkgs#dprint
-          nix profile add nixpkgs#nufmt
-          nix profile add nixpkgs#nixfmt
-          nix profile add nixpkgs#kdlfmt
+      - name: 🧪 run setup script
+        run: ./setup --skip-nix --no-confirm
 
-      - name: 🔧 set up formatter configs
+      - name: 📦 install raco fmt
         run: |
-          # kdlfmt needs its config at ~/.config/kdl/kdlfmt.kdl
-          mkdir -p ~/.config/kdl
-          cp Configs/kdl/.config/kdl/kdlfmt.kdl ~/.config/kdl/kdlfmt.kdl
+          nix profile add nixpkgs#racket-minimal
+          raco pkg install --skip-installed --auto --scope user fmt
 
       - name: 🔍 shellcheck bash scripts
         run: |
@@ -88,29 +80,7 @@ jobs:
           cat /tmp/test-machine.nix
           rm /tmp/test-machine.nix
 
-  nix-check:
-    name: nix flake check
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 checkout repository
-        uses: actions/checkout@v4
-
-      - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
-
-      - name: 📝 generate machine.nix for ci
-        run: |
-          nix profile add nixpkgs#nushell
-          nu Configs/scripts/.local/bin/generate-machine-config \
-            --output Configs/nix/.config/nix/machine.nix
-          # git-add so Nix includes it when copying source to the store
-          git add --force Configs/nix/.config/nix/machine.nix
-
-      - name: 🔍 nix flake check
-        run: |
-          nix flake check ./Configs/nix/.config/nix --impure --no-build
-
-  setup-test:
+  setup:
     name: setup script (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -121,11 +91,8 @@ jobs:
       - name: 📥 checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
-
       - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm
+        run: ./setup --no-confirm
 
       - name: ✅ verify setup completed
         run: |
