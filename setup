@@ -591,7 +591,12 @@ main() {
         echo "$PATH" | tr ':' '\n' | while read -r p; do
             echo "  $p"
         done
-        echo "$PATH" | tr ':' '\n' >> "$GITHUB_PATH"
+        {
+            echo "$PATH" | tr ':' '\n'
+            # Ensure nix profile paths are available even if not yet in PATH
+            echo "/etc/profiles/per-user/${USER:-$(whoami)}/bin"
+            echo "/run/current-system/sw/bin"
+        } >> "$GITHUB_PATH"
     fi
 }
 
