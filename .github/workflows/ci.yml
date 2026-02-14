@@ -1,4 +1,4 @@
-name: CI
+name: ci
 
 on:
   push:
@@ -21,13 +21,13 @@ jobs:
 
       - name: Install tools
         run: |
-          nix profile install nixpkgs#nushell
-          nix profile install nixpkgs#shellcheck
-          nix profile install nixpkgs#shfmt
-          nix profile install nixpkgs#dprint
-          nix profile install nixpkgs#nufmt
-          nix profile install nixpkgs#nixfmt
-          nix profile install nixpkgs#kdlfmt
+          nix profile add nixpkgs#nushell
+          nix profile add nixpkgs#shellcheck
+          nix profile add nixpkgs#shfmt
+          nix profile add nixpkgs#dprint
+          nix profile add nixpkgs#nufmt
+          nix profile add nixpkgs#nixfmt
+          nix profile add nixpkgs#kdlfmt
 
       - name: Set up formatter configs
         run: |
@@ -72,7 +72,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
 
       - name: Install nushell
-        run: nix profile install nixpkgs#nushell
+        run: nix profile add nixpkgs#nushell
 
       - name: Run test suite
         run: |
@@ -94,7 +94,7 @@ jobs:
 
       - name: Generate machine.nix for CI
         run: |
-          nix profile install nixpkgs#nushell
+          nix profile add nixpkgs#nushell
           nu Configs/scripts/.local/bin/generate-machine-config \
             --output Configs/nix/.config/nix/machine.nix
           # git-add so Nix includes it when copying source to the store
@@ -111,4 +111,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build and run Docker integration test
-        run: docker build -t dotfiles-test . && docker run --rm dotfiles-test
+        run: docker build -t dotfiles-test
