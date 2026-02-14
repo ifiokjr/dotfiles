@@ -73,6 +73,11 @@ $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 # ---------------------------------------------------------------------------
 $env.GPG_TTY = (try { tty } catch { "" })
 # ---------------------------------------------------------------------------
+# Carapace
+# ---------------------------------------------------------------------------
+# Bridge completions from other shells for broader coverage
+$env.CARAPACE_BRIDGES = "zsh,fish,bash,inshellisense"
+# ---------------------------------------------------------------------------
 # Misc
 # ---------------------------------------------------------------------------
 # Force epoch 0 for deterministic/reproducible Nix builds
@@ -83,6 +88,7 @@ $env.DIRENV_LOG_FORMAT = ""
 # ---------------------------------------------------------------------------
 let path_prepend = [
     $"($env.HOME)/.local/bin"
+    $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.shorebird/bin"
     $env.PNPM_HOME
     $"($env.HOME)/.local/share/solana/install/active_release/bin"
