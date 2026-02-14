@@ -2,6 +2,18 @@
 # Rebuild system configuration after nix config changes
 echo "Rebuilding system configuration..."
 
+# Source nix environment if available (needed when hook runs in a fresh shell,
+# e.g. during setup where the parent process has nix in PATH but child doesn't)
+if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+    # shellcheck disable=SC1091
+    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+fi
+
+# Also add user nix profile to PATH (for nix profile-installed tools like nu)
+if [ -d "$HOME/.nix-profile/bin" ]; then
+    export PATH="$HOME/.nix-profile/bin:$PATH"
+fi
+
 # Use the rebuild script if available, otherwise fall back to direct command
 if command -v rebuild &> /dev/null; then
     rebuild

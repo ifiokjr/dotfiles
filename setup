@@ -16,6 +16,7 @@
 #   --cwd PATH          Clone dotfiles to PATH (default: current directory or ~/Developer/.dotfiles)
 #   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
 #   --skip-nix          Skip Nix installation (use if already installed)
+#   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
 set -euo pipefail
@@ -35,6 +36,7 @@ DEFAULT_DOTFILES_DIR="$HOME/Developer/.dotfiles"
 DOTFILES_DIR=""
 DEPLOY_GROUPS=""
 SKIP_NIX=false
+NO_CONFIRM=false
 
 # Track what we install for cleanup
 INSTALLED_GIT=false
@@ -76,6 +78,10 @@ parse_args() {
                 ;;
             --skip-nix)
                 SKIP_NIX=true
+                shift
+                ;;
+            --no-confirm)
+                NO_CONFIRM=true
                 shift
                 ;;
             --help)
@@ -143,7 +149,16 @@ install_nix() {
 
     print_header "Installing Determinate Nix"
 
-    if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- install; then
+    local nix_install_args=("install")
+    # Docker/containers lack systemd; use root-only nix install
+    if [ ! -d /run/systemd/system ]; then
+        nix_install_args+=("linux" "--init" "none")
+    fi
+    if [ "$NO_CONFIRM" = true ]; then
+        nix_install_args+=("--no-confirm")
+    fi
+
+    if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}"; then
         print_error "Failed to install Nix"
         exit 1
     fi
@@ -154,12 +169,33 @@ install_nix() {
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
     fi
 
+    # Root-only nix (--init none) puts binaries in /nix/var/nix/profiles/default/bin
+    # which isn't in the default system PATH. Symlink them to /usr/local/bin so all
+    # processes (including those spawned by sudo) can find nix, nix-env, etc.
+    if [ ! -d /run/systemd/system ] && [ -d /nix/var/nix/profiles/default/bin ]; then
+        print_info "Symlinking nix binaries to /usr/local/bin for system-wide access"
+        for f in /nix/var/nix/profiles/default/bin/*; do
+            sudo ln -sf "$f" /usr/local/bin/
+        done
+    fi
+
     print_success "Nix installed successfully"
 }
 
 # Check if a command exists
 command_exists() {
     command -v "$1" &> /dev/null
+}
+
+# Run nix commands, using sudo when nix was installed root-only (--init none).
+# Nix binaries are symlinked to /usr/local/bin so PATH isn't needed.
+# HOME is preserved so profile installs go to the calling user's profile.
+run_nix() {
+    if [ ! -d /run/systemd/system ] && [ "$(id -u)" -ne 0 ]; then
+        sudo HOME="$HOME" nix "$@"
+    else
+        nix "$@"
+    fi
 }
 
 # Install git via nix profile if needed
@@ -171,7 +207,7 @@ install_git() {
 
     print_header "Installing git temporarily"
 
-    if ! nix profile install nixpkgs#git; then
+    if ! run_nix profile add nixpkgs#git; then
         print_error "Failed to install git"
         exit 1
     fi
@@ -189,7 +225,7 @@ install_tuckr() {
 
     print_header "Installing tuckr temporarily"
 
-    if ! nix profile install nixpkgs#tuckr; then
+    if ! run_nix profile add nixpkgs#tuckr; then
         print_error "Failed to install tuckr"
         exit 1
     fi
@@ -207,7 +243,7 @@ install_nushell() {
 
     print_header "Installing nushell temporarily"
 
-    if ! nix profile install nixpkgs#nushell; then
+    if ! run_nix profile add nixpkgs#nushell; then
         print_error "Failed to install nushell"
         exit 1
     fi
@@ -281,7 +317,7 @@ deploy_groups() {
         IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
         for group in "${GROUPS[@]}"; do
             print_info "Deploying group: $group"
-            if [[ "$group" == "yazelix" ]] || [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
+            if [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
                 tuckr set "$group" || print_warning "Failed to deploy $group (hook may have failed)"
             else
                 tuckr add "$group" || print_warning "Failed to deploy $group"
@@ -309,7 +345,7 @@ deploy_groups() {
     echo ""
 
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("yazelix" "nix" "nushell")
+    local hook_groups=("nix" "nushell")
 
     # Deploy all groups automatically
     for group in "${all_groups[@]}"; do
@@ -383,7 +419,7 @@ deploy_groups() {
             echo "  • This process takes 5-10 minutes"
             echo ""
 
-            if ask_yes_no "Would you like to install custom Helix with Steel support now?"; then
+            if [ "$NO_CONFIRM" = false ] && ask_yes_no "Would you like to install custom Helix with Steel support now?"; then
                 print_info "Installing custom Helix..."
                 echo ""
 
@@ -434,17 +470,17 @@ cleanup() {
 
     if [ "$INSTALLED_TUCKR" = true ]; then
         print_info "Removing tuckr from nix profile"
-        nix profile remove '.*tuckr.*' || print_warning "Could not remove tuckr (may already be removed)"
+        run_nix profile remove '.*tuckr.*' || print_warning "Could not remove tuckr (may already be removed)"
     fi
 
     if [ "$INSTALLED_NUSHELL" = true ]; then
         print_info "Removing nushell from nix profile"
-        nix profile remove '.*nushell.*' || print_warning "Could not remove nushell (may already be removed)"
+        run_nix profile remove '.*nushell.*' || print_warning "Could not remove nushell (may already be removed)"
     fi
 
     if [ "$INSTALLED_GIT" = true ]; then
         print_info "Removing git from nix profile"
-        nix profile remove '.*git.*' || print_warning "Could not remove git (may already be removed)"
+        run_nix profile remove '.*git.*' || print_warning "Could not remove git (may already be removed)"
     fi
 
     print_success "Cleanup complete"
