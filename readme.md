@@ -91,15 +91,20 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:pnpm:version` - Automatically update pnpm-standalone to latest version (also installs latest Node.js)
 - `update:cursor:version` - Update cursor-cli to the latest version
+- `update:racket:version` - Update racket-minimal to the latest version
+- `update:custom-apps` - Update rolling-URL packages (google-chrome, steam, google-drive) and versioned casks (zoom, nordvpn, gpg-suite)
 - `update:node` - Update Node.js to latest version using pnpm env
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
+- `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
 - `commands` - List all custom scripts with descriptions
 - `test_scripts` - Run the test suite for nushell scripts
 
 #### `claude`
 
-**Location:** `Configs/claude/.config/claude/` **Deploys:** `~/.config/claude/` **Description:** Claude Code settings including attribution preferences.
+**Location:** `Configs/claude/` **Deploys:** `~/.claude/` and `~/.config/claude/` **Description:** Claude Code settings including attribution preferences and MCP server for tart VM control.
+
+**Hook:** `post_claude` - Registers tart-vm MCP server with Claude Code, caches Deno dependencies
 
 ### Development Tools
 
@@ -133,17 +138,19 @@ Tuckr supports hooks that run at different stages of deployment:
 
 ### Active Hooks
 
-- **`post_nix`**: Runs `rebuild` after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux)
-- **`post_up_nix`**: Ensures machine.nix exists after deployment, auto-generates if missing
-- **`post_nushell`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
+- **`Hooks/nix/post.sh`**: Rebuilds system after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux), auto-generates machine.nix if missing
+- **`Hooks/nushell/post.sh`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
+- **`Hooks/claude/post.sh`**: Registers tart-vm MCP server with Claude Code, caches Deno dependencies
 
 ### Hook Naming Convention
 
-- `pre_<group>`: Runs before symlinking
-- `post_<group>`: Runs after symlinking
-- `rm_<group>`: Runs during removal
+Hooks are organized as `Hooks/<group>/<type>.sh`:
 
-All hooks must be executable (`chmod +x Hooks/*`).
+- `pre.sh`: Runs before symlinking
+- `post.sh`: Runs after symlinking
+- `rm.sh`: Runs during removal
+
+All hooks must be executable (`chmod +x Hooks/*/post.sh`).
 
 ## Common Workflows
 

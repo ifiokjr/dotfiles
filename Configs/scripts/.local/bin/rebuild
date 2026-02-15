@@ -10,7 +10,7 @@ use nu_modules/nix_config.nu
 
 def main [
     --skip-check    # Skip flake check before rebuilding
-    --skip-updates  # Skip auto-updating packages before rebuilding
+    --update        # Update custom packages before rebuilding (skipped by default)
 ] {
     let nix_config = (nix_config config-dir)
     let machine_config = $"($nix_config)/machine.nix"
@@ -96,8 +96,8 @@ def main [
     print $"  System: ($config.system)"
     print ""
 
-    # Auto-update packages (unless skipped)
-    if not $skip_updates {
+    # Auto-update packages (only when --update is passed)
+    if $update {
         info "Checking for package updates..."
         print ""
 
