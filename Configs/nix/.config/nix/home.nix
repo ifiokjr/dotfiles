@@ -113,6 +113,7 @@ in
       act
       bottom
       cachix
+      cirrus-cli
       coreutils
       curl
       diffutils
@@ -122,6 +123,7 @@ in
       nix-prefetch
       openssh
       openssl
+      orchard
       podman
       protobuf
       scooter

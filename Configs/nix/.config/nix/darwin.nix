@@ -3,12 +3,28 @@
   pkgs,
   self,
   username,
+  homebrew-core,
+  homebrew-cask,
+  homebrew-bundle,
   ...
 }:
 
 {
   nix.enable = false;
   nixpkgs.config.allowUnfree = true;
+
+  nix-homebrew = {
+    enable = true;
+    enableRosetta = true;
+    user = username;
+    autoMigrate = true;
+    taps = {
+      "homebrew/homebrew-core" = homebrew-core;
+      "homebrew/homebrew-cask" = homebrew-cask;
+      "homebrew/homebrew-bundle" = homebrew-bundle;
+    };
+    mutableTaps = false;
+  };
 
   # User configuration
   users.users.${username} = {
@@ -22,6 +38,7 @@
 
   homebrew = {
     enable = true;
+    taps = builtins.attrNames config.nix-homebrew.taps;
     onActivation = {
       autoUpdate = true;
       upgrade = true;
@@ -115,6 +132,7 @@
   environment.systemPackages = with pkgs; [
     # macOS-specific system utilities
     mkalias # For creating app aliases in /Applications
+    tart # macOS VMs on Apple Silicon
 
     # Core system libraries that other packages depend on
     apple-sdk_15
@@ -176,6 +194,151 @@
   # No need to set nixpkgs.hostPlatform here as it's set at the flake level
 
   system.defaults = {
-    dock.autohide = true;
+    dock = {
+      autohide = true;
+      autohide-delay = 0.0;
+      autohide-time-modifier = 0.15;
+      expose-group-apps = true;
+      launchanim = false;
+      mineffect = "scale";
+      minimize-to-application = true;
+      mru-spaces = false;
+      orientation = "bottom";
+      show-recents = false;
+      showhidden = true;
+      static-only = false;
+      tilesize = 48;
+      wvous-tl-corner = 1;
+      wvous-tr-corner = 1;
+      wvous-bl-corner = 1;
+      wvous-br-corner = 1;
+    };
+
+    finder = {
+      _FXShowPosixPathInTitle = true;
+      _FXSortFoldersFirst = true;
+      _FXSortFoldersFirstOnDesktop = true;
+      AppleShowAllExtensions = true;
+      AppleShowAllFiles = true;
+      CreateDesktop = true;
+      FXDefaultSearchScope = "SCcf";
+      FXEnableExtensionChangeWarning = false;
+      FXPreferredViewStyle = "clmv";
+      FXRemoveOldTrashItems = true;
+      QuitMenuItem = true;
+      ShowExternalHardDrivesOnDesktop = true;
+      ShowHardDrivesOnDesktop = false;
+      ShowMountedServersOnDesktop = false;
+      ShowPathbar = true;
+      ShowRemovableMediaOnDesktop = true;
+      ShowStatusBar = true;
+    };
+
+    NSGlobalDomain = {
+      # Keyboard
+      ApplePressAndHoldEnabled = false;
+      InitialKeyRepeat = 15;
+      KeyRepeat = 2;
+      AppleKeyboardUIMode = 3;
+
+      # Appearance
+      AppleInterfaceStyle = "Dark";
+      AppleInterfaceStyleSwitchesAutomatically = false;
+      AppleFontSmoothing = 1;
+      NSUseAnimatedFocusRing = false;
+
+      # Scrolling & navigation
+      "com.apple.swipescrolldirection" = true;
+      AppleEnableSwipeNavigateWithScrolls = true;
+      AppleShowScrollBars = "WhenScrolling";
+      NSScrollAnimationEnabled = true;
+
+      # Trackpad & mouse
+      "com.apple.mouse.tapBehavior" = 1;
+      "com.apple.trackpad.enableSecondaryClick" = true;
+      "com.apple.trackpad.forceClick" = true;
+      "com.apple.trackpad.scaling" = 1.0;
+
+      # Disable all autocorrect
+      NSAutomaticCapitalizationEnabled = false;
+      NSAutomaticDashSubstitutionEnabled = false;
+      NSAutomaticPeriodSubstitutionEnabled = false;
+      NSAutomaticQuoteSubstitutionEnabled = false;
+      NSAutomaticSpellingCorrectionEnabled = false;
+      NSAutomaticInlinePredictionEnabled = false;
+
+      # Expanded dialogs by default
+      NSNavPanelExpandedStateForSaveMode = true;
+      NSNavPanelExpandedStateForSaveMode2 = true;
+      PMPrintingExpandedStateForPrint = true;
+      PMPrintingExpandedStateForPrint2 = true;
+      NSDocumentSaveNewDocumentsToCloud = false;
+
+      # Sound
+      "com.apple.sound.beep.feedback" = 0;
+
+      # Units & time
+      AppleICUForce24HourTime = true;
+      AppleMeasurementUnits = "Centimeters";
+      AppleMetricUnits = 1;
+      AppleTemperatureUnit = "Celsius";
+
+      # Windows
+      AppleWindowTabbingMode = "always";
+      NSWindowShouldDragOnGesture = true;
+      AppleShowAllExtensions = true;
+      _HIHideMenuBar = false;
+    };
+
+    trackpad = {
+      Clicking = true;
+      Dragging = false;
+      TrackpadRightClick = true;
+      TrackpadThreeFingerDrag = true;
+      TrackpadThreeFingerTapGesture = 2;
+      ActuationStrength = 1;
+      FirstClickThreshold = 1;
+      SecondClickThreshold = 1;
+    };
+
+    screencapture = {
+      disable-shadow = true;
+      location = "~/Pictures/Screenshots";
+      type = "png";
+      show-thumbnail = true;
+    };
+
+    controlcenter = {
+      BatteryShowPercentage = true;
+      Bluetooth = true;
+      Sound = true;
+    };
+
+    menuExtraClock = {
+      IsAnalog = false;
+      Show24Hour = true;
+      ShowDate = 1;
+      ShowDayOfMonth = true;
+      ShowDayOfWeek = true;
+      ShowSeconds = true;
+    };
+
+    spaces.spans-displays = false;
+
+    loginwindow = {
+      GuestEnabled = false;
+      DisableConsoleAccess = true;
+    };
+
+    WindowManager = {
+      GloballyEnabled = false;
+      EnableStandardClickToShowDesktop = false;
+      EnableTiledWindowMargins = true;
+      EnableTilingByEdgeDrag = true;
+      EnableTilingOptionAccelerator = true;
+      EnableTopTilingByEdgeDrag = true;
+      StandardHideDesktopIcons = false;
+      StandardHideWidgets = false;
+    };
   };
 }
