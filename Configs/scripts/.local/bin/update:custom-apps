@@ -1,0 +1,222 @@
+#!/usr/bin/env nu
+# Update custom app packages (rolling-URL hashes + versioned app versions)
+#
+# This script handles two categories of custom macOS app packages:
+#
+# 1. Rolling-URL packages (google-chrome, steam, google-drive):
+#    Always re-prefetch the hash since the URL points to the latest release.
+#
+# 2. Versioned packages (zoom, nordvpn, gpg-suite):
+#    Check Homebrew API for new versions. If updated, prefetch new hashes.
+#
+# Called automatically during `rebuild` unless --skip-updates is passed.
+
+use nu_modules/print_utils.nu *
+
+# Prefetch a URL and return the SRI hash
+def prefetch-hash [url: string]: nothing -> string {
+    let hash = (^nix-prefetch-url $url out+err>| lines | last | str trim)
+    ^nix hash convert --hash-algo sha256 --to sri $hash | str trim
+}
+
+# Update a single hash in a nix file. Returns the updated content.
+def update-hash [
+    content: string,
+    pattern: string,  # regex pattern to match (e.g., 'hash = "[^"]*"')
+    new_hash: string,
+]: nothing -> string {
+    $content | str replace --regex $pattern $'hash = "($new_hash)"'
+}
+
+# Update a rolling-URL package (re-prefetch hash, update if changed)
+def update-rolling [name: string, nix_file: string, urls: list<record<label: string, url: string, pattern: string>>] {
+    info $"Checking ($name)..."
+
+    if not ($nix_file | path exists) {
+        warn $"($nix_file) not found, skipping"
+        return
+    }
+
+    mut content = (open $nix_file --raw)
+    mut changed = false
+
+    for entry in $urls {
+        let new_hash = try {
+            prefetch-hash $entry.url
+        } catch {
+            warn $"  Failed to prefetch ($entry.label), skipping"
+            continue
+        }
+
+        let current_hash = try {
+            $content | parse --regex $'($entry.pattern) = "([^"]*)"' | get capture1.0
+        } catch {
+            ""
+        }
+
+        if $current_hash == $new_hash {
+            success $"  ($entry.label): up to date"
+        } else {
+            $content = ($content | str replace --regex $'($entry.pattern) = "[^"]*"' $'($entry.pattern) = "($new_hash)"')
+            $changed = true
+            success $"  ($entry.label): updated"
+        }
+    }
+
+    if $changed {
+        $content | save -f $nix_file
+        success $"  ($name) hashes updated"
+    }
+}
+
+# Update a versioned package (check Homebrew API for new version + prefetch)
+def update-versioned [
+    name: string,
+    cask_name: string,
+    nix_file: string,
+    url_builder: closure,  # closure that takes version and returns list of {label, url, pattern}
+] {
+    info $"Checking ($name)..."
+
+    if not ($nix_file | path exists) {
+        warn $"($nix_file) not found, skipping"
+        return
+    }
+
+    # Fetch latest version from Homebrew API
+    let latest_version = try {
+        http get $"https://formulae.brew.sh/api/cask/($cask_name).json" | get version
+    } catch {
+        warn $"  Failed to fetch version from Homebrew API, skipping"
+        return
+    }
+
+    let content = (open $nix_file --raw)
+    let current_version = try {
+        $content | parse --regex 'version = "([^"]+)"' | get capture0.0
+    } catch {
+        warn $"  Could not read current version, skipping"
+        return
+    }
+
+    if $current_version == $latest_version {
+        success $"  ($name): v($current_version) \(latest\)"
+        return
+    }
+
+    info $"  Updating ($current_version) → ($latest_version)"
+
+    # Update version
+    mut updated = ($content | str replace --regex 'version = "[^"]+"' $'version = "($latest_version)"')
+
+    # Prefetch new hashes
+    let entries = (do $url_builder $latest_version)
+
+    for entry in $entries {
+        let new_hash = try {
+            prefetch-hash $entry.url
+        } catch {
+            warn $"  Failed to prefetch ($entry.label), skipping ($name)"
+            return
+        }
+        $updated = ($updated | str replace --regex $'($entry.pattern) = "[^"]*"' $'($entry.pattern) = "($new_hash)"')
+        success $"  ($entry.label): prefetched"
+    }
+
+    $updated | save -f $nix_file
+    success $"  ($name) updated to ($latest_version)"
+}
+
+def main [
+    --skip-rebuild  # Skip the rebuild step after updating
+] {
+    let packages_dir = $"($env.HOME)/.config/nix/packages"
+
+    info "Updating custom app packages..."
+    print ""
+
+    # ── Rolling-URL packages ──────────────────────────────────────────
+    # These always point to the latest release; re-prefetch every time.
+
+    update-rolling "google-chrome" $"($packages_dir)/google-chrome.nix" [
+        {
+            label: "macOS universal"
+            url: "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg"
+            pattern: "hash"
+        }
+    ]
+
+    # google-chrome Linux hash is on a separate line with a different key
+    # Handle it by updating the x86_64-linux hash specifically
+    let chrome_file = $"($packages_dir)/google-chrome.nix"
+    if ($chrome_file | path exists) {
+        let content = (open $chrome_file --raw)
+        let linux_hash = try {
+            prefetch-hash "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+        } catch {
+            warn "  Failed to prefetch Chrome Linux hash"
+            null
+        }
+        if $linux_hash != null {
+            # The x86_64-linux hash appears after the macOS ones, find and replace it
+            let current = try {
+                $content
+                | parse --regex '"x86_64-linux" = \{[^}]*hash = "([^"]*)"'
+                | get capture0.0
+            } catch { "" }
+
+            if $current == $linux_hash {
+                success "  Linux x86_64: up to date"
+            } else {
+                # Use a multiline-aware approach: find the x86_64-linux block and update hash
+                let updated = ($content | str replace --regex '("x86_64-linux" = \{[^}]*hash = ")[^"]*"' $'${1}($linux_hash)"')
+                $updated | save -f $chrome_file
+                success "  Linux x86_64: updated"
+            }
+        }
+    }
+
+    update-rolling "steam" $"($packages_dir)/steam.nix" [
+        {
+            label: "macOS DMG"
+            url: "https://cdn.cloudflare.steamstatic.com/client/installer/steam.dmg"
+            pattern: "hash"
+        }
+    ]
+
+    update-rolling "google-drive" $"($packages_dir)/google-drive.nix" [
+        {
+            label: "macOS DMG"
+            url: "https://dl.google.com/drive-file-stream/5-percent/GoogleDrive.dmg"
+            pattern: "hash"
+        }
+    ]
+
+    print ""
+
+    # ── Versioned packages ────────────────────────────────────────────
+    # Check Homebrew API for new versions, prefetch if changed.
+
+    update-versioned "gpg-suite" "gpg-suite" $"($packages_dir)/gpg-suite.nix" {|version|
+        [{ label: "macOS DMG", url: $"https://releases.gpgtools.org/GPG_Suite-($version).dmg", pattern: "hash" }]
+    }
+
+    update-versioned "nordvpn" "nordvpn" $"($packages_dir)/nordvpn.nix" {|version|
+        [{ label: "macOS PKG", url: $"https://downloads.nordcdn.com/apps/macos/generic/NordVPN-OpenVPN/($version)/NordVPN.pkg", pattern: "hash" }]
+    }
+
+    update-versioned "zoom" "zoom" $"($packages_dir)/zoom.nix" {|version|
+        [
+            { label: "arm64", url: $"https://cdn.zoom.us/prod/($version)/arm64/zoomusInstallerFull.pkg", pattern: '"aarch64"' }
+            { label: "x86_64", url: $"https://cdn.zoom.us/prod/($version)/zoomusInstallerFull.pkg", pattern: '"x86_64"' }
+        ]
+    }
+
+    print ""
+    success "Custom app updates complete"
+
+    if not $skip_rebuild {
+        print ""
+        info "Run 'rebuild --skip-updates' to apply changes."
+    }
+}

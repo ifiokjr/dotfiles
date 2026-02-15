@@ -261,9 +261,30 @@ This organization maximizes portability while keeping macOS system management cl
 
 **GUI apps via nix-casks** (macOS only):
 
-- Edit `darwin.nix`
-- Add cask name to the `environment.systemPackages` cask list
-- Apps are installed as pure Nix derivations and aliased to `/Applications/Nix Apps/`
+GUI apps that were previously installed via Homebrew casks are now installed as pure Nix derivations using [nix-casks](https://github.com/atahanyorganci/nix-casks). No Homebrew installation is required.
+
+To add a new GUI app:
+
+1. **Check nix-casks first** — search for the Homebrew cask name at [nix-casks.atahan.dev](https://nix-casks.atahan.dev/). If available, add it to the cask list in `darwin.nix`:
+
+   ```nix
+   ++ (map (name: casks.${name}) [
+     # ... existing casks ...
+     "new-app-name"   # use exact Homebrew cask name
+   ]);
+   ```
+
+2. **If not in nix-casks** — the app likely uses a `.pkg` installer. Create a custom derivation in `packages/`:
+
+   - For `.dmg` containing `.app`: use `undmg` (see `packages/steam.nix`)
+   - For `.dmg` containing `.pkg`: use `undmg` + `pkgutil` (see `packages/google-drive.nix`)
+   - For direct `.pkg` download: use `pkgutil` (see `packages/zoom.nix`)
+
+   Then add `callPackage` in the `let` block and append to `environment.systemPackages`.
+
+3. **If in nixpkgs** — check `nix search nixpkgs <name>`. If available as a nixpkgs package, add it to `home.nix` instead (works cross-platform).
+
+All custom app packages with rolling URLs have their hashes automatically refreshed during `rebuild`. Versioned packages check the Homebrew API for updates. Use `rebuild --skip-updates` to skip this step.
 
 ### Environment Variables
 

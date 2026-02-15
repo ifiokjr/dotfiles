@@ -111,6 +111,7 @@ in
       yaml-language-server
 
       # Media & Graphics
+      blender
       ffmpeg
       imagemagick
       poppler
