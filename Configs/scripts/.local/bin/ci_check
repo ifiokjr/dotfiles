@@ -41,7 +41,7 @@ def main [
         ($dotfiles_root | path join "setup")
         ($dotfiles_root | path join "setup-tuckr-symlink.sh")
     ]
-    let hook_files = (glob ($dotfiles_root | path join "Hooks/*"))
+    let hook_files = (glob ($dotfiles_root | path join "Hooks/*/post.sh"))
     let all_shell_files = ($shell_files | append $hook_files)
 
     let result = do -i { ^shellcheck ...$all_shell_files }

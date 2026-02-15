@@ -21,7 +21,7 @@ The easiest way to set up your environment is using the automated setup script:
 
 ```bash
 # Remote installation (on a new machine)
-curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
 # Or clone anywhere, then run locally
 git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
@@ -42,6 +42,7 @@ The setup script will:
 - `--cwd PATH` - Clone dotfiles to custom path (default: current directory or `~/Developer/.dotfiles`)
 - `--groups GROUPS` - Deploy only specific comma-separated groups (otherwise deploys all)
 - `--skip-nix` - Skip Nix installation if already installed
+- `--no-confirm` - Run headlessly without interactive prompts
 - `--help` - Show help message
 
 ### Manual Setup
@@ -101,19 +102,21 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 9 configuration groups organized in `Configs/`:
+The repository contains 11 configuration groups organized in `Configs/`:
 
-| Group       | Files | Platform | Purpose                                  | Hook           |
-| ----------- | ----- | -------- | ---------------------------------------- | -------------- |
-| **nix**     | 6     | All      | System configuration with Nix flakes     | `post_nix`     |
-| **nushell** | 6     | All      | Nushell shell configuration & modules    | `post_nushell` |
-| **ghostty** | 1     | All      | Ghostty terminal emulator config         | None           |
-| **zellij**  | 4     | All      | Terminal multiplexer config & layouts    | None           |
-| **claude**  | 1     | All      | Claude Code settings (attribution, etc.) | None           |
-| **direnv**  | 1     | All      | Directory-specific environment variables | None           |
-| **dprint**  | 1     | All      | Multi-language code formatter            | None           |
-| **kdl**     | 1     | All      | KDL document formatter                   | None           |
-| **lazygit** | 1     | All      | Git TUI configuration                    | None           |
+| Group       | Platform | Purpose                                  | Hook      |
+| ----------- | -------- | ---------------------------------------- | --------- |
+| **nix**     | All      | System configuration with Nix flakes     | `post.sh` |
+| **nushell** | All      | Nushell shell configuration & modules    | `post.sh` |
+| **claude**  | All      | Claude Code settings & MCP server        | `post.sh` |
+| **scripts** | All      | Custom utility scripts (~/.local/bin)    | None      |
+| **helix**   | All      | Helix editor config & Steel plugins      | None      |
+| **ghostty** | All      | Ghostty terminal emulator config         | None      |
+| **zellij**  | All      | Terminal multiplexer config & layouts    | None      |
+| **direnv**  | All      | Directory-specific environment variables | None      |
+| **dprint**  | All      | Multi-language code formatter            | None      |
+| **kdl**     | All      | KDL document formatter                   | None      |
+| **lazygit** | All      | Git TUI configuration                    | None      |
 
 **Platform-specific groups** (suffixed with `_macos`, `_linux`, etc.) only deploy on matching platforms.
 
@@ -126,16 +129,20 @@ The repository contains 9 configuration groups organized in `Configs/`:
 ├── Configs/                    # Configuration groups
 │   ├── nix/                   # Nix system config (darwin + home-manager)
 │   ├── nushell/               # Nushell shell config
+│   ├── scripts/               # Custom utility scripts (~/.local/bin)
+│   ├── claude/                # Claude Code settings & MCP server
+│   ├── helix/                 # Helix editor config & Steel plugins
 │   ├── ghostty/               # Ghostty terminal config
 │   ├── zellij/                # Terminal multiplexer
-│   ├── claude/                # Claude Code settings
 │   ├── direnv/                # Environment management
 │   ├── dprint/                # Code formatter
 │   ├── kdl/                   # KDL formatter
 │   └── lazygit/               # Git TUI
 ├── Hooks/                      # Pre/post deployment scripts
 │   ├── nix/post.sh            # Rebuilds system after Nix changes
-│   └── nushell/post.sh        # Generates vendor autoload, sets default shell
+│   ├── nushell/post.sh        # Generates vendor autoload, sets default shell
+│   └── claude/post.sh         # Registers MCP server, caches Deno deps
+├── setup                       # Automated setup script
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
 └── readme.md                   # Full documentation
 ```
@@ -163,6 +170,7 @@ Hooks are organized as `Hooks/<group>/pre.sh`, `Hooks/<group>/post.sh`, or `Hook
 
 1. **`Hooks/nix/post.sh`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
 2. **`Hooks/nushell/post.sh`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
+3. **`Hooks/claude/post.sh`** - Registers tart-vm MCP server with Claude Code, caches Deno dependencies
 
 ## Nushell Development Notes
 
@@ -194,14 +202,11 @@ The `nix` group contains a complete Nix system configuration with integrated Hom
 
 ```bash
 # Primary method (on macOS)
-darwin-rebuild switch --flake ~/.config/nix#$(whoami)
-
-# Alternative with auto-detection (impure)
-darwin-rebuild switch --flake ~/.config/nix# --impure
+darwin-rebuild switch --flake ~/.config/nix#default --impure
 
 # Standalone Home Manager (Linux or standalone)
-home-manager switch --flake ~/.config/nix#username@system
-# Example: home-manager switch --flake ~/.config/nix#ifiokjr@x86_64-linux
+home-manager switch --flake ~/.config/nix#username@system --impure
+# Example: home-manager switch --flake ~/.config/nix#ifiokjr@x86_64-linux --impure
 ```
 
 ### Adding New Users
@@ -335,8 +340,10 @@ Use relevant scope based on what's being modified:
 - **nushell**: Nushell shell configuration
 - **scripts**: Custom utility scripts
 - **helix**: Helix editor configuration
+- **claude**: Claude Code configuration
+- **ci**: CI/CD workflows and configuration
 - **tuckr**: Tuckr configuration or hooks
-- **docs**: Documentation files (README, CLAUDE.md)
+- **docs**: Documentation files (readme.md, CLAUDE.md)
 - **setup**: Setup scripts
 
 ### Examples
@@ -486,9 +493,10 @@ If any check fails, fix the issues before pushing. Never push code that would fa
 act -l
 
 # Run a specific job
-act -j lint-and-format
+act -j lint
 act -j test
-act -j setup-test
+act -j setup
+act -j docker-integration
 
 # Run all jobs (Linux runners only — macOS jobs are skipped)
 act
