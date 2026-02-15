@@ -73,7 +73,6 @@ alias n = nvim
 alias zj = zellij
 alias lg = lazygit
 alias cl = clear
-alias bu = brew upgrade
 alias pinentry = pinentry-mac
 alias cc = claude --dangerously-skip-permissions
 alias g = git

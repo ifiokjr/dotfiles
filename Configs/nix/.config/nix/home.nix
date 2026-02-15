@@ -146,6 +146,10 @@ in
       pnpm-standalone
 
       # Fonts
+      google-fonts # Includes Duru Sans, Kranky, Rubik, Short Stack, etc.
+      inconsolata
+      recursive
+      roboto
       nerd-fonts.agave
       nerd-fonts.caskaydia-cove
       nerd-fonts.code-new-roman

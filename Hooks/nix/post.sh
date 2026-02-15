@@ -186,14 +186,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 		sudo mv /etc/shells /etc/shells.before-nix-darwin
 	fi
 
-	# nix-homebrew manages Homebrew via nix-darwin. The activation step fails
-	# if an existing Homebrew installation has a Taps directory. Remove it so
-	# nix-homebrew can take ownership cleanly.
-	if [ -d "/opt/homebrew/Library/Taps" ]; then
-		echo "Removing existing Homebrew Taps to avoid nix-homebrew conflict..."
-		sudo rm -rf /opt/homebrew/Library/Taps
-	fi
-
 	# Build darwin-rebuild command (with nix run fallback for first-time setup)
 	if command -v darwin-rebuild &>/dev/null; then
 		DARWIN_CMD="darwin-rebuild switch --flake '${NIX_FLAKE_DIR}#default' --impure"

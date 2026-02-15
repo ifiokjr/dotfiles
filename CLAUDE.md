@@ -187,7 +187,7 @@ The `nix` group contains a complete Nix system configuration with integrated Hom
 ### Features
 
 - User-specific configurations (currently configured for `ifiokjr`)
-- Nix Homebrew integration with declarative tap management
+- GUI apps via nix-casks (pure Nix derivations, no Homebrew needed)
 - Integrated Home Manager (no separate invocation needed)
 
 ### Build Commands

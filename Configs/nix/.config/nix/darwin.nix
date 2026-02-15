@@ -3,28 +3,16 @@
   pkgs,
   self,
   username,
-  homebrew-core,
-  homebrew-cask,
-  homebrew-bundle,
+  nix-casks,
   ...
 }:
 
+let
+  casks = nix-casks.packages.${pkgs.stdenv.system};
+in
 {
   nix.enable = false;
   nixpkgs.config.allowUnfree = true;
-
-  nix-homebrew = {
-    enable = true;
-    enableRosetta = true;
-    user = username;
-    autoMigrate = true;
-    taps = {
-      "homebrew/homebrew-core" = homebrew-core;
-      "homebrew/homebrew-cask" = homebrew-cask;
-      "homebrew/homebrew-bundle" = homebrew-bundle;
-    };
-    mutableTaps = false;
-  };
 
   # User configuration
   users.users.${username} = {
@@ -36,85 +24,71 @@
   # Set primary user for darwin options that require it
   system.primaryUser = username;
 
-  homebrew = {
-    enable = true;
-    taps = builtins.attrNames config.nix-homebrew.taps;
-    onActivation = {
-      autoUpdate = true;
-      upgrade = true;
-      cleanup = "zap";
-    };
-    brews = [ ];
-    casks = [
+  # System-level packages (only those that require system integration)
+  # Most packages are now managed in home.nix
+  environment.systemPackages =
+    (with pkgs; [
+      # macOS-specific system utilities
+      mkalias # For creating app aliases in /Applications
+      tart # macOS VMs on Apple Silicon
+
+      # Core system libraries that other packages depend on
+      apple-sdk_15
+      libiconv
+      fontconfig
+      freetype
+      jdk # Some system tools may need Java
+    ])
+    ++ (map (name: casks.${name}) [
+      # Productivity & Communication
       "1password"
-      "alt-tab" # provides a saner UI/UX when switching tabs
+      "discord"
+      "figma"
+      "setapp"
+      "slack"
+      "telegram"
+      "whatsapp"
+
+      # Browsers
+      "brave-browser"
+      "firefox"
+      "microsoft-edge"
+
+      # Development
       "android-ndk"
       "android-studio"
-      "blender"
-      "brave-browser"
       "charles"
       "cursor"
       "db-browser-for-sqlite"
       "dbeaver-community"
-      "discord"
-      "duet"
-      "figma"
-      "firefox"
-      "flux-app"
-      "font-duru-sans"
-      "font-fira-code"
-      "font-inconsolata"
-      "font-kranky"
-      "font-recursive"
-      "font-recursive-code"
-      "font-roboto"
-      "font-rubik"
-      "font-short-stack"
       "gdevelop"
-      "geekbench"
       "ghostty"
       "godot"
-      "google-chrome"
-      "google-drive"
-      "gpg-suite"
-      "ledger-live"
-      "microsoft-edge"
-      "nordvpn"
-      "obs"
-      "ollama-app"
       "orbstack"
       "podman-desktop"
-      "qbittorrent"
       "react-native-debugger"
       "reactotron"
-      "setapp"
-      "slack"
-      "steam"
-      "telegram"
-      "the-unarchiver"
       "visual-studio-code"
-      "vlc"
-      "vysor"
-      "whatsapp"
       "zed"
-      "zoom"
-    ];
-  };
 
-  # System-level packages (only those that require system integration)
-  # Most packages are now managed in home.nix
-  environment.systemPackages = with pkgs; [
-    # macOS-specific system utilities
-    mkalias # For creating app aliases in /Applications
-    tart # macOS VMs on Apple Silicon
+      # Media & Graphics
+      "blender"
+      "obs"
+      "ollama-app"
+      "vlc"
 
-    # Core system libraries that other packages depend on
-    apple-sdk_15
-    libiconv
-    fontconfig
-    freetype
-    jdk # Some system tools may need Java
-  ];
+      # Utilities
+      "alt-tab"
+      "flux-app"
+      "geekbench"
+      "ledger-live"
+      "qbittorrent"
+      "the-unarchiver"
+      "vysor"
+
+      # Android
+      "duet"
+    ]);
 
   # Enable zsh system-wide
   programs.zsh.enable = true;
@@ -130,26 +104,26 @@
   # (without this, nushell defaults to ~/Library/Application Support/nushell/)
   environment.variables.XDG_CONFIG_HOME = "$HOME/.config";
 
-  # system.activationScripts.applications.text =
-  #   let
-  #     env = pkgs.buildEnv {
-  #       name = "system-applications";
-  #       paths = config.environment.systemPackages;
-  #       pathsToLink = "/Applications";
-  #     };
-  #   in
-  #   pkgs.lib.mkForce ''
-  #     # Set up applications.
-  #     echo "setting up /Applications..." >&2
-  #     rm -rf /Applications/Nix\ Apps
-  #     mkdir -p /Applications/Nix\ Apps
-  #     find ${env}/Applications -maxdepth 1 -type l -exec readlink '{}' + |
-  #     while IFS= read -r src; do
-  #       app_name=$(basename "$src")
-  #       echo "copying $src" >&2
-  #       ${pkgs.mkalias}/bin/mkalias "$src" "/Applications/Nix Apps/$app_name"
-  #     done
-  #   '';
+  system.activationScripts.applications.text =
+    let
+      env = pkgs.buildEnv {
+        name = "system-applications";
+        paths = config.environment.systemPackages;
+        pathsToLink = "/Applications";
+      };
+    in
+    pkgs.lib.mkForce ''
+      # Set up applications.
+      echo "setting up /Applications..." >&2
+      rm -rf /Applications/Nix\ Apps
+      mkdir -p /Applications/Nix\ Apps
+      find ${env}/Applications -maxdepth 1 -type l -exec readlink '{}' + |
+      while IFS= read -r src; do
+        app_name=$(basename "$src")
+        echo "copying $src" >&2
+        ${pkgs.mkalias}/bin/mkalias "$src" "/Applications/Nix Apps/$app_name"
+      done
+    '';
 
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";

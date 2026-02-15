@@ -7,19 +7,9 @@
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
-    # Optional: Declarative tap management
-    homebrew-core = {
-      url = "github:homebrew/homebrew-core";
-      flake = false;
-    };
-    homebrew-cask = {
-      url = "github:homebrew/homebrew-cask";
-      flake = false;
-    };
-    homebrew-bundle = {
-      url = "github:homebrew/homebrew-bundle";
-      flake = false;
+    nix-casks = {
+      url = "github:atahanyorganci/nix-casks/archive";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
@@ -29,10 +19,7 @@
       darwin,
       home-manager,
       nixpkgs,
-      nix-homebrew,
-      homebrew-core,
-      homebrew-cask,
-      homebrew-bundle,
+      nix-casks,
     }:
     let
       # Helper function to create configurations for a specific user
@@ -48,16 +35,9 @@
           inherit system;
           modules = [
             ./darwin.nix
-            nix-homebrew.darwinModules.nix-homebrew
-            # Pass username and homebrew inputs to darwin.nix
             {
               _module.args = {
-                inherit
-                  username
-                  homebrew-core
-                  homebrew-cask
-                  homebrew-bundle
-                  ;
+                inherit username nix-casks;
               };
             }
             # Integrate home-manager directly with nix-darwin
