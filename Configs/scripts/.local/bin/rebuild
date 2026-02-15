@@ -128,6 +128,15 @@ def main [
             warn "racket update check failed \(continuing\)"
         }
 
+        # Update custom app packages (rolling hashes + versioned casks)
+        do -i {
+            info "Checking custom app packages for updates..."
+            ^update:custom-apps --skip-rebuild
+        }
+        if ($env.LAST_EXIT_CODE != 0) {
+            warn "custom app update check failed \(continuing\)"
+        }
+
         print ""
     }
 

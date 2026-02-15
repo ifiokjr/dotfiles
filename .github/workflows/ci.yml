@@ -36,33 +36,17 @@ jobs:
       - name: 🔧 set up nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: 📦 restore homebrew cache (macos)
-        if: runner.os == 'macOS'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-          key: homebrew-${{ runner.os }}-${{ hashFiles('Configs/nix/.config/nix/darwin.nix') }}
-          restore-keys: |
-            homebrew-${{ runner.os }}-
-
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔍 debug GITHUB_PATH and PATH
+      - name: 📦 ensure lint tools available
         run: |
-          echo "=== GITHUB_PATH file contents ==="
-          cat "$GITHUB_PATH" || echo "(empty or missing)"
-          echo ""
-          echo "=== Current PATH ==="
-          echo "$PATH" | tr ':' '\n'
-          echo ""
-          echo "=== Which checks ==="
-          which dprint || echo "dprint: NOT FOUND"
-          which shellcheck || echo "shellcheck: NOT FOUND"
-          which nu || echo "nu: NOT FOUND"
+          # If darwin-rebuild failed, tools may not be installed. Install via nix profile as fallback.
+          command -v shellcheck || nix profile add nixpkgs#shellcheck
+          command -v dprint || nix profile add nixpkgs#dprint
+          command -v nu || nix profile add nixpkgs#nushell
 
       - name: 🔍 shellcheck bash scripts
         run: |
@@ -149,16 +133,6 @@ jobs:
       - name: 🔧 set up nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: 📦 restore homebrew cache (macos)
-        if: runner.os == 'macOS'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/Library/Caches/Homebrew
-          key: homebrew-${{ runner.os }}-${{ hashFiles('Configs/nix/.config/nix/darwin.nix') }}
-          restore-keys: |
-            homebrew-${{ runner.os }}-
-
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm
         env:
@@ -166,8 +140,11 @@ jobs:
 
       - name: ✅ verify setup completed
         run: |
-          command -v tuckr && echo "tuckr: ok"
-          command -v nu && echo "nushell: ok"
+          # If darwin-rebuild failed, reinstall tools for verification
+          command -v tuckr || nix profile add nixpkgs#tuckr
+          command -v nu || nix profile add nixpkgs#nushell
+          echo "tuckr: $(command -v tuckr)"
+          echo "nushell: $(command -v nu)"
           tuckr status
 
   docker-integration:

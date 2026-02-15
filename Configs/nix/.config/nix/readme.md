@@ -103,7 +103,7 @@ The `generate-machine-config` command auto-detects and creates `machine.nix`:
 - **Cross-Platform Home Manager**: User packages and settings in `home.nix` work on both macOS and Linux
 - **Integrated Mode (macOS)**: Home-manager integrated with nix-darwin for one-command updates
 - **Standalone Mode (Linux)**: Separate home-manager configurations for Linux systems
-- **Homebrew Integration** (macOS only): Uses nix-homebrew for declarative Homebrew management
+- **GUI Apps via nix-casks** (macOS only): Installs Homebrew casks as pure Nix derivations (no Homebrew process needed)
 - **System Architecture Support**: Works with aarch64-darwin (Apple Silicon), x86_64-darwin (Intel), x86_64-linux, and aarch64-linux
 - **Convenient Rebuild Script**: Simple `rebuild` command handles all the complexity
 
@@ -185,7 +185,7 @@ This file is gitignored and never committed to the repository, making it safe to
   - Reads configuration from `machine.nix`
   - Exports `darwinConfigurations.default` for macOS
   - Exports `homeConfigurations` for standalone use
-- **darwin.nix**: macOS system-level configuration (system settings, homebrew, macOS-specific packages)
+- **darwin.nix**: macOS system-level configuration (system settings, GUI apps via nix-casks, macOS-specific packages)
 - **home.nix**: User-level home-manager configuration (CLI tools, development packages, shell config)
   - Works on both macOS and Linux
   - Most packages are managed here for cross-platform compatibility
@@ -236,7 +236,7 @@ This configuration supports two deployment modes:
   - Manages shell configurations (zsh, bash, fish)
 
 - **darwin.nix**: Contains macOS-specific system configuration
-  - Homebrew packages and casks
+  - GUI apps installed via nix-casks
   - System preferences (dock, keyboard, etc.)
   - macOS-only system packages that need system integration
   - nix-darwin settings
@@ -259,11 +259,32 @@ This organization maximizes portability while keeping macOS system management cl
 - Add to `environment.systemPackages`
 - Only for packages that need system-level integration
 
-**Homebrew packages** (macOS only):
+**GUI apps via nix-casks** (macOS only):
 
-- Edit `darwin.nix`
-- Add to `homebrew.brews` or `homebrew.casks`
-- For macOS GUI apps and tools not available in nixpkgs
+GUI apps that were previously installed via Homebrew casks are now installed as pure Nix derivations using [nix-casks](https://github.com/atahanyorganci/nix-casks). No Homebrew installation is required.
+
+To add a new GUI app:
+
+1. **Check nix-casks first** — search for the Homebrew cask name at [nix-casks.atahan.dev](https://nix-casks.atahan.dev/). If available, add it to the cask list in `darwin.nix`:
+
+   ```nix
+   ++ (map (name: casks.${name}) [
+     # ... existing casks ...
+     "new-app-name"   # use exact Homebrew cask name
+   ]);
+   ```
+
+2. **If not in nix-casks** — the app likely uses a `.pkg` installer. Create a custom derivation in `packages/`:
+
+   - For `.dmg` containing `.app`: use `undmg` (see `packages/steam.nix`)
+   - For `.dmg` containing `.pkg`: use `undmg` + `pkgutil` (see `packages/google-drive.nix`)
+   - For direct `.pkg` download: use `pkgutil` (see `packages/zoom.nix`)
+
+   Then add `callPackage` in the `let` block and append to `environment.systemPackages`.
+
+3. **If in nixpkgs** — check `nix search nixpkgs <name>`. If available as a nixpkgs package, add it to `home.nix` instead (works cross-platform).
+
+All custom app packages with rolling URLs have their hashes automatically refreshed during `rebuild`. Versioned packages check the Homebrew API for updates. Use `rebuild --skip-updates` to skip this step.
 
 ### Environment Variables
 
@@ -356,10 +377,6 @@ Make sure home-manager is installed and integrated:
 sudo darwin-rebuild switch --flake ~/.config/nix
 ```
 
-### Homebrew packages not installing
-
-Make sure you've run `darwin-rebuild` at least once, which sets up nix-homebrew integration.
-
 ## Migration from Old Setup
 
 If you're migrating from a setup that used `--impure` or hardcoded usernames:
@@ -374,5 +391,5 @@ If you're migrating from a setup that used `--impure` or hardcoded usernames:
 
 - [nix-darwin](https://github.com/LnL7/nix-darwin)
 - [home-manager](https://github.com/nix-community/home-manager)
-- [nix-homebrew](https://github.com/zhaofengli/nix-homebrew)
+- [nix-casks](https://github.com/atahanyorganci/nix-casks)
 - [Nix Flakes](https://nixos.wiki/wiki/Flakes)
