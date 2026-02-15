@@ -426,6 +426,18 @@ All GitHub Actions workflow files **must** follow these naming and formatting co
 
 - **Always** use `nix profile add`, **never** `nix profile install` (deprecated)
 
+## Branching Workflow
+
+All changes to `main` **must** be made via pull request. Direct pushes to `main` are not allowed (enforced by branch protection rules). The workflow is:
+
+1. Create a feature branch from `main` (e.g., `fix/ci-failures`, `feat/new-tool`)
+2. Make changes, commit, and push the branch
+3. Open a pull request against `main`
+4. Wait for CI to pass
+5. Merge the pull request
+
+Admins may bypass this rule in emergencies, but should prefer PRs whenever possible.
+
 ## Pre-Push Verification
 
 **MANDATORY**: Before pushing any commits to the remote, always run the local CI checks to ensure they pass. At minimum:
