@@ -422,6 +422,12 @@ All GitHub Actions workflow files **must** follow these naming and formatting co
 | 🤖    | AI / automation     |
 | ✅    | verify / validate   |
 
+### CI Integrity Rules
+
+- **Never introduce workarounds for failing `./setup`** in `ci.yml`. If `darwin-rebuild` or `home-manager switch` fails during the setup step, fix the root cause (broken packages, wrong config) instead of adding fallback `nix profile add` steps. Workarounds mask real build failures and defeat the purpose of CI.
+- **All tools used in CI steps must come from the setup script**. The `./setup --skip-nix --no-confirm` step installs everything via `darwin-rebuild` (macOS) or `home-manager switch` (Linux). If a tool is missing after setup, it means the nix configuration is broken and must be fixed.
+- **Packages marked as broken on a platform must be moved to platform-conditional lists**. Use `lib.optionals pkgs.stdenv.isLinux` or `lib.optionals pkgs.stdenv.isDarwin` in `home.nix`, or install via nix-casks in `darwin.nix` for macOS GUI apps.
+
 ## Nix Commands
 
 - **Always** use `nix profile add`, **never** `nix profile install` (deprecated)
