@@ -452,6 +452,8 @@ When Claude Code (or other agents) starts a new feature or fix:
 5. Before pushing, run the pre-push verification checks (see below)
 6. Open a pull request against `main`
 
+**Worktree note:** If `git checkout main` fails because another worktree already has `main` checked out, use `origin/main` as the base instead (e.g., `git checkout -b feat/my-feature origin/main`).
+
 ## Pre-Push Verification
 
 **MANDATORY**: Before pushing any commits to the remote, always run the local CI checks to ensure they pass. At minimum:
