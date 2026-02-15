@@ -49,37 +49,15 @@
           modules = [
             ./darwin.nix
             nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                enableRosetta = true;
-                user = username;
-                autoMigrate = true;
-
-                # Optional: Declarative tap management
-                taps = {
-                  "homebrew/homebrew-core" = homebrew-core;
-                  "homebrew/homebrew-cask" = homebrew-cask;
-                  "homebrew/homebrew-bundle" = homebrew-bundle;
-                };
-
-                # Optional: Enable fully-declarative tap management
-                #
-                # With mutableTaps disabled, taps can no longer be added imperatively with `brew tap`.
-                mutableTaps = false;
-              };
-            }
-            # Optional: Align homebrew taps config with nix-homebrew
-            (
-              { config, ... }:
-              {
-                homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
-              }
-            )
-            # Pass the username to darwin.nix
+            # Pass username and homebrew inputs to darwin.nix
             {
               _module.args = {
-                inherit username;
+                inherit
+                  username
+                  homebrew-core
+                  homebrew-cask
+                  homebrew-bundle
+                  ;
               };
             }
             # Integrate home-manager directly with nix-darwin
