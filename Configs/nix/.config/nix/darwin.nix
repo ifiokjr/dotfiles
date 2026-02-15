@@ -80,6 +80,7 @@ in
       "zed"
 
       # Media & Graphics
+      "blender"
       "obs"
       "ollama-app"
       "vlc"
