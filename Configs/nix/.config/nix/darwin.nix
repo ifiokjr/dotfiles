@@ -9,6 +9,13 @@
 
 let
   casks = nix-casks.packages.${pkgs.stdenv.system};
+
+  # Custom packages (apps not available in nix-casks)
+  steam-custom = pkgs.callPackage ./packages/steam.nix { };
+  google-drive-custom = pkgs.callPackage ./packages/google-drive.nix { };
+  gpg-suite-custom = pkgs.callPackage ./packages/gpg-suite.nix { };
+  nordvpn-custom = pkgs.callPackage ./packages/nordvpn.nix { };
+  zoom-custom = pkgs.callPackage ./packages/zoom.nix { };
 in
 {
   nix.enable = false;
@@ -88,7 +95,15 @@ in
 
       # Android
       "duet"
-    ]);
+    ])
+    ++ [
+      # Custom packages (PKG-based apps not available in nix-casks)
+      google-drive-custom
+      gpg-suite-custom
+      nordvpn-custom
+      steam-custom
+      zoom-custom
+    ];
 
   # Enable zsh system-wide
   programs.zsh.enable = true;

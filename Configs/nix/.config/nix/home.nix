@@ -169,6 +169,7 @@ in
       cocoapods
       code-cursor
       fvm # Flutter Version Management (macOS/Windows only)
+      google-chrome
       mas
       pinentry_mac
       powershell
