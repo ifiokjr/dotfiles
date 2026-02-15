@@ -41,13 +41,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 📦 ensure lint tools available
-        run: |
-          # If darwin-rebuild failed, tools may not be installed. Install via nix profile as fallback.
-          command -v shellcheck || nix profile add nixpkgs#shellcheck
-          command -v dprint || nix profile add nixpkgs#dprint
-          command -v nu || nix profile add nixpkgs#nushell
-
       - name: 🔍 shellcheck bash scripts
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/nix/post.sh Hooks/nushell/post.sh
@@ -140,11 +133,8 @@ jobs:
 
       - name: ✅ verify setup completed
         run: |
-          # If darwin-rebuild failed, reinstall tools for verification
-          command -v tuckr || nix profile add nixpkgs#tuckr
-          command -v nu || nix profile add nixpkgs#nushell
-          echo "tuckr: $(command -v tuckr)"
-          echo "nushell: $(command -v nu)"
+          command -v tuckr && echo "tuckr: ok"
+          command -v nu && echo "nushell: ok"
           tuckr status
 
   docker-integration:
