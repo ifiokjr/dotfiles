@@ -461,11 +461,15 @@ When Claude Code (or other agents) starts a new feature or fix:
 1. **Format check**: `dprint check --config Configs/dprint/dprint.json`
 2. **Shellcheck**: `shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh`
 3. **Nix flake check** (if nix files changed): Generate `machine.nix` if needed, then `nix flake check ./Configs/nix/.config/nix --impure --no-build`
-4. **Local workflow test** (optional): `act -j lint-and-format` to run CI jobs locally via Docker
+4. **Nix rebuild** (if nix packages changed): Run `rebuild` to verify all packages build and install correctly on the current platform
+5. **Docker build** (if nix packages changed, verifies Linux): `docker build -t dotfiles-test .` to verify the configuration works on Linux
+6. **Local workflow test** (optional): `act -j lint-and-format` to run CI jobs locally via Docker
 
 A convenience script is available: `nu Configs/scripts/.local/bin/ci_check`
 
 If any check fails, fix the issues before pushing. Never push code that would fail CI.
+
+**Package changes require extra verification**: When adding, removing, or updating packages in `home.nix` or `darwin.nix`, you **must** run `rebuild` locally to confirm the packages resolve and install. For cross-platform confidence, also run the Docker build to verify Linux compatibility. Never push package changes that have not been locally verified.
 
 ### Local CI with `act`
 

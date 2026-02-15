@@ -128,12 +128,14 @@ in
       gnumake
       gzip
       nix-prefetch
+      nixpkgs-review
       openssh
       openssl
       orchard
       podman
       protobuf
       scooter
+      sshpass
       sqld
       tealdeer
       tuckr
