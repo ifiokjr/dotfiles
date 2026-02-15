@@ -8,6 +8,7 @@ let
   # Custom packages
   pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
   cursor-cli-custom = pkgs.callPackage ./packages/cursor-cli.nix { };
+  google-chrome-custom = pkgs.callPackage ./packages/google-chrome.nix { };
   racket-minimal-custom = pkgs.callPackage ./packages/racket-minimal.nix { };
 in
 {
@@ -172,6 +173,10 @@ in
       mas
       pinentry_mac
       powershell
+    ]
+    ++ lib.optionals pkgs.stdenv.isLinux [
+      # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
+      google-chrome-custom
     ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
