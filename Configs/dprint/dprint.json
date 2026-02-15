@@ -72,7 +72,8 @@
 		"**/fixtures",
 		"**/snapshots",
 		"**/target",
-		"**/node_modules"
+		"**/node_modules",
+		"**/skills/**"
 	],
 	"plugins": [
 		"https://plugins.dprint.dev/typescript-0.95.15.wasm",
