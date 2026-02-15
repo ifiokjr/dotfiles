@@ -36,6 +36,16 @@ jobs:
       - name: 🔧 set up nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
+      - name: 📦 restore homebrew cache (macos)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+          key: homebrew-${{ runner.os }}-${{ hashFiles('Configs/nix/.config/nix/darwin.nix') }}
+          restore-keys: |
+            homebrew-${{ runner.os }}-
+
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm
         env:
