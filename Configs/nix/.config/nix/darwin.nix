@@ -280,12 +280,12 @@ in
     };
 
     menuExtraClock = {
-      IsAnalog = false;
+      IsAnalog = true;
       Show24Hour = true;
       ShowDate = 1;
       ShowDayOfMonth = true;
       ShowDayOfWeek = true;
-      ShowSeconds = true;
+      ShowSeconds = false;
     };
 
     spaces.spans-displays = false;
