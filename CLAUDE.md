@@ -438,6 +438,20 @@ All changes to `main` **must** be made via pull request. Direct pushes to `main`
 
 Admins may bypass this rule in emergencies, but should prefer PRs whenever possible.
 
+### Agent Workflow
+
+When Claude Code (or other agents) starts a new feature or fix:
+
+1. Fetch the latest `origin/main` before creating a branch
+2. Create a branch following the naming convention (e.g., `fix/ci-failures`, `feat/new-tool`)
+3. Keep the branch rebased on latest `main` throughout development
+4. Enable `git rerere` for easier conflict resolution during repeated rebases:
+   ```bash
+   git config rerere.enabled true
+   ```
+5. Before pushing, run the pre-push verification checks (see below)
+6. Open a pull request against `main`
+
 ## Pre-Push Verification
 
 **MANDATORY**: Before pushing any commits to the remote, always run the local CI checks to ensure they pass. At minimum:

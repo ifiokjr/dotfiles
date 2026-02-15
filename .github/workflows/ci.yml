@@ -33,6 +33,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: 📦 restore homebrew cache (macos)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+          key: homebrew-${{ runner.os }}-${{ hashFiles('Configs/nix/.config/nix/darwin.nix') }}
+          restore-keys: |
+            homebrew-${{ runner.os }}-
+
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm
         env:
@@ -91,6 +104,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
       - name: 📦 install nushell
         run: nix profile add nixpkgs#nushell
 
@@ -125,8 +141,26 @@ jobs:
           sudo rm -rf ~/Library/Developer/CoreSimulator
           df -h /
 
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: 📦 restore homebrew cache (macos)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+          key: homebrew-${{ runner.os }}-${{ hashFiles('Configs/nix/.config/nix/darwin.nix') }}
+          restore-keys: |
+            homebrew-${{ runner.os }}-
+
       - name: 🧪 run setup script
-        run: ./setup --no-confirm
+        run: ./setup --skip-nix --no-confirm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
