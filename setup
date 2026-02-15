@@ -372,7 +372,7 @@ deploy_groups() {
     echo ""
 
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("nix" "nushell")
+    local hook_groups=("nix" "nushell" "claude")
 
     # Deploy scripts first — other groups' hooks depend on scripts in ~/.local/bin
     # (e.g. post_nix calls rebuild which lives in the scripts group)
