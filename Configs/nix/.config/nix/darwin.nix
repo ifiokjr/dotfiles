@@ -11,6 +11,7 @@ let
   casks = nix-casks.packages.${pkgs.stdenv.system};
 
   # Custom packages (apps not available in nix-casks)
+  google-chrome-custom = pkgs.callPackage ./packages/google-chrome.nix { };
   steam-custom = pkgs.callPackage ./packages/steam.nix { };
   google-drive-custom = pkgs.callPackage ./packages/google-drive.nix { };
   gpg-suite-custom = pkgs.callPackage ./packages/gpg-suite.nix { };
@@ -97,7 +98,8 @@ in
       "duet"
     ])
     ++ [
-      # Custom packages (PKG-based apps not available in nix-casks)
+      # Custom packages (apps not available in nix-casks)
+      google-chrome-custom
       google-drive-custom
       gpg-suite-custom
       nordvpn-custom
