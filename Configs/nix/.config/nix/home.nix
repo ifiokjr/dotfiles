@@ -140,6 +140,7 @@ in
       tealdeer
       tuckr
       uv
+      vncdo
       zlib
 
       # Custom packages
