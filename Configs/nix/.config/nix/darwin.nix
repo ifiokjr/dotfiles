@@ -39,6 +39,7 @@ in
       # macOS-specific system utilities
       mkalias # For creating app aliases in /Applications
       tart # macOS VMs on Apple Silicon
+      xcodes # Install and manage multiple Xcode versions
 
       # Core system libraries that other packages depend on
       apple-sdk_15
