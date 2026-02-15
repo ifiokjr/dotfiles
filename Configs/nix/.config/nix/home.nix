@@ -9,6 +9,7 @@ let
   pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
   cursor-cli-custom = pkgs.callPackage ./packages/cursor-cli.nix { };
   racket-minimal-custom = pkgs.callPackage ./packages/racket-minimal.nix { };
+  rustdesk-custom = pkgs.callPackage ./packages/rustdesk.nix { };
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -128,12 +129,15 @@ in
       gnumake
       gzip
       nix-prefetch
+      nixpkgs-review
       openssh
       openssl
       orchard
       podman
       protobuf
+      rustdesk-custom
       scooter
+      sshpass
       sqld
       tealdeer
       tuckr
