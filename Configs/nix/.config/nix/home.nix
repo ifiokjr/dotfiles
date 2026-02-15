@@ -41,9 +41,11 @@ in
       deno
       devenv
       direnv
+      dotnet-sdk
       dprint
       emscripten
       evcxr
+      fluxcd
       gemini-cli
       gh
       git
@@ -53,11 +55,14 @@ in
       graphite-cli
       jdk17
       lazygit
+      lld
+      llvm
       maestro
       mise
       neovim
       nixd
       nixfmt
+      ollama
       opencode
       racket-minimal-custom
       rustup
@@ -91,6 +96,7 @@ in
       shellcheck
       shfmt
       taplo
+      yamllint
 
       # Language Servers & Tools
       kotlin
@@ -117,6 +123,7 @@ in
       coreutils
       curl
       diffutils
+      double-conversion
       dust
       gnumake
       gzip
@@ -137,14 +144,28 @@ in
       pnpm-standalone
 
       # Fonts
+      nerd-fonts.agave
+      nerd-fonts.caskaydia-cove
+      nerd-fonts.code-new-roman
+      nerd-fonts.droid-sans-mono
       nerd-fonts.fira-code
+      nerd-fonts.fira-mono
+      nerd-fonts.hack
+      nerd-fonts.mononoki
+      nerd-fonts.noto
+      nerd-fonts.profont
+      nerd-fonts.sauce-code-pro
       nerd-fonts.symbols-only
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin [
       # macOS-only packages
+      _1password-cli
       cocoapods
       code-cursor
       fvm # Flutter Version Management (macOS/Windows only)
+      mas
+      pinentry_mac
+      powershell
     ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
