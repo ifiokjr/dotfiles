@@ -147,6 +147,7 @@ def main [] {
         { name: "GOOGLE_API_KEY", desc: "API key for Google services \(Maps, Cloud, Gemini, etc.\)", url: "https://console.cloud.google.com/apis/credentials" }
         { name: "REPLICATE_API_TOKEN", desc: "API token for Replicate AI model hosting and inference", url: "https://replicate.com/account/api-tokens" }
         { name: "HUGGING_FACE_TOKEN", desc: "Access token for Hugging Face model hub and inference API", url: "https://huggingface.co/settings/tokens" }
+        { name: "FLAKEHUB_TOKEN", desc: "Authentication token for FlakeHub nix binary cache and flake registry", url: "https://flakehub.com/settings/tokens" }
     ]
 
     # Prompt for each variable
