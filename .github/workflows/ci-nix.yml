@@ -1,0 +1,74 @@
+name: ci-nix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Configs/nix/**"
+      - "Hooks/nix/**"
+      - "setup"
+      - "setup-tuckr-symlink.sh"
+      - "Dockerfile"
+      - "tests/**"
+      - ".github/workflows/ci-nix.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "Configs/nix/**"
+      - "Hooks/nix/**"
+      - "setup"
+      - "setup-tuckr-symlink.sh"
+      - "Dockerfile"
+      - "tests/**"
+      - ".github/workflows/ci-nix.yml"
+
+jobs:
+  setup:
+    name: setup script (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🧹 free disk space (macos)
+        if: runner.os == 'macOS'
+        run: |
+          # Remove Xcode to free ~12GB (nix provides its own build tools)
+          sudo rm -rf /Applications/Xcode_*.app
+          # Remove simulators
+          xcrun simctl delete all 2>/dev/null || true
+          sudo rm -rf ~/Library/Developer/CoreSimulator
+          df -h /
+
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: 🧪 run setup script
+        run: ./setup --skip-nix --no-confirm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ verify setup completed
+        run: |
+          command -v tuckr && echo "tuckr: ok"
+          command -v nu && echo "nushell: ok"
+          tuckr status
+
+  docker-integration:
+    name: docker integration test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🏗️ build and run docker integration test
+        run: docker build -t dotfiles-test .
