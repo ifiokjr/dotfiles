@@ -27,7 +27,7 @@ jobs:
           nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
             nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
             nixpkgs#racket-minimal
-          raco pkg install --skip-installed --auto --scope user --no-docs fmt
+          raco pkg install --skip-installed --auto --scope user --no-docs fmt || true
 
       - name: 🔍 shellcheck bash scripts
         run: |
