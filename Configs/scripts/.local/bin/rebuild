@@ -13,6 +13,7 @@ def main [
     --update        # Update custom packages before rebuilding (skipped by default)
 ] {
     let nix_config = (nix_config config-dir)
+    let nix_flake = (nix_config flake-dir)
     let machine_config = $"($nix_config)/machine.nix"
     let machine_example = $"($nix_config)/machine.nix.example"
 
@@ -94,6 +95,8 @@ def main [
     info "Configuration:"
     print $"  Username: ($config.username)"
     print $"  System: ($config.system)"
+    print $"  Config dir: ($nix_config)"
+    print $"  Flake dir:  ($nix_flake)"
     print ""
 
     # Auto-update packages (only when --update is passed)
@@ -154,7 +157,7 @@ def main [
     if not $skip_check {
         info "Checking flake configuration..."
         # `do -i` suppresses the error so we can continue even if check fails
-        let check_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake check '($nix_config)' --impure"
+        let check_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake check '($nix_flake)' --impure"
         let check_result = do -i { ^bash -c $check_cmd }
         if ($env.LAST_EXIT_CODE != 0) {
             # \( and \) escape parentheses in nushell string interpolation
@@ -181,10 +184,10 @@ def main [
         # On first run, `darwin-rebuild` CLI may not be installed yet.
         # Use `nix run nix-darwin` from the flake input as fallback.
         let darwin_cmd = if (which darwin-rebuild | is-not-empty) {
-            $"darwin-rebuild switch --flake '($nix_config)#default' --impure"
+            $"darwin-rebuild switch --flake '($nix_flake)#default' --impure"
         } else {
             info "darwin-rebuild not found, using nix run for first-time setup..."
-            $"nix run nix-darwin/master -- switch --flake '($nix_config)#default' --impure"
+            $"nix run nix-darwin/master -- switch --flake '($nix_flake)#default' --impure"
         }
 
         # Wrap in bash -c because:
@@ -211,7 +214,7 @@ def main [
         info "Rebuilding home-manager configuration..."
         print ""
 
-        let hm_flake = $"($nix_config)#($config.username)@($config.system)"
+        let hm_flake = $"($nix_flake)#($config.username)@($config.system)"
 
         # On first run, `home-manager` CLI may not be installed yet.
         # Use `nix run home-manager` from the flake input as fallback.
