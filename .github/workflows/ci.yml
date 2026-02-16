@@ -24,7 +24,10 @@ jobs:
 
       - name: 📦 install lint tools
         run: |
-          nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell
+          nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
+            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
+            nixpkgs#racket-minimal
+          raco pkg install --skip-installed --auto --scope user fmt
 
       - name: 🔍 shellcheck bash scripts
         run: |
