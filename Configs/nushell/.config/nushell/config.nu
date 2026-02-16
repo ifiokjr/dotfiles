@@ -20,6 +20,22 @@ $env.config = {
     table: {mode: rounded}
     cursor_shape: {emacs: line, vi_insert: line, vi_normal: block}
     hooks: {
+        pre_prompt: [
+            {|| 
+                # Direnv integration - loads/unloads environment variables based
+                # on .envrc files. Runs before every prompt (like zsh precmd) so
+                # it catches: directory changes, `direnv allow`, and file edits.
+                # Based on: https://direnv.net/docs/hook.html
+                if (which direnv | is-empty) { return }
+                let direnv_out = (direnv export json | from json | default {})
+                if ($direnv_out | is-empty) { return }
+                let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
+                    let path_as_list = ($direnv_out | get PATH | split row (char esep))
+                    $direnv_out | merge { PATH: $path_as_list }
+                } else { $direnv_out }
+                $env_to_load | load-env
+            }
+        ]
         env_change: {
             PWD: [
                 {|| 
@@ -27,28 +43,6 @@ $env.config = {
                     # Mirrors zsh auto_pushd behaviour used by oh-my-zsh's `d` command.
                     let dir = ($env.PWD | path expand)
                     $env.DIRSTACK = ([$dir] | append ($env.DIRSTACK | where { $in != $dir }) | first 10)
-                }
-                {|| 
-                    # Direnv integration - loads/unloads environment variables when
-                    # entering/leaving directories with .envrc files (e.g. devenv).
-                    # Based on: https://direnv.net/docs/hook.html
-                    # Skip if direnv is not installed
-                    if (which direnv | is-empty) { return }
-                    # Ask direnv what env vars changed for the new directory.
-                    # `direnv export json` returns JSON when changes exist, or
-                    # empty string when nothing changed — `default {}` handles that.
-                    let direnv_out = (direnv export json | from json | default {})
-                    # Nothing to do when direnv reports no changes
-                    if ($direnv_out | is-empty) { return }
-                    # Direnv returns PATH as a colon-separated string, but nushell
-                    # requires PATH to be a list. Convert it before loading so that
-                    # command lookups continue to work.
-                    let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
-                        let path_as_list = ($direnv_out | get PATH | split row (char esep))
-                        $direnv_out | merge { PATH: $path_as_list }
-                    } else { $direnv_out }
-                    # Apply all environment variable changes from direnv
-                    $env_to_load | load-env
                 }
             ]
         }
