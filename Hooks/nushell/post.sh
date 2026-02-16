@@ -91,24 +91,35 @@ fi
 
 # Set nushell as default shell via chsh
 if [ -x "$NU_PATH" ]; then
-	# Detect current shell: macOS uses dscl (Directory Service), Linux uses /etc/passwd
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		CURRENT_SHELL=$(dscl . -read /Users/"$USER" UserShell 2>/dev/null | awk '{print $2}')
+	# Verify the nushell binary actually works before attempting chsh.
+	# A broken binary would lock the user out of their account.
+	if ! "$NU_PATH" --version &>/dev/null; then
+		echo -e "${YELLOW}!${NC} $NU_PATH exists but failed version check, skipping chsh"
+	elif [[ "$OSTYPE" == "darwin"* ]]; then
+		# On macOS, nix-darwin manages the login shell via darwin.nix
+		# (users.users.*.shell = pkgs.nushell), so chsh is not needed.
+		# Running chsh here is dangerous: it sets the shell to a path like
+		# /run/current-system/sw/bin/nu which breaks if nix-darwin fails.
+		echo -e "${BLUE}→${NC} Login shell is managed by nix-darwin (skipping chsh)"
 	else
+		# Linux: set nushell as default shell with safety checks
 		CURRENT_SHELL=$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)
-	fi
 
-	if [ "$CURRENT_SHELL" != "$NU_PATH" ]; then
-		# Ensure nu is in /etc/shells (required by chsh on most systems)
-		if ! grep -qx "$NU_PATH" /etc/shells 2>/dev/null; then
-			echo -e "${YELLOW}!${NC} Adding $NU_PATH to /etc/shells"
-			echo "$NU_PATH" | sudo tee -a /etc/shells >/dev/null
+		if [ "$CURRENT_SHELL" != "$NU_PATH" ]; then
+			# Ensure nu is in /etc/shells (required by chsh on most systems)
+			if ! grep -qx "$NU_PATH" /etc/shells 2>/dev/null; then
+				echo -e "${YELLOW}!${NC} Adding $NU_PATH to /etc/shells"
+				echo "$NU_PATH" | sudo tee -a /etc/shells >/dev/null
+			fi
+			echo -e "${BLUE}→${NC} Setting default shell to nushell..."
+			if sudo chsh -s "$NU_PATH" "$USER" 2>/dev/null; then
+				echo -e "${GREEN}✓${NC} Default shell set to $NU_PATH"
+			else
+				echo -e "${YELLOW}!${NC} chsh failed (you can run 'sudo chsh -s $NU_PATH $USER' manually)"
+			fi
+		else
+			echo -e "${BLUE}→${NC} Default shell is already nushell"
 		fi
-		echo -e "${BLUE}→${NC} Setting default shell to nushell..."
-		chsh -s "$NU_PATH"
-		echo -e "${GREEN}✓${NC} Default shell set to $NU_PATH"
-	else
-		echo -e "${BLUE}→${NC} Default shell is already nushell"
 	fi
 else
 	echo -e "${YELLOW}!${NC} Nushell not found, skipping chsh"

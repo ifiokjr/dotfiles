@@ -319,6 +319,88 @@ ask_yes_no() {
     done
 }
 
+# Back up conflicting files and retry tuckr with --force.
+# Parses tuckr stderr to find files that already exist, backs them up
+# to ~/.dotfiles-backup/<timestamp>/, then retries with --force.
+backup_and_force_deploy() {
+    local tuckr_cmd="$1"  # "add" or "set"
+    local group="$2"
+    local tuckr_bin="$3"
+    local error_output="$4"
+    local backup_dir
+    backup_dir="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
+
+    # Extract conflicting file paths from tuckr error output.
+    # tuckr reports conflicts like: "File already exists: /path/to/file"
+    local conflicting_files=()
+    while IFS= read -r line; do
+        # Match lines containing file paths that already exist
+        local file_path=""
+        # tuckr outputs "already exists" for conflicts
+        if [[ "$line" == *"already exists"* ]]; then
+            file_path=$(echo "$line" | grep -oE '/[^ ]+' | head -1)
+        fi
+        if [ -n "$file_path" ] && [ -f "$file_path" ]; then
+            conflicting_files+=("$file_path")
+        fi
+    done <<< "$error_output"
+
+    if [ ${#conflicting_files[@]} -gt 0 ]; then
+        mkdir -p "$backup_dir"
+        print_warning "Backing up ${#conflicting_files[@]} conflicting file(s) to $backup_dir/"
+        for f in "${conflicting_files[@]}"; do
+            local rel_path="${f#"$HOME"/}"
+            local backup_path="$backup_dir/$rel_path"
+            mkdir -p "$(dirname "$backup_path")"
+            cp -a "$f" "$backup_path" 2>/dev/null || true
+            print_info "  Backed up: ~/$rel_path"
+        done
+    else
+        print_warning "Could not identify conflicting files, retrying with --force"
+    fi
+
+    # Retry with --force
+    print_info "Retrying: tuckr $tuckr_cmd --force $group"
+    if "$tuckr_bin" "$tuckr_cmd" --force "$group" 2>&1; then
+        print_success "Deployed $group (with --force after backup)"
+        return 0
+    else
+        print_error "Failed to deploy $group even with --force"
+        return 1
+    fi
+}
+
+# Deploy a single tuckr group with backup-and-retry on failure.
+# Usage: deploy_one_group <tuckr_bin> <group> <"add"|"set"> [label]
+deploy_one_group() {
+    local tuckr_bin="$1"
+    local group="$2"
+    local tuckr_cmd="$3"
+    local label="${4:-$group}"
+
+    if [ "$tuckr_cmd" = "set" ]; then
+        print_info "Deploying $label (with hooks)"
+    else
+        print_info "Deploying $label"
+    fi
+
+    local output
+    output=$("$tuckr_bin" "$tuckr_cmd" "$group" 2>&1) && {
+        print_success "Deployed $group"
+        return 0
+    }
+
+    # First attempt failed — try backup and --force
+    print_warning "Initial deploy of $group failed, attempting backup and retry..."
+    if backup_and_force_deploy "$tuckr_cmd" "$group" "$tuckr_bin" "$output"; then
+        return 0
+    fi
+
+    print_error "Failed to deploy $group"
+    DEPLOY_FAILED=true
+    return 1
+}
+
 # Deploy configuration groups
 deploy_groups() {
     print_header "Deploying configuration groups"
@@ -337,17 +419,10 @@ deploy_groups() {
     if [ -n "$DEPLOY_GROUPS" ]; then
         IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
         for group in "${GROUPS[@]}"; do
-            print_info "Deploying group: $group"
-            if [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
-                if ! "$TUCKR" set "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                fi
+            if [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]] || [[ "$group" == "claude" ]]; then
+                deploy_one_group "$TUCKR" "$group" "set" || true
             else
-                if ! "$TUCKR" add "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                fi
+                deploy_one_group "$TUCKR" "$group" "add" || true
             fi
         done
         return 0
@@ -374,169 +449,185 @@ deploy_groups() {
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
     local hook_groups=("nix" "nushell" "claude")
 
-    # Deploy scripts first — other groups' hooks depend on scripts in ~/.local/bin
-    # (e.g. post_nix calls rebuild which lives in the scripts group)
-    local has_scripts=false
-    for g in "${all_groups[@]}"; do
-        if [[ "$g" == "scripts" ]]; then
-            has_scripts=true
-            break
-        fi
-    done
-    if [ "$has_scripts" = true ]; then
-        print_info "Deploying scripts (priority)"
-        if ! "$TUCKR" add scripts 2>&1; then
-            print_error "Failed to deploy scripts"
-            DEPLOY_FAILED=true
-        else
-            print_success "Deployed scripts"
-        fi
-    fi
-
-    # Deploy all remaining groups
-    for group in "${all_groups[@]}"; do
-        # Skip scripts — already deployed above
-        if [[ "$group" == "scripts" ]]; then
-            continue
-        fi
-        # Check if this group has a hook
-        local has_hook=false
-        for hook_group in "${hook_groups[@]}"; do
-            if [[ "$group" == "$hook_group" ]]; then
-                has_hook=true
-                break
-            fi
+    # Helper: check if a group name is in the available groups list
+    group_exists() {
+        local target="$1"
+        for g in "${all_groups[@]}"; do
+            if [[ "$g" == "$target" ]]; then return 0; fi
         done
+        return 1
+    }
 
-        # Special handling for nix — cross-platform deployment
-        if [[ "$group" == "nix" ]]; then
-            echo ""
-            if [[ "$PLATFORM" == "macos" ]]; then
-                print_header "Nix Darwin Configuration"
-                echo -e "${YELLOW}Note:${NC} nix deployment will run 'darwin-rebuild switch' which requires sudo"
-            else
-                print_header "Nix Home Manager Configuration"
-                echo -e "${YELLOW}Note:${NC} nix deployment will run 'home-manager switch'"
-            fi
-            print_info "This may take several minutes..."
-            echo ""
+    # Helper: check if a group has hooks
+    group_has_hook() {
+        local target="$1"
+        for h in "${hook_groups[@]}"; do
+            if [[ "$target" == "$h" ]]; then return 0; fi
+        done
+        return 1
+    }
 
-            # Remove temporary nix profile packages before nix deployment.
-            # home-manager (or nix-darwin) will install these permanently, but
-            # if they're already in the nix profile the activation fails with
-            # "An existing package already provides the following file" conflict.
-            if [ "$INSTALLED_TUCKR" = true ]; then
-                print_info "Removing temporary tuckr to avoid nix profile conflict"
-                run_nix profile remove --regex '.*tuckr.*' 2>/dev/null || true
-                INSTALLED_TUCKR=false
-            fi
-            if [ "$INSTALLED_NUSHELL" = true ]; then
-                print_info "Removing temporary nushell to avoid nix profile conflict"
-                run_nix profile remove --regex '.*nushell.*' 2>/dev/null || true
-                INSTALLED_NUSHELL=false
-            fi
-
-            if ! "$TUCKR" set "$group" 2>&1; then
-                print_error "Failed to deploy $group"
-                DEPLOY_FAILED=true
-            else
-                print_success "Deployed $group"
-            fi
-            continue
-        fi
-
-        # Skip platform-specific groups that don't match the current platform
+    # Helper: check if a group should be skipped on this platform
+    should_skip_platform() {
+        local group="$1"
         if [[ "$group" == *_macos ]] && [[ "$PLATFORM" != "macos" ]]; then
             print_info "Skipping $group (macOS-only, current platform: $PLATFORM)"
-            continue
+            return 0
         fi
         if [[ "$group" == *_linux ]] && [[ "$PLATFORM" != "linux" ]]; then
             print_info "Skipping $group (Linux-only, current platform: $PLATFORM)"
+            return 0
+        fi
+        return 1
+    }
+
+    # Track which groups have been deployed to avoid duplicates
+    local deployed_groups=()
+    mark_deployed() { deployed_groups+=("$1"); }
+    is_deployed() {
+        local target="$1"
+        for d in "${deployed_groups[@]}"; do
+            if [[ "$d" == "$target" ]]; then return 0; fi
+        done
+        return 1
+    }
+
+    # -----------------------------------------------------------------------
+    # Phase 1: scripts (priority — other hooks depend on ~/.local/bin)
+    # -----------------------------------------------------------------------
+    if group_exists "scripts"; then
+        deploy_one_group "$TUCKR" "scripts" "add" "scripts (priority)" || true
+        mark_deployed "scripts"
+    fi
+
+    # -----------------------------------------------------------------------
+    # Phase 2: nix (installs all packages that other groups depend on)
+    # -----------------------------------------------------------------------
+    if group_exists "nix"; then
+        echo ""
+        if [[ "$PLATFORM" == "macos" ]]; then
+            print_header "Nix Darwin Configuration"
+            echo -e "${YELLOW}Note:${NC} nix deployment will run 'darwin-rebuild switch' which requires sudo"
+        else
+            print_header "Nix Home Manager Configuration"
+            echo -e "${YELLOW}Note:${NC} nix deployment will run 'home-manager switch'"
+        fi
+        print_info "This may take several minutes..."
+        echo ""
+
+        # Remove temporary nix profile packages before nix deployment.
+        # home-manager (or nix-darwin) will install these permanently, but
+        # if they're already in the nix profile the activation fails with
+        # "An existing package already provides the following file" conflict.
+        if [ "$INSTALLED_TUCKR" = true ]; then
+            print_info "Removing temporary tuckr to avoid nix profile conflict"
+            run_nix profile remove --regex '.*tuckr.*' 2>/dev/null || true
+            INSTALLED_TUCKR=false
+        fi
+        if [ "$INSTALLED_NUSHELL" = true ]; then
+            print_info "Removing temporary nushell to avoid nix profile conflict"
+            run_nix profile remove --regex '.*nushell.*' 2>/dev/null || true
+            INSTALLED_NUSHELL=false
+        fi
+
+        deploy_one_group "$TUCKR" "nix" "set" || true
+        mark_deployed "nix"
+    fi
+
+    # -----------------------------------------------------------------------
+    # Phase 3: shell (shared POSIX env used by bash/zsh — deploy before them)
+    # -----------------------------------------------------------------------
+    if group_exists "shell"; then
+        deploy_one_group "$TUCKR" "shell" "add" || true
+        mark_deployed "shell"
+    fi
+
+    # -----------------------------------------------------------------------
+    # Phase 4: nushell (vendor autoloads depend on tools installed by nix)
+    # -----------------------------------------------------------------------
+    if group_exists "nushell"; then
+        deploy_one_group "$TUCKR" "nushell" "set" || true
+        mark_deployed "nushell"
+    fi
+
+    # -----------------------------------------------------------------------
+    # Phase 5: remaining groups (alphabetical, excluding helix and deployed)
+    # -----------------------------------------------------------------------
+    for group in "${all_groups[@]}"; do
+        # Skip already-deployed and helix (deployed last)
+        if is_deployed "$group" || [[ "$group" == "helix" ]]; then
             continue
         fi
 
-        # Special handling for helix - offer to install custom build
-        if [[ "$group" == "helix" ]]; then
-            # Deploy config first
-            if [ "$has_hook" = true ]; then
-                print_info "Deploying $group (with hooks)"
-                if ! "$TUCKR" set "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                else
-                    print_success "Deployed $group"
-                fi
-            else
-                print_info "Deploying $group"
-                if ! "$TUCKR" add "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                else
-                    print_success "Deployed $group"
-                fi
-            fi
-
-            # Ask about custom Helix installation
-            echo ""
-            print_header "Custom Helix with Steel Plugin System"
-            echo -e "${YELLOW}Note:${NC} The helix config has been deployed, but you need the custom Helix binary to use Steel plugins"
-            print_info "This will:"
-            echo "  • Clone/update the Helix Steel fork (mattwparas/helix)"
-            echo "  • Build Helix with Steel plugin support (requires Rust/cargo)"
-            echo "  • Install Steel language server and package manager"
-            echo "  • This process takes 5-10 minutes"
-            echo ""
-
-            if [ "$NO_CONFIRM" = false ] && ask_yes_no "Would you like to install custom Helix with Steel support now?"; then
-                print_info "Installing custom Helix..."
-                echo ""
-
-                # Check if install:helix:custom script exists
-                local helix_install_script="$DOTFILES_DIR/Configs/scripts/.local/bin/install:helix:custom"
-                if [ -f "$helix_install_script" ]; then
-                    if nu "$helix_install_script"; then
-                        print_success "Custom Helix installed successfully"
-                        # Verify steel tools are available
-                        for tool in forge steel steel-language-server; do
-                            if [ -f "$HOME/.local/bin/$tool" ]; then
-                                print_success "$tool available at ~/.local/bin/$tool"
-                            else
-                                print_warning "$tool not found at ~/.local/bin/$tool"
-                            fi
-                        done
-                    else
-                        print_warning "Failed to install custom Helix (you can run 'install:helix:custom' manually later)"
-                    fi
-                else
-                    print_warning "install:helix:custom script not found (you can run it manually after setup)"
-                fi
-            else
-                print_info "Skipping custom Helix installation"
-                print_info "You can install it later by running: install:helix:custom"
-            fi
-            echo ""
+        # Skip platform-specific groups that don't match
+        if should_skip_platform "$group"; then
+            mark_deployed "$group"
             continue
         fi
 
-        # Deploy the group
-        if [ "$has_hook" = true ]; then
-            print_info "Deploying $group (with hooks)"
-            if ! "$TUCKR" set "$group" 2>&1; then
-                print_error "Failed to deploy $group"
-                DEPLOY_FAILED=true
+        if group_has_hook "$group"; then
+            deploy_one_group "$TUCKR" "$group" "set" || true
+        else
+            deploy_one_group "$TUCKR" "$group" "add" || true
+        fi
+        mark_deployed "$group"
+    done
+
+    # -----------------------------------------------------------------------
+    # Phase 6: helix config (near end — depends on tools from nix)
+    # -----------------------------------------------------------------------
+    if group_exists "helix" && ! is_deployed "helix"; then
+        if ! should_skip_platform "helix"; then
+            if group_has_hook "helix"; then
+                deploy_one_group "$TUCKR" "helix" "set" || true
             else
-                print_success "Deployed $group"
+                deploy_one_group "$TUCKR" "helix" "add" || true
+            fi
+            mark_deployed "helix"
+        fi
+    fi
+
+    # -----------------------------------------------------------------------
+    # Phase 7: helix custom build (absolute last — needs cargo, git, etc.)
+    # -----------------------------------------------------------------------
+    if is_deployed "helix"; then
+        echo ""
+        print_header "Custom Helix with Steel Plugin System"
+        echo -e "${YELLOW}Note:${NC} The helix config has been deployed, but you need the custom Helix binary to use Steel plugins"
+        print_info "This will:"
+        echo "  • Clone/update the Helix Steel fork (mattwparas/helix)"
+        echo "  • Build Helix with Steel plugin support (requires Rust/cargo)"
+        echo "  • Install Steel language server and package manager"
+        echo "  • This process takes 5-10 minutes"
+        echo ""
+
+        if [ "$NO_CONFIRM" = false ] && ask_yes_no "Would you like to install custom Helix with Steel support now?"; then
+            print_info "Installing custom Helix..."
+            echo ""
+
+            local helix_install_script="$DOTFILES_DIR/Configs/scripts/.local/bin/install:helix:custom"
+            if [ -f "$helix_install_script" ]; then
+                if nu "$helix_install_script"; then
+                    print_success "Custom Helix installed successfully"
+                    for tool in forge steel steel-language-server; do
+                        if [ -f "$HOME/.local/bin/$tool" ]; then
+                            print_success "$tool available at ~/.local/bin/$tool"
+                        else
+                            print_warning "$tool not found at ~/.local/bin/$tool"
+                        fi
+                    done
+                else
+                    print_warning "Failed to install custom Helix (you can run 'install:helix:custom' manually later)"
+                fi
+            else
+                print_warning "install:helix:custom script not found (you can run it manually after setup)"
             fi
         else
-            print_info "Deploying $group"
-            if ! "$TUCKR" add "$group" 2>&1; then
-                print_error "Failed to deploy $group"
-                DEPLOY_FAILED=true
-            else
-                print_success "Deployed $group"
-            fi
+            print_info "Skipping custom Helix installation"
+            print_info "You can install it later by running: install:helix:custom"
         fi
-    done
+        echo ""
+    fi
 
     echo ""
     if [ "$DEPLOY_FAILED" = true ]; then

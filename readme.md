@@ -67,7 +67,19 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 **Location:** `Configs/nushell/.config/nushell/` **Deploys:** `~/.config/nushell/` **Description:** Nushell shell configuration including env.nu, config.nu, login.nu, and custom modules (secrets, direnv).
 
-**Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
+**Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell on Linux via chsh (macOS uses nix-darwin), creates macOS config symlink
+
+#### `shell`
+
+**Location:** `Configs/shell/` **Deploys:** `~/.config/shell/env.sh` and `~/.hushlogin` **Description:** Shared POSIX environment sourced by both bash and zsh. Contains nix bootstrap, PATH setup, environment variables, and secrets loading — mirroring nushell's env.nu. The `.hushlogin` file suppresses the "Last login" message.
+
+#### `bash`
+
+**Location:** `Configs/bash/` **Deploys:** `~/.bashrc` **Description:** Bash shell configuration. Sources shared env from `~/.config/shell/env.sh` and adds bash-specific integrations: starship prompt, direnv, atuin, zoxide, carapace completions, mise, and common aliases.
+
+#### `zsh`
+
+**Location:** `Configs/zsh/` **Deploys:** `~/.zshrc` **Description:** Zsh shell configuration. Sources shared env from `~/.config/shell/env.sh` and adds zsh-specific integrations: starship prompt, direnv, atuin, zoxide, carapace completions, mise, and common aliases.
 
 #### `zellij`
 
@@ -168,15 +180,18 @@ curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/se
 # First, ensure the repository is cloned and Tuckr symlink is set up
 # (The setup script handles this automatically)
 
-# Deploy core groups
+# Deploy in order: scripts first, then nix (installs packages), then shells
+tuckr add scripts
+tuckr set nix
+tuckr add shell
 tuckr set nushell
-tuckr add nix
+tuckr add bash zsh
 
 # Deploy development tools
 tuckr add dprint direnv kdl lazygit
 
 # Deploy terminal environment
-tuckr add zellij
+tuckr add zellij ghostty helix
 
 # Verify everything
 tuckr status

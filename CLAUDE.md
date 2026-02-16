@@ -53,11 +53,14 @@ If you prefer manual setup:
 # First time setup - creates platform-specific symlink
 ./setup-tuckr-symlink.sh
 
-# Deploy configuration groups
-tuckr set nushell                    # Shell config (runs hooks)
-tuckr add nix                        # Nix system configs (all platforms)
+# Deploy configuration groups (order matters!)
+tuckr add scripts                    # Scripts first (hooks depend on ~/.local/bin)
+tuckr set nix                        # Nix second (installs packages others need)
+tuckr add shell                      # Shared POSIX env for bash/zsh
+tuckr set nushell                    # Nushell (vendor autoloads need nix tools)
+tuckr add bash zsh                   # Bash/Zsh configs
 tuckr add dprint direnv kdl lazygit  # Development tools
-tuckr add zellij                  # Terminal multiplexer
+tuckr add zellij ghostty helix       # Terminal & editor
 
 # Verify deployment
 tuckr status
@@ -102,13 +105,16 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 11 configuration groups organized in `Configs/`:
+The repository contains 14 configuration groups organized in `Configs/`:
 
 | Group       | Platform | Purpose                                  | Hook      |
 | ----------- | -------- | ---------------------------------------- | --------- |
 | **nix**     | All      | System configuration with Nix flakes     | `post.sh` |
 | **nushell** | All      | Nushell shell configuration & modules    | `post.sh` |
 | **claude**  | All      | Claude Code settings & MCP server        | `post.sh` |
+| **shell**   | All      | Shared POSIX env for bash/zsh, hushlogin | None      |
+| **bash**    | All      | Bash shell configuration (.bashrc)       | None      |
+| **zsh**     | All      | Zsh shell configuration (.zshrc)         | None      |
 | **scripts** | All      | Custom utility scripts (~/.local/bin)    | None      |
 | **helix**   | All      | Helix editor config & Steel plugins      | None      |
 | **ghostty** | All      | Ghostty terminal emulator config         | None      |
@@ -129,6 +135,9 @@ The repository contains 11 configuration groups organized in `Configs/`:
 ├── Configs/                    # Configuration groups
 │   ├── nix/                   # Nix system config (darwin + home-manager)
 │   ├── nushell/               # Nushell shell config
+│   ├── shell/                 # Shared POSIX env for bash/zsh, hushlogin
+│   ├── bash/                  # Bash shell config (.bashrc)
+│   ├── zsh/                   # Zsh shell config (.zshrc)
 │   ├── scripts/               # Custom utility scripts (~/.local/bin)
 │   ├── claude/                # Claude Code settings & MCP server
 │   ├── helix/                 # Helix editor config & Steel plugins
