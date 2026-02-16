@@ -431,8 +431,16 @@ All GitHub Actions workflow files **must** follow these naming and formatting co
 
 ### CI Integrity Rules
 
-- **Never introduce workarounds for failing `./setup`** in `ci.yml`. If `darwin-rebuild` or `home-manager switch` fails during the setup step, fix the root cause (broken packages, wrong config) instead of adding fallback `nix profile add` steps. Workarounds mask real build failures and defeat the purpose of CI.
-- **All tools used in CI steps must come from the setup script**. The `./setup --skip-nix --no-confirm` step installs everything via `darwin-rebuild` (macOS) or `home-manager switch` (Linux). If a tool is missing after setup, it means the nix configuration is broken and must be fixed.
+CI is split into two workflows:
+
+- **`ci.yml`** — Fast checks that always run (~2-8 min): lint (ubuntu-only), test (both platforms). Lint tools are installed via `nix profile add` (not `./setup`).
+- **`ci-nix.yml`** — Nix build validation that only runs when nix-related files change (~20-40 min): setup (both platforms), docker-integration (ubuntu-only).
+
+Rules:
+
+- **Never introduce workarounds for failing `./setup`** in `ci-nix.yml`. If `darwin-rebuild` or `home-manager switch` fails during the setup step, fix the root cause (broken packages, wrong config) instead of adding fallback `nix profile add` steps. Workarounds mask real build failures and defeat the purpose of CI.
+- **All tools used in `ci-nix.yml` setup steps must come from the setup script**. The `./setup --skip-nix --no-confirm` step installs everything via `darwin-rebuild` (macOS) or `home-manager switch` (Linux). If a tool is missing after setup, it means the nix configuration is broken and must be fixed.
+- **Lint tools in `ci.yml` are installed directly via `nix profile add`**. This avoids the slow `./setup` step for checks that don't need the full system configuration.
 - **Packages marked as broken on a platform must be moved to platform-conditional lists**. Use `lib.optionals pkgs.stdenv.isLinux` or `lib.optionals pkgs.stdenv.isDarwin` in `home.nix`, or install via nix-casks in `darwin.nix` for macOS GUI apps.
 
 ## Nix Commands
@@ -476,7 +484,7 @@ When Claude Code (or other agents) starts a new feature or fix:
 3. **Nix flake check** (if nix files changed): Generate `machine.nix` if needed, then `nix flake check ./Configs/nix/.config/nix --impure --no-build`
 4. **Nix rebuild** (if nix packages changed): Run `rebuild` to verify all packages build and install correctly on the current platform
 5. **Docker build** (if nix packages changed, verifies Linux): `docker build -t dotfiles-test .` to verify the configuration works on Linux
-6. **Local workflow test** (optional): `act -j lint-and-format` to run CI jobs locally via Docker
+6. **Local workflow test** (optional): `act -j lint` or `act -j test` to run CI jobs locally via Docker
 
 A convenience script is available: `nu Configs/scripts/.local/bin/ci_check`
 
@@ -492,11 +500,13 @@ If any check fails, fix the issues before pushing. Never push code that would fa
 # List available jobs
 act -l
 
-# Run a specific job
+# Run ci.yml jobs (fast checks)
 act -j lint
 act -j test
-act -j setup
-act -j docker-integration
+
+# Run ci-nix.yml jobs (nix build validation)
+act -j setup -W .github/workflows/ci-nix.yml
+act -j docker-integration -W .github/workflows/ci-nix.yml
 
 # Run all jobs (Linux runners only — macOS jobs are skipped)
 act
