@@ -331,9 +331,10 @@ tuckr_deploy() {
         return 0
     fi
 
-    # First attempt failed — retry with --force (handles existing file conflicts)
+    # First attempt failed — retry with --force (handles existing file conflicts).
+    # Pipe "y" because tuckr --force still prompts "Are you sure?" interactively.
     print_warning "Retrying $group with --force (existing file conflict)"
-    if "$tuckr_bin" "$mode" --force "$group" 2>&1; then
+    if echo y | "$tuckr_bin" "$mode" --force "$group" 2>&1; then
         return 0
     fi
 
