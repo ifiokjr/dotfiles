@@ -23,10 +23,10 @@ let
     .${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}");
 
   hashes = {
-    "aarch64-apple-darwin" = "sha256-+ohdPbgCLwrCys6827GswgBPyebrX1F7O3+EvnIlxh8=";
-    "x86_64-apple-darwin" = "sha256-l8Ufq4V7F9xLQLFrCTUJmYf1eqqePAV6FWIC6gWclZA=";
-    "aarch64-unknown-linux-musl" = "sha256-6USObSeSYbDCU8yMFTe9MgUjlnBG/wLTwSm5q8jpxno=";
-    "x86_64-unknown-linux-musl" = "sha256-SeVSE+cpVulmUCzqNRhYNbCb0WJW3BVHT+z7v8m9wsE=";
+    "aarch64-apple-darwin" = "sha256-/Ah+kAK+DhcL/qonZZ43eCHhWrl4tKSQde+V21+CB/g=";
+    "x86_64-apple-darwin" = "sha256-UdTjUXx18JMxMr4zZfM7CANtQ9PCBpKzD1zDbdPqw+k=";
+    "aarch64-unknown-linux-musl" = "sha256-9cSxFHMyocxBCLd2x1nue0CdNl5YMKTllmfh+cfm2mA=";
+    "x86_64-unknown-linux-musl" = "sha256-/zY/hZfb8Dg8F2WefJJzW6qZG+irmflnxcw8aLMpJ3w=";
   };
 in
 stdenv.mkDerivation {
