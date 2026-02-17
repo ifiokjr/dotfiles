@@ -1,0 +1,17 @@
+#!/usr/bin/env nu
+# Reveal the current Helix buffer in the Yazi sidebar
+#
+# Called from a Helix keybinding to navigate Yazi to the current file.
+
+def main [file: string] {
+    let file_path = ($file | path expand)
+    let yazi_id = ($env | get -i YAZI_ID | default "")
+
+    if ($yazi_id | is-not-empty) {
+        ^ya emit-to $yazi_id reveal $file_path
+    } else {
+        ^ya pub-to 0 reveal $file_path
+    }
+
+    zellij action focus-pane --direction left
+}

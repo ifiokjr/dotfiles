@@ -1,0 +1,66 @@
+#!/usr/bin/env nu
+# Open a file from Yazi in an existing or new Helix pane (yazelix pattern)
+#
+# This script implements smart pane detection:
+# 1. Starting from the focused pane, loop through panes looking for Helix
+# 2. If found, send the file to the existing Helix instance
+# 3. If not found, open a new Helix pane to the right
+
+def main [file: string] {
+    let file_path = ($file | path expand)
+
+    if not ($file_path | path exists) {
+        print $"(ansi red)File not found: ($file_path)(ansi reset)"
+        exit 1
+    }
+
+    let dir = ($file_path | path dirname)
+
+    # Smart pane detection: look for an existing Helix pane
+    mut found_editor = false
+    for _ in 0..3 {
+        zellij action focus-next-pane
+
+        # Dump the layout and check if the focused pane is running hx
+        let layout = (zellij action dump-layout | str trim)
+        if ($layout | str contains "hx") {
+            $found_editor = true
+            break
+        }
+    }
+
+    if $found_editor {
+        # Send Escape to ensure Helix is in normal mode
+        zellij action write 27
+
+        # Change directory and open file
+        zellij action write-chars $":cd ($dir)\n"
+        zellij action write-chars $":open ($file_path)\n"
+    } else {
+        # No editor found - open a new Helix pane
+        if ($env | get -i YAZI_ID | is-not-empty) {
+            zellij run --name "editor" --direction right --cwd $dir -- hx $file_path
+        } else {
+            zellij run --name "editor" --direction right --cwd $dir -- hx $file_path
+        }
+    }
+
+    # Rename tab to git repo name or directory basename
+    let tab_name = try {
+        let git_root = (do -i { ^git -C $dir rev-parse --show-toplevel } | complete)
+        if $git_root.exit_code == 0 {
+            $git_root.stdout | str trim | path basename
+        } else {
+            $dir | path basename
+        }
+    } catch {
+        $dir | path basename
+    }
+    zellij action rename-tab $tab_name
+
+    # Sync Yazi to the file's directory
+    let yazi_id = ($env | get -i YAZI_ID | default "")
+    if ($yazi_id | is-not-empty) {
+        ^ya emit-to $yazi_id cd $dir
+    }
+}

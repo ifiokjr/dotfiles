@@ -8,6 +8,7 @@ let
   # Custom packages
   pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
   cursor-cli-custom = pkgs.callPackage ./packages/cursor-cli.nix { };
+  codex-cli-custom = pkgs.callPackage ./packages/codex-cli.nix { };
   google-chrome-custom = pkgs.callPackage ./packages/google-chrome.nix { };
   racket-minimal-custom = pkgs.callPackage ./packages/racket-minimal.nix { };
 in
@@ -38,6 +39,7 @@ in
       cargo-update
       claude-code
       cloudflared
+      codex-cli-custom
       cursor-cli-custom
       deno
       devenv

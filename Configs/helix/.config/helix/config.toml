@@ -157,6 +157,8 @@ h = ":o ~/.config/helix/helix.scm"
 l = ":o ~/.config/helix/languages.toml"
 ## Open the nushell config
 Z = ":o ~/.config/nushell/config.nu"
+## Open the yazi config
+y = ":o ~/.config/yazi/yazi.toml"
 
 [keys.normal.space.o.z]
 ## Open the zellij/config.kdl
@@ -189,6 +191,12 @@ G = ":! zellij run --floating --close-on-exit --name \"gemini\" -- gemini -m gem
 R = ":! zellij run --floating --close-on-exit --name \"find-and-replace\" -- serpl"
 ## Open terminal in a zellij floating pane
 t = ":! zellij run --floating --close-on-exit --name \"quick-terminal\""
+## Reveal current file in Yazi sidebar
+y = ':sh nu ~/.local/bin/yazi-reveal "%{buffer_name}"'
+## Open Codex AI in a zellij floating pane
+C = ':! zellij run --floating --close-on-exit --name "codex" -- codex'
+## Open Claude Code in a zellij floating pane
+c = ':! zellij run --floating --close-on-exit --name "claude" -- claude'
 
 [keys.normal.ret]
 s = ["split_selection_on_newline", ":sort", "merge_selections"]
@@ -215,6 +223,12 @@ G = ":! zellij run --floating --close-on-exit --name \"gemini\" -- gemini -m gem
 R = ":! zellij run --floating --close-on-exit --name \"find-and-replace\" -- serpl"
 ## Open terminal in a zellij floating pane
 t = ":! zellij run --floating --close-on-exit --name \"quick-terminal\""
+## Reveal current file in Yazi sidebar
+y = ':sh nu ~/.local/bin/yazi-reveal "%{buffer_name}"'
+## Open Codex AI in a zellij floating pane
+C = ':! zellij run --floating --close-on-exit --name "codex" -- codex'
+## Open Claude Code in a zellij floating pane
+c = ':! zellij run --floating --close-on-exit --name "claude" -- claude'
 
 [keys.normal.ret.b]
 ## Close the current buffer only if saved.
