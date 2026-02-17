@@ -10,6 +10,16 @@ NC='\033[0m'
 
 echo -e "${GREEN}✓${NC} Nushell configuration deployed"
 
+# ---------------------------------------------------------------------------
+# PATH augmentation — ensure nix-installed tools (starship, carapace, etc.)
+# are discoverable even when this hook runs before the user's shell profile.
+# ---------------------------------------------------------------------------
+for p in "/etc/profiles/per-user/${USER}/bin" "/run/current-system/sw/bin" \
+	"$HOME/.nix-profile/bin" "/nix/var/nix/profiles/default/bin"; do
+	# shellcheck disable=SC2249
+	[ -d "$p" ] && case ":$PATH:" in *":$p:"*) ;; *) export PATH="$p:$PATH" ;; esac
+done
+
 # On macOS, nushell defaults to ~/Library/Application Support/nushell/ when
 # XDG_CONFIG_HOME is not set. Since nix-darwin's set-environment only runs for
 # POSIX shells, XDG_CONFIG_HOME won't be set when nushell is the login shell.
@@ -91,24 +101,35 @@ fi
 
 # Set nushell as default shell via chsh
 if [ -x "$NU_PATH" ]; then
-	# Detect current shell: macOS uses dscl (Directory Service), Linux uses /etc/passwd
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		CURRENT_SHELL=$(dscl . -read /Users/"$USER" UserShell 2>/dev/null | awk '{print $2}')
+	# Validate that nushell actually works before attempting to change shells
+	if ! "$NU_PATH" -c 'echo ok' &>/dev/null; then
+		echo -e "${YELLOW}!${NC} Nushell binary exists but fails to run, skipping chsh"
+	# Skip chsh in non-interactive / CI contexts (would hang waiting for password)
+	elif [ "${NO_CONFIRM:-}" = "true" ] || [ -n "${CI:-}" ] || [ -n "${GITHUB_ACTIONS:-}" ]; then
+		echo -e "${BLUE}→${NC} Skipping chsh (non-interactive mode)"
 	else
-		CURRENT_SHELL=$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)
-	fi
-
-	if [ "$CURRENT_SHELL" != "$NU_PATH" ]; then
-		# Ensure nu is in /etc/shells (required by chsh on most systems)
-		if ! grep -qx "$NU_PATH" /etc/shells 2>/dev/null; then
-			echo -e "${YELLOW}!${NC} Adding $NU_PATH to /etc/shells"
-			echo "$NU_PATH" | sudo tee -a /etc/shells >/dev/null
+		# Detect current shell: macOS uses dscl (Directory Service), Linux uses /etc/passwd
+		if [[ "$OSTYPE" == "darwin"* ]]; then
+			CURRENT_SHELL=$(dscl . -read /Users/"$USER" UserShell 2>/dev/null | awk '{print $2}')
+		else
+			CURRENT_SHELL=$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)
 		fi
-		echo -e "${BLUE}→${NC} Setting default shell to nushell..."
-		chsh -s "$NU_PATH"
-		echo -e "${GREEN}✓${NC} Default shell set to $NU_PATH"
-	else
-		echo -e "${BLUE}→${NC} Default shell is already nushell"
+
+		if [ "$CURRENT_SHELL" != "$NU_PATH" ]; then
+			# Ensure nu is in /etc/shells (required by chsh on most systems)
+			if ! grep -qx "$NU_PATH" /etc/shells 2>/dev/null; then
+				echo -e "${YELLOW}!${NC} Adding $NU_PATH to /etc/shells"
+				echo "$NU_PATH" | sudo tee -a /etc/shells >/dev/null
+			fi
+			echo -e "${BLUE}→${NC} Setting default shell to nushell..."
+			if chsh -s "$NU_PATH"; then
+				echo -e "${GREEN}✓${NC} Default shell set to $NU_PATH"
+			else
+				echo -e "${YELLOW}!${NC} chsh failed — you can set it manually: chsh -s $NU_PATH"
+			fi
+		else
+			echo -e "${BLUE}→${NC} Default shell is already nushell"
+		fi
 	fi
 else
 	echo -e "${YELLOW}!${NC} Nushell not found, skipping chsh"

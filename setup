@@ -319,6 +319,27 @@ ask_yes_no() {
     done
 }
 
+# Deploy a single group with automatic --force fallback on conflict.
+# Usage: tuckr_deploy <tuckr_binary> <group> [set]
+# Pass "set" as $3 to use `tuckr set` (runs hooks) instead of `tuckr add`.
+tuckr_deploy() {
+    local tuckr_bin="$1"
+    local group="$2"
+    local mode="${3:-add}"
+
+    if "$tuckr_bin" "$mode" "$group" 2>&1; then
+        return 0
+    fi
+
+    # First attempt failed — retry with --force (handles existing file conflicts)
+    print_warning "Retrying $group with --force (existing file conflict)"
+    if "$tuckr_bin" "$mode" --force "$group" 2>&1; then
+        return 0
+    fi
+
+    return 1
+}
+
 # Deploy configuration groups
 deploy_groups() {
     print_header "Deploying configuration groups"
@@ -333,22 +354,43 @@ deploy_groups() {
     local TUCKR
     TUCKR=$(realpath "$(command -v tuckr)")
 
+    # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
+    local hook_groups=("nix" "nushell" "claude")
+
+    # Helper: check if a group uses hooks
+    has_hook() {
+        local group="$1"
+        for hg in "${hook_groups[@]}"; do
+            [[ "$group" == "$hg" ]] && return 0
+        done
+        return 1
+    }
+
+    # Helper: deploy a group (with hook awareness and --force fallback)
+    deploy_one() {
+        local group="$1"
+        local mode="add"
+        has_hook "$group" && mode="set"
+
+        if [ "$mode" = "set" ]; then
+            print_info "Deploying $group (with hooks)"
+        else
+            print_info "Deploying $group"
+        fi
+
+        if tuckr_deploy "$TUCKR" "$group" "$mode"; then
+            print_success "Deployed $group"
+        else
+            print_error "Failed to deploy $group"
+            DEPLOY_FAILED=true
+        fi
+    }
+
     # If specific groups are specified via --groups flag
     if [ -n "$DEPLOY_GROUPS" ]; then
         IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
         for group in "${GROUPS[@]}"; do
-            print_info "Deploying group: $group"
-            if [[ "$group" == "nix" ]] || [[ "$group" == "nushell" ]]; then
-                if ! "$TUCKR" set "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                fi
-            else
-                if ! "$TUCKR" add "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                fi
-            fi
+            deploy_one "$group"
         done
         return 0
     fi
@@ -371,45 +413,42 @@ deploy_groups() {
     print_info "Found ${#all_groups[@]} configuration groups"
     echo ""
 
-    # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("nix" "nushell" "claude")
+    # -----------------------------------------------------------------------
+    # Deployment phases (order matters):
+    #   1. scripts    — other hooks depend on scripts in ~/.local/bin
+    #   2. nix        — installs all tools via darwin-rebuild / home-manager
+    #   3. simple     — groups with no ordering constraints (alphabetical)
+    #   4. late       — nushell (needs starship/carapace from nix)
+    #                   helix  (custom build needs nushell + cargo)
+    #                   claude (needs deno for MCP server)
+    # -----------------------------------------------------------------------
+    local late_groups=("nushell" "helix" "claude")
 
-    # Deploy scripts first — other groups' hooks depend on scripts in ~/.local/bin
-    # (e.g. post_nix calls rebuild which lives in the scripts group)
-    local has_scripts=false
+    is_late() {
+        local group="$1"
+        for lg in "${late_groups[@]}"; do
+            [[ "$group" == "$lg" ]] && return 0
+        done
+        return 1
+    }
+
+    # Phase 1: scripts
     for g in "${all_groups[@]}"; do
         if [[ "$g" == "scripts" ]]; then
-            has_scripts=true
+            print_info "Deploying scripts (priority)"
+            if tuckr_deploy "$TUCKR" scripts add; then
+                print_success "Deployed scripts"
+            else
+                print_error "Failed to deploy scripts"
+                DEPLOY_FAILED=true
+            fi
             break
         fi
     done
-    if [ "$has_scripts" = true ]; then
-        print_info "Deploying scripts (priority)"
-        if ! "$TUCKR" add scripts 2>&1; then
-            print_error "Failed to deploy scripts"
-            DEPLOY_FAILED=true
-        else
-            print_success "Deployed scripts"
-        fi
-    fi
 
-    # Deploy all remaining groups
-    for group in "${all_groups[@]}"; do
-        # Skip scripts — already deployed above
-        if [[ "$group" == "scripts" ]]; then
-            continue
-        fi
-        # Check if this group has a hook
-        local has_hook=false
-        for hook_group in "${hook_groups[@]}"; do
-            if [[ "$group" == "$hook_group" ]]; then
-                has_hook=true
-                break
-            fi
-        done
-
-        # Special handling for nix — cross-platform deployment
-        if [[ "$group" == "nix" ]]; then
+    # Phase 2: nix
+    for g in "${all_groups[@]}"; do
+        if [[ "$g" == "nix" ]]; then
             echo ""
             if [[ "$PLATFORM" == "macos" ]]; then
                 print_header "Nix Darwin Configuration"
@@ -436,14 +475,21 @@ deploy_groups() {
                 INSTALLED_NUSHELL=false
             fi
 
-            if ! "$TUCKR" set "$group" 2>&1; then
-                print_error "Failed to deploy $group"
-                DEPLOY_FAILED=true
+            if tuckr_deploy "$TUCKR" nix set; then
+                print_success "Deployed nix"
             else
-                print_success "Deployed $group"
+                print_error "Failed to deploy nix"
+                DEPLOY_FAILED=true
             fi
-            continue
+            break
         fi
+    done
+
+    # Phase 3: simple groups (everything except scripts, nix, and late groups)
+    for group in "${all_groups[@]}"; do
+        [[ "$group" == "scripts" ]] && continue
+        [[ "$group" == "nix" ]] && continue
+        is_late "$group" && continue
 
         # Skip platform-specific groups that don't match the current platform
         if [[ "$group" == *_macos ]] && [[ "$PLATFORM" != "macos" ]]; then
@@ -455,26 +501,21 @@ deploy_groups() {
             continue
         fi
 
+        deploy_one "$group"
+    done
+
+    # Phase 4: late groups (in defined order)
+    for group in "${late_groups[@]}"; do
+        # Verify the group actually exists in Configs/
+        local found=false
+        for g in "${all_groups[@]}"; do
+            [[ "$g" == "$group" ]] && found=true && break
+        done
+        [[ "$found" == "false" ]] && continue
+
         # Special handling for helix - offer to install custom build
         if [[ "$group" == "helix" ]]; then
-            # Deploy config first
-            if [ "$has_hook" = true ]; then
-                print_info "Deploying $group (with hooks)"
-                if ! "$TUCKR" set "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                else
-                    print_success "Deployed $group"
-                fi
-            else
-                print_info "Deploying $group"
-                if ! "$TUCKR" add "$group" 2>&1; then
-                    print_error "Failed to deploy $group"
-                    DEPLOY_FAILED=true
-                else
-                    print_success "Deployed $group"
-                fi
-            fi
+            deploy_one "$group"
 
             # Ask about custom Helix installation
             echo ""
@@ -518,24 +559,7 @@ deploy_groups() {
             continue
         fi
 
-        # Deploy the group
-        if [ "$has_hook" = true ]; then
-            print_info "Deploying $group (with hooks)"
-            if ! "$TUCKR" set "$group" 2>&1; then
-                print_error "Failed to deploy $group"
-                DEPLOY_FAILED=true
-            else
-                print_success "Deployed $group"
-            fi
-        else
-            print_info "Deploying $group"
-            if ! "$TUCKR" add "$group" 2>&1; then
-                print_error "Failed to deploy $group"
-                DEPLOY_FAILED=true
-            else
-                print_success "Deployed $group"
-            fi
-        fi
+        deploy_one "$group"
     done
 
     echo ""
@@ -579,6 +603,7 @@ main() {
     echo ""
 
     parse_args "$@"
+    export NO_CONFIRM
     detect_platform
 
     # Check if we're already in the repo

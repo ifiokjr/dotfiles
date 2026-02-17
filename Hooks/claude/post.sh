@@ -10,6 +10,16 @@ NC='\033[0m'
 
 echo -e "${GREEN}✓${NC} Claude configuration deployed"
 
+# ---------------------------------------------------------------------------
+# PATH augmentation — ensure nix-installed tools (claude, deno, etc.)
+# are discoverable even when this hook runs before the user's shell profile.
+# ---------------------------------------------------------------------------
+for p in "/etc/profiles/per-user/${USER}/bin" "/run/current-system/sw/bin" \
+	"$HOME/.nix-profile/bin" "/nix/var/nix/profiles/default/bin"; do
+	# shellcheck disable=SC2249
+	[ -d "$p" ] && case ":$PATH:" in *":$p:"*) ;; *) export PATH="$p:$PATH" ;; esac
+done
+
 # Resolve the real path of the MCP server (follows symlinks portably)
 MCP_SERVER="$HOME/.claude/skills/tart_vm_control/mcp-server-tart.ts"
 if [ -f "$MCP_SERVER" ]; then

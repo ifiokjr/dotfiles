@@ -102,7 +102,7 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 11 configuration groups organized in `Configs/`:
+The repository contains 14 configuration groups organized in `Configs/`:
 
 | Group       | Platform | Purpose                                  | Hook      |
 | ----------- | -------- | ---------------------------------------- | --------- |
@@ -110,6 +110,9 @@ The repository contains 11 configuration groups organized in `Configs/`:
 | **nushell** | All      | Nushell shell configuration & modules    | `post.sh` |
 | **claude**  | All      | Claude Code settings & MCP server        | `post.sh` |
 | **scripts** | All      | Custom utility scripts (~/.local/bin)    | None      |
+| **shell**   | All      | Shared POSIX env (PATH, vars, secrets)   | None      |
+| **bash**    | All      | Bash shell config sourcing shared env    | None      |
+| **zsh**     | All      | Zsh shell config sourcing shared env     | None      |
 | **helix**   | All      | Helix editor config & Steel plugins      | None      |
 | **ghostty** | All      | Ghostty terminal emulator config         | None      |
 | **zellij**  | All      | Terminal multiplexer config & layouts    | None      |
@@ -119,6 +122,8 @@ The repository contains 11 configuration groups organized in `Configs/`:
 | **lazygit** | All      | Git TUI configuration                    | None      |
 
 **Platform-specific groups** (suffixed with `_macos`, `_linux`, etc.) only deploy on matching platforms.
+
+**Deployment ordering:** The setup script deploys groups in explicit phases: `scripts` first (hooks depend on it), then `nix` (installs all tools), then simple groups (alphabetical), then late groups in order: `nushell` (needs starship/carapace from nix), `helix` (custom build needs nushell + cargo), `claude` (needs deno for MCP server).
 
 ## Architecture
 
@@ -130,6 +135,9 @@ The repository contains 11 configuration groups organized in `Configs/`:
 │   ├── nix/                   # Nix system config (darwin + home-manager)
 │   ├── nushell/               # Nushell shell config
 │   ├── scripts/               # Custom utility scripts (~/.local/bin)
+│   ├── shell/                 # Shared POSIX env (env.sh, .hushlogin)
+│   ├── bash/                  # Bash shell config (.bashrc, .bash_profile)
+│   ├── zsh/                   # Zsh shell config (.zshrc, .zprofile)
 │   ├── claude/                # Claude Code settings & MCP server
 │   ├── helix/                 # Helix editor config & Steel plugins
 │   ├── ghostty/               # Ghostty terminal config
