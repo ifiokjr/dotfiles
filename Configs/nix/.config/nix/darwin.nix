@@ -72,7 +72,8 @@ in
       "dbeaver-community"
       "gdevelop"
       "ghostty"
-      "godot"
+      # Temporarily disabled: upstream cask source hash is currently mismatched.
+      # Re-enable once nix-casks updates the hash for the current Godot artifact.
       "orbstack"
       "podman-desktop"
       "react-native-debugger"
@@ -184,7 +185,7 @@ in
       _FXShowPosixPathInTitle = true;
       _FXSortFoldersFirst = true;
       _FXSortFoldersFirstOnDesktop = true;
-      AppleShowAllExtensions = true;
+      AppleShowAllExtensions = false;
       AppleShowAllFiles = true;
       CreateDesktop = true;
       FXDefaultSearchScope = "SCcf";
@@ -252,7 +253,7 @@ in
       # Windows
       AppleWindowTabbingMode = "always";
       NSWindowShouldDragOnGesture = true;
-      AppleShowAllExtensions = true;
+      AppleShowAllExtensions = false;
       _HIHideMenuBar = false;
     };
 

@@ -1,0 +1,6 @@
+#!/usr/bin/env nu
+# Run codex with bypassed approvals and sandbox.
+
+def main [...args: string] {
+    ^codex --dangerously-bypass-approvals-and-sandbox ...$args
+}
