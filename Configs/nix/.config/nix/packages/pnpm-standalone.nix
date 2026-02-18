@@ -11,7 +11,7 @@ let
   # 2. Set hash to lib.fakeSha256
   # 3. Run rebuild - Nix will show the correct hash in the error
   # 4. Copy the correct hash here
-  version = "10.29.3";
+  version = "10.30.0";
 
   # Platform and architecture mapping
   platform = if stdenv.isDarwin then "macos" else "linux";
@@ -20,10 +20,10 @@ let
   # SHA256 hashes for different platforms
   # Using fakeSha256 initially - Nix will provide correct hash on first build
   hashes = {
-    "macos-arm64" = "sha256-okjFawqyBEPhjQyO4yB8bFZO40K9P8hpSzVpoGDOzs4=";
-    "macos-x64" = "sha256-Vph3Al6IlNiLF1b9vAZ1Mw382cAezkqyZoW6r/+o4wM=";
-    "linux-arm64" = "sha256-rnAgiIKyxSKeFD3iRU/E93iy0q6Vmi5I7Hamwm6LMSc=";
-    "linux-x64" = "sha256-L8mNsSfGEb4MEQrxG1tydZ99c2iT3dyB33O3tZsw8Vo=";
+    "macos-arm64" = "sha256-/Riad2sI2RVAzueeW0sCT8TH1a7q9ORWHUz5JuDEvmk=";
+    "macos-x64" = "sha256-AvGkXG1bftmF63BlaYHrK7TkLi4pu26CBX0PGU3XdKA=";
+    "linux-arm64" = "sha256-YAKeVl2AAd5xxPIGSv0qIMuF40byXpgDAOnK0CEnenE=";
+    "linux-x64" = "sha256-eNg6oAncfo0Y+vXqh+jK/tlgEkXyN1fwDDWCKE9U95M=";
   };
 
   platformKey = "${platform}-${arch}";

@@ -318,6 +318,8 @@ Complete
 
 All commits in this repository **must** follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
 
+This is **enforced in CI** by the `commit messages` job in `.github/workflows/ci.yml`. Pull requests with non-conventional commit subjects will fail checks.
+
 ### Commit Message Format
 
 ```

@@ -12,7 +12,6 @@ set -e
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
@@ -57,13 +56,13 @@ fetch_hash() {
 	local platform="$1"
 	local url="https://github.com/pnpm/pnpm/releases/download/v${VERSION}/pnpm-${platform}"
 
-	print_info "Fetching hash for $platform..."
+	print_info "Fetching hash for $platform..." >&2
 
 	local raw_hash
 	raw_hash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1)
 
 	if [[ -z "$raw_hash" ]]; then
-		print_error "Failed to fetch hash for $platform"
+		print_error "Failed to fetch hash for $platform" >&2
 		return 1
 	fi
 
