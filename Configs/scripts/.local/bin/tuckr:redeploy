@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+Usage: tuckr:redeploy [--dry-run] [--no-force] [--profile <name>]
+
+Redeploy all Tuckr groups in a consistent order.
+Order: nix first, then all other groups (alphabetical), then late groups (nushell, helix, claude).
+
+Options:
+  --dry-run        Print what would happen without changing files
+  --no-force       Do not pass --force to tuckr
+  --profile <name> Use a specific tuckr profile
+USAGE
+}
+
+DRY_RUN=0
+FORCE=1
+PROFILE=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run|-n)
+      DRY_RUN=1
+      shift
+      ;;
+    --no-force)
+      FORCE=0
+      shift
+      ;;
+    --profile|-p)
+      PROFILE="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown argument: $1" >&2
+      usage
+      exit 1
+      ;;
+  esac
+done
+
+# Detect platform-specific tuckr location
+PLATFORM=""
+TUCKR_LOCATION=""
+case "$(uname -s)" in
+  Darwin*)
+    PLATFORM="macos"
+    TUCKR_LOCATION="$HOME/Library/Application Support/dotfiles"
+    ;;
+  Linux*)
+    PLATFORM="linux"
+    TUCKR_LOCATION="$HOME/.config/dotfiles"
+    ;;
+  FreeBSD*|OpenBSD*|NetBSD*)
+    PLATFORM="bsd"
+    TUCKR_LOCATION="$HOME/.config/dotfiles"
+    ;;
+  CYGWIN*|MINGW32*|MINGW64*|MINGW*|MSYS*)
+    PLATFORM="windows"
+    TUCKR_LOCATION="$HOME/AppData/Roaming/dotfiles"
+    ;;
+  *)
+    echo "Unsupported platform: $(uname -s)" >&2
+    exit 1
+    ;;
+ esac
+
+if [[ ! -d "$TUCKR_LOCATION" ]]; then
+  echo "Tuckr dotfiles location not found: $TUCKR_LOCATION" >&2
+  echo "Run setup-tuckr-symlink.sh first." >&2
+  exit 1
+fi
+
+CONFIGS_DIR="$TUCKR_LOCATION/Configs"
+if [[ ! -d "$CONFIGS_DIR" ]]; then
+  echo "Configs directory not found: $CONFIGS_DIR" >&2
+  exit 1
+fi
+
+# Get all group directories (portable across GNU/BSD find)
+mapfile -t GROUPS < <(find "$CONFIGS_DIR" -mindepth 1 -maxdepth 1 -type d | sed 's#.*/##' | sort)
+
+is_platform_group() {
+  local group="$1"
+  case "$group" in
+    *_macos|*_linux|*_bsd|*_windows)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+matches_platform() {
+  local group="$1"
+  case "$PLATFORM" in
+    macos) [[ "$group" == *_macos ]] ;;
+    linux) [[ "$group" == *_linux ]] ;;
+    bsd) [[ "$group" == *_bsd ]] ;;
+    windows) [[ "$group" == *_windows ]] ;;
+    *) return 1 ;;
+  esac
+}
+
+FILTERED=()
+for group in "${GROUPS[@]}"; do
+  if is_platform_group "$group"; then
+    if matches_platform "$group"; then
+      FILTERED+=("$group")
+    fi
+  else
+    FILTERED+=("$group")
+  fi
+done
+
+PRIMARY_GROUPS=("nix")
+LATE_GROUPS=("nushell" "helix" "claude")
+HOOK_GROUPS=("nix" "nushell" "claude")
+
+# Build ordered list: nix first, then others (alphabetical), then late groups
+ORDERED=()
+
+for g in "${PRIMARY_GROUPS[@]}"; do
+  for grp in "${FILTERED[@]}"; do
+    if [[ "$grp" == "$g" ]]; then
+      ORDERED+=("$grp")
+    fi
+  done
+ done
+
+for grp in "${FILTERED[@]}"; do
+  skip=0
+  for g in "${PRIMARY_GROUPS[@]}" "${LATE_GROUPS[@]}"; do
+    if [[ "$grp" == "$g" ]]; then
+      skip=1
+      break
+    fi
+  done
+  if [[ $skip -eq 0 ]]; then
+    ORDERED+=("$grp")
+  fi
+ done
+
+for g in "${LATE_GROUPS[@]}"; do
+  for grp in "${FILTERED[@]}"; do
+    if [[ "$grp" == "$g" ]]; then
+      ORDERED+=("$grp")
+    fi
+  done
+ done
+
+TUCKR_ARGS=()
+if [[ $DRY_RUN -eq 1 ]]; then
+  TUCKR_ARGS+=("--dry-run")
+fi
+if [[ $FORCE -eq 1 ]]; then
+  TUCKR_ARGS+=("--force")
+fi
+if [[ -n "$PROFILE" ]]; then
+  TUCKR_ARGS+=("--profile" "$PROFILE")
+fi
+
+is_hook_group() {
+  local group="$1"
+  for g in "${HOOK_GROUPS[@]}"; do
+    if [[ "$group" == "$g" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+echo "Redeploying Tuckr groups from $TUCKR_LOCATION"
+echo "Order: ${ORDERED[*]}"
+
+for group in "${ORDERED[@]}"; do
+  if is_hook_group "$group"; then
+    echo "tuckr set ${TUCKR_ARGS[*]} $group"
+    tuckr set "${TUCKR_ARGS[@]}" "$group"
+  else
+    echo "tuckr add ${TUCKR_ARGS[*]} $group"
+    tuckr add "${TUCKR_ARGS[@]}" "$group"
+  fi
+ done

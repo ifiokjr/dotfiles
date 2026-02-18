@@ -102,24 +102,25 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 14 configuration groups organized in `Configs/`:
+The repository contains 15 configuration groups organized in `Configs/`:
 
-| Group       | Platform | Purpose                                  | Hook      |
-| ----------- | -------- | ---------------------------------------- | --------- |
-| **nix**     | All      | System configuration with Nix flakes     | `post.sh` |
-| **nushell** | All      | Nushell shell configuration & modules    | `post.sh` |
-| **claude**  | All      | Claude Code settings & MCP server        | `post.sh` |
-| **scripts** | All      | Custom utility scripts (~/.local/bin)    | None      |
-| **shell**   | All      | Shared POSIX env (PATH, vars, secrets)   | None      |
-| **bash**    | All      | Bash shell config sourcing shared env    | None      |
-| **zsh**     | All      | Zsh shell config sourcing shared env     | None      |
-| **helix**   | All      | Helix editor config & Steel plugins      | None      |
-| **ghostty** | All      | Ghostty terminal emulator config         | None      |
-| **zellij**  | All      | Terminal multiplexer config & layouts    | None      |
-| **direnv**  | All      | Directory-specific environment variables | None      |
-| **dprint**  | All      | Multi-language code formatter            | None      |
-| **kdl**     | All      | KDL document formatter                   | None      |
-| **lazygit** | All      | Git TUI configuration                    | None      |
+| Group       | Platform | Purpose                                         | Hook      |
+| ----------- | -------- | ----------------------------------------------- | --------- |
+| **nix**     | All      | System configuration with Nix flakes            | `post.sh` |
+| **nushell** | All      | Nushell shell configuration & modules           | `post.sh` |
+| **claude**  | All      | Claude Code settings & MCP server               | `post.sh` |
+| **scripts** | All      | Custom utility scripts (~/.local/bin)           | None      |
+| **shell**   | All      | Shared POSIX env (PATH, vars, secrets)          | None      |
+| **bash**    | All      | Bash shell config sourcing shared env           | None      |
+| **zsh**     | All      | Zsh shell config sourcing shared env            | None      |
+| **helix**   | All      | Helix editor config & Steel plugins             | None      |
+| **ghostty** | All      | Ghostty terminal emulator config                | None      |
+| **zellij**  | All      | Terminal multiplexer config & layouts           | None      |
+| **direnv**  | All      | Directory-specific environment variables        | None      |
+| **dprint**  | All      | Multi-language code formatter                   | None      |
+| **kdl**     | All      | KDL document formatter                          | None      |
+| **lazygit** | All      | Git TUI configuration                           | None      |
+| **yazi**    | All      | Yazi file manager with Helix/Zellij integration | None      |
 
 **Platform-specific groups** (suffixed with `_macos`, `_linux`, etc.) only deploy on matching platforms.
 
@@ -145,7 +146,8 @@ The repository contains 14 configuration groups organized in `Configs/`:
 │   ├── direnv/                # Environment management
 │   ├── dprint/                # Code formatter
 │   ├── kdl/                   # KDL formatter
-│   └── lazygit/               # Git TUI
+│   ├── lazygit/               # Git TUI
+│   └── yazi/                  # Yazi file manager config
 ├── Hooks/                      # Pre/post deployment scripts
 │   ├── nix/post.sh            # Rebuilds system after Nix changes
 │   ├── nushell/post.sh        # Generates vendor autoload, sets default shell

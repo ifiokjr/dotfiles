@@ -1,0 +1,21 @@
+[mgr]
+show_hidden = true
+sort_by = "natural"
+sort_dir_first = true
+linemode = "size"
+show_symlink = true
+
+[opener]
+edit = [
+	{ run = 'nu ~/.local/bin/yazi-open-file "$1"', block = true, desc = "Open in Helix (smart pane)" },
+]
+
+[open]
+prepend_rules = [
+	{ mime = "text/*", use = "edit" },
+	{ mime = "application/json", use = "edit" },
+	{ mime = "*/xml", use = "edit" },
+	{ mime = "*/javascript", use = "edit" },
+	{ mime = "*/x-yaml", use = "edit" },
+	{ mime = "*/toml", use = "edit" },
+]
