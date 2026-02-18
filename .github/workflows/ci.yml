@@ -7,6 +7,59 @@ on:
     branches: [main]
 
 jobs:
+  commit-messages:
+    name: commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 validate conventional commits
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.sha }}"
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              RANGE="$AFTER"
+            else
+              RANGE="$BEFORE..$AFTER"
+            fi
+          fi
+
+          echo "Checking commit subjects in range: $RANGE"
+
+          mapfile -t commits < <(git rev-list --no-merges "$RANGE")
+          if [ "${#commits[@]}" -eq 0 ]; then
+            echo "No non-merge commits to validate."
+            exit 0
+          fi
+
+          regex='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9._/-]+\))?(!)?: .+'
+          failed=0
+
+          for sha in "${commits[@]}"; do
+            subject="$(git log --format=%s -n 1 "$sha")"
+            if [[ ! "$subject" =~ $regex ]]; then
+              echo "::error::Commit ${sha} has non-conventional subject: ${subject}"
+              failed=1
+            else
+              echo "ok: ${sha} ${subject}"
+            fi
+          done
+
+          if [ "$failed" -ne 0 ]; then
+            echo "Conventional commit check failed."
+            exit 1
+          fi
+
+          echo "All commit subjects are Conventional Commits."
+
   lint:
     name: lint
     runs-on: ubuntu-latest
