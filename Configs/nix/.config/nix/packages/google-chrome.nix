@@ -46,7 +46,7 @@ let
   sources = {
     "x86_64-darwin" = {
       url = "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg";
-      hash = "sha256-+B22PmRdySDsBuTxzd5fry4+w/vWa7r7+97pM1K6zKA=";
+      hash = "sha256-VTF6SG+fon+0CQ3xS4qX5AOFFeP3Qz47ZPIHuBkJcUU=";
     };
     "aarch64-darwin" = {
       url = "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg";
@@ -54,7 +54,7 @@ let
     };
     "x86_64-linux" = {
       url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb";
-      hash = "sha256-4hFjRhkURRq1NXdAUPesS32t/NyG9eb784/sW75DlCU=";
+      hash = "sha256-VNvx/3l3gzj8HjeeK3v/Hj05E9t2PvsiP8pnIOq1AEA=";
     };
   };
 
