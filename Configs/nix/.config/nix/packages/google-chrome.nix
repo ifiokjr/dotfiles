@@ -50,6 +50,7 @@ let
     };
     "aarch64-darwin" = {
       url = "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg";
+      # Apple Silicon uses the same universal DMG payload as x86_64 on macOS.
       hash = "sha256-VTF6SG+fon+0CQ3xS4qX5AOFFeP3Qz47ZPIHuBkJcUU=";
     };
     "x86_64-linux" = {

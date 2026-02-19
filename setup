@@ -322,20 +322,82 @@ ask_yes_no() {
 # Deploy a single group with automatic --force fallback on conflict.
 # Usage: tuckr_deploy <tuckr_binary> <group> [set]
 # Pass "set" as $3 to use `tuckr set` (runs hooks) instead of `tuckr add`.
+# Returns:
+#   0 on success
+#   1 on failure
+#   2 from run_tuckr_command when a hook failed (treated as non-retriable)
+run_tuckr_command() {
+    local tuckr_bin="$1"
+    local mode="$2"
+    local group="$3"
+    local force="${4:-false}"
+    local out_file
+    local rc=0
+
+    out_file="$(mktemp)"
+
+    if [ "$force" = true ]; then
+        if echo y | "$tuckr_bin" "$mode" --force "$group" 2>&1 | tee "$out_file"; then
+            rc=0
+        else
+            rc=$?
+        fi
+    else
+        if "$tuckr_bin" "$mode" "$group" 2>&1 | tee "$out_file"; then
+            rc=0
+        else
+            rc=$?
+        fi
+    fi
+
+    # Tuckr can return success even when hooks fail. Treat that as a hard failure.
+    if grep -q "Failed to hook" "$out_file"; then
+        # Docker CI builds can run setup before the nix daemon is started.
+        # In that environment, the nix post-hook may fail during bootstrap even
+        # though the later explicit rebuild step succeeds. Allow this only when
+        # explicitly opted in.
+        if [ "${SETUP_ALLOW_NIX_HOOK_FAILURE:-false}" = "true" ] && [ "$group" = "nix" ] && [ "$mode" = "set" ]; then
+            print_warning "Ignoring nix hook failure due to SETUP_ALLOW_NIX_HOOK_FAILURE=true"
+            rm -f "$out_file"
+            return 0
+        fi
+
+        rm -f "$out_file"
+        return 2
+    fi
+
+    rm -f "$out_file"
+    return "$rc"
+}
+
 tuckr_deploy() {
     local tuckr_bin="$1"
     local group="$2"
     local mode="${3:-add}"
+    local rc=0
 
-    if "$tuckr_bin" "$mode" "$group" 2>&1; then
+    if run_tuckr_command "$tuckr_bin" "$mode" "$group"; then
         return 0
+    else
+        rc=$?
+    fi
+
+    if [ "$rc" -eq 2 ]; then
+        print_error "Hook failed while deploying $group"
+        return 1
     fi
 
     # First attempt failed — retry with --force (handles existing file conflicts).
     # Pipe "y" because tuckr --force still prompts "Are you sure?" interactively.
     print_warning "Retrying $group with --force (existing file conflict)"
-    if echo y | "$tuckr_bin" "$mode" --force "$group" 2>&1; then
+    if run_tuckr_command "$tuckr_bin" "$mode" "$group" true; then
         return 0
+    else
+        rc=$?
+    fi
+
+    if [ "$rc" -eq 2 ]; then
+        print_error "Hook failed while deploying $group"
     fi
 
     return 1
@@ -639,6 +701,14 @@ main() {
     # Cleanup
     cleanup
 
+    # Exit with failure if any group deployment failed.
+    # Avoid printing a success banner in this case.
+    if [ "$deploy_exit" -ne 0 ]; then
+        echo ""
+        print_error "Setup completed with errors"
+        exit "$deploy_exit"
+    fi
+
     echo ""
     echo -e "${GREEN}${BOLD}╔════════════════════════════════════════╗${NC}"
     echo -e "${GREEN}${BOLD}║                                        ║${NC}"
@@ -684,11 +754,6 @@ main() {
         } >> "$GITHUB_PATH"
     fi
 
-    # Exit with failure if any group deployment failed
-    if [ "$deploy_exit" -ne 0 ]; then
-        print_error "Setup completed with errors"
-        exit "$deploy_exit"
-    fi
 }
 
 # Run main function

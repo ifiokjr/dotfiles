@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Docker integration test: generates machine config, runs rebuild, then verifies.
 #
-# This script runs inside the Docker container after `./setup --no-confirm`
+# This script runs inside the Docker container after
+# `SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm`
 # has already executed during the image build step.
 
 set -euo pipefail
@@ -37,7 +38,7 @@ if [ ! -S /nix/var/nix/daemon-socket/socket ]; then
 	step "Starting nix daemon"
 	sudo /nix/var/nix/profiles/default/bin/nix-daemon &
 	# Wait for the socket to appear
-	for i in $(seq 1 10); do
+	for _ in $(seq 1 10); do
 		[ -S /nix/var/nix/daemon-socket/socket ] && break
 		sleep 1
 	done
