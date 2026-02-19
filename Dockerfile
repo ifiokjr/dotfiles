@@ -12,6 +12,6 @@ USER testuser
 COPY --chown=testuser:testuser . /home/testuser/.dotfiles
 WORKDIR /home/testuser/.dotfiles
 
-RUN ./setup --no-confirm
+RUN ./setup --skip-nix --no-confirm
 
 CMD ["bash", "-lc", "tests/docker-integration-test.sh"]
