@@ -409,6 +409,13 @@ deploy_groups() {
 
     cd "$DOTFILES_DIR"
 
+    # Pre-create common parent directories that tuckr needs for symlinking.
+    # On a fresh macOS, ~/.config and ~/.local/bin may not exist yet, causing
+    # "No such file or directory (os error 2)" when tuckr tries to create
+    # symlinks inside them.
+    mkdir -p "$HOME/.config"
+    mkdir -p "$HOME/.local/bin"
+
     # Resolve tuckr to its real nix store path. This survives nix profile
     # removal — only the ~/.nix-profile/bin symlink is deleted, the store
     # binary remains. We need this because tuckr is removed from the profile

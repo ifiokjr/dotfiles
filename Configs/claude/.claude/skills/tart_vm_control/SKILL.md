@@ -55,6 +55,22 @@ All dependencies are managed via nix (`home.nix`). No manual installation needed
 - **Nested virtualization:** Only on M3/M4 chips with macOS 15+.
 - **Boot time:** ~20-40s for macOS. Use the **warm VM pattern** to avoid this.
 
+## VNC Modes
+
+Tart supports two VNC modes. The MCP server defaults to **native VNC** for automation.
+
+| Feature | `--vnc-experimental` (default) | `--vnc` (legacy) |
+| --- | --- | --- |
+| **Backend** | Apple's `_VZVNCServer` (host-side) | macOS Screen Sharing (guest) |
+| **Works during install/recovery** | Yes | No |
+| **Guest config needed** | None | Remote Login must be enabled |
+| **Password** | Auto-generated 4-word passphrase | Guest credentials (admin/admin) |
+| **Port** | Random ephemeral (OS-assigned) | 5900 (guest VNC) |
+| **VNC binds to** | `127.0.0.1` (localhost only) | VM IP address |
+| **Clipboard** | No (known regression) | Yes |
+
+**Native VNC is preferred for automation** because it requires no guest setup and works even before the OS boots. The password and port are parsed from Tart's stdout output (`vnc://:<password>@127.0.0.1:<port>`).
+
 ---
 
 ## Recommended Approaches
@@ -69,17 +85,28 @@ sshpass -p admin ssh -o StrictHostKeyChecking=no admin@$(tart ip test-vm) "swift
 tart stop test-vm && tart delete test-vm
 ```
 
-### Approach 2: VNC-Based GUI Testing — Best for GUI
+### Approach 2: Native VNC GUI Testing — Best for GUI automation
 
-Uses [vncdo](https://github.com/sibson/vncdotool) from the **host**. No guest tools needed.
+Uses Tart's built-in VNC (`--vnc-experimental`) + [vncdo](https://github.com/sibson/vncdotool) from the host. No guest tools needed.
 
 ```bash
-tart run test-vm --no-graphics --vnc &
+tart run test-vm --no-graphics --vnc-experimental &
+sleep 5
+# Parse VNC URL from stdout: vnc://:<password>@127.0.0.1:<port>
+vncdo -s localhost::<port> --password '<password>' capture screenshot.png
+vncdo -s localhost::<port> --password '<password>' move 500 400 click 1
+vncdo -s localhost::<port> --password '<password>' type "hello world" key enter
+```
+
+### Approach 2b: Bridged Networking — VM on local network
+
+Give the VM a real IP on your LAN for network-dependent testing:
+
+```bash
+tart run test-vm --no-graphics --vnc-experimental --net-bridged=en0 &
 sleep 30
-VM_IP=$(tart ip test-vm)
-vncdo -s $VM_IP capture screenshot.png
-vncdo -s $VM_IP move 500 400 click 1
-vncdo -s $VM_IP type "hello world" key enter
+# VM gets a real IP on your local network
+tart ip test-vm  # returns LAN IP, e.g. 192.168.1.x
 ```
 
 ### Approach 3: Warm VM Pattern — Best for repeated testing
@@ -91,7 +118,7 @@ Resume from suspension in ~2-5s instead of cold booting in 30+.
 tart suspend warm-vm
 
 # Each iteration: resume -> test -> suspend
-tart run warm-vm --no-graphics --vnc &
+tart run warm-vm --no-graphics --vnc-experimental &
 sleep 5
 # ... test ...
 tart suspend warm-vm
@@ -124,7 +151,9 @@ tart clone <image> <name>       # Clone from registry
 tart create --from-ipsw=latest <name>  # From IPSW
 tart create --linux <name>      # Empty Linux VM
 tart run <name>                 # Start with GUI
-tart run <name> --no-graphics --vnc  # Headless + VNC
+tart run <name> --no-graphics --vnc-experimental  # Headless + native VNC
+tart run <name> --no-graphics --vnc-experimental --net-bridged=en0  # + bridged network
+tart run <name> --no-graphics --vnc  # Headless + guest Screen Sharing VNC
 tart run <name> --dir=label:~/path   # With shared dir
 tart stop <name>                # Stop
 tart suspend <name>             # Suspend (warm pattern)
@@ -148,13 +177,18 @@ sshpass -p admin ssh -o StrictHostKeyChecking=no admin@$(tart ip <name>) "cmd"
 tart exec <name> -- command     # Requires guest agent
 ```
 
-### GUI via VNC (host-side)
+### GUI via VNC (host-side, native)
+
+With `--vnc-experimental`, VNC runs on localhost. Parse password and port from Tart's stdout.
 
 ```bash
-vncdo -s $(tart ip <name>) capture screenshot.png
-vncdo -s $(tart ip <name>) move 500 400 click 1
-vncdo -s $(tart ip <name>) type "text" key enter
-vncdo -s $(tart ip <name>) key ctrl-c
+# Native VNC (--vnc-experimental) — connects to localhost
+vncdo -s localhost::<port> --password '<password>' capture screenshot.png
+vncdo -s localhost::<port> --password '<password>' move 500 400 click 1
+vncdo -s localhost::<port> --password '<password>' type "text" key enter
+
+# Legacy VNC (--vnc) — connects to guest VM IP
+vncdo -s $(tart ip <name>)::5900 --password admin capture screenshot.png
 ```
 
 ---

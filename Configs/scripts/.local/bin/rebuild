@@ -101,6 +101,15 @@ def main [
         info "Checking for package updates..."
         print ""
 
+        # Update codex-cli
+        do -i {
+            info "Checking codex-cli for updates..."
+            ^update:codex:version --skip-rebuild
+        }
+        if ($env.LAST_EXIT_CODE != 0) {
+            warn "codex-cli update check failed \(continuing\)"
+        }
+
         # Update cursor-cli
         do -i {
             info "Checking cursor-cli for updates..."
