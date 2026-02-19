@@ -19,13 +19,18 @@ def prefetch-hash [url: string]: nothing -> string {
     ^nix hash convert --hash-algo sha256 --to sri $hash | str trim
 }
 
-# Update a single hash in a nix file. Returns the updated content.
-def update-hash [
-    content: string,
-    pattern: string,  # regex pattern to match (e.g., 'hash = "[^"]*"')
-    new_hash: string,
-]: nothing -> string {
-    $content | str replace --regex $pattern $'hash = "($new_hash)"'
+# Build a regex pattern that matches a keyed hash entry.
+# Uses str join to avoid nushell's $'...' interpolation eating regex capture groups.
+# Returns a regex like: "key" = \{[^}]*hash = "([^"]*)"
+def hash-re [key: string]: nothing -> string {
+    [$"\"($key)\" = \\{[^}]*hash = " '"([^"]*)"'] | str join
+}
+
+# Parse the current hash for a keyed entry from nix file content.
+# Returns empty string if not found.
+def parse-hash [content: string, key: string]: nothing -> string {
+    let re = (hash-re $key)
+    try { $content | parse --regex $re | get capture0.0 } catch { "" }
 }
 
 # Update a rolling-URL package (re-prefetch hash, update if changed)
@@ -48,8 +53,11 @@ def update-rolling [name: string, nix_file: string, urls: list<record<label: str
             continue
         }
 
+        # Build parse regex: pattern = "([^"]*)"
+        # Use str join to avoid $'...' eating the capture group
+        let parse_re = [$entry.pattern ' = "' '([^"]*)"'] | str join
         let current_hash = try {
-            $content | parse --regex $'($entry.pattern) = "([^"]*)"' | get capture1.0
+            $content | parse --regex $parse_re | get capture0.0
         } catch {
             ""
         }
@@ -57,7 +65,10 @@ def update-rolling [name: string, nix_file: string, urls: list<record<label: str
         if $current_hash == $new_hash {
             success $"  ($entry.label): up to date"
         } else {
-            $content = ($content | str replace --regex $'($entry.pattern) = "[^"]*"' $'($entry.pattern) = "($new_hash)"')
+            # Replace using the pattern (no backreferences needed)
+            let search_re = [$entry.pattern ' = "[^"]*"'] | str join
+            let replacement = $"($entry.pattern) = \"($new_hash)\""
+            $content = ($content | str replace --regex $search_re $replacement)
             $changed = true
             success $"  ($entry.label): updated"
         }
@@ -107,7 +118,7 @@ def update-versioned [
     info $"  Updating ($current_version) → ($latest_version)"
 
     # Update version
-    mut updated = ($content | str replace --regex 'version = "[^"]+"' $'version = "($latest_version)"')
+    mut updated = ($content | str replace --regex 'version = "[^"]+"' $"version = \"($latest_version)\"")
 
     # Prefetch new hashes
     let entries = (do $url_builder $latest_version)
@@ -119,7 +130,9 @@ def update-versioned [
             warn $"  Failed to prefetch ($entry.label), skipping ($name)"
             return
         }
-        $updated = ($updated | str replace --regex $'($entry.pattern) = "[^"]*"' $'($entry.pattern) = "($new_hash)"')
+        let search_re = [$entry.pattern ' = "[^"]*"'] | str join
+        let replacement = $"($entry.pattern) = \"($new_hash)\""
+        $updated = ($updated | str replace --regex $search_re $replacement)
         success $"  ($entry.label): prefetched"
     }
 
@@ -138,41 +151,65 @@ def main [
     # ── Rolling-URL packages ──────────────────────────────────────────
     # These always point to the latest release; re-prefetch every time.
 
-    update-rolling "google-chrome" $"($packages_dir)/google-chrome.nix" [
-        {
-            label: "macOS universal"
-            url: "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg"
-            pattern: "hash"
-        }
-    ]
-
-    # google-chrome Linux hash is on a separate line with a different key
-    # Handle it by updating the x86_64-linux hash specifically
+    # Google Chrome: update all architecture hashes explicitly.
+    # The macOS universal DMG is shared by x86_64-darwin and aarch64-darwin,
+    # so both entries must be updated together. The Linux URL is separate.
     let chrome_file = $"($packages_dir)/google-chrome.nix"
     if ($chrome_file | path exists) {
-        let content = (open $chrome_file --raw)
+        info "Checking google-chrome..."
+        mut content = (open $chrome_file --raw)
+        mut changed = false
+
+        # macOS universal (same URL for both x86_64-darwin and aarch64-darwin)
+        let mac_hash = try {
+            prefetch-hash "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg"
+        } catch {
+            warn "  Failed to prefetch macOS hash"
+            null
+        }
+
+        if $mac_hash != null {
+            for arch in ["x86_64-darwin" "aarch64-darwin"] {
+                let current = (parse-hash $content $arch)
+
+                if $current == $mac_hash {
+                    success $"  ($arch): up to date"
+                } else if ($current | is-not-empty) {
+                    # Direct replacement: swap old hash value for new (no regex backreferences)
+                    $content = ($content | str replace $"hash = \"($current)\"" $"hash = \"($mac_hash)\"")
+                    $changed = true
+                    success $"  ($arch): updated"
+                } else {
+                    warn $"  ($arch): could not parse current hash"
+                }
+            }
+        }
+
+        # Linux x86_64
         let linux_hash = try {
             prefetch-hash "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
         } catch {
-            warn "  Failed to prefetch Chrome Linux hash"
+            warn "  Failed to prefetch Linux hash"
             null
         }
+
         if $linux_hash != null {
-            # The x86_64-linux hash appears after the macOS ones, find and replace it
-            let current = try {
-                $content
-                | parse --regex '"x86_64-linux" = \{[^}]*hash = "([^"]*)"'
-                | get capture0.0
-            } catch { "" }
+            let current = (parse-hash $content "x86_64-linux")
 
             if $current == $linux_hash {
-                success "  Linux x86_64: up to date"
+                success "  x86_64-linux: up to date"
+            } else if ($current | is-not-empty) {
+                $content = ($content | str replace $"hash = \"($current)\"" $"hash = \"($linux_hash)\"")
+                $changed = true
+                success "  x86_64-linux: updated"
             } else {
-                # Use a multiline-aware approach: find the x86_64-linux block and update hash
-                let updated = ($content | str replace --regex '("x86_64-linux" = \{[^}]*hash = ")[^"]*"' $'${1}($linux_hash)"')
-                $updated | save -f $chrome_file
-                success "  Linux x86_64: updated"
+                warn "  x86_64-linux: could not parse current hash"
             }
+        }
+
+        if $changed {
+            $content | save -f $chrome_file
+            success "  google-chrome hashes updated"
         }
     }
 
