@@ -44,6 +44,13 @@ const DEFAULT_USER = "admin";
 const DEFAULT_PASS = "admin";
 const VNC_PORT = 5900;
 
+// Track Tart's native VNC info per VM (--vnc-experimental)
+interface VncInfo {
+	port: number;
+	password: string;
+}
+const vmVncInfo: Map<string, VncInfo> = new Map();
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -92,7 +99,20 @@ function sshExec(
 	);
 }
 
-function vncdo(ip: string, args: string) {
+function vncdo(vmName: string, args: string) {
+	const info = vmVncInfo.get(vmName);
+	if (info) {
+		// Use Tart's native VNC on localhost (--vnc-experimental)
+		return run(
+			`vncdo -s localhost::${info.port} --password '${info.password}' ${args}`,
+			30_000,
+		);
+	}
+	// Fallback: connect to guest VNC via VM IP (--vnc mode)
+	const ip = getIp(vmName);
+	if (!ip) {
+		return { success: false, output: "", error: "Cannot resolve VM IP for VNC" };
+	}
 	return run(
 		`vncdo -s ${ip}::${VNC_PORT} --password ${DEFAULT_PASS} ${args}`,
 		30_000,
@@ -150,7 +170,7 @@ const TOOLS = [
 	{
 		name: "vm_start",
 		description:
-			"Start a VM headless with VNC. Also resumes suspended VMs (~2-5s).",
+			"Start a VM headless with Tart's native VNC (--vnc-experimental). Also resumes suspended VMs (~2-5s). VNC runs on localhost with auto-generated password and random port.",
 		inputSchema: {
 			type: "object" as const,
 			properties: {
@@ -158,6 +178,16 @@ const TOOLS = [
 				shared_dir: {
 					type: "string",
 					description: "Host dir to share (label:/path)",
+				},
+				net_bridged: {
+					type: "string",
+					description:
+						"Network interface for bridged networking (e.g. en0, Wi-Fi). VM gets a real IP on the local network.",
+				},
+				vnc_legacy: {
+					type: "boolean",
+					description:
+						"Use --vnc (guest Screen Sharing) instead of --vnc-experimental (host-side VNC). Requires Remote Login enabled in guest.",
 				},
 			},
 			required: ["name"],
@@ -306,38 +336,80 @@ async function handle(tool: string, args: Args) {
 		}
 
 		case "vm_start": {
-			let cmd = `tart run ${args.name} --no-graphics --vnc`;
+			const name = args.name as string;
+			const useLegacyVnc = args.vnc_legacy === true;
+
+			let cmd = `tart run ${name} --no-graphics`;
+			cmd += useLegacyVnc ? ` --vnc` : ` --vnc-experimental`;
+			if (args.net_bridged) cmd += ` --net-bridged=${args.net_bridged}`;
 			if (args.shared_dir) cmd += ` --dir=${args.shared_dir}`;
 
+			const stdoutFile = `${SCREENSHOT_DIR}/tart-${name}-stdout.log`;
+
 			const proc = new Deno.Command("bash", {
-				args: ["-c", cmd],
+				args: ["-c", `${cmd} > ${stdoutFile} 2>&1`],
 				stdin: "null",
 				stdout: "null",
 				stderr: "null",
 			});
 			proc.spawn();
 
-			const boot = waitForBoot(args.name as string, 90);
-			if (boot.success) {
-				return text(
-					`VM "${args.name}" running\n` +
-						`IP: ${boot.ip}\n` +
-						`SSH: ssh admin@${boot.ip}\n` +
-						`VNC: vnc://admin:admin@${boot.ip}\n` +
-						`Screenshot: vncdo -s ${boot.ip} capture screen.png`,
-				);
+			// Parse VNC URL from Tart's stdout (--vnc-experimental)
+			// Format: vnc://:<password>@127.0.0.1:<port>
+			if (!useLegacyVnc) {
+				sleep(5);
+				try {
+					const content = Deno.readTextFileSync(stdoutFile);
+					const match = content.match(
+						/vnc:\/\/:([^@]+)@[^:]+:(\d+)/,
+					);
+					if (match) {
+						vmVncInfo.set(name, {
+							port: parseInt(match[2]),
+							password: match[1],
+						});
+					}
+				} catch { /* VNC info will be unavailable */ }
 			}
-			return text(`Started but may still be booting: ${boot.error}`);
+
+			const boot = waitForBoot(name, 90);
+			const vncInfo = vmVncInfo.get(name);
+			if (boot.success) {
+				const lines = [
+					`VM "${name}" running`,
+					`IP: ${boot.ip}`,
+					`SSH: ssh admin@${boot.ip}`,
+				];
+				if (vncInfo) {
+					lines.push(
+						`VNC: vnc://localhost:${vncInfo.port} (Tart native, host-side)`,
+						`VNC password: ${vncInfo.password}`,
+					);
+				} else {
+					lines.push(`VNC: vnc://${boot.ip} (guest Screen Sharing)`);
+				}
+				if (args.net_bridged) {
+					lines.push(`Network: bridged via ${args.net_bridged}`);
+				}
+				return text(lines.join("\n"));
+			}
+			const msg = [`Started but may still be booting: ${boot.error}`];
+			if (vncInfo) {
+				msg.push(`VNC: vnc://localhost:${vncInfo.port}`);
+			}
+			return text(msg.join("\n"));
 		}
 
 		case "vm_stop": {
+			const name = args.name as string;
+			vmVncInfo.delete(name);
 			let msg = "";
-			const stop = run(`tart stop ${args.name}`);
+			const stop = run(`tart stop ${name}`);
 			msg += stop.success
-				? `Stopped "${args.name}".`
+				? `Stopped "${name}".`
 				: `Warning: ${stop.error}`;
 			if (args.delete_after) {
-				const del = run(`tart delete ${args.name}`);
+				const del = run(`tart delete ${name}`);
 				msg += del.success ? " Deleted." : ` Delete failed: ${del.error}`;
 			}
 			return text(msg);
@@ -362,13 +434,11 @@ async function handle(tool: string, args: Args) {
 		}
 
 		case "vm_screenshot": {
-			const ip = getIp(args.name as string);
-			if (!ip) return text("Cannot get VM IP.");
-
+			const name = args.name as string;
 			const ts = Date.now();
 			const localPath = `${SCREENSHOT_DIR}/screenshot-${ts}.png`;
 
-			const vnc = vncdo(ip, `capture ${localPath}`);
+			const vnc = vncdo(name, `capture ${localPath}`);
 			if (vnc.success) {
 				try {
 					const data = Deno.readFileSync(localPath);
@@ -380,61 +450,62 @@ async function handle(tool: string, args: Args) {
 				} catch { /* fall through */ }
 			}
 
-			const remote = `/tmp/screenshot-${ts}.png`;
-			sshExec(
-				args.name as string,
-				`PID=$(pgrep loginwindow 2>/dev/null || echo 1); ` +
-					`sudo launchctl bsexec $PID screencapture -x ${remote} 2>/dev/null || ` +
-					`screencapture -x ${remote} 2>/dev/null || ` +
-					`DISPLAY=:0 scrot ${remote} 2>/dev/null`,
-			);
-			const scp = run(
-				`sshpass -p '${DEFAULT_PASS}' scp ${SSH_OPTS} ${DEFAULT_USER}@${ip}:${remote} ${localPath}`,
-			);
-			if (scp.success) {
-				try {
-					const data = Deno.readFileSync(localPath);
-					const b64 = btoa(String.fromCharCode(...data));
-					return image(
-						b64,
-						`Screenshot via SSH fallback. Saved: ${localPath}`,
-					);
-				} catch { /* fall through */ }
+			// SSH fallback (requires VM IP)
+			const ip = getIp(name);
+			if (ip) {
+				const remote = `/tmp/screenshot-${ts}.png`;
+				sshExec(
+					name,
+					`PID=$(pgrep loginwindow 2>/dev/null || echo 1); ` +
+						`sudo launchctl bsexec $PID screencapture -x ${remote} 2>/dev/null || ` +
+						`screencapture -x ${remote} 2>/dev/null || ` +
+						`DISPLAY=:0 scrot ${remote} 2>/dev/null`,
+				);
+				const scp = run(
+					`sshpass -p '${DEFAULT_PASS}' scp ${SSH_OPTS} ${DEFAULT_USER}@${ip}:${remote} ${localPath}`,
+				);
+				if (scp.success) {
+					try {
+						const data = Deno.readFileSync(localPath);
+						const b64 = btoa(String.fromCharCode(...data));
+						return image(
+							b64,
+							`Screenshot via SSH fallback. Saved: ${localPath}`,
+						);
+					} catch { /* fall through */ }
+				}
 			}
 
 			return text(
 				`Screenshot failed (VNC + SSH).\n` +
 					`VNC: ${vnc.error || "unknown"}\n` +
-					`Ensure VM is running with --vnc and vncdo installed.`,
+					`Ensure VM is running with --vnc-experimental and vncdo installed.`,
 			);
 		}
 
 		case "vm_click": {
-			const ip = getIp(args.name as string);
-			if (!ip) return text("Cannot get VM IP.");
+			const name = args.name as string;
 			const clicks = args.double_click
 				? `move ${args.x} ${args.y} click 1 click 1`
 				: `move ${args.x} ${args.y} click 1`;
-			const r = vncdo(ip, clicks);
+			const r = vncdo(name, clicks);
 			return r.success
 				? text(`Clicked (${args.x}, ${args.y})`)
 				: text(`Failed: ${r.error}`);
 		}
 
 		case "vm_type": {
-			const ip = getIp(args.name as string);
-			if (!ip) return text("Cannot get VM IP.");
+			const name = args.name as string;
 			const escaped = (args.text as string).replaceAll("'", "'\\''");
-			const r = vncdo(ip, `type '${escaped}'`);
+			const r = vncdo(name, `type '${escaped}'`);
 			return r.success
 				? text(`Typed: "${args.text}"`)
 				: text(`Failed: ${r.error}`);
 		}
 
 		case "vm_key": {
-			const ip = getIp(args.name as string);
-			if (!ip) return text("Cannot get VM IP.");
-			const r = vncdo(ip, `key ${args.key}`);
+			const name = args.name as string;
+			const r = vncdo(name, `key ${args.key}`);
 			return r.success
 				? text(`Pressed: ${args.key}`)
 				: text(`Failed: ${r.error}`);
