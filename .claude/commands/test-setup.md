@@ -14,6 +14,7 @@ You are testing the dotfiles `setup` script end-to-end in a fresh macOS virtual 
 - **MCP server:** `tart-vm` (tools: `mcp__tart-vm__vm_*`)
 - **Success marker:** The string `Setup Complete!` in `/tmp/setup.log`
 - **Max retries:** 3
+- **Disk size:** The base image is 50GB; the full nix config uses ~30GB. Disk pressure is expected.
 
 ---
 
@@ -36,15 +37,62 @@ You are testing the dotfiles `setup` script end-to-end in a fresh macOS virtual 
    - `command`: `echo "VM is ready"`
    - If this fails, wait another 20 seconds and retry (up to 3 times).
 
+## Phase 2.5: Verify and fix VM networking
+
+Tart's default NAT networking can break when VPN/tunnel interfaces (utun*) are active on the host.
+
+1. Test internet connectivity inside the VM:
+   ```
+   curl -s --max-time 15 https://api.github.com/zen
+   ```
+2. If this **succeeds**, skip to Phase 3.
+3. If this **fails** (timeout or empty response), set up an SSH reverse SOCKS proxy as a workaround: a. From the host, run:
+   ```
+   sshpass -p admin ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -R 1080 -N -f admin@192.168.65.2
+   ```
+   b. Verify the proxy works inside the VM:
+   ```
+   curl -s --max-time 10 --socks5 localhost:1080 https://api.github.com/zen
+   ```
+   c. Configure the VM environment so all tools use the proxy:
+   ```
+   echo 'export ALL_PROXY=socks5://localhost:1080' >> ~/.zprofile
+   echo 'export ALL_PROXY=socks5://localhost:1080' >> ~/.zshrc
+   echo 'export ALL_PROXY=socks5://localhost:1080' >> ~/.bash_profile
+   echo 'export ALL_PROXY=socks5://localhost:1080' >> ~/.bashrc
+   ```
+   d. Configure sudo to preserve the proxy env var (needed for `darwin-rebuild`):
+   ```
+   echo 'Defaults env_keep += "ALL_PROXY http_proxy https_proxy HTTPS_PROXY HTTP_PROXY"' | sudo tee /etc/sudoers.d/proxy
+   sudo chmod 440 /etc/sudoers.d/proxy
+   ```
+   e. Set proxy in root's environment:
+   ```
+   echo 'export ALL_PROXY=socks5://localhost:1080' | sudo tee -a /var/root/.zshrc
+   echo 'export ALL_PROXY=socks5://localhost:1080' | sudo tee -a /var/root/.zprofile
+   ```
+   f. Add proxy environment to the Nix daemon's launchd plist (needed for nix downloads):
+   ```
+   sudo /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables dict" /Library/LaunchDaemons/systems.determinate.nix-daemon.plist
+   sudo /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:ALL_PROXY string socks5://localhost:1080" /Library/LaunchDaemons/systems.determinate.nix-daemon.plist
+   sudo /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:http_proxy string socks5://localhost:1080" /Library/LaunchDaemons/systems.determinate.nix-daemon.plist
+   sudo /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:https_proxy string socks5://localhost:1080" /Library/LaunchDaemons/systems.determinate.nix-daemon.plist
+   ```
+   Note: The Nix daemon plist modifications will only take effect after Nix is installed. Run these commands **after** Nix installation if the setup script installs Nix, or skip if Nix is not yet installed.
+4. When starting setup with the proxy, always prefix:
+   ```
+   ALL_PROXY=socks5://localhost:1080 nohup ./setup --no-confirm > /tmp/setup.log 2>&1 &
+   ```
+
 ## Phase 3: Run the setup script
 
-1. Clone the dotfiles repo into the VM. Use `mcp__tart-vm__vm_exec` with:
+1. Clone the dotfiles repo into the VM. If the SOCKS proxy was configured in Phase 2.5, prefix with `ALL_PROXY=socks5://localhost:1080`. Use `mcp__tart-vm__vm_exec` with:
    ```
-   git clone -b <branch> https://github.com/ifiokjr/dotfiles.git ~/Developer/.dotfiles
+   ALL_PROXY=socks5://localhost:1080 git clone -b <branch> https://github.com/ifiokjr/dotfiles.git ~/Developer/.dotfiles
    ```
-2. Start the setup script in the background so the SSH session does not timeout:
+2. Start the setup script in the background so the SSH session does not timeout. If the SOCKS proxy was configured, include `ALL_PROXY`:
    ```
-   cd ~/Developer/.dotfiles && nohup ./setup --no-confirm > /tmp/setup.log 2>&1 &
+   cd ~/Developer/.dotfiles && ALL_PROXY=socks5://localhost:1080 nohup ./setup --no-confirm > /tmp/setup.log 2>&1 &
    ```
 3. Immediately verify the process started:
    ```
@@ -67,6 +115,7 @@ Poll the setup log every **60 seconds** until completion or failure. On each pol
 4. **Failure condition:** The process has exited AND the log does NOT contain `Setup Complete!` — proceed to Phase 5.
 5. **Timeout:** If 45 minutes have elapsed since Phase 3 started, treat it as a failure and proceed to Phase 5.
 6. While waiting, summarize the last few meaningful log lines to the user so they can follow progress.
+7. **SSH auth note:** If `mcp__tart-vm__vm_exec` fails with "Too many authentication failures", retry with a shorter command (e.g., `echo ok`) first to re-establish the connection, then retry the original command. This happens when the host SSH agent has many keys.
 
 ## Phase 5: Fix and retry (max 3 attempts)
 
@@ -80,6 +129,7 @@ If the setup failed:
    - **Nix build errors** — broken packages, hash mismatches, platform issues
    - **Tuckr hook failures** — missing commands, permission errors
    - **Network errors** — transient download failures (retry without code changes)
+   - **Disk space errors** — "No space left on device" means the 50GB VM disk is full. Run `nix-collect-garbage -d` inside the VM to free Nix store space, then retry. If still insufficient, this is a known limitation of the base image size.
 3. Fix the issue in the **local** dotfiles repo (not in the VM). Edit the source files as needed.
 4. Commit the fix with a conventional commit message and push to the branch.
 5. Pull the fix into the VM:
