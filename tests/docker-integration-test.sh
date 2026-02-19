@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Docker integration test: generates machine config, runs rebuild, then verifies.
 #
-# This script runs inside the Docker container after `./setup --skip-nix --no-confirm`
+# This script runs inside the Docker container after
+# `SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm`
 # has already executed during the image build step.
 
 set -euo pipefail

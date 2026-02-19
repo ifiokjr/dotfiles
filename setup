@@ -352,6 +352,16 @@ run_tuckr_command() {
 
     # Tuckr can return success even when hooks fail. Treat that as a hard failure.
     if grep -q "Failed to hook" "$out_file"; then
+        # Docker CI builds can run setup before the nix daemon is started.
+        # In that environment, the nix post-hook may fail during bootstrap even
+        # though the later explicit rebuild step succeeds. Allow this only when
+        # explicitly opted in.
+        if [ "${SETUP_ALLOW_NIX_HOOK_FAILURE:-false}" = "true" ] && [ "$group" = "nix" ] && [ "$mode" = "set" ]; then
+            print_warning "Ignoring nix hook failure due to SETUP_ALLOW_NIX_HOOK_FAILURE=true"
+            rm -f "$out_file"
+            return 0
+        fi
+
         rm -f "$out_file"
         return 2
     fi
