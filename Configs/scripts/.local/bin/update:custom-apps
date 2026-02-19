@@ -138,19 +138,38 @@ def main [
     # ── Rolling-URL packages ──────────────────────────────────────────
     # These always point to the latest release; re-prefetch every time.
 
-    update-rolling "google-chrome" $"($packages_dir)/google-chrome.nix" [
-        {
-            label: "macOS universal"
-            url: "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg"
-            pattern: "hash"
-        }
-    ]
-
-    # google-chrome Linux hash is on a separate line with a different key
-    # Handle it by updating the x86_64-linux hash specifically
+    # google-chrome has two Darwin system blocks that share one universal DMG.
+    # Update both Darwin hashes explicitly, then update Linux separately.
     let chrome_file = $"($packages_dir)/google-chrome.nix"
     if ($chrome_file | path exists) {
-        let content = (open $chrome_file --raw)
+        info "Checking google-chrome..."
+        mut content = (open $chrome_file --raw)
+        mut changed = false
+
+        let darwin_hash = try {
+            prefetch-hash "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg"
+        } catch {
+            warn "  Failed to prefetch Chrome macOS hash"
+            null
+        }
+        if $darwin_hash != null {
+            for system in ["x86_64-darwin", "aarch64-darwin"] {
+                let current = try {
+                    $content
+                    | parse --regex $'"($system)" = \\{[^}]*hash = "([^"]*)"'
+                    | get capture1.0
+                } catch { "" }
+
+                if $current == $darwin_hash {
+                    success $"  ($system): up to date"
+                } else {
+                    $content = ($content | str replace --regex $'("($system)" = \\{[^}]*hash = ")[^"]*"' $'${1}($darwin_hash)"')
+                    $changed = true
+                    success $"  ($system): updated"
+                }
+            }
+        }
+
         let linux_hash = try {
             prefetch-hash "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
         } catch {
@@ -169,10 +188,15 @@ def main [
                 success "  Linux x86_64: up to date"
             } else {
                 # Use a multiline-aware approach: find the x86_64-linux block and update hash
-                let updated = ($content | str replace --regex '("x86_64-linux" = \{[^}]*hash = ")[^"]*"' $'${1}($linux_hash)"')
-                $updated | save -f $chrome_file
+                $content = ($content | str replace --regex '("x86_64-linux" = \{[^}]*hash = ")[^"]*"' $'${1}($linux_hash)"')
+                $changed = true
                 success "  Linux x86_64: updated"
             }
+        }
+
+        if $changed {
+            $content | save -f $chrome_file
+            success "  google-chrome hashes updated"
         }
     }
 
