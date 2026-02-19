@@ -158,12 +158,15 @@ def main [
     # Nix binaries are symlinked to /usr/local/bin by setup, so PATH isn't needed.
     let sudo_prefix = if $root_only_nix { "sudo" } else { "" }
 
+    # Use resolved flake dir for nix commands so symlinked flake.nix doesn't produce invalid paths
+    let flake_dir = (nix_config flake-dir)
+
     # Check flake validity (unless skipped)
     # `nix flake check` validates the flake.nix outputs without building everything
     if not $skip_check {
         info "Checking flake configuration..."
         # `do -i` suppresses the error so we can continue even if check fails
-        let check_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake check '($nix_config)' --impure"
+        let check_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake check '($flake_dir)' --impure"
         let check_result = do -i { ^bash -c $check_cmd }
         if ($env.LAST_EXIT_CODE != 0) {
             # \( and \) escape parentheses in nushell string interpolation
@@ -190,10 +193,10 @@ def main [
         # On first run, `darwin-rebuild` CLI may not be installed yet.
         # Use `nix run nix-darwin` from the flake input as fallback.
         let darwin_cmd = if (which darwin-rebuild | is-not-empty) {
-            $"darwin-rebuild switch --flake '($nix_config)#default' --impure"
+            $"darwin-rebuild switch --flake '($flake_dir)#default' --impure"
         } else {
             info "darwin-rebuild not found, using nix run for first-time setup..."
-            $"nix run nix-darwin/master -- switch --flake '($nix_config)#default' --impure"
+            $"nix run nix-darwin/master -- switch --flake '($flake_dir)#default' --impure"
         }
 
         # Wrap in bash -c because:
@@ -220,7 +223,7 @@ def main [
         info "Rebuilding home-manager configuration..."
         print ""
 
-        let hm_flake = $"($nix_config)#($config.username)@($config.system)"
+        let hm_flake = $"($flake_dir)#($config.username)@($config.system)"
 
         # On first run, `home-manager` CLI may not be installed yet.
         # Use `nix run home-manager` from the flake input as fallback.

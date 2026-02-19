@@ -79,9 +79,14 @@ if [ -x "$NU_PATH" ]; then
 		echo -e "${YELLOW}!${NC} atuin not found, skipping atuin.nu"
 	fi
 
-	# Generate mise activation
+	# Generate mise activation (patch add-hook for Nushell compatibility: update optional true -> each { merge } )
 	if command -v mise &>/dev/null; then
 		mise activate nu >"$VENDOR_AUTOLOAD_DIR/mise.nu"
+		# Fix add-hook: "update optional true" pipeline is incompatible in recent Nushell; use each/merge instead
+		# (SC2016: $r must stay literal in sed replacement - it is the Nushell variable name in the generated script)
+		# shellcheck disable=SC2016
+		sed -i '' 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
+			sed -i 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
 		echo -e "${GREEN}✓${NC} Generated mise.nu"
 	else
 		echo -e "${YELLOW}!${NC} mise not found, skipping mise.nu"
