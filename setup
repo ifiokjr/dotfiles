@@ -535,6 +535,24 @@ deploy_groups() {
             print_info "This may take several minutes..."
             echo ""
 
+            # On Linux, standalone home-manager shares the nix profile with
+            # `nix profile add`. Remove temporary packages now to avoid
+            # "An existing package already provides the following file" conflict.
+            # On macOS, nix-darwin uses /etc/profiles/per-user/ (separate path),
+            # so no conflict — cleanup happens at the end instead.
+            if [[ "$PLATFORM" != "macos" ]]; then
+                if [ "$INSTALLED_TUCKR" = true ]; then
+                    print_info "Removing temporary tuckr to avoid nix profile conflict"
+                    run_nix profile remove --regex '.*tuckr.*' 2>/dev/null || true
+                    INSTALLED_TUCKR=false
+                fi
+                if [ "$INSTALLED_NUSHELL" = true ]; then
+                    print_info "Removing temporary nushell to avoid nix profile conflict"
+                    run_nix profile remove --regex '.*nushell.*' 2>/dev/null || true
+                    INSTALLED_NUSHELL=false
+                fi
+            fi
+
             if tuckr_deploy "$TUCKR" nix set; then
                 print_success "Deployed nix"
             else
