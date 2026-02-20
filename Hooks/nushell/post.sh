@@ -87,6 +87,9 @@ if [ -x "$NU_PATH" ]; then
 		# shellcheck disable=SC2016
 		sed -i '' 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
 			sed -i 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
+		# Fix deprecated --ignore-errors flag (renamed to --optional in nushell 0.106.0)
+		sed -i '' 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
+			sed -i 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
 		echo -e "${GREEN}✓${NC} Generated mise.nu"
 	else
 		echo -e "${YELLOW}!${NC} mise not found, skipping mise.nu"
