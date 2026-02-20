@@ -104,3 +104,5 @@ alias gsta='git stash push'
 alias gstp='git stash pop'
 alias gsw='git switch'
 alias gswc='git switch --create'
+
+export PATH="$HOME/.local/bin:$PATH"
