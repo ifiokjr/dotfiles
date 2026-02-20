@@ -409,18 +409,23 @@ deploy_groups() {
 
     cd "$DOTFILES_DIR"
 
-    # Pre-create common parent directories that tuckr needs for symlinking.
-    # On a fresh macOS, ~/.config and ~/.local/bin may not exist yet, causing
-    # "No such file or directory (os error 2)" when tuckr tries to create
-    # symlinks inside them.
-    mkdir -p "$HOME/.config"
-    mkdir -p "$HOME/.local/bin"
+    # Pre-create all parent directories that tuckr needs for symlinking.
+    # Tuckr creates file-level symlinks but cannot create intermediate
+    # directories. On a fresh machine, paths like ~/.config/nix/packages/
+    # or ~/.local/bin/nu_modules/ may not exist, causing tuckr to report
+    # "No such file or directory (os error 2)" for files inside them.
+    # Scan every config group for directory structure and mirror it under $HOME.
+    if [ -d "Configs" ]; then
+        while IFS= read -r -d '' dir; do
+            # Strip "Configs/<group>/" prefix to get the home-relative path
+            local rel="${dir#Configs/*/}"
+            mkdir -p "$HOME/$rel"
+        done < <(find Configs -mindepth 3 -type d -print0)
+    fi
 
-    # Resolve tuckr to its real nix store path. This survives nix profile
-    # removal — only the ~/.nix-profile/bin symlink is deleted, the store
-    # binary remains. We need this because tuckr is removed from the profile
-    # before nix deployment to avoid home-manager conflicts, but is still
-    # needed to deploy remaining groups.
+    # Resolve tuckr to its real nix store path so it survives nix profile
+    # removal during cleanup. The store binary persists even after the
+    # ~/.nix-profile/bin symlink is deleted.
     local TUCKR
     TUCKR=$(realpath "$(command -v tuckr)")
 
@@ -530,19 +535,22 @@ deploy_groups() {
             print_info "This may take several minutes..."
             echo ""
 
-            # Remove temporary nix profile packages before nix deployment.
-            # home-manager (or nix-darwin) will install these permanently, but
-            # if they're already in the nix profile the activation fails with
+            # On Linux, standalone home-manager shares the nix profile with
+            # `nix profile add`. Remove temporary packages now to avoid
             # "An existing package already provides the following file" conflict.
-            if [ "$INSTALLED_TUCKR" = true ]; then
-                print_info "Removing temporary tuckr to avoid nix profile conflict"
-                run_nix profile remove --regex '.*tuckr.*' 2>/dev/null || true
-                INSTALLED_TUCKR=false
-            fi
-            if [ "$INSTALLED_NUSHELL" = true ]; then
-                print_info "Removing temporary nushell to avoid nix profile conflict"
-                run_nix profile remove --regex '.*nushell.*' 2>/dev/null || true
-                INSTALLED_NUSHELL=false
+            # On macOS, nix-darwin uses /etc/profiles/per-user/ (separate path),
+            # so no conflict — cleanup happens at the end instead.
+            if [[ "$PLATFORM" != "macos" ]]; then
+                if [ "$INSTALLED_TUCKR" = true ]; then
+                    print_info "Removing temporary tuckr to avoid nix profile conflict"
+                    run_nix profile remove --regex '.*tuckr.*' 2>/dev/null || true
+                    INSTALLED_TUCKR=false
+                fi
+                if [ "$INSTALLED_NUSHELL" = true ]; then
+                    print_info "Removing temporary nushell to avoid nix profile conflict"
+                    run_nix profile remove --regex '.*nushell.*' 2>/dev/null || true
+                    INSTALLED_NUSHELL=false
+                fi
             fi
 
             if tuckr_deploy "$TUCKR" nix set; then
