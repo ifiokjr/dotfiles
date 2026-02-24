@@ -35,6 +35,7 @@ in
       awscli2
       bat
       biome
+      bun
       cargo-sweep
       cargo-update
       claude-code
