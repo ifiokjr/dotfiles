@@ -55,7 +55,7 @@ let
     };
     "x86_64-linux" = {
       url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb";
-      hash = "sha256-VNvx/3l3gzj8HjeeK3v/Hj05E9t2PvsiP8pnIOq1AEA=";
+      hash = "sha256-lGMopGtpLp3g0PVIfRIACNP6yRarzQDIsuctNbiqCCo=";
     };
   };
 
