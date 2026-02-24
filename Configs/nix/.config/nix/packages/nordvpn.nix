@@ -11,7 +11,7 @@ let
   # 3. Set hash to lib.fakeHash
   # 4. Run rebuild - Nix will show the correct hash in the error
   # 5. Copy the correct hash here
-  version = "9.13.0";
+  version = "9.14.0";
 in
 stdenv.mkDerivation {
   pname = "nordvpn";
@@ -19,7 +19,7 @@ stdenv.mkDerivation {
 
   src = fetchurl {
     url = "https://downloads.nordcdn.com/apps/macos/generic/NordVPN-OpenVPN/${version}/NordVPN.pkg";
-    hash = "sha256-vpu+XMqx1kzxMXyqQkLF2Br6t8HMY+q8O4PiUgF7AwY=";
+    hash = "sha256-GCR6eGvQdLLn9bcNtOEDPLjrbA40syBzeXa05zLIETU=";
   };
 
   dontUnpack = true;

@@ -15,16 +15,16 @@
 # This package uses the official pre-built Racket minimal binaries instead.
 
 let
-  version = "9.0";
+  version = "9.1";
 
   arch = if stdenv.isAarch64 then "aarch64" else "x86_64";
   os = if stdenv.isDarwin then "macosx" else "linux-buster";
 
   hashes = {
-    "aarch64-macosx" = "sha256-Iyk7oMMpLJP6NBuf7uX4kwVSBNOZI4gOYGyC0VCej/I=";
-    "x86_64-macosx" = "sha256-BRn/s02MGUqaIysM0SyeGbhznz+DZXsF3sUr9O/u2Sc=";
-    "aarch64-linux-buster" = "sha256-HwPIo5KUV00ysqOqIoy5+QPURxy0+kG+MuscRgTQnHM=";
-    "x86_64-linux-buster" = "sha256-FiYhLe7S5SOD0Qz6fmd1/Ty4QsCUxYQdzjV+i+moSek=";
+    "aarch64-macosx" = "sha256-5TtdBh+FXnRUi32LW+pr7GidVNBe2H5IXlNIFsmwlrw=";
+    "x86_64-macosx" = "sha256-ih+FNqA2q0yoXrVn6vTs4emOjNQapRvs9L6de7Gyn28=";
+    "aarch64-linux-buster" = "sha256-q9KH9RK2Y+2YSGCs+GElO3WVARAdxyhjKAnL/+L6WGE=";
+    "x86_64-linux-buster" = "sha256-vVY+O5ZNs0G8QYdYia3aqNh1UuS/YrTlDHVuWm8aPVA=";
   };
 in
 stdenv.mkDerivation {
