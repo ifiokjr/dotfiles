@@ -31,15 +31,8 @@ layout {
             pane
         }
         pane split_direction="vertical" {
-            // For now use gemini but can be updateded to claude code once money is better
-            pane name="ai" {
-                command "gemini"
-                args "-m gemini-2.5-flash"
-            }
-            // For use with lazygit
-            pane name="git" {
-                command "lazygit"
-            }
+            pane
+            pane
         }
     }
 }
