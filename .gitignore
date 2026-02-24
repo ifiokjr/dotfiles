@@ -4,7 +4,7 @@ Configs/nix/.config/nix/.devenv/
 Configs/nix/.config/nix/.devenv.flake.nix
 **/result
 **/result-*
-**/flake.lock
+# **/flake.lock
 .direnv/
 **/.direnv/
 .nix-defexpr/

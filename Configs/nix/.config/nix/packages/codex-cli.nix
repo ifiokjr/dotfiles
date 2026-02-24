@@ -9,7 +9,7 @@ let
   # To update version:
   # 1. Run: update:codex:version
   # 2. Or manually change version, set hashes to lib.fakeSha256, rebuild
-  version = "0.101.0";
+  version = "0.104.0";
   tag = "rust-v${version}";
 
   # Platform mapping: Nix system → release asset suffix
@@ -23,10 +23,10 @@ let
     .${stdenv.hostPlatform.system} or (throw "Unsupported platform: ${stdenv.hostPlatform.system}");
 
   hashes = {
-    "aarch64-apple-darwin" = "sha256-/Ah+kAK+DhcL/qonZZ43eCHhWrl4tKSQde+V21+CB/g=";
-    "x86_64-apple-darwin" = "sha256-UdTjUXx18JMxMr4zZfM7CANtQ9PCBpKzD1zDbdPqw+k=";
-    "aarch64-unknown-linux-musl" = "sha256-9cSxFHMyocxBCLd2x1nue0CdNl5YMKTllmfh+cfm2mA=";
-    "x86_64-unknown-linux-musl" = "sha256-/zY/hZfb8Dg8F2WefJJzW6qZG+irmflnxcw8aLMpJ3w=";
+    "aarch64-apple-darwin" = "sha256-twFR4DigVVJNTQAOgLS30VWGFluEdnSgwyFl0R2sJxE=";
+    "x86_64-apple-darwin" = "sha256-bKIkT4VgC8C7knRKSAezkALnN4xORzLQm6e7DteU1Ow=";
+    "aarch64-unknown-linux-musl" = "sha256-gUyqVfEBbDzOlQ6S4LreBOAOHII5VfbCsCCIPoYtGqY=";
+    "x86_64-unknown-linux-musl" = "sha256-4QloDXgyPo6Od7GyI6JXdv7qbgQOsG9QyKQ5D1k8spg=";
   };
 in
 stdenv.mkDerivation {
