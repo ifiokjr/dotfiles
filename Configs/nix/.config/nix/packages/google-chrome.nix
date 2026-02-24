@@ -46,12 +46,12 @@ let
   sources = {
     "x86_64-darwin" = {
       url = "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg";
-      hash = "sha256-VTF6SG+fon+0CQ3xS4qX5AOFFeP3Qz47ZPIHuBkJcUU=";
+      hash = "sha256-tEZQk64nIU9cgvKwOwBIn4pLv0mTT9vSgmqLEYqCyAg=";
     };
     "aarch64-darwin" = {
       url = "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg";
       # Apple Silicon uses the same universal DMG payload as x86_64 on macOS.
-      hash = "sha256-VTF6SG+fon+0CQ3xS4qX5AOFFeP3Qz47ZPIHuBkJcUU=";
+      hash = "sha256-tEZQk64nIU9cgvKwOwBIn4pLv0mTT9vSgmqLEYqCyAg=";
     };
     "x86_64-linux" = {
       url = "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb";
