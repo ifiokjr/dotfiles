@@ -68,6 +68,8 @@ in
       nixfmt
       ollama
       opencode
+      pulumi-bin
+      pulumi-esc
       racket-minimal-custom
       rustup
       spec-kit
