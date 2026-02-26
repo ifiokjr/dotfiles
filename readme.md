@@ -87,12 +87,8 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
-- `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux)
+- `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux); use `rebuild --update` to refresh `flake.lock` before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
-- `update:pnpm:version` - Automatically update pnpm-standalone to latest version (also installs latest Node.js)
-- `update:cursor:version` - Update cursor-cli to the latest version
-- `update:racket:version` - Update racket-minimal to the latest version
-- `update:custom-apps` - Update rolling-URL packages (google-chrome, steam, google-drive) and versioned casks (zoom, nordvpn, gpg-suite)
 - `update:node` - Update Node.js to latest version using pnpm env
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
@@ -385,115 +381,27 @@ Or let the `post_nix` hook handle rebuilds:
 tuckr set nix
 ```
 
-## Custom Nix Packages
+## Nix Package Updates
 
-The dotfiles include custom Nix packages that aren't available in nixpkgs or have special requirements. These are located in `Configs/nix/.config/nix/packages/`.
+Custom package definitions are maintained in the external `ifiokjr/nixpkgs` input.
 
-### pnpm-standalone
-
-A standalone version of pnpm that doesn't depend on Node.js, allowing you to use pnpm to manage Node versions.
-
-**Why custom?** The nixpkgs pnpm package depends on Node.js, which defeats the purpose of using pnpm to manage Node versions. This custom package fetches the standalone binary directly from GitHub releases.
-
-**Supported platforms:**
-
-- macOS (arm64, x64)
-- Linux (arm64, x64)
-
-**Current version:** Check `Configs/nix/.config/nix/packages/pnpm-standalone.nix` for the latest version.
-
-#### Updating pnpm Version
-
-**Easiest Method (Recommended):**
-
-Simply run:
+Use:
 
 ```bash
-update:pnpm:version
+rebuild --update
 ```
 
-This script automatically:
-
-- Fetches the latest pnpm version from GitHub releases
-- Updates `pnpm-standalone.nix` with the new version
-- Detects your platform (macos-arm64, macos-x64, etc.)
-- Fetches and updates the correct hash
-- Rebuilds your system configuration
-- Verifies pnpm is installed correctly
-- Installs the latest Node.js version using pnpm env
-
-**Advanced Method:**
-
-If you only need to update the hash for the current version (doesn't require sudo):
-
-```bash
-cd ~/.config/nix/packages
-./update-pnpm-hash.sh
-# Then run: rebuild
-```
-
-**Manual Method:**
-
-If you prefer full manual control:
-
-1. Edit `Configs/nix/.config/nix/packages/pnpm-standalone.nix`
-2. Update the `version` variable (e.g., `version = "10.29.0";`)
-3. Set the hash for your platform to `lib.fakeSha256`:
-   ```nix
-   hashes = {
-     "macos-arm64" = lib.fakeSha256;  # Or whichever platform you're on
-     # ...
-   };
-   ```
-4. Run `rebuild`
-5. The build will fail with an error showing the correct hash:
-   ```
-   error: hash mismatch in fixed-output derivation '/nix/store/...'
-     specified: sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-     got:      sha256-3NKbhDlzXW0IUJL+Yoj0vKRfdmHCNYVP9Q4Q8OvGXV8=
-   ```
-6. Copy the "got" hash and update your platform entry in `pnpm-standalone.nix`
-7. Run `rebuild` again
-
-**Troubleshooting:**
-
-If any script fails:
-
-- Check the output for error messages
-- Verify you have internet access (scripts need to fetch from GitHub)
-- Try the manual method above
+to update flake inputs (including `ifiokjr-nixpkgs`) and refresh `flake.lock` before rebuilding.
 
 ### Node.js Version Management
 
-Since pnpm-standalone doesn't depend on Node.js, you can use pnpm itself to manage Node.js versions. This gives you full control over which Node.js version to use.
-
-**Update Node.js to latest version:**
+Use:
 
 ```bash
 update:node
 ```
 
-This script uses `pnpm env use --global latest` to install and activate the latest stable Node.js version.
-
-**Manual Node.js management:**
-
-```bash
-# Install latest Node.js
-pnpm env use --global latest
-
-# Install specific version
-pnpm env use --global 20
-
-# List installed versions
-pnpm env list
-
-# Remove a version
-pnpm env remove --global 18
-```
-
-**Note:** The `update:pnpm:version` script automatically installs the latest Node.js after updating pnpm, so you typically don't need to run `update:node` separately.
-
-For more details about the custom package system, see `Configs/nix/.config/nix/packages/readme.md`.
+to install/activate the latest Node.js version via `pnpm env use --global latest`.
 
 ## Testing
 

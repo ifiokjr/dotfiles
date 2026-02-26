@@ -274,17 +274,11 @@ To add a new GUI app:
    ]);
    ```
 
-2. **If not in nix-casks** — the app likely uses a `.pkg` installer. Create a custom derivation in `packages/`:
-
-   - For `.dmg` containing `.app`: use `undmg` (see `packages/steam.nix`)
-   - For `.dmg` containing `.pkg`: use `undmg` + `pkgutil` (see `packages/google-drive.nix`)
-   - For direct `.pkg` download: use `pkgutil` (see `packages/zoom.nix`)
-
-   Then add `callPackage` in the `let` block and append to `environment.systemPackages`.
+2. **If not in nix-casks** — add a custom package in `ifiokjr/nixpkgs`, then consume it from the `ifiokjr-nixpkgs` flake input used by this repo.
 
 3. **If in nixpkgs** — check `nix search nixpkgs <name>`. If available as a nixpkgs package, add it to `home.nix` instead (works cross-platform).
 
-All custom app packages with rolling URLs have their hashes automatically refreshed during `rebuild`. Versioned packages check the Homebrew API for updates. Use `rebuild --skip-updates` to skip this step.
+Run `rebuild --update` to refresh flake inputs (including `ifiokjr-nixpkgs`) and update `flake.lock` before rebuilding.
 
 ### Environment Variables
 

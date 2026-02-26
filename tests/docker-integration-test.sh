@@ -56,7 +56,7 @@ pass "machine.nix generated"
 
 # ----- Step 2: Run rebuild (home-manager switch on Linux) -----
 step "Running rebuild"
-nu "$HOME/.local/bin/rebuild" --skip-check --skip-updates
+nu "$HOME/.local/bin/rebuild" --skip-check
 pass "rebuild completed"
 
 # ----- Step 3: Run verification tests -----
