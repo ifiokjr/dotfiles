@@ -95,8 +95,6 @@ def main [] {
         "generate-machine-config"
         "install:helix:custom"
         "update:node"
-        "update:pnpm:version"
-        "update:cursor:version"
         "setup:env"
     ]
 

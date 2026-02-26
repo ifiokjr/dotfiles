@@ -10,7 +10,7 @@ use nu_modules/nix_config.nu
 
 def main [
     --skip-check    # Skip flake check before rebuilding
-    --update        # Update custom packages before rebuilding (skipped by default)
+    --update        # Update flake inputs (flake.lock) before rebuilding
 ] {
     let nix_config = (nix_config config-dir)
     let machine_config = $"($nix_config)/machine.nix"
@@ -96,59 +96,6 @@ def main [
     print $"  System: ($config.system)"
     print ""
 
-    # Auto-update packages (only when --update is passed)
-    if $update {
-        info "Checking for package updates..."
-        print ""
-
-        # Update codex-cli
-        do -i {
-            info "Checking codex-cli for updates..."
-            ^update:codex:version --skip-rebuild
-        }
-        if ($env.LAST_EXIT_CODE != 0) {
-            warn "codex-cli update check failed \(continuing\)"
-        }
-
-        # Update cursor-cli
-        do -i {
-            info "Checking cursor-cli for updates..."
-            ^update:cursor:version --skip-rebuild
-        }
-        if ($env.LAST_EXIT_CODE != 0) {
-            warn "cursor-cli update check failed \(continuing\)"
-        }
-
-        # Update pnpm-standalone
-        do -i {
-            info "Checking pnpm for updates..."
-            ^update:pnpm:version --skip-rebuild
-        }
-        if ($env.LAST_EXIT_CODE != 0) {
-            warn "pnpm update check failed \(continuing\)"
-        }
-
-        # Update racket-minimal
-        do -i {
-            info "Checking racket for updates..."
-            ^update:racket:version --skip-rebuild
-        }
-        if ($env.LAST_EXIT_CODE != 0) {
-            warn "racket update check failed \(continuing\)"
-        }
-
-        # Update custom app packages (rolling hashes + versioned casks)
-        do -i {
-            info "Checking custom app packages for updates..."
-            ^update:custom-apps --skip-rebuild
-        }
-        if ($env.LAST_EXIT_CODE != 0) {
-            warn "custom app update check failed \(continuing\)"
-        }
-
-        print ""
-    }
-
     # Detect root-only nix install (Docker/containers without systemd).
     # When true, nix commands need sudo with HOME preserved.
     # If the nix daemon socket exists (e.g. manually started), sudo is not needed.
@@ -160,6 +107,19 @@ def main [
 
     # Use resolved flake dir for nix commands so symlinked flake.nix doesn't produce invalid paths
     let flake_dir = (nix_config flake-dir)
+
+    # Update flake inputs (only when --update is passed)
+    if $update {
+        info "Updating flake inputs..."
+        let update_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake update --flake '($flake_dir)'"
+        let update_result = do -i { ^bash -c $update_cmd }
+        if ($env.LAST_EXIT_CODE == 0) {
+            success "Flake lock updated"
+        } else {
+            warn "Flake update failed \(continuing\)"
+        }
+        print ""
+    }
 
     # Check flake validity (unless skipped)
     # `nix flake check` validates the flake.nix outputs without building everything
