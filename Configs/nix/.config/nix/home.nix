@@ -54,6 +54,7 @@ in
       go
       graphite-cli
       jdk17
+      kubernetes-helm
       lazygit
       lld
       llvm
