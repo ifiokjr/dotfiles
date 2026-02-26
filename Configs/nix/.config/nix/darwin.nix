@@ -4,19 +4,13 @@
   self,
   username,
   nix-casks,
+  ifiokjr-nixpkgs,
   ...
 }:
 
 let
   casks = nix-casks.packages.${pkgs.stdenv.system};
-
-  # Custom packages (apps not available in nix-casks)
-  google-chrome-custom = pkgs.callPackage ./packages/google-chrome.nix { };
-  steam-custom = pkgs.callPackage ./packages/steam.nix { };
-  google-drive-custom = pkgs.callPackage ./packages/google-drive.nix { };
-  gpg-suite-custom = pkgs.callPackage ./packages/gpg-suite.nix { };
-  nordvpn-custom = pkgs.callPackage ./packages/nordvpn.nix { };
-  zoom-custom = pkgs.callPackage ./packages/zoom.nix { };
+  extra = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
 in
 {
   nix.enable = false;
@@ -100,13 +94,13 @@ in
       "duet"
     ])
     ++ [
-      # Custom packages (apps not available in nix-casks)
-      google-chrome-custom
-      google-drive-custom
-      gpg-suite-custom
-      nordvpn-custom
-      steam-custom
-      zoom-custom
+      # Custom packages from ifiokjr/nixpkgs (apps not available in nix-casks)
+      extra.google-chrome
+      extra.google-drive
+      extra.gpg-suite
+      extra.nordvpn
+      extra.steam
+      extra.zoom
     ];
 
   # Enable zsh system-wide

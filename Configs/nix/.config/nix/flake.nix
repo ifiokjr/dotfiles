@@ -11,6 +11,10 @@
       url = "github:atahanyorganci/nix-casks/archive";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ifiokjr-nixpkgs = {
+      url = "github:ifiokjr/nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -20,6 +24,7 @@
       home-manager,
       nixpkgs,
       nix-casks,
+      ifiokjr-nixpkgs,
     }:
     let
       # Helper function to create configurations for a specific user
@@ -37,7 +42,7 @@
             ./darwin.nix
             {
               _module.args = {
-                inherit username nix-casks;
+                inherit username nix-casks ifiokjr-nixpkgs;
               };
             }
             # Integrate home-manager directly with nix-darwin
@@ -45,6 +50,9 @@
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.extraSpecialArgs = {
+                inherit ifiokjr-nixpkgs;
+              };
               home-manager.users.${username} = {
                 imports = [ ./home.nix ];
                 home.username = username;
@@ -77,7 +85,9 @@
         in
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
-
+          extraSpecialArgs = {
+            inherit ifiokjr-nixpkgs;
+          };
           modules = [
             ./home.nix
             {

@@ -1,16 +1,12 @@
 {
   pkgs,
   lib,
+  ifiokjr-nixpkgs,
   ...
 }:
 
 let
-  # Custom packages
-  pnpm-standalone = pkgs.callPackage ./packages/pnpm-standalone.nix { };
-  cursor-cli-custom = pkgs.callPackage ./packages/cursor-cli.nix { };
-  codex-cli-custom = pkgs.callPackage ./packages/codex-cli.nix { };
-  google-chrome-custom = pkgs.callPackage ./packages/google-chrome.nix { };
-  racket-minimal-custom = pkgs.callPackage ./packages/racket-minimal.nix { };
+  extra = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -40,8 +36,8 @@ in
       cargo-update
       claude-code
       cloudflared
-      codex-cli-custom
-      cursor-cli-custom
+      extra.codex-cli
+      extra.cursor-cli
       deno
       devenv
       direnv
@@ -70,7 +66,9 @@ in
       opencode
       pulumi-bin
       pulumi-esc
-      racket-minimal-custom
+      extra.knope
+      extra.mdt
+      extra.racket-minimal
       rustup
       spec-kit
 
@@ -149,8 +147,8 @@ in
       vncdo
       zlib
 
-      # Custom packages
-      pnpm-standalone
+      # Custom packages from ifiokjr/nixpkgs
+      extra.pnpm-standalone
 
       # Fonts
       google-fonts # Includes Duru Sans, Kranky, Rubik, Short Stack, etc.
@@ -183,7 +181,7 @@ in
     ++ lib.optionals pkgs.stdenv.isLinux [
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       blender # broken on macOS in nixpkgs; macOS uses nix-casks
-      google-chrome-custom
+      extra.google-chrome
     ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -203,7 +201,7 @@ in
 
   # Activation scripts
   home.activation.installRacketPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    ${racket-minimal-custom}/bin/raco pkg install --skip-installed --auto --scope user fmt || true
+    ${extra.racket-minimal}/bin/raco pkg install --skip-installed --auto --scope user fmt || true
   '';
 
   # Environment variables
