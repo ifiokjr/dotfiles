@@ -156,7 +156,7 @@ in
       inconsolata
       recursive
       roboto
-      nerd-fonts.agave
+      extra.agave
       nerd-fonts.caskaydia-cove
       nerd-fonts.code-new-roman
       nerd-fonts.droid-sans-mono
