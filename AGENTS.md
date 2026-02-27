@@ -15,6 +15,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
   - Use feature branches like `feat/*`, `fix/*`, `ci/*`, `chore/*` (no `codex/` prefix).
   - Use Conventional Commits.
   - Open a pull request to merge into `main`.
+  - Use squash merges only (no merge commits or rebase merges).
 
 ## Guides
 

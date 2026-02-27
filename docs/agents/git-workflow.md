@@ -6,6 +6,13 @@
 - Use names like `feat/*`, `fix/*`, `ci/*`, `chore/*`.
 - Do not use `codex/` prefix.
 - Merge to `main` via pull request.
+- Use squash merge only.
+
+## Merge Strategy
+
+- `squash` is the only allowed merge method.
+- Do not use merge commits.
+- Do not use rebase merges.
 
 ## Agent Branch Flow
 
