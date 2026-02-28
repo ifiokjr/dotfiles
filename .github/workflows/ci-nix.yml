@@ -22,8 +22,51 @@ on:
       - "tests/**"
       - ".github/workflows/ci-nix.yml"
 
+concurrency:
+  group: ci-nix-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  changes:
+    name: detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      run_setup: ${{ steps.filter.outputs.setup }}
+      run_macos: ${{ steps.filter.outputs.macos }}
+      run_docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 detect file changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            setup:
+              - "Configs/nix/**"
+              - "Hooks/nix/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+            macos:
+              - "Configs/nix/.config/nix/darwin.nix"
+              - "Configs/nix/.config/nix/flake.nix"
+              - "Configs/nix/.config/nix/home.nix"
+              - "Hooks/nix/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+            docker:
+              - "Dockerfile"
+              - "tests/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+
   setup:
+    needs: changes
+    if: needs.changes.outputs.run_setup == 'true' && (matrix.os != 'macos-latest' || needs.changes.outputs.run_macos == 'true')
     name: setup script (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -64,6 +107,8 @@ jobs:
           tuckr status
 
   docker-integration:
+    needs: changes
+    if: needs.changes.outputs.run_docker == 'true'
     name: docker integration test
     runs-on: ubuntu-latest
     steps:
