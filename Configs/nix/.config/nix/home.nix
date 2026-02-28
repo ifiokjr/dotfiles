@@ -106,6 +106,7 @@ in
 
       # Language Servers & Tools
       kotlin
+      ktlint
       kotlin-language-server
       lua-language-server
       markdown-oxide
