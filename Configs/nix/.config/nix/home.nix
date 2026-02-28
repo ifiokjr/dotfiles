@@ -150,6 +150,7 @@ in
       zlib
 
       # Custom packages from ifiokjr/nixpkgs
+      extra.cargo-interactive-update
       extra.pnpm-standalone
 
       # Fonts

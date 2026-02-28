@@ -98,6 +98,7 @@ in
       ])
       ++ [
         # Custom packages from ifiokjr/nixpkgs (apps not available in nix-casks)
+        extra.codexbar
         extra.google-chrome
         extra.google-drive
         extra.gpg-suite
