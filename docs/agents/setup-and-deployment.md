@@ -17,6 +17,7 @@ cd ~/path/to/dotfiles
 - `--cwd PATH`: clone to custom path.
 - `--groups GROUPS`: deploy specific comma-separated groups.
 - `--skip-nix`: skip Nix install.
+- `--lite`: enable CLI-focused install and skip GUI-heavy applications.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
 
@@ -37,6 +38,8 @@ tuckr set <group>
 tuckr status
 
 rebuild
+rebuild --lite
+rebuild --no-lite
 tuckr set nix
 ```
 

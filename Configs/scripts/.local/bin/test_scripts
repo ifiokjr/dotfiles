@@ -148,8 +148,37 @@ def main [] {
             if ($config.system | is-empty) {
                 error make { msg: "system is empty" }
             }
+            if (($config.lite | describe) != "bool") {
+                error make { msg: "lite should be bool" }
+            }
         }
         # Skip if machine.nix doesn't exist (CI environments)
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "nix_config: set-lite-mode true/false" { ||
+        let test_file = "/tmp/test-machine-lite.nix"
+        let base = "# Machine-specific configuration
+{
+  username = \"testuser\";
+  system = \"x86_64-linux\";
+  hostname = \"test-host\";
+}
+"
+        $base | save -f $test_file
+
+        nix_config set-lite-mode true --path $test_file
+        let content_true = (open $test_file --raw)
+        if not ($content_true | str contains "lite = true;") {
+            error make { msg: "expected lite = true after set-lite-mode true" }
+        }
+
+        nix_config set-lite-mode false --path $test_file
+        let content_false = (open $test_file --raw)
+        if not ($content_false | str contains "lite = false;") {
+            error make { msg: "expected lite = false after set-lite-mode false" }
+        }
+
+        rm $test_file
     }) { $passed += 1 } else { $failed += 1 }
 
     # ── Summary ───────────────────────────────────────────────────

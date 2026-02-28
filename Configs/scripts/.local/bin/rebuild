@@ -11,10 +11,17 @@ use nu_modules/nix_config.nu
 def main [
     --skip-check    # Skip flake check before rebuilding
     --update        # Update flake inputs (flake.lock) before rebuilding
+    --lite          # Set machine.nix default to lite mode (skip GUI-heavy apps)
+    --no-lite       # Set machine.nix default to full mode (include GUI-heavy apps)
 ] {
     let nix_config = (nix_config config-dir)
     let machine_config = $"($nix_config)/machine.nix"
     let machine_example = $"($nix_config)/machine.nix.example"
+
+    if $lite and $no_lite {
+        err "Cannot use both --lite and --no-lite"
+        exit 1
+    }
 
     # Configure GitHub access token for nix to avoid API rate limits when
     # fetching nixpkgs. Uses GITHUB_TOKEN if available (e.g. in CI).
@@ -81,6 +88,15 @@ def main [
         print ""
     }
 
+    # Persist lite mode choice into machine.nix when explicitly requested.
+    if $lite {
+        nix_config set-lite-mode true
+        success "Updated machine.nix default: lite = true"
+    } else if $no_lite {
+        nix_config set-lite-mode false
+        success "Updated machine.nix default: lite = false"
+    }
+
     # Show current configuration
     info $"Reading machine configuration from: ($machine_config)"
     let config = (nix_config parse-machine-config)
@@ -94,6 +110,7 @@ def main [
     info "Configuration:"
     print $"  Username: ($config.username)"
     print $"  System: ($config.system)"
+    print $"  Lite: ($config.lite)"
     print ""
 
     # Detect root-only nix install (Docker/containers without systemd).

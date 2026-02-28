@@ -16,6 +16,7 @@
 #   --cwd PATH          Clone dotfiles to PATH (default: current directory or ~/Developer/.dotfiles)
 #   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
 #   --skip-nix          Skip Nix installation (use if already installed)
+#   --lite              Install CLI-focused setup and skip GUI-heavy applications
 #   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
@@ -36,6 +37,7 @@ DEFAULT_DOTFILES_DIR="$HOME/Developer/.dotfiles"
 DOTFILES_DIR=""
 DEPLOY_GROUPS=""
 SKIP_NIX=false
+LITE=false
 NO_CONFIRM=false
 
 # Track what we install for cleanup
@@ -81,12 +83,16 @@ parse_args() {
                 SKIP_NIX=true
                 shift
                 ;;
+            --lite)
+                LITE=true
+                shift
+                ;;
             --no-confirm)
                 NO_CONFIRM=true
                 shift
                 ;;
             --help)
-                sed -n '2,16p' "$0" | sed 's/^# //'
+                sed -n '2,21p' "$0" | sed 's/^# //'
                 exit 0
                 ;;
             *)
@@ -682,7 +688,12 @@ main() {
 
     parse_args "$@"
     export NO_CONFIRM
+    export SETUP_LITE="$LITE"
     detect_platform
+
+    if [ "$LITE" = true ]; then
+        print_info "Lite mode enabled: GUI-heavy applications will be skipped"
+    fi
 
     # Check if we're already in the repo
     if ! check_if_in_repo; then

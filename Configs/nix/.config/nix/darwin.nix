@@ -1,8 +1,10 @@
 {
   config,
+  lib,
   pkgs,
   self,
   username,
+  lite ? false,
   nix-casks,
   ifiokjr-nixpkgs,
   ...
@@ -42,66 +44,68 @@ in
       freetype
       jdk # Some system tools may need Java
     ])
-    ++ (map (name: casks.${name}) [
-      # Productivity & Communication
-      "1password"
-      "discord"
-      "figma"
-      "setapp"
-      "slack"
-      "telegram"
-      "whatsapp"
+    ++ lib.optionals (!lite) (
+      (map (name: casks.${name}) [
+        # Productivity & Communication
+        "1password"
+        "discord"
+        "figma"
+        "setapp"
+        "slack"
+        "telegram"
+        "whatsapp"
 
-      # Browsers
-      "brave-browser"
-      "firefox"
-      "microsoft-edge"
+        # Browsers
+        "brave-browser"
+        "firefox"
+        "microsoft-edge"
 
-      # Development
-      "android-ndk"
-      "android-studio"
-      "charles"
-      "cursor"
-      "db-browser-for-sqlite"
-      "dbeaver-community"
-      "gdevelop"
-      "ghostty"
-      # Temporarily disabled: upstream cask source hash is currently mismatched.
-      # Re-enable once nix-casks updates the hash for the current Godot artifact.
-      "orbstack"
-      "podman-desktop"
-      "react-native-debugger"
-      "reactotron"
-      "visual-studio-code"
-      "zed"
+        # Development
+        "android-ndk"
+        "android-studio"
+        "charles"
+        "cursor"
+        "db-browser-for-sqlite"
+        "dbeaver-community"
+        "gdevelop"
+        "ghostty"
+        # Temporarily disabled: upstream cask source hash is currently mismatched.
+        # Re-enable once nix-casks updates the hash for the current Godot artifact.
+        "orbstack"
+        "podman-desktop"
+        "react-native-debugger"
+        "reactotron"
+        "visual-studio-code"
+        "zed"
 
-      # Media & Graphics
-      "blender"
-      "obs"
-      "ollama-app"
-      "vlc"
+        # Media & Graphics
+        "blender"
+        "obs"
+        "ollama-app"
+        "vlc"
 
-      # Utilities
-      "alt-tab"
-      "flux-app"
-      "geekbench"
-      "ledger-live"
-      "qbittorrent"
-      "the-unarchiver"
-      "vysor"
+        # Utilities
+        "alt-tab"
+        "flux-app"
+        "geekbench"
+        "ledger-live"
+        "qbittorrent"
+        "the-unarchiver"
+        "vysor"
 
-      # Android
-      "duet"
-    ])
-    ++ [
-      # Custom packages from ifiokjr/nixpkgs (apps not available in nix-casks)
-      extra.google-chrome
-      extra.google-drive
-      extra.gpg-suite
-      extra.nordvpn
-      extra.steam
-      extra.zoom
-    ];
+        # Android
+        "duet"
+      ])
+      ++ [
+        # Custom packages from ifiokjr/nixpkgs (apps not available in nix-casks)
+        extra.google-chrome
+        extra.google-drive
+        extra.gpg-suite
+        extra.nordvpn
+        extra.steam
+        extra.zoom
+      ]
+    );
 
   # Enable zsh system-wide
   programs.zsh.enable = true;

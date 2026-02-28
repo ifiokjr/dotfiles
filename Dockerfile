@@ -12,6 +12,6 @@ USER testuser
 COPY --chown=testuser:testuser . /home/testuser/.dotfiles
 WORKDIR /home/testuser/.dotfiles
 
-RUN SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm
+RUN SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm --lite
 
 CMD ["bash", "-lc", "tests/docker-integration-test.sh"]
