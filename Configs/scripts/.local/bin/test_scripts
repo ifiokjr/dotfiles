@@ -84,6 +84,19 @@ def main [] {
         }
     }) { $passed += 1 } else { $failed += 1 }
 
+    if (run_test "nix_config: flake-dir fallback to repo checkout" { ||
+        let temp_home = "/tmp/test-flake-dir-home"
+        if ($temp_home | path exists) { rm -rf $temp_home }
+        mkdir $temp_home
+
+        let resolved = (with-env { HOME: $temp_home } { nix_config flake-dir })
+        if not ($resolved | str ends-with "Configs/nix/.config/nix") {
+            error make { msg: $"unexpected fallback flake-dir: ($resolved)" }
+        }
+
+        rm -rf $temp_home
+    }) { $passed += 1 } else { $failed += 1 }
+
     print ""
 
     # ── Script Parse Tests (--help) ───────────────────────────────

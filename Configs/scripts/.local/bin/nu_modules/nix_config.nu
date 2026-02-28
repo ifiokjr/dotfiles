@@ -15,7 +15,17 @@ export def flake-dir [] {
     let flake_nix = $"($link_dir)/flake.nix"
     if ($flake_nix | path exists) { 
     # path expand resolves the symlink; dirname gives the flake root
-    ($flake_nix | path expand | path dirname) } else { $link_dir }
+    ($flake_nix | path expand | path dirname) } else {
+        # CI/workflow checkouts may run without ~/.config/nix symlinks deployed.
+        # In that case, fall back to the flake path inside the checked out repo.
+        let repo_root = try {
+            ^git rev-parse --show-toplevel | str trim
+        } catch { "" }
+        if ($repo_root | is-not-empty) {
+            let repo_flake = $"($repo_root)/Configs/nix/.config/nix/flake.nix"
+            if ($repo_flake | path exists) { ($repo_flake | path expand | path dirname) } else { $link_dir }
+        } else { $link_dir }
+    }
 }
 # Path to machine.nix
 export def machine-config-path [] { $"(config-dir)/machine.nix" }
