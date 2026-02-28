@@ -12,12 +12,8 @@ permissions:
 
 jobs:
   update:
-    name: update flake inputs & packages (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+    name: update flake lock
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@v4
@@ -33,207 +29,10 @@ jobs:
       - name: 📦 install nushell
         run: nix profile add nixpkgs#nushell
 
-      - name: 📝 generate machine.nix
-        run: >-
-          nu Configs/scripts/.local/bin/generate-machine-config
-          --output Configs/nix/.config/nix/machine.nix
-
-      - name: 🔄 update flake inputs
-        run: nix flake update Configs/nix/.config/nix
+      - name: 🔄 update flake lock
+        run: nu Configs/scripts/.local/bin/rebuild --update --skip-check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔄 update custom package versions & hashes
-        run: |
-          export PATH="$PWD/Configs/scripts/.local/bin:$PATH"
-          nu -c '
-            do -i { ^update:codex:version --skip-rebuild }
-            do -i { ^update:cursor:version --skip-rebuild }
-            do -i { ^update:pnpm:version --skip-rebuild }
-            do -i { ^update:racket:version --skip-rebuild }
-            do -i { ^update:custom-apps --skip-rebuild }
-          '
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 📤 upload nix changes
-        uses: actions/upload-artifact@v4
-        with:
-          name: nix-updates-${{ matrix.os }}
-          path: |
-            Configs/nix/.config/nix/flake.lock
-            Configs/nix/.config/nix/packages/
-          retention-days: 1
-
-  merge:
-    name: merge platform updates
-    needs: update
-    runs-on: ubuntu-latest
-    outputs:
-      has_changes: ${{ steps.check.outputs.has_changes }}
-    steps:
-      - name: 📥 checkout repository
-        uses: actions/checkout@v4
-
-      - name: 📥 download macos artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: nix-updates-macos-latest
-          path: artifacts/macos
-
-      - name: 📥 download linux artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: nix-updates-ubuntu-latest
-          path: artifacts/linux
-
-      - name: 🔀 merge updates from both platforms
-        run: >-
-          bash .github/scripts/merge-platform-hashes.sh
-          artifacts/macos artifacts/linux Configs/nix/.config/nix
-
-      - name: 🔍 check for changes
-        id: check
-        run: |
-          if git diff --quiet; then
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-            echo "No changes detected"
-          else
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-            echo "Changes detected:"
-            git diff --stat
-          fi
-
-      - name: 📤 upload merged changes
-        if: steps.check.outputs.has_changes == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: nix-updates-merged
-          path: |
-            Configs/nix/.config/nix/flake.lock
-            Configs/nix/.config/nix/packages/
-          retention-days: 1
-
-  test:
-    name: test (${{ matrix.os }})
-    needs: merge
-    if: needs.merge.outputs.has_changes == 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - name: 📥 checkout repository
-        uses: actions/checkout@v4
-
-      - name: 📥 download merged updates
-        uses: actions/download-artifact@v4
-        with:
-          name: nix-updates-merged
-          path: artifacts
-
-      - name: 🔀 apply merged updates
-        run: |
-          cp artifacts/flake.lock Configs/nix/.config/nix/flake.lock
-          cp artifacts/packages/*.nix Configs/nix/.config/nix/packages/
-
-      - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
-
-      - name: 📦 install lint tools
-        run: |
-          nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
-            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
-            nixpkgs#racket-minimal
-          raco pkg install --skip-installed --auto --scope user --no-docs fmt || true
-
-      - name: 🔍 shellcheck bash scripts
-        run: >-
-          shellcheck setup setup-tuckr-symlink.sh
-          Hooks/nix/post.sh Hooks/nushell/post.sh Hooks/claude/post.sh
-          Configs/shell/.config/shell/env.sh
-          Configs/bash/.bashrc Configs/bash/.bash_profile
-
-      - name: 🔍 validate nushell scripts (nu-check)
-        run: |
-          for f in $(find . -name '*.nu' -not -path './.git/*'); do
-            echo "Checking: $f"
-            nu -c "nu-check --as-module '$f'"
-          done
-          for f in Configs/scripts/.local/bin/*; do
-            if [ -f "$f" ] && head -1 "$f" | grep -q '#!/usr/bin/env nu'; then
-              echo "Checking: $f"
-              nu -c "nu-check '$f'"
-            fi
-          done
-
-      - name: 🎨 format check (dprint)
-        run: dprint check --config Configs/dprint/dprint.json
-
-      - name: 📝 generate machine.nix
-        run: >-
-          nu Configs/scripts/.local/bin/generate-machine-config
-          --output Configs/nix/.config/nix/machine.nix
-
-      - name: 🔧 temporarily stage machine.nix for flake check
-        run: git add --force Configs/nix/.config/nix/machine.nix
-
-      - name: 🔍 nix flake check
-        run: nix flake check Configs/nix/.config/nix --impure --no-build
-
-      - name: 🧪 run test suite
-        run: nu Configs/scripts/.local/bin/test_scripts
-
-      - name: ✅ verify generate-machine-config
-        run: |
-          nu Configs/scripts/.local/bin/generate-machine-config --output /tmp/test-machine.nix
-          cat /tmp/test-machine.nix
-          rm /tmp/test-machine.nix
-
-      - name: 🧹 free disk space (macos)
-        if: runner.os == 'macOS'
-        run: |
-          sudo rm -rf /Applications/Xcode_*.app
-          xcrun simctl delete all 2>/dev/null || true
-          sudo rm -rf ~/Library/Developer/CoreSimulator
-          df -h /
-
-      - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: ✅ verify setup completed
-        run: |
-          command -v tuckr && echo "tuckr: ok"
-          command -v nu && echo "nushell: ok"
-          tuckr status
-
-  commit:
-    name: create pull request
-    needs: [merge, test]
-    if: needs.merge.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 checkout repository
-        uses: actions/checkout@v4
-
-      - name: 📥 download merged updates
-        uses: actions/download-artifact@v4
-        with:
-          name: nix-updates-merged
-          path: artifacts
-
-      - name: 🔀 apply merged updates
-        run: |
-          cp artifacts/flake.lock Configs/nix/.config/nix/flake.lock
-          cp artifacts/packages/*.nix Configs/nix/.config/nix/packages/
 
       - name: 📝 generate commit summary
         id: summary
@@ -242,7 +41,7 @@ jobs:
             echo 'body<<EOFBODY'
             echo "## Summary"
             echo ""
-            echo "Automated daily update of Nix flake inputs and custom package versions/hashes."
+            echo "Automated daily update of Nix flake inputs via rebuild --update."
             echo ""
             if ! git diff --quiet Configs/nix/.config/nix/flake.lock; then
               echo "### Flake input changes"
@@ -252,21 +51,10 @@ jobs:
               echo '```'
               echo ""
             fi
-            if ! git diff --quiet Configs/nix/.config/nix/packages/; then
-              echo "### Package changes"
-              echo ""
-              echo '```diff'
-              git diff Configs/nix/.config/nix/packages/ | head -200
-              echo '```'
-              echo ""
-            fi
             echo "## Test plan"
             echo ""
-            echo "- [x] Lint checks passed (shellcheck, nu-check, dprint)"
-            echo "- [x] Nix flake check passed (both platforms)"
-            echo "- [x] Test suite passed (both platforms)"
-            echo "- [x] Setup script verified (both platforms)"
-            echo "- [x] Cross-platform hashes verified (macOS + Linux)"
+            echo "- [x] Ran rebuild --update --skip-check"
+            echo "- [x] Verified flake.lock diff"
             echo 'EOFBODY'
           } >> "$GITHUB_OUTPUT"
 
@@ -274,9 +62,10 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(nix): update flake inputs and custom packages"
+          add-paths: Configs/nix/.config/nix/flake.lock
+          commit-message: "chore(nix): update flake lock"
           branch: chore/nix-auto-update
           delete-branch: true
-          title: "chore(nix): update flake inputs and custom packages"
+          title: "chore(nix): update flake lock"
           body: ${{ steps.summary.outputs.body }}
           labels: automated,nix
