@@ -22,20 +22,86 @@ on:
       - "tests/**"
       - ".github/workflows/ci-nix.yml"
 
+concurrency:
+  group: ci-nix-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  setup:
-    name: setup script (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+  changes:
+    name: detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      run_setup: ${{ steps.filter.outputs.setup }}
+      run_macos: ${{ steps.filter.outputs.macos }}
+      run_docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔍 detect file changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            setup:
+              - "Configs/nix/**"
+              - "Hooks/nix/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+            macos:
+              - "Configs/nix/.config/nix/darwin.nix"
+              - "Configs/nix/.config/nix/flake.nix"
+              - "Configs/nix/.config/nix/home.nix"
+              - "Hooks/nix/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+            docker:
+              - "Dockerfile"
+              - "tests/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+
+  setup-ubuntu:
+    needs: changes
+    if: needs.changes.outputs.run_setup == 'true'
+    name: setup script (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: 🧪 run setup script
+        run: ./setup --skip-nix --no-confirm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ verify setup completed
+        run: |
+          command -v tuckr && echo "tuckr: ok"
+          command -v nu && echo "nushell: ok"
+          tuckr status
+
+  setup-macos:
+    needs: changes
+    if: needs.changes.outputs.run_setup == 'true' && needs.changes.outputs.run_macos == 'true'
+    name: setup script (macos-latest)
+    runs-on: macos-latest
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@v4
 
       - name: 🧹 free disk space (macos)
-        if: runner.os == 'macOS'
         run: |
           # Remove Xcode to free ~12GB (nix provides its own build tools)
           sudo rm -rf /Applications/Xcode_*.app
@@ -64,6 +130,8 @@ jobs:
           tuckr status
 
   docker-integration:
+    needs: changes
+    if: needs.changes.outputs.run_docker == 'true'
     name: docker integration test
     runs-on: ubuntu-latest
     steps:

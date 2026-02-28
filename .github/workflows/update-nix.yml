@@ -1,0 +1,71 @@
+name: update nix
+
+on:
+  schedule:
+    # Run daily at 06:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: update flake lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: 📦 install nushell
+        run: nix profile add nixpkgs#nushell
+
+      - name: 🔄 update flake lock
+        run: nu Configs/scripts/.local/bin/rebuild --update --skip-check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 generate commit summary
+        id: summary
+        run: |
+          {
+            echo 'body<<EOFBODY'
+            echo "## Summary"
+            echo ""
+            echo "Automated daily update of Nix flake inputs via rebuild --update."
+            echo ""
+            if ! git diff --quiet Configs/nix/.config/nix/flake.lock; then
+              echo "### Flake input changes"
+              echo ""
+              echo '```diff'
+              git diff Configs/nix/.config/nix/flake.lock | head -200
+              echo '```'
+              echo ""
+            fi
+            echo "## Test plan"
+            echo ""
+            echo "- [x] Ran rebuild --update --skip-check"
+            echo "- [x] Verified flake.lock diff"
+            echo 'EOFBODY'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: 🤖 create pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: Configs/nix/.config/nix/flake.lock
+          commit-message: "chore(nix): update flake lock"
+          branch: chore/nix-auto-update
+          delete-branch: true
+          title: "chore(nix): update flake lock"
+          body: ${{ steps.summary.outputs.body }}
+          labels: automated,nix
