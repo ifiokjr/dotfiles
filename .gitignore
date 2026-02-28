@@ -45,6 +45,7 @@ logs/
 # User-specific configuration (should not be in dotfiles)
 **/machine.nix
 **/nix.conf
+.bash_profile
 
 # Environment files with secrets
 .env
