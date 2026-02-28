@@ -78,6 +78,7 @@ sudo darwin-rebuild --rollback
 The `rebuild` command is a convenient wrapper that:
 
 - Auto-generates `machine.nix` if it doesn't exist (using `generate-machine-config`)
+- Supports `--lite` / `--no-lite` to persist GUI-lite/full defaults in `machine.nix`
 - Displays your current configuration
 - Increases file descriptor limits for Nix builds
 - Runs darwin-rebuild with the correct flags
@@ -103,6 +104,7 @@ The `generate-machine-config` command auto-detects and creates `machine.nix`:
 - **Cross-Platform Home Manager**: User packages and settings in `home.nix` work on both macOS and Linux
 - **Integrated Mode (macOS)**: Home-manager integrated with nix-darwin for one-command updates
 - **Standalone Mode (Linux)**: Separate home-manager configurations for Linux systems
+- **Lite Mode**: Set `lite = true` in `machine.nix` (or run `./setup --lite`) to skip GUI-heavy applications
 - **GUI Apps via nix-casks** (macOS only): Installs Homebrew casks as pure Nix derivations (no Homebrew process needed)
 - **System Architecture Support**: Works with aarch64-darwin (Apple Silicon), x86_64-darwin (Intel), x86_64-linux, and aarch64-linux
 - **Convenient Rebuild Script**: Simple `rebuild` command handles all the complexity
@@ -170,6 +172,7 @@ The `machine.nix` file contains your machine-specific settings:
   username = "yourusername";
   system = "aarch64-darwin";  # or "x86_64-darwin", "x86_64-linux", "aarch64-linux"
   hostname = "your-machine-name";  # optional, for documentation
+  lite = false;  # optional, set true for CLI-focused install
 }
 ```
 
@@ -178,7 +181,7 @@ This file is gitignored and never committed to the repository, making it safe to
 ## Configuration Files
 
 - **machine.nix**: Machine-specific configuration (gitignored)
-  - Contains username, system architecture, and hostname
+  - Contains username, system architecture, hostname, and optional lite profile flag
   - Created from `machine.nix.example` on each machine
   - Never committed to git
 - **flake.nix**: Main flake configuration with inputs and outputs
@@ -360,6 +363,7 @@ Check that your `machine.nix` is properly formatted:
   username = "yourusername";  # Must be in quotes
   system = "aarch64-darwin";  # Must be in quotes
   hostname = "optional";
+  lite = false;  # Optional
 }
 ```
 

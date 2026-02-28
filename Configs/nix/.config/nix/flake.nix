@@ -32,6 +32,7 @@
         {
           system ? "aarch64-darwin",
           username,
+          lite ? false,
         }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -42,7 +43,12 @@
             ./darwin.nix
             {
               _module.args = {
-                inherit username nix-casks ifiokjr-nixpkgs;
+                inherit
+                  username
+                  lite
+                  nix-casks
+                  ifiokjr-nixpkgs
+                  ;
               };
             }
             # Integrate home-manager directly with nix-darwin
@@ -51,7 +57,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = {
-                inherit ifiokjr-nixpkgs;
+                inherit ifiokjr-nixpkgs lite;
               };
               home-manager.users.${username} = {
                 imports = [ ./home.nix ];
@@ -67,6 +73,7 @@
         {
           system,
           username,
+          lite ? false,
           homeDirectory ? null,
         }:
         let
@@ -86,7 +93,7 @@
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           extraSpecialArgs = {
-            inherit ifiokjr-nixpkgs;
+            inherit ifiokjr-nixpkgs lite;
           };
           modules = [
             ./home.nix
@@ -152,6 +159,7 @@
         mkDarwinConfig {
           system = machineConfig.system;
           username = machineConfig.username;
+          lite = machineConfig.lite or false;
         };
 
       # Standalone home-manager configuration (for Linux or non-Darwin use)
@@ -164,6 +172,7 @@
           "${machineConfig.username}@${machineConfig.system}" = makeHomeManagerConfiguration {
             system = machineConfig.system;
             username = machineConfig.username;
+            lite = machineConfig.lite or false;
           };
         };
     };

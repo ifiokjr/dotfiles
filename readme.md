@@ -25,6 +25,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 - `--groups <groups>` - Deploy only specific groups (comma-separated, otherwise deploys all)
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
+- `--lite` - Enable CLI-focused install and skip GUI-heavy applications
 - `--help` - Show help
 
 ### Manual Tuckr Commands
@@ -332,6 +333,12 @@ update
 
 # Rebuild system (automatically increases ulimit before building on macOS)
 rebuild
+
+# Persist CLI-focused lite mode (skip GUI-heavy apps)
+rebuild --lite
+
+# Persist full mode (include GUI-heavy apps)
+rebuild --no-lite
 ```
 
 The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS.

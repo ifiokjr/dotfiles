@@ -7,6 +7,7 @@
 - Username
 - System architecture (aarch64-darwin, x86_64-darwin, x86_64-linux, aarch64-linux)
 - Hostname (for documentation)
+- Optional lite profile flag (CLI-focused install)
 
 ## File Locations
 
@@ -117,6 +118,10 @@ Changes take effect immediately - no need to sync files.
 
   # Machine hostname (optional, for documentation)
   hostname = "your-machine-name";
+
+  # Lite profile (optional, CLI-focused install)
+  # Set to true to skip GUI-heavy applications
+  lite = false;
 }
 ```
 
@@ -178,3 +183,10 @@ Both work! Tuckr may create a symlink if the file exists in the repo, or it may 
 - Runs after Tuckr deployment
 - Ensures machine.nix exists
 - Auto-generates if missing
+
+## Lite Setup
+
+- Run `./setup --lite` to automatically set `lite = true` in `machine.nix`
+- Run `rebuild --lite` to set `lite = true` as the persisted default
+- Run `rebuild --no-lite` to set `lite = false` as the persisted default
+- Lite mode keeps CLI tooling and skips GUI-heavy applications in nix configs

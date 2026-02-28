@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  lite ? false,
   ifiokjr-nixpkgs,
   ...
 }:
@@ -169,21 +170,27 @@ in
       nerd-fonts.sauce-code-pro
       nerd-fonts.symbols-only
     ]
-    ++ lib.optionals pkgs.stdenv.isDarwin [
-      # macOS-only packages
-      _1password-cli
-      cocoapods
-      code-cursor
-      fvm # Flutter Version Management (macOS/Windows only)
-      mas
-      pinentry_mac
-      powershell
-    ]
-    ++ lib.optionals pkgs.stdenv.isLinux [
+    ++ lib.optionals pkgs.stdenv.isDarwin (
+      [
+        # macOS-only packages
+        _1password-cli
+        cocoapods
+        fvm # Flutter Version Management (macOS/Windows only)
+        mas
+        pinentry_mac
+        powershell
+      ]
+      ++ lib.optionals (!lite) [
+        code-cursor
+      ]
+    )
+    ++ lib.optionals pkgs.stdenv.isLinux (
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
-      blender # broken on macOS in nixpkgs; macOS uses nix-casks
-      extra.google-chrome
-    ];
+      lib.optionals (!lite) [
+        blender # broken on macOS in nixpkgs; macOS uses nix-casks
+        extra.google-chrome
+      ]
+    );
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.

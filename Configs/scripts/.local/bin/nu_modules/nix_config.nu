@@ -19,6 +19,23 @@ export def flake-dir [] {
 }
 # Path to machine.nix
 export def machine-config-path [] { $"(config-dir)/machine.nix" }
+# Set the machine.nix lite mode flag (inserts the field if missing).
+export def set-lite-mode [value: bool, --path(-p): string] {
+    let target_path = ($path | default (machine-config-path))
+    if not ($target_path | path exists) { error make {
+        msg: $"machine.nix not found at: ($target_path)"
+    } }
+    let content = (open $target_path --raw)
+    let lite_value = (if $value { "true" } else { "false" })
+    let lite_line = $"  lite = ($lite_value);"
+    let updated = if ($content | str contains "lite =") {
+        $content | str replace --regex '(?m)^\s*lite\s*=\s*(true|false);\s*$' $lite_line
+    } else {
+        let with_lite = $"\n  # Lite profile \(CLI-focused, skips GUI-heavy applications\)\n($lite_line)\n}"
+        $content | str replace --regex '\n\}\s*$' $with_lite
+    }
+    $updated | save -f $target_path
+}
 # Parse machine.nix and return {username, system, hostname} record.
 # machine.nix is a simple Nix attrset (not a module), so we extract
 # values with regex rather than invoking the nix evaluator.
@@ -35,9 +52,12 @@ export def parse-machine-config [] {
     let hostname = try {
         $content | parse --regex 'hostname = "([^"]+)"' | get capture0.0
     } catch { "" }
+    # lite is optional — older machine.nix files may not have it
+    let lite = try { (($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
     {
         username: $username
         system: $system
         hostname: $hostname
+        lite: $lite
     }
 }

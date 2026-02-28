@@ -11,4 +11,8 @@
 
   # Optional: Machine hostname (for documentation)
   hostname = "your-machine-name";
+
+  # Optional: Lite profile (CLI-focused, skips GUI-heavy applications)
+  # Set to true when using `./setup --lite`
+  lite = false;
 }

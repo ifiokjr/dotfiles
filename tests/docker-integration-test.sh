@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Docker integration test: generates machine config, runs rebuild, then verifies.
+# Docker integration test: verifies setup --lite, runs rebuild, then verifies.
 #
 # This script runs inside the Docker container after
-# `SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm`
+# `SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm --lite`
 # has already executed during the image build step.
 
 set -euo pipefail
@@ -49,10 +49,17 @@ if [ ! -S /nix/var/nix/daemon-socket/socket ]; then
 	fi
 fi
 
-# ----- Step 1: Generate machine.nix -----
-step "Generating machine.nix"
-nu "$HOME/.local/bin/generate-machine-config" --force
-pass "machine.nix generated"
+# ----- Step 1: Verify setup --lite updated machine.nix -----
+step "Verifying setup --lite machine.nix"
+MACHINE_NIX="$HOME/.config/nix/machine.nix"
+if [ ! -f "$MACHINE_NIX" ]; then
+	fail "machine.nix was not created by setup"
+fi
+if grep -Eq '^[[:space:]]*lite[[:space:]]*=[[:space:]]*true;' "$MACHINE_NIX"; then
+	pass "setup --lite persisted lite = true in machine.nix"
+else
+	fail "setup --lite did not set lite = true in machine.nix"
+fi
 
 # ----- Step 2: Run rebuild (home-manager switch on Linux) -----
 step "Running rebuild"

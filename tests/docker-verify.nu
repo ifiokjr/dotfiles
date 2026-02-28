@@ -13,13 +13,13 @@ def main [] {
         print $"   FAIL: ($nix_config) does not exist"
         $failures = ($failures | append "~/.config/nix missing")
     }
-    # 2. machine.nix valid — parseable with correct username/system/hostname
+    # 2. machine.nix valid — parseable with correct username/system/hostname/lite
     print "2. Checking machine.nix..."
     let machine_nix = $"($nix_config)/machine.nix"
     if ($machine_nix | path exists) {
         let content = (open $machine_nix --raw)
-        if ($content | str contains "username") and ($content | str contains "system") { print "   PASS: machine.nix is valid" } else {
-            print "   FAIL: machine.nix missing required fields"
+        if ($content | str contains "username") and ($content | str contains "system") and ($content | str contains "lite = true;") { print "   PASS: machine.nix is valid and lite mode is enabled" } else {
+            print "   FAIL: machine.nix missing required fields or lite mode"
             $failures = ($failures | append "machine.nix invalid")
         }
     } else {
