@@ -206,6 +206,99 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
+# Check if git is present and executable (important on fresh macOS installs,
+# where /usr/bin/git exists but fails until Command Line Tools are installed).
+can_run_git() {
+    command_exists git && git --version &> /dev/null
+}
+
+# Resolve a working git binary, preferring PATH and then common Nix locations.
+find_working_git() {
+    local candidate
+    local profile_user
+
+    if can_run_git; then
+        command -v git
+        return 0
+    fi
+
+    profile_user="${USER:-$(whoami)}"
+    for candidate in \
+        "$HOME/.nix-profile/bin/git" \
+        "/etc/profiles/per-user/$profile_user/bin/git" \
+        "/nix/var/nix/profiles/default/bin/git"
+    do
+        if [ -x "$candidate" ] && "$candidate" --version &> /dev/null; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Wait for macOS Command Line Tools to become available.
+wait_for_macos_developer_tools() {
+    local max_wait_seconds="${1:-1800}"
+    local interval_seconds=10
+    local waited_seconds=0
+
+    while ! xcode-select -p &> /dev/null; do
+        if [ "$waited_seconds" -eq 0 ]; then
+            print_info "Waiting for Command Line Tools installation to finish..."
+        elif [ $((waited_seconds % 60)) -eq 0 ]; then
+            print_info "Still waiting for Command Line Tools... (${waited_seconds}s elapsed)"
+        fi
+
+        sleep "$interval_seconds"
+        waited_seconds=$((waited_seconds + interval_seconds))
+
+        if [ "$waited_seconds" -ge "$max_wait_seconds" ]; then
+            print_warning "Timed out waiting for Command Line Tools after ${max_wait_seconds}s"
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+# Ensure Xcode Command Line Tools are installed on macOS.
+ensure_macos_developer_tools() {
+    local install_output
+
+    if [ "$PLATFORM" != "macos" ]; then
+        return 0
+    fi
+
+    if xcode-select -p &> /dev/null; then
+        print_success "macOS developer tools are already installed"
+        return 0
+    fi
+
+    print_header "Installing macOS developer tools"
+    print_info "Command Line Tools are required for Apple's developer toolchain"
+
+    if install_output="$(xcode-select --install 2>&1)"; then
+        print_info "Started Command Line Tools installer"
+    else
+        if echo "$install_output" | grep -qiE "already installed|already being installed|software update"; then
+            print_info "Command Line Tools installation is already in progress"
+        else
+            print_warning "Could not start Command Line Tools installer automatically"
+            print_warning "$install_output"
+            return 1
+        fi
+    fi
+
+    print_info "If prompted, accept the installer dialog to continue setup"
+    if wait_for_macos_developer_tools 1800; then
+        print_success "macOS developer tools installed"
+        return 0
+    fi
+
+    return 1
+}
+
 # Run nix commands, using sudo when nix was installed root-only (--init none).
 # Nix binaries are symlinked to /usr/local/bin so PATH isn't needed.
 # HOME is preserved so profile installs go to the calling user's profile.
@@ -219,9 +312,19 @@ run_nix() {
 
 # Install git via nix profile if needed
 install_git() {
-    if command_exists git; then
+    if can_run_git; then
         print_success "Git is already available"
         return 0
+    fi
+
+    # Fresh macOS installs provide /usr/bin/git but require Command Line Tools
+    # before git is actually executable.
+    if [ "$PLATFORM" = "macos" ]; then
+        if ensure_macos_developer_tools && can_run_git; then
+            print_success "Git is already available"
+            return 0
+        fi
+        print_warning "Using Nix-provided git while macOS Command Line Tools are unavailable"
     fi
 
     print_header "Installing git temporarily"
@@ -232,6 +335,12 @@ install_git() {
     fi
 
     INSTALLED_GIT=true
+
+    if ! find_working_git > /dev/null; then
+        print_error "Git was installed but no executable git binary was found"
+        exit 1
+    fi
+
     print_success "Git installed"
 }
 
@@ -273,6 +382,8 @@ install_nushell() {
 
 # Clone the dotfiles repository
 clone_dotfiles() {
+    local git_bin
+
     if [ -d "$DOTFILES_DIR/.git" ]; then
         print_success "Dotfiles repository already exists at $DOTFILES_DIR"
         return 0
@@ -284,7 +395,12 @@ clone_dotfiles() {
     # Create parent directory if it doesn't exist
     mkdir -p "$(dirname "$DOTFILES_DIR")"
 
-    if ! git clone "$DOTFILES_REPO" "$DOTFILES_DIR"; then
+    if ! git_bin="$(find_working_git)"; then
+        print_error "No executable git binary found (install may be incomplete)"
+        exit 1
+    fi
+
+    if ! "$git_bin" clone "$DOTFILES_REPO" "$DOTFILES_DIR"; then
         print_error "Failed to clone dotfiles repository"
         exit 1
     fi
