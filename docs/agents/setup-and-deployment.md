@@ -6,6 +6,9 @@
 # Remote install
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
+# Remote install (lite mode)
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
+
 # Local clone and setup
 git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
 cd ~/path/to/dotfiles

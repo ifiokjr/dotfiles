@@ -23,6 +23,9 @@ The easiest way to set up your environment is using the automated setup script:
 # Remote installation (on a new machine)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
+# Remote installation (lite mode - CLI-focused)
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
+
 # Or clone anywhere, then run locally
 git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
 cd ~/path/to/dotfiles

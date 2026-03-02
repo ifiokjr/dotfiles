@@ -12,6 +12,9 @@ Set up your entire environment with one command:
 # Remote installation (fastest way to get started)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
+# Remote installation (lite mode - CLI-focused)
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
+
 # Or clone anywhere you like, then run locally
 git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
 cd ~/path/to/dotfiles
@@ -157,6 +160,9 @@ All hooks must be executable (`chmod +x Hooks/*/post.sh`).
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
+
+# Lite mode (skip GUI-heavy applications)
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
 ```
 
 **Or manually with Tuckr:**
