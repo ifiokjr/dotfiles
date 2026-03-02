@@ -181,6 +181,8 @@ in
         mas
         pinentry_mac
         powershell
+        swiftformat
+        swiftlint
       ]
       ++ lib.optionals (!lite) [
         code-cursor
