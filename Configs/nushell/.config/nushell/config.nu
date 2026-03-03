@@ -89,14 +89,14 @@ alias cw = cargo watch -x run
 # pnpm / Node.js
 # ---------------------------------------------------------------------------
 alias p = pnpm
-alias pi = pnpm install
-alias pd = pnpm dev
-alias pb = pnpm build
-alias pt = pnpm test
-alias px = pnpm exec
-alias pa = pnpm add
-alias pad = pnpm add -D
-alias pr = pnpm run
+# alias pi = pnpm install
+# alias pd = pnpm dev
+# alias pb = pnpm build
+# alias pt = pnpm test
+# alias px = pnpm exec
+# alias pa = pnpm add
+# alias pad = pnpm add -D
+# alias pr = pnpm run
 # ---------------------------------------------------------------------------
 # Docker / Compose
 # ---------------------------------------------------------------------------
