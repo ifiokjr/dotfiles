@@ -217,6 +217,14 @@ in
     ${extra.racket-minimal}/bin/raco pkg install --skip-installed --auto --scope user fmt || true
   '';
 
+  # Keep pnpm global packages in sync from the managed manifest when available.
+  # This is best-effort to avoid making activation fail when pnpm is unavailable.
+  home.activation.syncPnpmGlobalPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ -x "$HOME/.local/bin/pnpm:global:sync" ]; then
+      "$HOME/.local/bin/pnpm:global:sync" --quiet --no-fail || true
+    fi
+  '';
+
   # Environment variables
   home.sessionVariables = {
     EDITOR = "hx";

@@ -28,3 +28,4 @@
 - `Hooks/nix/post.sh`: rebuild system config after Nix deployment.
 - `Hooks/nushell/post.sh`: generate vendor autoload and configure shell behavior.
 - `Hooks/claude/post.sh`: register MCP server and cache Deno dependencies.
+- `Hooks/pnpm/post.sh`: sync managed pnpm global manifests and install global packages.

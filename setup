@@ -552,7 +552,7 @@ deploy_groups() {
     TUCKR=$(realpath "$(command -v tuckr)")
 
     # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("nix" "nushell" "claude")
+    local hook_groups=("nix" "nushell" "claude" "pnpm")
 
     # Helper: check if a group uses hooks
     has_hook() {
