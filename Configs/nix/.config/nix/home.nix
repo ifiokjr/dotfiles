@@ -192,6 +192,7 @@ in
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       lib.optionals (!lite) [
         blender # broken on macOS in nixpkgs; macOS uses nix-casks
+        ghostty
         extra.google-chrome
       ]
     );

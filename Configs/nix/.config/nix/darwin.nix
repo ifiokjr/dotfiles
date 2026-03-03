@@ -52,7 +52,7 @@ in
         "figma"
         "setapp"
         "slack"
-        "telegram"
+        # "telegram"
         "whatsapp"
 
         # Browsers
