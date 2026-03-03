@@ -38,7 +38,7 @@ in
       xcodes # Install and manage multiple Xcode versions
 
       # Core system libraries that other packages depend on
-      apple-sdk_15
+      apple-sdk_26
       libiconv
       fontconfig
       freetype
