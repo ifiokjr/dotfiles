@@ -94,6 +94,7 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 - `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux); use `rebuild --update` to refresh `flake.lock` before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
+- `pnpm:global:sync` - Symlink global pnpm manifests and install pinned global packages
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
 - `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
@@ -118,6 +119,12 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 **Location:** `Configs/direnv/.config/direnv/` **Deploys:** `~/.config/direnv/` **Description:** Directory-specific environment variable management.
 
+#### `pnpm`
+
+**Location:** `Configs/pnpm/.config/pnpm-global/` **Deploys:** `~/.config/pnpm-global/` **Description:** Managed global pnpm manifest (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`) for deterministic global package installs on macOS and Linux.
+
+**Hook:** `post_pnpm` - Resolves pnpm's active global directory and symlinks/installs the managed global package set.
+
 #### `dprint`
 
 **Location:** `Configs/dprint/` **Deploys:** `~/dprint.json` **Description:** Code formatter configuration for multiple languages.
@@ -141,6 +148,7 @@ Tuckr supports hooks that run at different stages of deployment:
 - **`Hooks/nix/post.sh`**: Rebuilds system after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux), auto-generates machine.nix if missing
 - **`Hooks/nushell/post.sh`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
 - **`Hooks/claude/post.sh`**: Registers tart-vm MCP server with Claude Code, caches Deno dependencies
+- **`Hooks/pnpm/post.sh`**: Syncs managed pnpm global manifests and installs global packages with lockfile enforcement
 
 ### Hook Naming Convention
 
@@ -415,6 +423,16 @@ update:node
 ```
 
 to install/activate the latest Node.js version via `pnpm env use --global latest`.
+
+### Global pnpm Packages
+
+Use:
+
+```bash
+tuckr set pnpm
+```
+
+to sync `~/.config/pnpm-global` into pnpm's active global directory (resolved from `pnpm root -g`) and install packages from the committed lockfile.
 
 ## Testing
 

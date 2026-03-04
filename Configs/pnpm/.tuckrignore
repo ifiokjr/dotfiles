@@ -1,0 +1,3 @@
+# Generated pnpm installation artifacts
+.config/pnpm-global/node_modules/
+.config/pnpm-global/.pnpm/

@@ -1,8 +1,6 @@
 # config.nu - Nushell configuration
 # Loaded after env.nu. Contains shell settings, aliases, and commands.
-# ---------------------------------------------------------------------------
 # Shell configuration
-# ---------------------------------------------------------------------------
 $env.config = {
     show_banner: false
     completions: {
@@ -48,14 +46,10 @@ $env.config = {
         }
     }
 }
-# ---------------------------------------------------------------------------
 # Secrets
-# ---------------------------------------------------------------------------
 use modules/secrets.nu
 secrets load
-# ---------------------------------------------------------------------------
 # General aliases
-# ---------------------------------------------------------------------------
 # Reload shell
 alias s = exec nu
 # Nix
@@ -75,9 +69,7 @@ alias md = mkdir
 alias rd = rmdir
 # Config editing
 alias nushellconfig = hx $"($nu.default-config-dir)/config.nu"
-# ---------------------------------------------------------------------------
 # Rust / Cargo
-# ---------------------------------------------------------------------------
 alias cr = cargo run
 alias cb = cargo build
 alias ct = cargo test
@@ -85,21 +77,17 @@ alias cch = cargo check
 alias ccl = cargo clippy
 alias cf = cargo fmt
 alias cw = cargo watch -x run
-# ---------------------------------------------------------------------------
-# pnpm / Node.js
-# ---------------------------------------------------------------------------
+# pnpm 
 alias p = pnpm
-alias pi = pnpm install
-alias pd = pnpm dev
-alias pb = pnpm build
-alias pt = pnpm test
-alias px = pnpm exec
-alias pa = pnpm add
-alias pad = pnpm add -D
-alias pr = pnpm run
-# ---------------------------------------------------------------------------
+# alias pi = pnpm install
+# alias pd = pnpm dev
+# alias pb = pnpm build
+# alias pt = pnpm test
+# alias px = pnpm exec
+# alias pa = pnpm add
+# alias pad = pnpm add -D
+# alias pr = pnpm run
 # Docker / Compose
-# ---------------------------------------------------------------------------
 alias dk = docker
 alias dkc = docker compose
 alias dkcu = docker compose up -d
@@ -107,25 +95,19 @@ alias dkcd = docker compose down
 alias dkcl = docker compose logs -f
 alias dkce = docker compose exec
 alias dkps = docker ps
-# ---------------------------------------------------------------------------
 # Nix / Devenv
-# ---------------------------------------------------------------------------
 alias nr = rebuild
 alias nfc = nix flake check --flake ~/.config/nix
 alias nfu = nix flake update --flake ~/.config/nix
 alias ns = nix search nixpkgs
 alias de = devenv up
-# ---------------------------------------------------------------------------
 # File listing (lsd)
-# ---------------------------------------------------------------------------
 alias l = lsd -lah
 alias la = lsd -lAh
 alias ll = lsd -lh
 alias lls = lsd -G
 alias lsa = lsd -lah
-# ---------------------------------------------------------------------------
 # Git helper commands
-# ---------------------------------------------------------------------------
 def git_main_branch [] {
     let branches = (
         ^git branch --list main master | lines | each { str trim } | where { $in != "" }
@@ -141,9 +123,7 @@ def git_develop_branch [] {
 def git_current_branch [] {
     ^git branch --show-current | str trim
 }
-# ---------------------------------------------------------------------------
 # Git aliases
-# ---------------------------------------------------------------------------
 # add
 alias ga = git add
 alias gaa = git add --all
@@ -331,9 +311,7 @@ alias gwh = git worktree --help
 alias gwl = git worktree list --porcelain
 alias gwm = git worktree move
 alias gwr = git worktree remove
-# ---------------------------------------------------------------------------
 # Dynamic git commands (branch-aware)
-# ---------------------------------------------------------------------------
 def gcm [] { ^git checkout (git_main_branch) }
 def gcd [] { ^git checkout (git_develop_branch) }
 def ggpull [] { ^git pull origin (git_current_branch) }
@@ -367,9 +345,7 @@ def gtv [] {
 def gdct [] { ^git describe --tags (^git rev-list --tags --max-count=1 | str trim) }
 # git diff-tree (show changed files in a commit)
 def gdt [commit: string] { ^git diff-tree --no-commit-id --name-only -r $commit }
-# ---------------------------------------------------------------------------
 # Complex git commands
-# ---------------------------------------------------------------------------
 # Push all branches and tags to origin
 def gpoat [] {
     ^git push origin --all
@@ -399,9 +375,7 @@ def gsqa [message: string] {
     let tree_hash = (^git commit-tree $"HEAD^{tree}" -m $message | str trim)
     ^git reset $tree_hash
 }
-# ---------------------------------------------------------------------------
 # Custom commands
-# ---------------------------------------------------------------------------
 # Open in Cursor
 def c [...paths: string] {
     if ($paths | is-empty) { ^open -a "Cursor" . } else {
@@ -424,9 +398,7 @@ def --env d [index?: int] {
     }
     null
 }
-# ---------------------------------------------------------------------------
 # Startup time (only shown when DOTFILES_DEBUG is set)
-# ---------------------------------------------------------------------------
 if ($env | get -o DOTFILES_DEBUG | is-not-empty) {
     let elapsed = ((date now) - $env._SHELL_START)
     print $"(ansi blue)→(ansi reset) Shell loaded in ($elapsed | format duration ms)"

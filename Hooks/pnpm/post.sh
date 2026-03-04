@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sync pnpm global manifests and reconcile global package installs.
+SYNC_SCRIPT="$HOME/.local/bin/pnpm:global:sync"
+
+# Fallback for partial/manual deployments where scripts group is not linked yet.
+if [ ! -x "$SYNC_SCRIPT" ]; then
+	THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	FALLBACK_SCRIPT="$(cd "$THIS_DIR/../.." && pwd -P)/Configs/scripts/.local/bin/pnpm:global:sync"
+	if [ -x "$FALLBACK_SCRIPT" ]; then
+		SYNC_SCRIPT="$FALLBACK_SCRIPT"
+	fi
+fi
+
+if [ -x "$SYNC_SCRIPT" ]; then
+	"$SYNC_SCRIPT"
+else
+	echo "pnpm:global:sync not found at ~/.local/bin; skipping"
+fi

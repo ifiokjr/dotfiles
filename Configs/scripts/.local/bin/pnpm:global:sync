@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Sync global pnpm package manifests from ~/.config/pnpm-global into the
+# active global pnpm directory (resolved dynamically via `pnpm root -g`).
+
+QUIET=false
+NO_FAIL=false
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --quiet)
+      QUIET=true
+      ;;
+    --no-fail)
+      NO_FAIL=true
+      ;;
+    -h|--help)
+      cat <<'USAGE'
+Usage: pnpm:global:sync [--quiet] [--no-fail]
+
+Options:
+  --quiet    Suppress info output
+  --no-fail  Return success even when sync/install fails
+USAGE
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+info() {
+  if [ "$QUIET" = false ]; then
+    echo "$*"
+  fi
+}
+
+warn() {
+  echo "$*" >&2
+}
+
+fail() {
+  warn "$*"
+  if [ "$NO_FAIL" = true ]; then
+    return 0
+  fi
+  return 1
+}
+
+# Home Manager activation hooks may run in a non-login shell where PATH does
+# not include nix profile bins yet. Ensure common nix profile locations exist
+# on PATH before checking for pnpm.
+for _p in "$HOME/.nix-profile/bin" \
+  "/etc/profiles/per-user/${USER}/bin" \
+  "/run/current-system/sw/bin" \
+  "/nix/var/nix/profiles/default/bin"; do
+  [ -d "$_p" ] && case ":$PATH:" in *":$_p:"*) ;; *) export PATH="$_p:$PATH" ;; esac
+done
+unset _p
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  fail "pnpm is not installed; skipping pnpm global sync"
+  exit $?
+fi
+
+if [ -z "${PNPM_HOME:-}" ]; then
+  if [ "$(uname -s)" = "Darwin" ]; then
+    PNPM_HOME="$HOME/Library/pnpm"
+  else
+    PNPM_HOME="$HOME/.local/share/pnpm"
+  fi
+  export PNPM_HOME
+fi
+
+mkdir -p "$PNPM_HOME"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+SOURCE_DIR="$HOME/.config/pnpm-global"
+if [ ! -f "$SOURCE_DIR/package.json" ]; then
+  info "No $SOURCE_DIR/package.json found; skipping pnpm global sync"
+  exit 0
+fi
+
+if ! GLOBAL_ROOT="$(pnpm root -g 2>/dev/null)"; then
+  fail "Failed to resolve pnpm global root with 'pnpm root -g'"
+  exit $?
+fi
+
+GLOBAL_DIR="$(dirname "$GLOBAL_ROOT")"
+mkdir -p "$GLOBAL_DIR"
+
+for manifest in package.json pnpm-lock.yaml pnpm-workspace.yaml; do
+  src="$SOURCE_DIR/$manifest"
+  dest="$GLOBAL_DIR/$manifest"
+
+  if [ -f "$src" ]; then
+    rm -f "$dest"
+    ln -sfn "$src" "$dest"
+    info "Linked $dest -> $src"
+  elif [ -L "$dest" ]; then
+    rm -f "$dest"
+    info "Removed stale symlink $dest"
+  fi
+done
+
+INSTALL_ARGS=(install -g)
+if [ -f "$SOURCE_DIR/pnpm-lock.yaml" ]; then
+  INSTALL_ARGS+=(--frozen-lockfile)
+fi
+
+if ! pnpm "${INSTALL_ARGS[@]}"; then
+  fail "pnpm global install failed"
+  exit $?
+fi
+
+info "pnpm global packages synced"
