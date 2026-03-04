@@ -190,7 +190,7 @@ in
       lib.optionals (!lite) [
         blender # broken on macOS in nixpkgs; macOS uses nix-casks
         ghostty
-        extra.google-chrome
+        google-chrome
       ]
     );
 
