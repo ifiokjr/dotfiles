@@ -54,13 +54,25 @@ fail() {
 # Home Manager activation hooks may run in a non-login shell where PATH does
 # not include nix profile bins yet. Ensure common nix profile locations exist
 # on PATH before checking for pnpm.
-for _p in "$HOME/.nix-profile/bin" \
-  "/etc/profiles/per-user/${USER}/bin" \
-  "/run/current-system/sw/bin" \
-  "/nix/var/nix/profiles/default/bin"; do
+user_name="${USER:-}"
+if [ -z "$user_name" ]; then
+  user_name="$(id -un 2>/dev/null || true)"
+fi
+
+profile_paths=(
+  "$HOME/.nix-profile/bin"
+  "/run/current-system/sw/bin"
+  "/nix/var/nix/profiles/default/bin"
+)
+
+if [ -n "$user_name" ]; then
+  profile_paths+=("/etc/profiles/per-user/${user_name}/bin")
+fi
+
+for _p in "${profile_paths[@]}"; do
   [ -d "$_p" ] && case ":$PATH:" in *":$_p:"*) ;; *) export PATH="$_p:$PATH" ;; esac
 done
-unset _p
+unset _p user_name profile_paths
 
 if ! command -v pnpm >/dev/null 2>&1; then
   fail "pnpm is not installed; skipping pnpm global sync"

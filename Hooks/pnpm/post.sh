@@ -14,7 +14,9 @@ if [ ! -x "$SYNC_SCRIPT" ]; then
 fi
 
 if [ -x "$SYNC_SCRIPT" ]; then
-	"$SYNC_SCRIPT"
+	# Setup may run before nix rebuild finishes in CI containers.
+	# Treat pnpm sync as best-effort during hook execution.
+	"$SYNC_SCRIPT" --no-fail
 else
 	echo "pnpm:global:sync not found at ~/.local/bin; skipping"
 fi
