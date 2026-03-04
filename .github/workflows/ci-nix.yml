@@ -5,7 +5,10 @@ on:
     branches: [main]
     paths:
       - "Configs/nix/**"
+      - "Configs/pnpm/**"
+      - "Configs/scripts/.local/bin/pnpm:global:sync"
       - "Hooks/nix/**"
+      - "Hooks/pnpm/**"
       - "setup"
       - "setup-tuckr-symlink.sh"
       - "Dockerfile"
@@ -15,7 +18,10 @@ on:
     branches: [main]
     paths:
       - "Configs/nix/**"
+      - "Configs/pnpm/**"
+      - "Configs/scripts/.local/bin/pnpm:global:sync"
       - "Hooks/nix/**"
+      - "Hooks/pnpm/**"
       - "setup"
       - "setup-tuckr-symlink.sh"
       - "Dockerfile"
@@ -45,7 +51,10 @@ jobs:
           filters: |
             setup:
               - "Configs/nix/**"
+              - "Configs/pnpm/**"
+              - "Configs/scripts/.local/bin/pnpm:global:sync"
               - "Hooks/nix/**"
+              - "Hooks/pnpm/**"
               - "setup"
               - "setup-tuckr-symlink.sh"
               - ".github/workflows/ci-nix.yml"
@@ -53,11 +62,17 @@ jobs:
               - "Configs/nix/.config/nix/darwin.nix"
               - "Configs/nix/.config/nix/flake.nix"
               - "Configs/nix/.config/nix/home.nix"
+              - "Configs/pnpm/**"
+              - "Configs/scripts/.local/bin/pnpm:global:sync"
               - "Hooks/nix/**"
+              - "Hooks/pnpm/**"
               - "setup"
               - "setup-tuckr-symlink.sh"
               - ".github/workflows/ci-nix.yml"
             docker:
+              - "Configs/pnpm/**"
+              - "Configs/scripts/.local/bin/pnpm:global:sync"
+              - "Hooks/pnpm/**"
               - "Dockerfile"
               - "tests/**"
               - "setup"
