@@ -35,9 +35,7 @@ in
       bun
       cargo-sweep
       cargo-update
-      claude-code
       cloudflared
-      extra.codex-cli
       extra.cursor-cli
       deno
       devenv
@@ -47,7 +45,6 @@ in
       emscripten
       evcxr
       fluxcd
-      gemini-cli
       gh
       git
       git-filter-repo
