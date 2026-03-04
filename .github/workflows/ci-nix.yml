@@ -97,7 +97,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm
+        run: ./setup --skip-nix --no-confirm --lite
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -134,7 +134,7 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm
+        run: ./setup --skip-nix --no-confirm --lite
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
