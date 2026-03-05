@@ -169,6 +169,9 @@ in
       nerd-fonts.sauce-code-pro
       nerd-fonts.symbols-only
     ]
+    ++ lib.optionals (!lite) [
+      google-chrome
+    ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
       [
         # macOS-only packages
@@ -190,7 +193,7 @@ in
       lib.optionals (!lite) [
         blender # broken on macOS in nixpkgs; macOS uses nix-casks
         ghostty
-        google-chrome
+        ungoogled-chromium
       ]
     );
 
