@@ -26,11 +26,8 @@ jobs:
       - name: 🔧 set up nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: 📦 install nushell
-        run: nix profile add nixpkgs#nushell
-
       - name: 🔄 update flake lock
-        run: nu Configs/scripts/.local/bin/rebuild --update --skip-check
+        run: nix run nixpkgs#nushell -- Configs/scripts/.local/bin/rebuild --update --skip-check
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
