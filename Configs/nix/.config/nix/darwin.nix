@@ -141,6 +141,8 @@ in
         app_name=$(basename "$src")
         echo "copying $src" >&2
         cp -rL "$src" "/Applications/Nix Apps/$app_name"
+        # Remove quarantine attribute so Gatekeeper doesn't block Nix-managed apps
+        xattr -cr "/Applications/Nix Apps/$app_name"
       done
     '';
 
