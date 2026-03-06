@@ -7,10 +7,6 @@
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    nix-casks = {
-      url = "github:atahanyorganci/nix-casks/archive";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     ifiokjr-nixpkgs = {
       url = "github:ifiokjr/nixpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,7 +19,6 @@
       darwin,
       home-manager,
       nixpkgs,
-      nix-casks,
       ifiokjr-nixpkgs,
     }:
     let
@@ -46,7 +41,6 @@
                 inherit
                   username
                   lite
-                  nix-casks
                   ifiokjr-nixpkgs
                   ;
               };

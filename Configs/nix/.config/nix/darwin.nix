@@ -5,13 +5,11 @@
   self,
   username,
   lite ? false,
-  nix-casks,
   ifiokjr-nixpkgs,
   ...
 }:
 
 let
-  casks = nix-casks.packages.${pkgs.stdenv.system};
   extra = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
 in
 {
@@ -30,6 +28,7 @@ in
 
   # System-level packages (only those that require system integration)
   # Most packages are now managed in home.nix
+  # GUI apps are managed by Homebrew casks (see homebrew section below)
   environment.systemPackages =
     (with pkgs; [
       # macOS-specific system utilities
@@ -44,69 +43,80 @@ in
       freetype
       jdk # Some system tools may need Java
     ])
-    ++ lib.optionals (!lite) (
-      (map (name: casks.${name}) [
-        # Productivity & Communication
-        "1password"
-        "discord"
-        "figma"
-        "setapp"
-        "slack"
-        # "telegram"
-        "whatsapp"
+    ++ lib.optionals (!lite) [
+      # Custom nix packages not available as Homebrew casks
+      extra.codexbar
+    ];
 
-        # Browsers
-        "brave-browser"
-        "firefox"
-        "microsoft-edge"
+  # Homebrew cask management via nix-darwin
+  # Apps are installed natively by Homebrew into /Applications with proper
+  # icons, code signing, and Spotlight indexing.
+  homebrew = {
+    enable = true;
+    onActivation = {
+      autoUpdate = false;
+      cleanup = "zap"; # Remove casks not listed here
+      upgrade = true;
+    };
+    casks = lib.optionals (!lite) [
+      # Productivity & Communication
+      "1password"
+      "discord"
+      "figma"
+      "setapp"
+      "slack"
+      # "telegram"
+      "whatsapp"
 
-        # Development
-        "android-ndk"
-        "android-studio"
-        "charles"
-        "cursor"
-        "db-browser-for-sqlite"
-        "dbeaver-community"
-        "gdevelop"
-        "ghostty"
-        # Temporarily disabled: upstream cask source hash is currently mismatched.
-        # Re-enable once nix-casks updates the hash for the current Godot artifact.
-        "orbstack"
-        "podman-desktop"
-        "react-native-debugger"
-        "reactotron"
-        "visual-studio-code"
-        "zed"
+      # Browsers
+      "brave-browser"
+      "firefox"
+      "google-chrome"
+      "microsoft-edge"
 
-        # Media & Graphics
-        "blender"
-        "obs"
-        "ollama-app"
-        "vlc"
+      # Development
+      "android-ndk"
+      "android-studio"
+      "charles"
+      "cursor"
+      "db-browser-for-sqlite"
+      "dbeaver-community"
+      "gdevelop"
+      "ghostty"
+      "orbstack"
+      "podman-desktop"
+      "react-native-debugger"
+      "reactotron"
+      "visual-studio-code"
+      "zed"
 
-        # Utilities
-        "alt-tab"
-        "flux-app"
-        "geekbench"
-        "jordanbaird-ice"
-        "ledger-live"
-        "qbittorrent"
-        "the-unarchiver"
-        "vysor"
+      # Media & Graphics
+      "blender"
+      "obs"
+      "ollama"
+      "vlc"
 
-        # Android
-        "duet"
-      ])
-      ++ [
-        # Custom packages from ifiokjr/nixpkgs (apps not available in nix-casks)
-        extra.codexbar
-        extra.google-drive
-        extra.gpg-suite
-        extra.nordvpn
-        extra.steam
-        extra.zoom
-      ]
-    );
+      # Utilities
+      "alt-tab"
+      "flux"
+      "geekbench"
+      "google-drive"
+      "gpg-suite"
+      "jordanbaird-ice"
+      "ledger-live"
+      "nordvpn"
+      "qbittorrent"
+      "the-unarchiver"
+      "vysor"
+
+      # Gaming
+      "steam"
+
+      # Communication
+      "duet"
+      "zoom"
+    ];
+  };
 
   # Enable zsh system-wide
   programs.zsh.enable = true;
