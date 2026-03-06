@@ -54,7 +54,7 @@ in
   homebrew = {
     enable = true;
     onActivation = {
-      autoUpdate = false;
+      autoUpdate = true; # Required to keep tap repos valid
       cleanup = "zap"; # Remove casks not listed here
       upgrade = true;
     };
