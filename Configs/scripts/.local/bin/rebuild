@@ -167,6 +167,18 @@ def main [
         info "Rebuilding nix-darwin configuration..."
         print ""
 
+        # Prompt for sudo password up front and start a keep-alive loop.
+        # The Nix build phase can take a long time, and Homebrew cask installs
+        # during activation call `sudo` internally. Without this keep-alive,
+        # the cached sudo credentials expire and cause an infinite "Password:"
+        # prompt loop (brew retries sudo endlessly in non-interactive context).
+        ^sudo -v
+        # Spawn a background bash process that refreshes sudo every 50 seconds.
+        # Uses nohup + /dev/null redirection to fully detach from the terminal.
+        # The loop self-terminates when the parent nushell process ($nu.pid) exits.
+        let keepalive_pid = $nu.pid
+        ^bash -c $"nohup bash -c 'while true; do sudo -n true; sleep 50; kill -0 ($keepalive_pid) 2>/dev/null || exit; done' >/dev/null 2>&1 &"
+
         # On first run, `darwin-rebuild` CLI may not be installed yet.
         # Use `nix run nix-darwin` from the flake input as fallback.
         let darwin_cmd = if (which darwin-rebuild | is-not-empty) {
