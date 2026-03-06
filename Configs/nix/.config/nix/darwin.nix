@@ -97,17 +97,17 @@ in
       # Media & Graphics
       "blender"
       "obs"
-      "ollama"
+      "ollama-app"
       "vlc"
 
       # Utilities
       "alt-tab"
-      "flux"
+      "flux-app"
       "geekbench"
       "google-drive"
       "gpg-suite"
       "jordanbaird-ice"
-      "ledger-live"
+      "ledger-wallet"
       "nordvpn"
       "qbittorrent"
       "the-unarchiver"
