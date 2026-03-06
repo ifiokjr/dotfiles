@@ -88,6 +88,7 @@ in
         "alt-tab"
         "flux-app"
         "geekbench"
+        "jordanbaird-ice"
         "ledger-live"
         "qbittorrent"
         "the-unarchiver"
@@ -136,8 +137,8 @@ in
       mkdir -p /Applications/Nix\ Apps
       find ${env}/Applications -maxdepth 1 -type l -exec readlink '{}' + |
       while IFS= read -r src; do
-        app_name=$(basename "$src" .app)
-        echo "copying $src" >&2
+        app_name=$(basename "$src")
+        echo "aliasing $src" >&2
         ${pkgs.mkalias}/bin/mkalias "$src" "/Applications/Nix Apps/$app_name"
       done
     '';
