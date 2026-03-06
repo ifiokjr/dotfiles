@@ -172,6 +172,13 @@ def main [
         # during activation call `sudo` internally. Without this keep-alive,
         # the cached sudo credentials expire and cause an infinite "Password:"
         # prompt loop (brew retries sudo endlessly in non-interactive context).
+        #
+        # IMPORTANT: We do NOT wrap darwin-rebuild in `sudo`. darwin-rebuild
+        # handles sudo internally for activation. Wrapping it in sudo causes
+        # nix-darwin's homebrew module to run `sudo --user=<user> brew ...`
+        # which spawns on a different TTY. When brew then calls `sudo` for
+        # cask installs, the cached credentials are on the original TTY and
+        # unavailable — causing an infinite password prompt loop.
         ^sudo -v
         # Spawn a background bash process that refreshes sudo every 50 seconds.
         # Uses nohup + /dev/null redirection to fully detach from the terminal.
@@ -190,10 +197,11 @@ def main [
 
         # Wrap in bash -c because:
         # 1. `ulimit -n 10240` raises macOS file descriptor limit (nix builds open many files)
-        # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
-        #    through to the darwin-rebuild process so it can find gitignored machine.nix
+        # 2. `NIX_USER_CONFIG_DIR` passes the config path so nix can find gitignored machine.nix
         # 3. `--impure` is needed because machine.nix is gitignored and read via env var
-        let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
+        # NOTE: No outer `sudo` — darwin-rebuild calls sudo internally for activation,
+        # keeping all sudo prompts on the user's TTY so credentials stay valid.
+        let rebuild_cmd = $"ulimit -n 10240 && NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
         # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
         let result = do -i { ^bash -c $rebuild_cmd }
 
