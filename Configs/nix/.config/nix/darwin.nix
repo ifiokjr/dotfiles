@@ -53,10 +53,14 @@ in
   # icons, code signing, and Spotlight indexing.
   homebrew = {
     enable = true;
+    global.autoUpdate = false; # Don't auto-update on every brew command
     onActivation = {
       autoUpdate = true; # Required to keep tap repos valid
       cleanup = "zap"; # Remove casks not listed here
       upgrade = true;
+      extraFlags = [
+        "--verbose"
+      ];
     };
     casks = lib.optionals (!lite) [
       # Productivity & Communication
