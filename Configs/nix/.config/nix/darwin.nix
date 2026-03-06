@@ -33,6 +33,7 @@ in
   environment.systemPackages =
     (with pkgs; [
       # macOS-specific system utilities
+      mkalias # For creating app aliases in /Applications
       tart # macOS VMs on Apple Silicon
       xcodes # Install and manage multiple Xcode versions
 
@@ -131,18 +132,14 @@ in
     in
     pkgs.lib.mkForce ''
       # Set up applications.
-      # Copy real .app bundles (dereferencing symlinks) so macOS Spotlight
-      # indexes them with their original icons and ranks them as real apps.
       echo "setting up /Applications..." >&2
       rm -rf /Applications/Nix\ Apps
       mkdir -p /Applications/Nix\ Apps
       find ${env}/Applications -maxdepth 1 -type l -exec readlink '{}' + |
       while IFS= read -r src; do
         app_name=$(basename "$src")
-        echo "copying $src" >&2
-        cp -rL "$src" "/Applications/Nix Apps/$app_name"
-        # Remove quarantine attribute so Gatekeeper doesn't block Nix-managed apps
-        xattr -cr "/Applications/Nix Apps/$app_name"
+        echo "aliasing $src" >&2
+        ${pkgs.mkalias}/bin/mkalias "$src" "/Applications/Nix Apps/$app_name"
       done
     '';
 
