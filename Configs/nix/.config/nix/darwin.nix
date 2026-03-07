@@ -5,13 +5,14 @@
   self,
   username,
   lite ? false,
-  nix-casks,
   ifiokjr-nixpkgs,
+  homebrew-core,
+  homebrew-cask,
+  homebrew-bundle,
   ...
 }:
 
 let
-  casks = nix-casks.packages.${pkgs.stdenv.system};
   extra = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
 in
 {
@@ -28,8 +29,24 @@ in
   # Set primary user for darwin options that require it
   system.primaryUser = username;
 
+  # nix-homebrew manages the Homebrew installation and taps declaratively.
+  # This ensures proper privilege handling during activation (no TTY issues).
+  nix-homebrew = {
+    enable = true;
+    enableRosetta = true;
+    user = username;
+    autoMigrate = true;
+    taps = {
+      "homebrew/homebrew-core" = homebrew-core;
+      "homebrew/homebrew-cask" = homebrew-cask;
+      "homebrew/homebrew-bundle" = homebrew-bundle;
+    };
+    mutableTaps = false;
+  };
+
   # System-level packages (only those that require system integration)
   # Most packages are now managed in home.nix
+  # GUI apps are managed by Homebrew casks (see homebrew section below)
   environment.systemPackages =
     (with pkgs; [
       # macOS-specific system utilities
@@ -44,69 +61,95 @@ in
       freetype
       jdk # Some system tools may need Java
     ])
-    ++ lib.optionals (!lite) (
-      (map (name: casks.${name}) [
-        # Productivity & Communication
-        "1password"
-        "discord"
-        "figma"
-        "setapp"
-        "slack"
-        # "telegram"
-        "whatsapp"
+    ++ lib.optionals (!lite) [
+      # Custom nix packages not available as Homebrew casks
+      extra.codexbar
+    ];
 
-        # Browsers
-        "brave-browser"
-        "firefox"
-        "microsoft-edge"
+  # Homebrew cask management via nix-darwin
+  # Apps are installed natively by Homebrew into /Applications with proper
+  # icons, code signing, and Spotlight indexing.
+  homebrew = {
+    enable = true;
+    taps = builtins.attrNames config.nix-homebrew.taps;
+    onActivation = {
+      autoUpdate = true;
+      upgrade = true;
+      cleanup = "zap";
+      extraFlags = [
+        "--verbose"
+      ];
+    };
+    casks = lib.optionals (!lite) [
+      # Productivity & Communication
+      "1password"
+      "discord"
+      "figma"
+      "setapp"
+      "slack"
+      # "telegram"
+      "whatsapp"
 
-        # Development
-        "android-ndk"
-        "android-studio"
-        "charles"
-        "cursor"
-        "db-browser-for-sqlite"
-        "dbeaver-community"
-        "gdevelop"
-        "ghostty"
-        # Temporarily disabled: upstream cask source hash is currently mismatched.
-        # Re-enable once nix-casks updates the hash for the current Godot artifact.
-        "orbstack"
-        "podman-desktop"
-        "react-native-debugger"
-        "reactotron"
-        "visual-studio-code"
-        "zed"
+      # Browsers
+      "brave-browser"
+      "firefox"
+      "google-chrome"
+      "microsoft-edge"
 
-        # Media & Graphics
-        "blender"
-        "obs"
-        "ollama-app"
-        "vlc"
+      # Development
+      "android-ndk"
+      "android-studio"
+      "charles"
+      "cursor"
+      "db-browser-for-sqlite"
+      "dbeaver-community"
+      "gdevelop"
+      "ghostty"
+      "orbstack"
+      "podman-desktop"
+      "react-native-debugger"
+      "reactotron"
+      "visual-studio-code"
+      "zed"
 
-        # Utilities
-        "alt-tab"
-        "flux-app"
-        "geekbench"
-        "jordanbaird-ice"
-        "ledger-live"
-        "qbittorrent"
-        "the-unarchiver"
-        "vysor"
+      # Media & Graphics
+      "blender"
+      "obs"
+      "ollama-app"
+      "vlc"
 
-        # Android
-        "duet"
-      ])
-      ++ [
-        # Custom packages from ifiokjr/nixpkgs (apps not available in nix-casks)
-        extra.codexbar
-        extra.google-drive
-        extra.gpg-suite
-        extra.nordvpn
-        extra.steam
-        extra.zoom
-      ]
-    );
+      # Utilities
+      "alt-tab"
+      "flux-app"
+      "geekbench"
+      "google-drive"
+      "gpg-suite"
+      "jordanbaird-ice"
+      "ledger-wallet"
+      "nordvpn"
+      "qbittorrent"
+      "the-unarchiver"
+      "vysor"
+
+      # Gaming
+      "steam"
+
+      # Communication
+      "duet"
+      "zoom"
+    ];
+  };
+
+  # Use global sudo timestamp so credentials are shared across all processes.
+  # Required because nix-darwin's Homebrew module runs `brew bundle` in a
+  # different process tree during activation, and brew's internal `sudo`
+  # calls (for cask installs) need to reuse the cached credentials.
+  # Note: on sudo 1.9+, `!tty_tickets` only gives ppid-based timestamps
+  # which don't survive across different process trees. `timestamp_type=global`
+  # is the correct setting for this use case.
+  security.sudo.extraConfig = ''
+    Defaults timestamp_type=global
+  '';
 
   # Enable zsh system-wide
   programs.zsh.enable = true;

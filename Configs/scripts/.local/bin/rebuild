@@ -167,6 +167,26 @@ def main [
         info "Rebuilding nix-darwin configuration..."
         print ""
 
+        # Ensure sudo uses global timestamps so credentials are shared across
+        # all processes. Required because nix-darwin activation runs brew in a
+        # different process tree, and brew's internal sudo calls need the cached
+        # credentials. On sudo 1.9+, !tty_tickets only gives ppid-based timestamps
+        # which don't survive across process trees.
+        # nix-darwin manages this permanently via security.sudo.extraConfig,
+        # but we bootstrap it here for the first run before activation applies it.
+        ^sudo -v
+        let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
+        let needs_global = if ($sudoers_extra | path exists) {
+            not (open $sudoers_extra | str contains "timestamp_type=global")
+        } else {
+            true
+        }
+        if $needs_global {
+            info "Bootstrapping global sudo timestamps..."
+            ^sudo bash -c $"echo 'Defaults timestamp_type=global' >> ($sudoers_extra)"
+            success "Added timestamp_type=global to sudoers"
+        }
+
         # On first run, `darwin-rebuild` CLI may not be installed yet.
         # Use `nix run nix-darwin` from the flake input as fallback.
         let darwin_cmd = if (which darwin-rebuild | is-not-empty) {
