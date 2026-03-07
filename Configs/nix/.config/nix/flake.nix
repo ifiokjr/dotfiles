@@ -11,6 +11,20 @@
       url = "github:ifiokjr/nixpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # Declarative tap management
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+    homebrew-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
   };
 
   outputs =
@@ -20,6 +34,10 @@
       home-manager,
       nixpkgs,
       ifiokjr-nixpkgs,
+      nix-homebrew,
+      homebrew-core,
+      homebrew-cask,
+      homebrew-bundle,
     }:
     let
       # Helper function to create configurations for a specific user
@@ -36,12 +54,16 @@
           inherit system;
           modules = [
             ./darwin.nix
+            nix-homebrew.darwinModules.nix-homebrew
             {
               _module.args = {
                 inherit
                   username
                   lite
                   ifiokjr-nixpkgs
+                  homebrew-core
+                  homebrew-cask
+                  homebrew-bundle
                   ;
               };
             }

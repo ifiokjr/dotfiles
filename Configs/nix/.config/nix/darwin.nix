@@ -6,6 +6,9 @@
   username,
   lite ? false,
   ifiokjr-nixpkgs,
+  homebrew-core,
+  homebrew-cask,
+  homebrew-bundle,
   ...
 }:
 
@@ -25,6 +28,21 @@ in
 
   # Set primary user for darwin options that require it
   system.primaryUser = username;
+
+  # nix-homebrew manages the Homebrew installation and taps declaratively.
+  # This ensures proper privilege handling during activation (no TTY issues).
+  nix-homebrew = {
+    enable = true;
+    enableRosetta = true;
+    user = username;
+    autoMigrate = true;
+    taps = {
+      "homebrew/homebrew-core" = homebrew-core;
+      "homebrew/homebrew-cask" = homebrew-cask;
+      "homebrew/homebrew-bundle" = homebrew-bundle;
+    };
+    mutableTaps = false;
+  };
 
   # System-level packages (only those that require system integration)
   # Most packages are now managed in home.nix
@@ -53,11 +71,11 @@ in
   # icons, code signing, and Spotlight indexing.
   homebrew = {
     enable = true;
-    global.autoUpdate = false; # Don't auto-update on every brew command
+    taps = builtins.attrNames config.nix-homebrew.taps;
     onActivation = {
-      autoUpdate = true; # Required to keep tap repos valid
-      cleanup = "zap"; # Remove casks not listed here
+      autoUpdate = true;
       upgrade = true;
+      cleanup = "zap";
       extraFlags = [
         "--verbose"
       ];
@@ -122,13 +140,15 @@ in
     ];
   };
 
-  # Disable per-TTY sudo credential caching so all terminals share the same
-  # sudo timestamp. Required because nix-darwin's Homebrew module runs
-  # `brew bundle` on a new pseudo-TTY during activation, and brew's internal
-  # `sudo` calls (for cask installs) would otherwise prompt for a password
-  # on a TTY that has no cached credentials — causing an infinite loop.
+  # Use global sudo timestamp so credentials are shared across all processes.
+  # Required because nix-darwin's Homebrew module runs `brew bundle` in a
+  # different process tree during activation, and brew's internal `sudo`
+  # calls (for cask installs) need to reuse the cached credentials.
+  # Note: on sudo 1.9+, `!tty_tickets` only gives ppid-based timestamps
+  # which don't survive across different process trees. `timestamp_type=global`
+  # is the correct setting for this use case.
   security.sudo.extraConfig = ''
-    Defaults !tty_tickets
+    Defaults timestamp_type=global
   '';
 
   # Enable zsh system-wide

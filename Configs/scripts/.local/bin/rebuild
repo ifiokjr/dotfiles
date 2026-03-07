@@ -167,37 +167,25 @@ def main [
         info "Rebuilding nix-darwin configuration..."
         print ""
 
-        # Prompt for sudo password up front and start a keep-alive loop.
-        # The Nix build phase can take a long time, and Homebrew cask installs
-        # during activation call `sudo` internally. Without this keep-alive,
-        # the cached sudo credentials expire and cause an infinite "Password:"
-        # prompt loop (brew retries sudo endlessly in non-interactive context).
-        ^sudo -v
-
-        # Ensure sudo credentials are shared across TTYs (not per-TTY).
-        # nix-darwin's Homebrew module runs brew on a new pseudo-TTY during
-        # activation. Without !tty_tickets, brew's internal sudo calls prompt
-        # for a password on the new TTY which has no cached credentials.
+        # Ensure sudo uses global timestamps so credentials are shared across
+        # all processes. Required because nix-darwin activation runs brew in a
+        # different process tree, and brew's internal sudo calls need the cached
+        # credentials. On sudo 1.9+, !tty_tickets only gives ppid-based timestamps
+        # which don't survive across process trees.
         # nix-darwin manages this permanently via security.sudo.extraConfig,
-        # but we bootstrap it here for the first run (before activation applies it).
-        let no_tty_tickets = "Defaults !tty_tickets"
+        # but we bootstrap it here for the first run before activation applies it.
+        ^sudo -v
         let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
-        let has_rule = if ($sudoers_extra | path exists) {
-            (open $sudoers_extra | str contains "!tty_tickets")
+        let needs_global = if ($sudoers_extra | path exists) {
+            not (open $sudoers_extra | str contains "timestamp_type=global")
         } else {
-            false
+            true
         }
-        if not $has_rule {
-            info "Bootstrapping sudoers !tty_tickets rule..."
-            ^sudo bash -c $"echo '($no_tty_tickets)' >> ($sudoers_extra)"
-            success "Added !tty_tickets to sudoers \(will be managed by nix-darwin after activation\)"
+        if $needs_global {
+            info "Bootstrapping global sudo timestamps..."
+            ^sudo bash -c $"echo 'Defaults timestamp_type=global' >> ($sudoers_extra)"
+            success "Added timestamp_type=global to sudoers"
         }
-
-        # Spawn a background bash process that refreshes sudo every 50 seconds.
-        # Uses nohup + /dev/null redirection to fully detach from the terminal.
-        # The loop self-terminates when the parent nushell process ($nu.pid) exits.
-        let keepalive_pid = $nu.pid
-        ^bash -c $"nohup bash -c 'while true; do sudo -n true; sleep 50; kill -0 ($keepalive_pid) 2>/dev/null || exit; done' >/dev/null 2>&1 &"
 
         # On first run, `darwin-rebuild` CLI may not be installed yet.
         # Use `nix run nix-darwin` from the flake input as fallback.
@@ -213,9 +201,6 @@ def main [
         # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
         #    through to the darwin-rebuild process so it can find gitignored machine.nix
         # 3. `--impure` is needed because machine.nix is gitignored and read via env var
-        # NOTE: sudo is required — darwin-rebuild needs root for system activation.
-        # The !tty_tickets sudoers rule (above) ensures brew's internal sudo calls
-        # can reuse cached credentials even when running on a different pseudo-TTY.
         let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
         # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
         let result = do -i { ^bash -c $rebuild_cmd }
