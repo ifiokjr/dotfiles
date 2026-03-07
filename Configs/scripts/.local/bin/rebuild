@@ -172,14 +172,27 @@ def main [
         # during activation call `sudo` internally. Without this keep-alive,
         # the cached sudo credentials expire and cause an infinite "Password:"
         # prompt loop (brew retries sudo endlessly in non-interactive context).
-        #
-        # IMPORTANT: We do NOT wrap darwin-rebuild in `sudo`. darwin-rebuild
-        # handles sudo internally for activation. Wrapping it in sudo causes
-        # nix-darwin's homebrew module to run `sudo --user=<user> brew ...`
-        # which spawns on a different TTY. When brew then calls `sudo` for
-        # cask installs, the cached credentials are on the original TTY and
-        # unavailable — causing an infinite password prompt loop.
         ^sudo -v
+
+        # Ensure sudo credentials are shared across TTYs (not per-TTY).
+        # nix-darwin's Homebrew module runs brew on a new pseudo-TTY during
+        # activation. Without !tty_tickets, brew's internal sudo calls prompt
+        # for a password on the new TTY which has no cached credentials.
+        # nix-darwin manages this permanently via security.sudo.extraConfig,
+        # but we bootstrap it here for the first run (before activation applies it).
+        let no_tty_tickets = "Defaults !tty_tickets"
+        let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
+        let has_rule = if ($sudoers_extra | path exists) {
+            (open $sudoers_extra | str contains "!tty_tickets")
+        } else {
+            false
+        }
+        if not $has_rule {
+            info "Bootstrapping sudoers !tty_tickets rule..."
+            ^sudo bash -c $"echo '($no_tty_tickets)' >> ($sudoers_extra)"
+            success "Added !tty_tickets to sudoers \(will be managed by nix-darwin after activation\)"
+        }
+
         # Spawn a background bash process that refreshes sudo every 50 seconds.
         # Uses nohup + /dev/null redirection to fully detach from the terminal.
         # The loop self-terminates when the parent nushell process ($nu.pid) exits.
@@ -197,11 +210,13 @@ def main [
 
         # Wrap in bash -c because:
         # 1. `ulimit -n 10240` raises macOS file descriptor limit (nix builds open many files)
-        # 2. `NIX_USER_CONFIG_DIR` passes the config path so nix can find gitignored machine.nix
+        # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
+        #    through to the darwin-rebuild process so it can find gitignored machine.nix
         # 3. `--impure` is needed because machine.nix is gitignored and read via env var
-        # NOTE: No outer `sudo` — darwin-rebuild calls sudo internally for activation,
-        # keeping all sudo prompts on the user's TTY so credentials stay valid.
-        let rebuild_cmd = $"ulimit -n 10240 && NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
+        # NOTE: sudo is required — darwin-rebuild needs root for system activation.
+        # The !tty_tickets sudoers rule (above) ensures brew's internal sudo calls
+        # can reuse cached credentials even when running on a different pseudo-TTY.
+        let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
         # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
         let result = do -i { ^bash -c $rebuild_cmd }
 

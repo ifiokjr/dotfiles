@@ -122,6 +122,15 @@ in
     ];
   };
 
+  # Disable per-TTY sudo credential caching so all terminals share the same
+  # sudo timestamp. Required because nix-darwin's Homebrew module runs
+  # `brew bundle` on a new pseudo-TTY during activation, and brew's internal
+  # `sudo` calls (for cask installs) would otherwise prompt for a password
+  # on a TTY that has no cached credentials — causing an infinite loop.
+  security.sudo.extraConfig = ''
+    Defaults !tty_tickets
+  '';
+
   # Enable zsh system-wide
   programs.zsh.enable = true;
 
