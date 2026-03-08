@@ -77,8 +77,9 @@ alias cch = cargo check
 alias ccl = cargo clippy
 alias cf = cargo fmt
 alias cw = cargo watch -x run
-# pnpm 
+# pnpm
 alias p = pnpm
+alias pu = pnpm update -g -iL
 # alias pi = pnpm install
 # alias pd = pnpm dev
 # alias pb = pnpm build
