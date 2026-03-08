@@ -84,6 +84,10 @@ $env.CARAPACE_BRIDGES = "zsh,fish,bash,inshellisense"
 # Force epoch 0 for deterministic/reproducible Nix builds
 $env.SOURCE_DATE_EPOCH = "0"
 $env.DIRENV_LOG_FORMAT = ""
+# Suppress boehm-gc "Exclusion ranges overlap" warnings on macOS.
+# The boehm-gc library (linked into nix) prints these harmless warnings
+# to stderr during memory region setup, polluting devenv/direnv output.
+$env.GC_LOG_FILE = "/dev/null"
 # ---------------------------------------------------------------------------
 # PATH (single consolidation point)
 # ---------------------------------------------------------------------------
