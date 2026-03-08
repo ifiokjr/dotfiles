@@ -9,6 +9,7 @@
 		"bash-language-server": "^5.6.0",
 		"eslint": "^10.0.3",
 		"firebase-tools": "^15.9.0",
+		"npm": "^11.11.0",
 		"opencode-ai": "1.2.21",
 		"prettier": "^3.8.1",
 		"sql-formatter": "^15.7.2",
@@ -40,6 +41,9 @@
 			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
 		},
 		"opencode-ai": {
+			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
+		},
+		"npm": {
 			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
 		}
 	}

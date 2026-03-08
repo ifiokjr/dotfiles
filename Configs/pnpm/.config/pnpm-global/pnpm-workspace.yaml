@@ -1,5 +1,2 @@
 onlyBuiltDependencies:
-  - core-js
-  - node-pty
-  - re2
-  - tree-sitter-bash
+  - opencode-ai
