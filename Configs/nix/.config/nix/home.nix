@@ -8,6 +8,15 @@
 
 let
   extra = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
+  # Work around intermittent ast-grep check failures on Darwin
+  # (`Illegal byte sequence (os error 92)`) during source builds.
+  astGrepPackage =
+    if pkgs.stdenv.isDarwin then
+      pkgs.ast-grep.overrideAttrs (_: {
+        doCheck = false;
+      })
+    else
+      pkgs.ast-grep;
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -27,7 +36,7 @@ in
     with pkgs;
     [
       # Development Tools
-      ast-grep
+      astGrepPackage
       atuin
       awscli2
       bat
