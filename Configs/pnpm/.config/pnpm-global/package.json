@@ -4,6 +4,7 @@
 		"@devcontainers/cli": "^0.84.0",
 		"@fsouza/prettierd": "^0.27.0",
 		"@google/gemini-cli": "^0.32.1",
+		"@googleworkspace/cli": "^0.8.1",
 		"@mariozechner/pi-coding-agent": "^0.57.1",
 		"@openai/codex": "^0.111.0",
 		"bash-language-server": "^5.6.0",
@@ -44,6 +45,9 @@
 			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
 		},
 		"npm": {
+			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
+		},
+		"@googleworkspace/cli": {
 			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
 		}
 	}
