@@ -25,7 +25,21 @@ $env.config = {
                 # it catches: directory changes, `direnv allow`, and file edits.
                 # Based on: https://direnv.net/docs/hook.html
                 if (which direnv | is-empty) { return }
-                let direnv_out = (direnv export json | from json | default {})
+                # Capture stdout/stderr so direnv/devenv build errors don't corrupt prompt rendering.
+                # (e.g. "↑↓ navigatedirenv: failed to build the devenv environment")
+                let result = (^direnv export json | complete)
+                if ($result.exit_code != 0) {
+                    if ($env | get -o DOTFILES_DEBUG | is-not-empty) {
+                        let err = ($result.stderr | str trim)
+                        if ($err | is-not-empty) { print $"(ansi yellow)direnv skipped:(ansi reset) ($err)" }
+                    }
+                    return
+                }
+                let stdout = ($result.stdout | str trim)
+                if ($stdout | is-empty) { return }
+                let direnv_out = (try {
+                    $stdout | from json
+                } catch { {} })
                 if ($direnv_out | is-empty) { return }
                 let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
                     let path_as_list = ($direnv_out | get PATH | split row (char esep))
