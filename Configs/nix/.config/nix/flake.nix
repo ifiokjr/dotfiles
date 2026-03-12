@@ -44,11 +44,13 @@
       # Work around intermittent ast-grep check failures on Darwin
       # (`Illegal byte sequence (os error 92)`) during source builds.
       # Applied as an overlay so every consumer (including serpl) benefits.
-      astGrepOverlay = final: prev: prev.lib.optionalAttrs prev.stdenv.isDarwin {
-        ast-grep = prev.ast-grep.overrideAttrs (_: {
-          doCheck = false;
-        });
-      };
+      astGrepOverlay =
+        final: prev:
+        prev.lib.optionalAttrs prev.stdenv.isDarwin {
+          ast-grep = prev.ast-grep.overrideAttrs (_: {
+            doCheck = false;
+          });
+        };
 
       mkDarwinConfig =
         {

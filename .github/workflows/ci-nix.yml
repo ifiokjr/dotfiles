@@ -116,13 +116,19 @@ jobs:
       - name: 📥 checkout repository
         uses: actions/checkout@v4
 
-      - name: 🧹 free disk space (macos)
+      - name: 🧹 free disk space & remove pre-installed Homebrew (macos)
         run: |
           # Remove Xcode to free ~12GB (nix provides its own build tools)
           sudo rm -rf /Applications/Xcode_*.app
           # Remove simulators
           xcrun simctl delete all 2>/dev/null || true
           sudo rm -rf ~/Library/Developer/CoreSimulator
+          # Remove pre-installed Homebrew so nix-homebrew can manage it
+          # declaratively without "existing /opt/homebrew/Library/Taps" conflicts.
+          sudo rm -rf /opt/homebrew/Library/Taps
+          sudo rm -rf /opt/homebrew/Library/Homebrew
+          sudo rm -rf /opt/homebrew/Library/Contributions
+          sudo rm -rf /opt/homebrew/.git
           df -h /
 
       - name: 🔧 install nix
