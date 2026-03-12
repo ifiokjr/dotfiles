@@ -62,27 +62,6 @@ importers:
       vscode-langservers-extracted:
         specifier: ^4.10.0
         version: 4.10.0
-    dependenciesMeta:
-      '@anthropic-ai/claude-code':
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      '@devcontainers/cli':
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      '@google/gemini-cli':
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      '@googleworkspace/cli':
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      '@mariozechner/pi-coding-agent':
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      '@openai/codex':
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      eslint:
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      firebase-tools:
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      npm:
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
-      opencode-ai:
-        node: /Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node
 
 packages:
 
