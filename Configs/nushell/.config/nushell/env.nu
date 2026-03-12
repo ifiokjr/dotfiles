@@ -8,7 +8,7 @@ $env._SHELL_START = (date now)
 # nix-darwin's set-environment has not run), detect and set them manually.
 if not ($env | get -o NIX_PROFILES | is-not-empty) {
     # Replicate nix-darwin's set-environment script
-    let user = ($env | get -o USER | default "ifiokjr")
+    let user = ($env | get -o USER | default (whoami))
     # Nix profiles (matches nix-darwin set-environment)
     $env.NIX_PROFILES = $"/nix/var/nix/profiles/default /run/current-system/sw /etc/profiles/per-user/($user) ($env.HOME)/.nix-profile"
     $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($user)"
