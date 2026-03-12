@@ -41,6 +41,15 @@
     }:
     let
       # Helper function to create configurations for a specific user
+      # Work around intermittent ast-grep check failures on Darwin
+      # (`Illegal byte sequence (os error 92)`) during source builds.
+      # Applied as an overlay so every consumer (including serpl) benefits.
+      astGrepOverlay = final: prev: prev.lib.optionalAttrs prev.stdenv.isDarwin {
+        ast-grep = prev.ast-grep.overrideAttrs (_: {
+          doCheck = false;
+        });
+      };
+
       mkDarwinConfig =
         {
           system ? "aarch64-darwin",
@@ -70,6 +79,7 @@
             # Integrate home-manager directly with nix-darwin
             home-manager.darwinModules.home-manager
             {
+              nixpkgs.overlays = [ astGrepOverlay ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = {
@@ -96,6 +106,7 @@
           pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
+            overlays = [ astGrepOverlay ];
           };
           # Automatically determine home directory based on system
           finalHomeDirectory =
