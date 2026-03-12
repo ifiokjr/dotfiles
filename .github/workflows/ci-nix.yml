@@ -95,6 +95,7 @@ jobs:
 
       - name: 🔧 set up nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
+        continue-on-error: true
 
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm --lite
@@ -136,6 +137,7 @@ jobs:
 
       - name: 🔧 set up nix cache
         uses: DeterminateSystems/magic-nix-cache-action@main
+        continue-on-error: true
 
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm --lite
