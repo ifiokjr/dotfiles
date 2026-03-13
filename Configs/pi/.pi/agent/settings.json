@@ -1,9 +1,19 @@
 {
 	"lastChangelogVersion": "0.57.1",
-	"defaultProvider": "anthropic",
-	"defaultModel": "claude-opus-4-6",
+	"defaultProvider": "openai-codex",
+	"defaultModel": "gpt-5.4",
 	"defaultThinkingLevel": "xhigh",
 	"packages": [
-		"npm:@ifi/oh-pi"
+		"npm:@ifi/oh-pi",
+		{
+			"source": "npm:@ifi/oh-pi-extensions",
+			"extensions": [
+				"-extensions/safe-guard.ts"
+			]
+		},
+		"npm:@ifi/oh-pi-ant-colony",
+		"npm:@ifi/oh-pi-themes",
+		"npm:@ifi/oh-pi-prompts",
+		"npm:@ifi/oh-pi-skills"
 	]
 }
