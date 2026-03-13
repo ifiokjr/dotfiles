@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 FROM ubuntu:24.04
 
 # Install minimal dependencies
@@ -12,6 +14,9 @@ USER testuser
 COPY --chown=testuser:testuser . /home/testuser/.dotfiles
 WORKDIR /home/testuser/.dotfiles
 
-RUN SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup --no-confirm --lite
+RUN --mount=type=secret,id=github_token,required=false \
+    GITHUB_TOKEN="$(cat /run/secrets/github_token 2>/dev/null || true)" \
+    SETUP_ALLOW_NIX_HOOK_FAILURE=true \
+    ./setup --no-confirm --lite
 
 CMD ["bash", "-lc", "tests/docker-integration-test.sh"]

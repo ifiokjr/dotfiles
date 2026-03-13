@@ -286,6 +286,30 @@ else
 	echo "Warning: raco not found after rebuild, skipping fmt package install"
 fi
 
+# Explicitly reconcile managed pnpm globals after a successful rebuild so
+# global CLI tools are installed even when activation hooks were best-effort.
+if [ "$REBUILD_EXIT" -eq 0 ]; then
+	PNPM_SYNC_SCRIPT="$HOME/.local/bin/pnpm:global:sync"
+	if [ ! -x "$PNPM_SYNC_SCRIPT" ]; then
+		THIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+		FALLBACK_SYNC_SCRIPT="$(cd "$THIS_DIR/../.." && pwd -P)/Configs/scripts/.local/bin/pnpm:global:sync"
+		if [ -x "$FALLBACK_SYNC_SCRIPT" ]; then
+			PNPM_SYNC_SCRIPT="$FALLBACK_SYNC_SCRIPT"
+		fi
+	fi
+
+	if [ -x "$PNPM_SYNC_SCRIPT" ]; then
+		echo "Syncing managed pnpm global packages..."
+		if ! "$PNPM_SYNC_SCRIPT"; then
+			echo "ERROR: managed pnpm global package sync failed"
+			REBUILD_EXIT=1
+		fi
+	else
+		echo "ERROR: pnpm:global:sync not found after rebuild"
+		REBUILD_EXIT=1
+	fi
+fi
+
 # After rebuild, make home-manager packages available to subsequent CI steps.
 if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
 	# Add all profile paths that may contain tools
