@@ -86,9 +86,6 @@
         "--verbose"
       ];
     };
-    brews = lib.optionals (!lite) [
-      "steipete/tap/codexbar"
-    ];
     casks = lib.optionals (!lite) [
       # Productivity & Communication
       "1password"
@@ -125,6 +122,7 @@
       "blender"
       "obs"
       "ollama-app"
+      "steipete/tap/codexbar"
       "vlc"
 
       # Utilities
