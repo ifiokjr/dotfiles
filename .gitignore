@@ -119,3 +119,4 @@ Configs/claude/.claude/skills/deno.lock
 *.tmp
 *.temp
 .*.tmp
+.ant-colony/

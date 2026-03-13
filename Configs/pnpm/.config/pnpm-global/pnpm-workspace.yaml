@@ -1,2 +1,10 @@
 onlyBuiltDependencies:
+  - "@googleworkspace/cli"
+  - core-js
+  - keytar
+  - koffi
+  - node-pty
   - opencode-ai
+  - protobufjs
+  - re2
+  - tree-sitter-bash

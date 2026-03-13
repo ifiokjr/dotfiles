@@ -13,9 +13,6 @@
   ...
 }:
 
-let
-  extra = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
-in
 {
   nix.enable = false;
   nixpkgs.config.allowUnfree = true;
@@ -41,7 +38,9 @@ in
       "homebrew/homebrew-core" = homebrew-core;
       "homebrew/homebrew-cask" = homebrew-cask;
       "homebrew/homebrew-bundle" = homebrew-bundle;
-      "steipete/tap" = steipete-tap;
+      # Custom taps must use the exact repository folder name (`homebrew-*`)
+      # so nix-homebrew creates the immutable tap at the path Homebrew expects.
+      "steipete/homebrew-tap" = steipete-tap;
     };
     mutableTaps = false;
   };
