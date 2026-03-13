@@ -8,6 +8,34 @@ use nu_modules/print_utils.nu *
 use nu_modules/platform.nu
 use nu_modules/nix_config.nu
 
+def sync_pnpm_global_packages [] {
+    let primary_sync_script = $"($env.HOME)/.local/bin/pnpm:global:sync"
+    let fallback_sync_script = $"($env.FILE_PWD)/pnpm:global:sync"
+
+    let sync_script = if ($primary_sync_script | path exists) {
+        $primary_sync_script
+    } else if ($fallback_sync_script | path exists) {
+        $fallback_sync_script
+    } else {
+        ""
+    }
+
+    if ($sync_script | is-empty) {
+        err "pnpm:global:sync not found; cannot sync managed pnpm global packages"
+        exit 1
+    }
+
+    info "Syncing managed pnpm global packages..."
+    do -i { ^bash $sync_script }
+
+    if ($env.LAST_EXIT_CODE == 0) {
+        success "Managed pnpm global packages synced"
+    } else {
+        err "Failed to sync managed pnpm global packages"
+        exit 1
+    }
+}
+
 def main [
     --skip-check    # Skip flake check before rebuilding
     --update        # Update flake inputs (flake.lock) before rebuilding
@@ -207,6 +235,8 @@ def main [
 
         if ($env.LAST_EXIT_CODE == 0) {
             print ""
+            sync_pnpm_global_packages
+            print ""
             success "Configuration rebuilt successfully!"
             info "Both system \(darwin\) and user \(home-manager\) configurations have been updated."
             info "You may need to restart your shell for some changes to take effect."
@@ -237,6 +267,8 @@ def main [
         let result = do -i { ^bash -c $rebuild_cmd }
 
         if ($env.LAST_EXIT_CODE == 0) {
+            print ""
+            sync_pnpm_global_packages
             print ""
             success "Configuration rebuilt successfully!"
             info "Home-manager configuration has been updated."

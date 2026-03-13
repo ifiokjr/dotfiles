@@ -51,6 +51,80 @@ fail() {
   return 1
 }
 
+sanitize_manifest_dependencies_meta() {
+  local manifest_path="$1"
+
+  [ -f "$manifest_path" ] || return 0
+
+  if node - "$manifest_path" <<'NODE'
+const fs = require('fs');
+const manifestPath = process.argv[2];
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+if (!Object.prototype.hasOwnProperty.call(manifest, 'dependenciesMeta')) {
+  process.exit(10);
+}
+
+delete manifest.dependenciesMeta;
+fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, '\t')}\n`);
+NODE
+  then
+    info "Removed pnpm-generated dependenciesMeta from $manifest_path"
+  else
+    local status=$?
+    case "$status" in
+      10) ;;
+      *)
+        fail "Failed to sanitize $manifest_path"
+        return $?
+        ;;
+    esac
+  fi
+}
+
+sanitize_lockfile_dependencies_meta() {
+  local lockfile_path="$1"
+
+  [ -f "$lockfile_path" ] || return 0
+
+  local tmpfile
+  tmpfile="$(mktemp)"
+
+  if awk '
+    BEGIN {
+      skipping = 0
+      removed = 0
+    }
+    /^    dependenciesMeta:$/ {
+      skipping = 1
+      removed = 1
+      next
+    }
+    skipping && (/^    [^ ]/ || /^[^ ]/) {
+      skipping = 0
+    }
+    !skipping {
+      print
+    }
+    END {
+      if (!removed) exit 10
+    }
+  ' "$lockfile_path" > "$tmpfile"; then
+    mv "$tmpfile" "$lockfile_path"
+    info "Removed pnpm-generated dependenciesMeta from $lockfile_path"
+  else
+    local status=$?
+    rm -f "$tmpfile"
+    case "$status" in
+      10) ;;
+      *)
+        fail "Failed to sanitize $lockfile_path"
+        return $?
+        ;;
+    esac
+  fi
+}
+
 # Home Manager activation hooks may run in a non-login shell where PATH does
 # not include nix profile bins yet. Ensure common nix profile locations exist
 # on PATH before checking for pnpm.
@@ -94,11 +168,21 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
+if ! command -v node >/dev/null 2>&1; then
+  fail "node is not installed; cannot sanitize pnpm global manifests"
+  exit $?
+fi
+
 SOURCE_DIR="$HOME/.config/pnpm-global"
 if [ ! -f "$SOURCE_DIR/package.json" ]; then
   info "No $SOURCE_DIR/package.json found; skipping pnpm global sync"
   exit 0
 fi
+
+# pnpm may add dependenciesMeta.*.node during global installs, which hardcodes
+# a machine-specific Node.js path into the managed manifest and lockfile.
+sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
+sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
 
 if ! GLOBAL_ROOT="$(pnpm root -g 2>/dev/null)"; then
   fail "Failed to resolve pnpm global root with 'pnpm root -g'"
@@ -131,5 +215,8 @@ if ! pnpm "${INSTALL_ARGS[@]}"; then
   fail "pnpm global install failed"
   exit $?
 fi
+
+sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
+sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
 
 info "pnpm global packages synced"
