@@ -63,11 +63,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773367248,
-        "narHash": "sha256-FFMc1uAwy2GYasd0rdNDVxKyAgzuoJH2M+GglBQbqf0=",
+        "lastModified": 1773422513,
+        "narHash": "sha256-MPjR48roW7CUMU6lu0+qQGqj92Kuh3paIulMWFZy+NQ=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "be0c641a6a5564caa33982faa1fe2c60d92131c7",
+        "rev": "ef12a9a2b0f77c8fa3dda1e7e494fca668909056",
         "type": "github"
       },
       "original": {
@@ -95,11 +95,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1773401650,
-        "narHash": "sha256-2ChS1/5XqDRbTFgLl5ANYyhZfg3M0De+54W9xa5Ktm8=",
+        "lastModified": 1773441197,
+        "narHash": "sha256-sExu+LGYQOpmKfD2cc4IycgXo9tRekLmjxG4gucvtSs=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "b2ddd612a173401cfd43f30a53147b31220f5555",
+        "rev": "507069b3f67b471d2038af6ab1077380602fcb2b",
         "type": "github"
       },
       "original": {
@@ -111,11 +111,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1773398259,
-        "narHash": "sha256-hRGksw1cDfPc3EIKAZU58sXp/hfaRM2/qT8kM7+S67c=",
+        "lastModified": 1773438379,
+        "narHash": "sha256-OaFxmRSHucSc/PAW3Tm6vI4zi/qr8R8LwiR2c74v+Xw=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "56a25cb14be8d439c47a99c1672ec2ee5e46847a",
+        "rev": "721d4697117fbdaf8456eb22b11fab6f4152315b",
         "type": "github"
       },
       "original": {
@@ -188,24 +188,7 @@
         "homebrew-core": "homebrew-core",
         "ifiokjr-nixpkgs": "ifiokjr-nixpkgs",
         "nix-homebrew": "nix-homebrew",
-        "nixpkgs": "nixpkgs",
-        "steipete-tap": "steipete-tap"
-      }
-    },
-    "steipete-tap": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1773360478,
-        "narHash": "sha256-F74WEvYlw1VJuU/HLmGSE5RgSr2yFi+3LrCcDKkLnP8=",
-        "owner": "steipete",
-        "repo": "homebrew-tap",
-        "rev": "ef78f57c11088f10a23a01f8750646310ed53fb6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "steipete",
-        "repo": "homebrew-tap",
-        "type": "github"
+        "nixpkgs": "nixpkgs"
       }
     },
     "systems": {

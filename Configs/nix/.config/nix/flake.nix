@@ -25,10 +25,6 @@
       url = "github:homebrew/homebrew-bundle";
       flake = false;
     };
-    steipete-tap = {
-      url = "github:steipete/homebrew-tap";
-      flake = false;
-    };
   };
 
   outputs =
@@ -42,7 +38,6 @@
       homebrew-core,
       homebrew-cask,
       homebrew-bundle,
-      steipete-tap,
     }:
     let
       # Helper function to create configurations for a specific user
@@ -80,7 +75,6 @@
                   homebrew-core
                   homebrew-cask
                   homebrew-bundle
-                  steipete-tap
                   ;
               };
             }

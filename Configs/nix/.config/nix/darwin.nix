@@ -9,7 +9,6 @@
   homebrew-core,
   homebrew-cask,
   homebrew-bundle,
-  steipete-tap,
   ...
 }:
 
@@ -38,9 +37,6 @@
       "homebrew/homebrew-core" = homebrew-core;
       "homebrew/homebrew-cask" = homebrew-cask;
       "homebrew/homebrew-bundle" = homebrew-bundle;
-      # Custom taps must use the exact repository folder name (`homebrew-*`)
-      # so nix-homebrew creates the immutable tap at the path Homebrew expects.
-      "steipete/homebrew-tap" = steipete-tap;
     };
     mutableTaps = false;
   };
@@ -122,7 +118,6 @@
       "blender"
       "obs"
       "ollama-app"
-      "steipete/tap/codexbar"
       "vlc"
 
       # Utilities
