@@ -151,6 +151,7 @@ in
       extra.pnpm-standalone
 
       # Fonts
+      fontforge
       google-fonts # Includes Duru Sans, Kranky, Rubik, Short Stack, etc.
       inconsolata
       recursive
