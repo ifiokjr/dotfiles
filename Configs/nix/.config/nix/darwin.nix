@@ -9,6 +9,7 @@
   homebrew-core,
   homebrew-cask,
   homebrew-bundle,
+  steipete-tap,
   ...
 }:
 
@@ -40,6 +41,7 @@ in
       "homebrew/homebrew-core" = homebrew-core;
       "homebrew/homebrew-cask" = homebrew-cask;
       "homebrew/homebrew-bundle" = homebrew-bundle;
+      "steipete/tap" = steipete-tap;
     };
     mutableTaps = false;
   };
@@ -60,11 +62,7 @@ in
       fontconfig
       freetype
       jdk # Some system tools may need Java
-    ])
-    ++ lib.optionals (!lite) [
-      # Custom nix packages not available as Homebrew casks
-      extra.codexbar
-    ];
+    ]);
 
   # Homebrew cask management via nix-darwin
   # Apps are installed natively by Homebrew into /Applications with proper
@@ -80,6 +78,9 @@ in
         "--verbose"
       ];
     };
+    brews = lib.optionals (!lite) [
+      "steipete/tap/codexbar"
+    ];
     casks = lib.optionals (!lite) [
       # Productivity & Communication
       "1password"

@@ -188,7 +188,24 @@
         "homebrew-core": "homebrew-core",
         "ifiokjr-nixpkgs": "ifiokjr-nixpkgs",
         "nix-homebrew": "nix-homebrew",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "steipete-tap": "steipete-tap"
+      }
+    },
+    "steipete-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773360478,
+        "narHash": "sha256-F74WEvYlw1VJuU/HLmGSE5RgSr2yFi+3LrCcDKkLnP8=",
+        "owner": "steipete",
+        "repo": "homebrew-tap",
+        "rev": "ef78f57c11088f10a23a01f8750646310ed53fb6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "steipete",
+        "repo": "homebrew-tap",
+        "type": "github"
       }
     },
     "systems": {
