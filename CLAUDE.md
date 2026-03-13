@@ -83,6 +83,7 @@ tuckr status                   # Check deployment status of all groups
 ```bash
 # Rebuild system configuration (automatically runs via post_nix hook)
 # macOS: darwin-rebuild switch, Linux: home-manager switch
+# Successful runs also sync managed global pnpm packages
 rebuild
 
 # Or let the hook handle it
@@ -105,7 +106,7 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 15 configuration groups organized in `Configs/`:
+The repository contains 17 configuration groups organized in `Configs/`:
 
 | Group       | Platform | Purpose                                         | Hook      |
 | ----------- | -------- | ----------------------------------------------- | --------- |
@@ -120,6 +121,8 @@ The repository contains 15 configuration groups organized in `Configs/`:
 | **ghostty** | All      | Ghostty terminal emulator config                | None      |
 | **zellij**  | All      | Terminal multiplexer config & layouts           | None      |
 | **direnv**  | All      | Directory-specific environment variables        | None      |
+| **pnpm**    | All      | Managed global pnpm package set                 | `post.sh` |
+| **pi**      | All      | Pi coding agent configuration                   | None      |
 | **dprint**  | All      | Multi-language code formatter                   | None      |
 | **kdl**     | All      | KDL document formatter                          | None      |
 | **lazygit** | All      | Git TUI configuration                           | None      |
@@ -147,6 +150,8 @@ The repository contains 15 configuration groups organized in `Configs/`:
 │   ├── ghostty/               # Ghostty terminal config
 │   ├── zellij/                # Terminal multiplexer
 │   ├── direnv/                # Environment management
+│   ├── pnpm/                  # Managed global pnpm package manifest
+│   ├── pi/                    # Pi coding agent config
 │   ├── dprint/                # Code formatter
 │   ├── kdl/                   # KDL formatter
 │   ├── lazygit/               # Git TUI
@@ -154,6 +159,7 @@ The repository contains 15 configuration groups organized in `Configs/`:
 ├── Hooks/                      # Pre/post deployment scripts
 │   ├── nix/post.sh            # Rebuilds system after Nix changes
 │   ├── nushell/post.sh        # Generates vendor autoload, sets default shell
+│   ├── pnpm/post.sh           # Syncs managed global pnpm packages
 │   └── claude/post.sh         # Registers MCP server, caches Deno deps
 ├── setup                       # Automated setup script
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
@@ -183,7 +189,8 @@ Hooks are organized as `Hooks/<group>/pre.sh`, `Hooks/<group>/post.sh`, or `Hook
 
 1. **`Hooks/nix/post.sh`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
 2. **`Hooks/nushell/post.sh`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
-3. **`Hooks/claude/post.sh`** - Registers tart-vm MCP server with Claude Code, caches Deno dependencies
+3. **`Hooks/pnpm/post.sh`** - Syncs managed pnpm global manifests and installs global packages
+4. **`Hooks/claude/post.sh`** - Registers tart-vm MCP server with Claude Code, caches Deno dependencies
 
 ## Nushell Development Notes
 

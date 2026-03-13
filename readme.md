@@ -91,7 +91,7 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
-- `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux); use `rebuild --update` to refresh `flake.lock` before rebuilding
+- `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux); successful runs also sync managed global pnpm packages, and `rebuild --update` refreshes `flake.lock` before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
 - `pnpm:global:sync` - Symlink global pnpm manifests and install pinned global packages
@@ -124,6 +124,10 @@ The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a p
 **Location:** `Configs/pnpm/.config/pnpm-global/` **Deploys:** `~/.config/pnpm-global/` **Description:** Managed global pnpm manifest (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`) for deterministic global package installs on macOS and Linux.
 
 **Hook:** `post_pnpm` - Resolves pnpm's active global directory and symlinks/installs the managed global package set.
+
+#### `pi`
+
+**Location:** `Configs/pi/.pi/` **Deploys:** `~/.pi/` **Description:** Pi coding agent configuration including global settings, keybindings, package sources, and symlinked custom skills.
 
 #### `dprint`
 
@@ -355,7 +359,7 @@ rebuild --lite
 rebuild --no-lite
 ```
 
-The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS.
+The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS, and successful runs explicitly sync managed global pnpm packages.
 
 **Solution (Manual rebuild on macOS):**
 
@@ -433,6 +437,10 @@ tuckr set pnpm
 ```
 
 to sync `~/.config/pnpm-global` into pnpm's active global directory (resolved from `pnpm root -g`) and install packages from the committed lockfile.
+
+The sync script also strips pnpm-generated `dependenciesMeta.*.node` entries from the managed manifest and lockfile, so machine-specific Node.js paths are not committed.
+
+Successful `rebuild` runs invoke the same managed sync explicitly, so global CLI packages like Pi stay installed after Nix/home-manager updates.
 
 ## Testing
 
