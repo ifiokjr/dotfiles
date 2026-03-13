@@ -9,6 +9,7 @@
   homebrew-core,
   homebrew-cask,
   homebrew-bundle,
+  steipete-tap,
   ...
 }:
 
@@ -40,6 +41,7 @@ in
       "homebrew/homebrew-core" = homebrew-core;
       "homebrew/homebrew-cask" = homebrew-cask;
       "homebrew/homebrew-bundle" = homebrew-bundle;
+      "steipete/tap" = steipete-tap;
     };
     mutableTaps = false;
   };
@@ -47,8 +49,9 @@ in
   # System-level packages (only those that require system integration)
   # Most packages are now managed in home.nix
   # GUI apps are managed by Homebrew casks (see homebrew section below)
-  environment.systemPackages =
-    (with pkgs; [
+  environment.systemPackages = (
+    with pkgs;
+    [
       # macOS-specific system utilities
       mkalias # For creating app aliases in /Applications
       tart # macOS VMs on Apple Silicon
@@ -60,18 +63,22 @@ in
       fontconfig
       freetype
       jdk # Some system tools may need Java
-    ])
-    ++ lib.optionals (!lite) [
-      # Custom nix packages not available as Homebrew casks
-      extra.codexbar
-    ];
+    ]
+  );
 
   # Homebrew cask management via nix-darwin
   # Apps are installed natively by Homebrew into /Applications with proper
   # icons, code signing, and Spotlight indexing.
   homebrew = {
     enable = true;
-    taps = builtins.attrNames config.nix-homebrew.taps;
+    # Third-party taps are installed declaratively by nix-homebrew above.
+    # Keep brew bundle taps limited to the built-in Homebrew taps so activation
+    # does not attempt to re-tap root-owned directories as the user.
+    taps = [
+      "homebrew/homebrew-core"
+      "homebrew/homebrew-cask"
+      "homebrew/homebrew-bundle"
+    ];
     onActivation = {
       autoUpdate = true;
       upgrade = true;
@@ -80,6 +87,9 @@ in
         "--verbose"
       ];
     };
+    brews = lib.optionals (!lite) [
+      "steipete/tap/codexbar"
+    ];
     casks = lib.optionals (!lite) [
       # Productivity & Communication
       "1password"
