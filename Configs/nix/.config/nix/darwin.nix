@@ -71,7 +71,14 @@ in
   # icons, code signing, and Spotlight indexing.
   homebrew = {
     enable = true;
-    taps = builtins.attrNames config.nix-homebrew.taps;
+    # Third-party taps are installed declaratively by nix-homebrew above.
+    # Keep brew bundle taps limited to the built-in Homebrew taps so activation
+    # does not attempt to re-tap root-owned directories as the user.
+    taps = [
+      "homebrew/homebrew-core"
+      "homebrew/homebrew-cask"
+      "homebrew/homebrew-bundle"
+    ];
     onActivation = {
       autoUpdate = true;
       upgrade = true;
