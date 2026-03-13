@@ -49,8 +49,9 @@ in
   # System-level packages (only those that require system integration)
   # Most packages are now managed in home.nix
   # GUI apps are managed by Homebrew casks (see homebrew section below)
-  environment.systemPackages =
-    (with pkgs; [
+  environment.systemPackages = (
+    with pkgs;
+    [
       # macOS-specific system utilities
       mkalias # For creating app aliases in /Applications
       tart # macOS VMs on Apple Silicon
@@ -62,7 +63,8 @@ in
       fontconfig
       freetype
       jdk # Some system tools may need Java
-    ]);
+    ]
+  );
 
   # Homebrew cask management via nix-darwin
   # Apps are installed natively by Homebrew into /Applications with proper
