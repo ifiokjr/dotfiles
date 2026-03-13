@@ -173,6 +173,11 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
+if ! command -v node >/dev/null 2>&1; then
+  fail "node is not installed; cannot sanitize pnpm global manifests"
+  exit $?
+fi
+
 SOURCE_DIR="$HOME/.config/pnpm-global"
 if [ ! -f "$SOURCE_DIR/package.json" ]; then
   info "No $SOURCE_DIR/package.json found; skipping pnpm global sync"
