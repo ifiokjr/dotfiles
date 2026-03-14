@@ -164,6 +164,20 @@ def main [
             warn "Flake update failed \(continuing\)"
         }
         print ""
+
+        # Update pnpm global dependencies to their latest compatible versions
+        if (which pnpm | is-not-empty) {
+            info "Updating pnpm global dependencies..."
+            let pnpm_result = do -i { ^pnpm update -g -L }
+            if ($env.LAST_EXIT_CODE == 0) {
+                success "pnpm global dependencies updated"
+            } else {
+                warn "pnpm global update failed \(continuing\)"
+            }
+            print ""
+        } else {
+            warn "pnpm not found, skipping global dependency update"
+        }
     }
 
     # Check flake validity (unless skipped)
