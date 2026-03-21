@@ -189,6 +189,7 @@ in
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       lib.optionals (!lite) [
         blender # broken on macOS in nixpkgs; macOS uses Homebrew casks
+        godot
         ghostty
         google-chrome
         ungoogled-chromium
