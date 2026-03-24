@@ -60,6 +60,23 @@ $env.config = {
         }
     }
 }
+# Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
+def --env pnpm_auto_activate [] {
+    if (which pnpm-activate-env | is-empty) { return }
+    let res = (^pnpm-activate-env | complete)
+    if $res.exit_code != 0 { return }
+    if ($res.stdout | str trim) == "" { return }
+    let first = (
+        $res.stdout | lines | first | default ""
+    )
+    let node_bin = (
+        $first | parse "__pnpm_activate_node_bin='{bin}'" | get 0.bin? | default ""
+    )
+    if $node_bin == "" { return }
+    if ($env.PATH | any { |p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
+}
+$env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append { |before, after| pnpm_auto_activate })
+pnpm_auto_activate
 # Secrets
 use modules/secrets.nu
 secrets load
