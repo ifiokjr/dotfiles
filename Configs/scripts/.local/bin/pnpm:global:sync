@@ -173,9 +173,10 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
+SANITIZE_MANIFESTS=true
 if ! command -v node >/dev/null 2>&1; then
-  fail "node is not installed; cannot sanitize pnpm global manifests"
-  exit $?
+  SANITIZE_MANIFESTS=false
+  warn "node is not installed; skipping pnpm global manifest sanitization"
 fi
 
 SOURCE_DIR="$HOME/.config/pnpm-global"
@@ -186,8 +187,10 @@ fi
 
 # pnpm may add dependenciesMeta.*.node during global installs, which hardcodes
 # a machine-specific Node.js path into the managed manifest and lockfile.
-sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
-sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
+if [ "$SANITIZE_MANIFESTS" = true ]; then
+  sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
+  sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
+fi
 
 if ! GLOBAL_ROOT="$(pnpm root -g 2>/dev/null)"; then
   fail "Failed to resolve pnpm global root with 'pnpm root -g'"
@@ -221,7 +224,9 @@ if ! pnpm "${INSTALL_ARGS[@]}"; then
   exit $?
 fi
 
-sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
-sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
+if [ "$SANITIZE_MANIFESTS" = true ]; then
+  sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
+  sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
+fi
 
 info "pnpm global packages synced"
