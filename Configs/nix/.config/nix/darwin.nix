@@ -106,7 +106,6 @@
       "db-browser-for-sqlite"
       "dbeaver-community"
       "gdevelop"
-      "godot"
       "ghostty"
       "orbstack"
       "podman-desktop"
