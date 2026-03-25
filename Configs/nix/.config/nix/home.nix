@@ -169,6 +169,10 @@ in
       nerd-fonts.sauce-code-pro
       nerd-fonts.symbols-only
     ]
+    ++ lib.optionals (!lite) [
+      # Cross-platform packages from ifiokjr/nixpkgs
+      extra.godot
+    ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
       [
         # macOS-only packages
@@ -189,7 +193,6 @@ in
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       lib.optionals (!lite) [
         blender # broken on macOS in nixpkgs; macOS uses Homebrew casks
-        godot
         ghostty
         google-chrome
         ungoogled-chromium
