@@ -299,8 +299,14 @@ if [ "$REBUILD_EXIT" -eq 0 ]; then
 	fi
 
 	if [ -x "$PNPM_SYNC_SCRIPT" ]; then
+		SYNC_ARGS=()
+		if [ "$CFG_LITE" = "true" ]; then
+			echo "Lite mode enabled; running pnpm global sync in best-effort mode"
+			SYNC_ARGS+=(--no-fail)
+		fi
+
 		echo "Syncing managed pnpm global packages..."
-		if ! "$PNPM_SYNC_SCRIPT"; then
+		if ! "$PNPM_SYNC_SCRIPT" "${SYNC_ARGS[@]}"; then
 			echo "ERROR: managed pnpm global package sync failed"
 			REBUILD_EXIT=1
 		fi
