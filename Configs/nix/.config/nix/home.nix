@@ -69,6 +69,7 @@ in
       extra.mdt
       extra.racket-minimal
       rustup
+      secretspec
       spec-kit
 
       # Shell & Terminal
