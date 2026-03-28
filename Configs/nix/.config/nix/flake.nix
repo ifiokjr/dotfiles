@@ -40,15 +40,26 @@
       homebrew-bundle,
     }:
     let
-      # Helper function to create configurations for a specific user
-      # Work around intermittent ast-grep check failures on Darwin
-      # (`Illegal byte sequence (os error 92)`) during source builds.
-      # Applied as an overlay so every consumer (including serpl) benefits.
-      astGrepOverlay =
+      # Helper function to create configurations for a specific user.
+      # Darwin-specific package workarounds are applied as an overlay so every
+      # consumer (including serpl) benefits.
+      darwinWorkaroundsOverlay =
         final: prev:
         prev.lib.optionalAttrs prev.stdenv.isDarwin {
+          # Work around intermittent ast-grep check failures on Darwin
+          # (`Illegal byte sequence (os error 92)`) during source builds.
           ast-grep = prev.ast-grep.overrideAttrs (_: {
             doCheck = false;
+          });
+
+          # direnv's GNUmakefile unconditionally enables `-linkmode=external`
+          # on Darwin, but nixpkgs builds direnv with `CGO_ENABLED=0`.
+          # Remove that linker flag so static non-CGO builds succeed again.
+          direnv = prev.direnv.overrideAttrs (old: {
+            postPatch = (old.postPatch or "") + ''
+              substituteInPlace GNUmakefile \
+                --replace-warn "GO_LDFLAGS += -linkmode=external" ""
+            '';
           });
         };
 
@@ -81,7 +92,7 @@
             # Integrate home-manager directly with nix-darwin
             home-manager.darwinModules.home-manager
             {
-              nixpkgs.overlays = [ astGrepOverlay ];
+              nixpkgs.overlays = [ darwinWorkaroundsOverlay ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = {
@@ -108,7 +119,7 @@
           pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
-            overlays = [ astGrepOverlay ];
+            overlays = [ darwinWorkaroundsOverlay ];
           };
           # Automatically determine home directory based on system
           finalHomeDirectory =

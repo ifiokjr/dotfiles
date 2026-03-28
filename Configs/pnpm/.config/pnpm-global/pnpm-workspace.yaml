@@ -1,10 +1,10 @@
-onlyBuiltDependencies:
-  - "@googleworkspace/cli"
-  - core-js
-  - keytar
-  - koffi
-  - node-pty
-  - opencode-ai
-  - protobufjs
-  - re2
-  - tree-sitter-bash
+allowBuilds:
+  "@googleworkspace/cli": true
+  core-js: true
+  keytar: true
+  koffi: true
+  node-pty: true
+  opencode-ai: true
+  protobufjs: true
+  re2: true
+  tree-sitter-bash: true
