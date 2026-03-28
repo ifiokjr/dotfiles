@@ -23,13 +23,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
-
       - name: 🔄 update flake lock
-        run: nix run nixpkgs#nushell -- Configs/scripts/.local/bin/rebuild --update --skip-check
+        run: nix flake update --flake ./Configs/nix/.config/nix
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NIX_CONFIG: access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: 📝 generate commit summary
         id: summary
@@ -38,7 +35,7 @@ jobs:
             echo 'body<<EOFBODY'
             echo "## Summary"
             echo ""
-            echo "Automated daily update of Nix flake inputs via rebuild --update."
+            echo "Automated daily update of Nix flake inputs via nix flake update."
             echo ""
             if ! git diff --quiet Configs/nix/.config/nix/flake.lock; then
               echo "### Flake input changes"
@@ -50,7 +47,7 @@ jobs:
             fi
             echo "## Test plan"
             echo ""
-            echo "- [x] Ran rebuild --update --skip-check"
+            echo "- [x] Ran nix flake update --flake ./Configs/nix/.config/nix"
             echo "- [x] Verified flake.lock diff"
             echo 'EOFBODY'
           } >> "$GITHUB_OUTPUT"
