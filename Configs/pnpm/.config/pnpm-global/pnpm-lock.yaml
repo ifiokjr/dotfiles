@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@anthropic-ai/claude-code':
-        specifier: ^2.1.86
-        version: 2.1.86
+        specifier: ^2.1.87
+        version: 2.1.87
       '@devcontainers/cli':
         specifier: ^0.84.1
         version: 0.84.1
@@ -21,8 +21,8 @@ importers:
         specifier: ^0.22.3
         version: 0.22.3
       '@mariozechner/pi-coding-agent':
-        specifier: ^0.63.1
-        version: 0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
+        specifier: ^0.63.2
+        version: 0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
       '@openai/codex':
         specifier: ^0.117.0
         version: 0.117.0
@@ -36,8 +36,8 @@ importers:
         specifier: ^11.12.1
         version: 11.12.1
       opencode-ai:
-        specifier: 1.3.3
-        version: 1.3.3
+        specifier: 1.3.5
+        version: 1.3.5
       sql-formatter:
         specifier: ^15.7.3
         version: 15.7.3
@@ -83,8 +83,8 @@ packages:
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
 
-  '@anthropic-ai/claude-code@2.1.86':
-    resolution: {integrity: sha512-Kd26SOYr9ULjSBTt8aPPhS6OkLKBV7qO9rFRWufK5U+WP219YJSbHO9erePtLxvOVl4/OmW/KHE2fqdW0McDNA==}
+  '@anthropic-ai/claude-code@2.1.87':
+    resolution: {integrity: sha512-R40p85lv270MsOmuP0VrgZlsBnq6HIoW/aIrPwny6AfhPUmsChPNLkxv/F8Mf6g9iYpGNEfICt5CDw++tKZD0g==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -359,8 +359,8 @@ packages:
       '@modelcontextprotocol/sdk':
         optional: true
 
-  '@google/genai@1.46.0':
-    resolution: {integrity: sha512-ewPMN5JkKfgU5/kdco9ZhXBHDPhVqZpMQqIFQhwsHLf8kyZfx1cNpw1pHo1eV6PGEW7EhIBFi3aYZraFndAXqg==}
+  '@google/genai@1.47.0':
+    resolution: {integrity: sha512-0VV7AaXm5rQu3oRHNZNEubRAOL2lv5u+YA72eWnDwcOx3B1jFRbvtgL4drRHlocRHOnludvr3xmbQGbR+/RQAQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -668,22 +668,22 @@ packages:
     resolution: {integrity: sha512-faGUlTcXka5l7rv0lP3K3vGW/ejRuOS24RR2aSFWREUQqzjgdsuWNo/IiPqL3kWRGt6Ahl2+qcDAwtdeWeuGUw==}
     hasBin: true
 
-  '@mariozechner/pi-agent-core@0.63.1':
-    resolution: {integrity: sha512-h0B20xfs/iEVR2EC4gwiE8hKI1TPeB8REdRJMgV+uXKH7gpeIZ9+s8Dp9nX35ZR0QUjkNey2+ULk2DxQtdg14Q==}
+  '@mariozechner/pi-agent-core@0.63.2':
+    resolution: {integrity: sha512-9QTS7ylcmoAIWXk0EVpwCCop3fK4NIqTAN8TiRuXvuKYx+wYmUJc+P5+RfehIZhwsy7g9O/rktz0c1YEUBFB0g==}
     engines: {node: '>=20.0.0'}
 
-  '@mariozechner/pi-ai@0.63.1':
-    resolution: {integrity: sha512-wjgwY+yfrFO6a9QdAfjWpH7iSrDean6GsKDDMohNcLCy6PreMxHOZvNM0NwJARL1tZoZovr7ikAQfLGFZbnjsw==}
+  '@mariozechner/pi-ai@0.63.2':
+    resolution: {integrity: sha512-EJNPyzeZeifTJmkD8PPYQmSO4P4h8kFCrhUqU4NvFUkug+GNYr954KlxhYnXH0f77MpdIEpf/O5zdDrYJQyafA==}
     engines: {node: '>=20.0.0'}
     hasBin: true
 
-  '@mariozechner/pi-coding-agent@0.63.1':
-    resolution: {integrity: sha512-XSoMyLtuMA7ePK1UBWqSJ/BBdtBdJUHY9nbtnNyG6GeW7Gbgd+iqljIuwmAUf8wlYL981UIfYM/WIPQ6t/dIxw==}
+  '@mariozechner/pi-coding-agent@0.63.2':
+    resolution: {integrity: sha512-RgZAVwzHphOWueArUOISFH+fkaPyDkClw28xdhNxddDvBep94V0YcW/3e35Eq8hJ3HICJUIm1m7DcxLCQmNnsw==}
     engines: {node: '>=20.6.0'}
     hasBin: true
 
-  '@mariozechner/pi-tui@0.63.1':
-    resolution: {integrity: sha512-G5p+eh1EPkFCNaaggX6vRrqttnDscK6npgmEOknoCQXZtch8XNgh9Lf3VJ0A2lZXSgR7IntG5dfXHPH/Ki64wA==}
+  '@mariozechner/pi-tui@0.63.2':
+    resolution: {integrity: sha512-750aR2SYepbqdrydW3qVN4bvkLiYt1M33RijKeAPJVFHV2bEI5teunB37IR44F60dIAIrl4hcAcv5cGvcU1V5w==}
     engines: {node: '>=20.0.0'}
 
   '@mistralai/mistralai@1.14.1':
@@ -1442,8 +1442,8 @@ packages:
       bare-buffer:
         optional: true
 
-  bare-os@3.8.1:
-    resolution: {integrity: sha512-6g8rIdyQqYL6XbghpOgS8AOSvWQUf0zT0XaYUrJIX5VugpCGUyJaz1zfcKCecOnUkI76oVJXuHg1LMGYVXTvKw==}
+  bare-os@3.8.4:
+    resolution: {integrity: sha512-4JboWUl7/2LhgU536tjUszzaVC8/WEWKtyX5crayvlN71ih8+O2SdvBhotQeDsuhhmPZmLCrPBJEcwVPhI/kkQ==}
     engines: {bare: '>=1.14.0'}
 
   bare-path@3.0.0:
@@ -2934,67 +2934,67 @@ packages:
       zod:
         optional: true
 
-  opencode-ai@1.3.3:
-    resolution: {integrity: sha512-jepqVEwUFsSwuREGdeAVyVXyQlrDiIbIM2Jw3VRKck3U/n0PDM1DEH4aX2Ox4IJQKyWJIzX3W5X6gs3+pMXyOA==}
+  opencode-ai@1.3.5:
+    resolution: {integrity: sha512-hxSGtRXTbX8X9uW5W4VH79LnFiFNaiVKk3A4disYRQbbt7TOuFSxN2efvIritNF9VMKGlCqoRsiThdqlUeJk7Q==}
     hasBin: true
 
-  opencode-darwin-arm64@1.3.3:
-    resolution: {integrity: sha512-q3BjhpR8ow8RSK6KuwcDXCEI80sCwb4RFNYET8n4fiWk2QQLhXRLjYWSNrtbQE0D7qvFvEoGFxf7kDf9iLQNdA==}
+  opencode-darwin-arm64@1.3.5:
+    resolution: {integrity: sha512-5C4mJgQpN82840nC8qXuGxVyiX6sxgniYj14s+Zkv2aR/CBd1tFCo7udFwNSwHLpjnA4TeUhShUkdYG3HuUjBA==}
     cpu: [arm64]
     os: [darwin]
 
-  opencode-darwin-x64-baseline@1.3.3:
-    resolution: {integrity: sha512-4Hp1Sr99BL3Poa+kz9ZNp0Lt9uwIoT8OYF/f10jNdMUZLBNSijVIiSH0zH3KyBKMRvNl0ZcWbOvKGTaRh9X0Kg==}
+  opencode-darwin-x64-baseline@1.3.5:
+    resolution: {integrity: sha512-FcFP1cyI4qOdJmOnIjvoVdP9IP+DuMRIAW1iD/ppUPm2X70QXxpdPIwSqKaapu2rOm7rQEVx9ygHNR4/PG2vZA==}
     cpu: [x64]
     os: [darwin]
 
-  opencode-darwin-x64@1.3.3:
-    resolution: {integrity: sha512-/AmjZ2hu7pVRKpj7t6siiiW3xo68enjRUmfAOI+grIAdX64oh+95xf/l7hsf2TLIWjRev+9kOBjUVMQTQNu2VA==}
+  opencode-darwin-x64@1.3.5:
+    resolution: {integrity: sha512-lCWEQY1GWvCGhzxrWD515JIJPDHvfktf0zyWIvb+x8LgJkem9ZMHsp9C2k0XDLyXC6id3bXYIVPa5pqt+DV56g==}
     cpu: [x64]
     os: [darwin]
 
-  opencode-linux-arm64-musl@1.3.3:
-    resolution: {integrity: sha512-N4pBzZDeTq4noc4/SwIm4roGb6OtDt9XOOE9p6OsB+4JhCuBIUcyMW71EQCIFlH197vmcJfWCo/AdCa3OS6uHA==}
+  opencode-linux-arm64-musl@1.3.5:
+    resolution: {integrity: sha512-4ti1AD9QiAWR7ckhxs9cr/aya8zJHoELRGyLbh9l460R0Xqzzjknr1gYmCa7x0OiQsjkV/Gb2MZWxO+4sl8chQ==}
     cpu: [arm64]
     os: [linux]
 
-  opencode-linux-arm64@1.3.3:
-    resolution: {integrity: sha512-i2/PR9lMPpn0RjELiAKcdLkDjtBHP+l/HVxNFB7l3E9jXT2V/WohOZOGlegIsYmm6bB10/qU0UrzPlRLLJY1kg==}
+  opencode-linux-arm64@1.3.5:
+    resolution: {integrity: sha512-wPm4hFL2xT2BcAMfMZyIbleD32OtDmA1sasbew/pAoHn6hTtppGeFBQ4XoF335S03xcIS7qMNywgtqUFi9DZmQ==}
     cpu: [arm64]
     os: [linux]
 
-  opencode-linux-x64-baseline-musl@1.3.3:
-    resolution: {integrity: sha512-QXiIDscOCDN0z80SrO/L4Oi/f8fxs0c4zV12eUA13zw8MITLjOzdRoBIIv8jwwgjLC7rJd/PE8CIkiB5xMjuXQ==}
+  opencode-linux-x64-baseline-musl@1.3.5:
+    resolution: {integrity: sha512-OSSG4hrRgkvM0+ICFmTFpm/X98HRekgmP3uDPZNrAkJL6lRwtRio45WaMu1cPIJkPFofjeQyk254RMkOAIkvWQ==}
     cpu: [x64]
     os: [linux]
 
-  opencode-linux-x64-baseline@1.3.3:
-    resolution: {integrity: sha512-9dY89V7tKNzyOsbH9pIQORCxPGImwnDvoyMZ1s1NtXDCXz/ZJWfzYOcVWBZZA7frRcwnwIueZjrz0aARDAtLdg==}
+  opencode-linux-x64-baseline@1.3.5:
+    resolution: {integrity: sha512-tuUw9NsVPrmS1cnZhJncLfdi90QD/Tb2yku99R8iUEp6BXaRMiQTSl3nc0bgq9S4o+hcKpwjR8afWYtP7SJQ9A==}
     cpu: [x64]
     os: [linux]
 
-  opencode-linux-x64-musl@1.3.3:
-    resolution: {integrity: sha512-mJlzR+VOv+zqxLbpd4JhUF9ElbN/9ebQ395onTUDZU3vGtTvqz5Z3cZm8R7Xd+GNs5f/AkPUNyYqlHrmT85RKw==}
+  opencode-linux-x64-musl@1.3.5:
+    resolution: {integrity: sha512-RrH/VE1Up5yNNnER9/EZ4Cig28BdBUfKJQj3BDnfMNSPuaag4Ut/5wbE3nvTGl5EOlk2ukpqRuGJfDwK1NUYgA==}
     cpu: [x64]
     os: [linux]
 
-  opencode-linux-x64@1.3.3:
-    resolution: {integrity: sha512-BpqYkbk8adAvnXTNFOjs5gxOsbqA/+l7J0PRIQtvslwRgVnrPMQoCXeD9okSXaVxMvyil4mWdodalY3wkY5LWg==}
+  opencode-linux-x64@1.3.5:
+    resolution: {integrity: sha512-1OrKX/h9A2z3BZXtByeNjBqywsrwGa7vJbVptqKZ9xnJgqNEr5mHQJtES1LMk377M298bfP+lg21loK4yr7XgQ==}
     cpu: [x64]
     os: [linux]
 
-  opencode-windows-arm64@1.3.3:
-    resolution: {integrity: sha512-1GeiiZocPzE0mBp6cgON/180DN1v+jT0YH4mKEY1nof5V0CWS5WazvciPdGDTf0mfnvz+FfrDpxFxpA8HVU+SA==}
+  opencode-windows-arm64@1.3.5:
+    resolution: {integrity: sha512-0OCq1NFDGETemweefJ/xyzdl79s9rPCsgFSI6lIcWvFjRUHUJ1FkdoD9NCWVGTuFEFFK/zVYqDAIDRfxSHoKYQ==}
     cpu: [arm64]
     os: [win32]
 
-  opencode-windows-x64-baseline@1.3.3:
-    resolution: {integrity: sha512-+S6ADlSdB3Cf+JfkVeJ1087lM6BeCslROfNUt3I2Y6hktqwOKRnlhI/dz/SySaGeQD0gysgYcQ7PzZPQpPNa/w==}
+  opencode-windows-x64-baseline@1.3.5:
+    resolution: {integrity: sha512-qR/z8ph5AlX/vBPJOvT7cqlpIQfINrupptPM91rqHL89pzIS6wVKgsKqg4yLMiKje2QxxEpp9xYDiri8ikRUIw==}
     cpu: [x64]
     os: [win32]
 
-  opencode-windows-x64@1.3.3:
-    resolution: {integrity: sha512-pE7VJNy3s3nMgdhbbZIGW9f/kHxgdV3sqAxM5kJd8WVOetQQ7DxUH52+rwYs0DqyoX9lZqIY2SnWCRFxio5Qtw==}
+  opencode-windows-x64@1.3.5:
+    resolution: {integrity: sha512-QZc4XHE646NbMHfHfQ6ZjVmmbNk6gOAb8Sd8fk8j7FDuTzSv8q7JtUXuQzwc4vNBne+cdCFselPBjVAPD1Y2og==}
     cpu: [x64]
     os: [win32]
 
@@ -3978,7 +3978,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@anthropic-ai/claude-code@2.1.86':
+  '@anthropic-ai/claude-code@2.1.87':
     optionalDependencies:
       '@img/sharp-darwin-arm64': 0.34.5
       '@img/sharp-darwin-x64': 0.34.5
@@ -4672,7 +4672,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@google/genai@1.46.0(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))':
+  '@google/genai@1.47.0(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))':
     dependencies:
       google-auth-library: 10.6.2
       p-retry: 4.6.2
@@ -4946,9 +4946,9 @@ snapshots:
       std-env: 3.10.0
       yoctocolors: 2.1.2
 
-  '@mariozechner/pi-agent-core@0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)':
+  '@mariozechner/pi-agent-core@0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)':
     dependencies:
-      '@mariozechner/pi-ai': 0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
+      '@mariozechner/pi-ai': 0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - aws-crt
@@ -4958,11 +4958,11 @@ snapshots:
       - ws
       - zod
 
-  '@mariozechner/pi-ai@0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)':
+  '@mariozechner/pi-ai@0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)':
     dependencies:
       '@anthropic-ai/sdk': 0.73.0(zod@4.3.6)
       '@aws-sdk/client-bedrock-runtime': 3.1019.0
-      '@google/genai': 1.46.0(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))
+      '@google/genai': 1.47.0(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))
       '@mistralai/mistralai': 1.14.1
       '@sinclair/typebox': 0.34.49
       ajv: 8.18.0
@@ -4982,12 +4982,12 @@ snapshots:
       - ws
       - zod
 
-  '@mariozechner/pi-coding-agent@0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)':
+  '@mariozechner/pi-coding-agent@0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)':
     dependencies:
       '@mariozechner/jiti': 2.6.5
-      '@mariozechner/pi-agent-core': 0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
-      '@mariozechner/pi-ai': 0.63.1(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
-      '@mariozechner/pi-tui': 0.63.1
+      '@mariozechner/pi-agent-core': 0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
+      '@mariozechner/pi-ai': 0.63.2(@modelcontextprotocol/sdk@1.28.0(zod@3.25.76))(ws@8.20.0)(zod@4.3.6)
+      '@mariozechner/pi-tui': 0.63.2
       '@silvia-odwyer/photon-node': 0.3.4
       ajv: 8.18.0
       chalk: 5.6.2
@@ -5015,7 +5015,7 @@ snapshots:
       - ws
       - zod
 
-  '@mariozechner/pi-tui@0.63.1':
+  '@mariozechner/pi-tui@0.63.2':
     dependencies:
       '@types/mime-types': 2.1.4
       chalk: 5.6.2
@@ -5959,11 +5959,11 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  bare-os@3.8.1: {}
+  bare-os@3.8.4: {}
 
   bare-path@3.0.0:
     dependencies:
-      bare-os: 3.8.1
+      bare-os: 3.8.4
 
   bare-stream@2.11.0(bare-events@2.8.2):
     dependencies:
@@ -7458,55 +7458,55 @@ snapshots:
       ws: 8.20.0
       zod: 4.3.6
 
-  opencode-ai@1.3.3:
+  opencode-ai@1.3.5:
     optionalDependencies:
-      opencode-darwin-arm64: 1.3.3
-      opencode-darwin-x64: 1.3.3
-      opencode-darwin-x64-baseline: 1.3.3
-      opencode-linux-arm64: 1.3.3
-      opencode-linux-arm64-musl: 1.3.3
-      opencode-linux-x64: 1.3.3
-      opencode-linux-x64-baseline: 1.3.3
-      opencode-linux-x64-baseline-musl: 1.3.3
-      opencode-linux-x64-musl: 1.3.3
-      opencode-windows-arm64: 1.3.3
-      opencode-windows-x64: 1.3.3
-      opencode-windows-x64-baseline: 1.3.3
+      opencode-darwin-arm64: 1.3.5
+      opencode-darwin-x64: 1.3.5
+      opencode-darwin-x64-baseline: 1.3.5
+      opencode-linux-arm64: 1.3.5
+      opencode-linux-arm64-musl: 1.3.5
+      opencode-linux-x64: 1.3.5
+      opencode-linux-x64-baseline: 1.3.5
+      opencode-linux-x64-baseline-musl: 1.3.5
+      opencode-linux-x64-musl: 1.3.5
+      opencode-windows-arm64: 1.3.5
+      opencode-windows-x64: 1.3.5
+      opencode-windows-x64-baseline: 1.3.5
 
-  opencode-darwin-arm64@1.3.3:
+  opencode-darwin-arm64@1.3.5:
     optional: true
 
-  opencode-darwin-x64-baseline@1.3.3:
+  opencode-darwin-x64-baseline@1.3.5:
     optional: true
 
-  opencode-darwin-x64@1.3.3:
+  opencode-darwin-x64@1.3.5:
     optional: true
 
-  opencode-linux-arm64-musl@1.3.3:
+  opencode-linux-arm64-musl@1.3.5:
     optional: true
 
-  opencode-linux-arm64@1.3.3:
+  opencode-linux-arm64@1.3.5:
     optional: true
 
-  opencode-linux-x64-baseline-musl@1.3.3:
+  opencode-linux-x64-baseline-musl@1.3.5:
     optional: true
 
-  opencode-linux-x64-baseline@1.3.3:
+  opencode-linux-x64-baseline@1.3.5:
     optional: true
 
-  opencode-linux-x64-musl@1.3.3:
+  opencode-linux-x64-musl@1.3.5:
     optional: true
 
-  opencode-linux-x64@1.3.3:
+  opencode-linux-x64@1.3.5:
     optional: true
 
-  opencode-windows-arm64@1.3.3:
+  opencode-windows-arm64@1.3.5:
     optional: true
 
-  opencode-windows-x64-baseline@1.3.3:
+  opencode-windows-x64-baseline@1.3.5:
     optional: true
 
-  opencode-windows-x64@1.3.3:
+  opencode-windows-x64@1.3.5:
     optional: true
 
   optionator@0.9.4:
