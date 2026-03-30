@@ -74,6 +74,34 @@ print_info() {
     echo -e "${BLUE}→${NC} $1"
 }
 
+show_help() {
+    cat <<'EOF'
+#
+Dotfiles Setup Script
+#
+This script sets up your development environment by:
+1. Installing Determinate Nix (if not present)
+2. Cloning the dotfiles repository (if not present)
+3. Setting up Tuckr symlinks
+4. Deploying configuration groups
+#
+Usage:
+  Local:  ./setup [options]
+  Remote: curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
+#
+Options:
+  --cwd PATH          Clone dotfiles to PATH (default: ~/Developer/.dotfiles)
+  --preset NAME       Use a named setup preset: core, dev, workstation, ci
+  --groups GROUPS     Deploy specific groups (comma-separated; overrides preset selection)
+  --skip-nix          Skip Nix installation (use if already installed)
+  --lite              Force CLI-focused mode and skip GUI-heavy applications
+  --doctor            Run preflight checks without changing the machine
+  --validate-metadata Validate Configs/*.group.toml files and exit
+  --no-confirm        Run headlessly without interactive prompts
+  --help              Show this help message
+EOF
+}
+
 # Parse command line arguments
 parse_args() {
     while [[ $# -gt 0 ]]; do
@@ -112,7 +140,7 @@ parse_args() {
                 shift
                 ;;
             --help)
-                sed -n '2,/^$/p' "$0" | sed -e 's/^# //' -e 's/^#$//'
+                show_help
                 exit 0
                 ;;
             *)

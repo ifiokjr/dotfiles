@@ -9,6 +9,7 @@ on:
       - "Configs/scripts/.local/bin/pnpm:global:sync"
       - "Hooks/nix/**"
       - "Hooks/pnpm/**"
+      - "lib/setup/**"
       - "setup"
       - "setup-tuckr-symlink.sh"
       - "Dockerfile"
@@ -22,6 +23,7 @@ on:
       - "Configs/scripts/.local/bin/pnpm:global:sync"
       - "Hooks/nix/**"
       - "Hooks/pnpm/**"
+      - "lib/setup/**"
       - "setup"
       - "setup-tuckr-symlink.sh"
       - "Dockerfile"
@@ -40,6 +42,7 @@ jobs:
       run_setup: ${{ steps.filter.outputs.setup }}
       run_macos: ${{ steps.filter.outputs.macos }}
       run_docker: ${{ steps.filter.outputs.docker }}
+      run_remote_installer: ${{ steps.filter.outputs.remote_installer }}
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@v4
@@ -55,8 +58,20 @@ jobs:
               - "Configs/scripts/.local/bin/pnpm:global:sync"
               - "Hooks/nix/**"
               - "Hooks/pnpm/**"
+              - "lib/setup/**"
               - "setup"
               - "setup-tuckr-symlink.sh"
+              - ".github/workflows/ci-nix.yml"
+            remote_installer:
+              - "Configs/nix/**"
+              - "Configs/pnpm/**"
+              - "Configs/scripts/.local/bin/pnpm:global:sync"
+              - "Hooks/nix/**"
+              - "Hooks/pnpm/**"
+              - "lib/setup/**"
+              - "setup"
+              - "setup-tuckr-symlink.sh"
+              - "tests/remote-installer-smoke.sh"
               - ".github/workflows/ci-nix.yml"
             macos:
               - "Configs/nix/.config/nix/darwin.nix"
@@ -66,6 +81,7 @@ jobs:
               - "Configs/scripts/.local/bin/pnpm:global:sync"
               - "Hooks/nix/**"
               - "Hooks/pnpm/**"
+              - "lib/setup/**"
               - "setup"
               - "setup-tuckr-symlink.sh"
               - ".github/workflows/ci-nix.yml"
@@ -75,9 +91,33 @@ jobs:
               - "Hooks/pnpm/**"
               - "Dockerfile"
               - "tests/**"
+              - "lib/setup/**"
               - "setup"
               - "setup-tuckr-symlink.sh"
               - ".github/workflows/ci-nix.yml"
+
+  remote-installer-smoke:
+    needs: changes
+    if: needs.changes.outputs.run_remote_installer == 'true'
+    name: remote installer smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔧 set up nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+        continue-on-error: true
+
+      - name: 🧪 run remote installer smoke test
+        run: tests/remote-installer-smoke.sh "$GITHUB_WORKSPACE"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   setup-ubuntu:
     needs: changes
