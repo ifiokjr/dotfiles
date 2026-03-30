@@ -29,6 +29,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
+- `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--help` - Show help
 
 ### Manual Tuckr Commands
@@ -363,6 +364,9 @@ rebuild --lite
 
 # Persist full mode (include GUI-heavy apps)
 rebuild --no-lite
+
+# Validate setup metadata files
+./setup --validate-metadata
 ```
 
 The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS, and successful runs explicitly sync managed global pnpm packages.

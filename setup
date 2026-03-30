@@ -17,6 +17,7 @@
 #   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
 #   --skip-nix          Skip Nix installation (use if already installed)
 #   --lite              Install CLI-focused setup and skip GUI-heavy applications
+#   --validate-metadata Validate Configs/*.group.toml files and exit
 #   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
@@ -38,6 +39,7 @@ DOTFILES_DIR=""
 DEPLOY_GROUPS=""
 SKIP_NIX=false
 LITE=false
+VALIDATE_METADATA=false
 NO_CONFIRM=false
 
 # Track what we install for cleanup
@@ -87,12 +89,16 @@ parse_args() {
                 LITE=true
                 shift
                 ;;
+            --validate-metadata)
+                VALIDATE_METADATA=true
+                shift
+                ;;
             --no-confirm)
                 NO_CONFIRM=true
                 shift
                 ;;
             --help)
-                sed -n '2,21p' "$0" | sed 's/^# //'
+                sed -n '2,22p' "$0" | sed 's/^# //'
                 exit 0
                 ;;
             *)
@@ -471,6 +477,48 @@ group_reset_metadata() {
     GROUP_PLATFORMS=""
 }
 
+phase_is_valid() {
+    case "$1" in
+        early|bootstrap|normal|late)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+platform_is_valid() {
+    case "$1" in
+        macos|linux|windows|bsd)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+validate_loaded_group_metadata() {
+    local group="$1"
+    local metadata_file
+    local platform
+
+    metadata_file="$(group_metadata_path "$group")"
+
+    if ! phase_is_valid "$GROUP_PHASE"; then
+        print_error "Invalid phase '$GROUP_PHASE' in $metadata_file"
+        return 1
+    fi
+
+    for platform in $GROUP_PLATFORMS; do
+        if ! platform_is_valid "$platform"; then
+            print_error "Invalid platform '$platform' in $metadata_file"
+            return 1
+        fi
+    done
+}
+
 load_group_metadata() {
     local group="$1"
     local metadata_file
@@ -487,7 +535,7 @@ load_group_metadata() {
         fi
 
         # shellcheck disable=SC2016
-        metadata_lines="$(GROUP_METADATA_PATH="$metadata_file" nu -c '
+        if ! metadata_lines="$(GROUP_METADATA_PATH="$metadata_file" nu -c '
             let data = (open --raw $env.GROUP_METADATA_PATH | from toml)
             [
               ["description", ($data | get --optional description | default "")],
@@ -497,7 +545,10 @@ load_group_metadata() {
             ]
             | each { |row| $"($row.0)	($row.1)" }
             | str join (char nl)
-        ')" || return 1
+        ')"; then
+            print_error "Invalid group metadata: $metadata_file"
+            return 1
+        fi
 
         while IFS=$'	' read -r key value; do
             case "$key" in
@@ -520,34 +571,51 @@ load_group_metadata() {
     if [ -z "$GROUP_DESCRIPTION" ]; then
         GROUP_DESCRIPTION="$group"
     fi
+
+    validate_loaded_group_metadata "$group"
 }
 
-group_supports_platform() {
+group_supports_platform_for() {
     local group="$1"
+    local target_platform="$2"
 
-    load_group_metadata "$group"
+    if ! load_group_metadata "$group"; then
+        return 2
+    fi
+
     if [ -n "$GROUP_PLATFORMS" ]; then
-        list_contains_word "$GROUP_PLATFORMS" "$PLATFORM"
-        return $?
+        if list_contains_word "$GROUP_PLATFORMS" "$target_platform"; then
+            return 0
+        fi
+
+        return 1
     fi
 
     case "$group" in
         *_macos)
-            [ "$PLATFORM" = "macos" ]
+            [ "$target_platform" = "macos" ]
+            return $?
             ;;
         *_linux)
-            [ "$PLATFORM" = "linux" ]
+            [ "$target_platform" = "linux" ]
+            return $?
             ;;
         *_windows)
-            [ "$PLATFORM" = "windows" ]
+            [ "$target_platform" = "windows" ]
+            return $?
             ;;
         *_bsd)
-            [ "$PLATFORM" = "bsd" ]
+            [ "$target_platform" = "bsd" ]
+            return $?
             ;;
         *)
             return 0
             ;;
     esac
+}
+
+group_supports_platform() {
+    group_supports_platform_for "$1" "$PLATFORM"
 }
 
 group_has_repo_hooks() {
@@ -580,6 +648,10 @@ discover_all_groups() {
     done < <(find "$DOTFILES_DIR/Configs" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
 }
 
+group_exists() {
+    [ -d "$DOTFILES_DIR/Configs/$1" ]
+}
+
 sort_selected_groups_by_phase() {
     local early_groups=()
     local normal_groups=()
@@ -587,7 +659,7 @@ sort_selected_groups_by_phase() {
     local group
 
     for group in "${SELECTED_GROUPS[@]}"; do
-        load_group_metadata "$group"
+        load_group_metadata "$group" || return 1
         case "$GROUP_PHASE" in
             early|bootstrap)
                 early_groups+=("$group")
@@ -602,6 +674,100 @@ sort_selected_groups_by_phase() {
     done
 
     SELECTED_GROUPS=("${early_groups[@]}" "${normal_groups[@]}" "${late_groups[@]}")
+}
+
+visit_group_for_validation() {
+    local group="$1"
+    local dependency
+
+    if list_contains_word "$VISITED_GROUPS" "$group"; then
+        return 0
+    fi
+
+    if list_contains_word "$VISITING_GROUPS" "$group"; then
+        print_error "Detected a cycle in group metadata around: $group"
+        return 1
+    fi
+
+    VISITING_GROUPS="${VISITING_GROUPS}${VISITING_GROUPS:+ }$group"
+
+    load_group_metadata "$group" || return 1
+    for dependency in $GROUP_DEPENDS_ON; do
+        if ! group_exists "$dependency"; then
+            print_error "Unknown dependency '$dependency' in $(group_metadata_path "$group")"
+            return 1
+        fi
+
+        visit_group_for_validation "$dependency" || return 1
+    done
+
+    VISITING_GROUPS=" ${VISITING_GROUPS} "
+    VISITING_GROUPS="${VISITING_GROUPS/ $group / }"
+    VISITING_GROUPS="${VISITING_GROUPS# }"
+    VISITING_GROUPS="${VISITING_GROUPS% }"
+    VISITED_GROUPS="${VISITED_GROUPS}${VISITED_GROUPS:+ }$group"
+}
+
+validate_group_platform_dependencies() {
+    local group="$1"
+    local dependency
+    local target_platform
+    local rc=0
+
+    load_group_metadata "$group" || return 1
+    for dependency in $GROUP_DEPENDS_ON; do
+        for target_platform in macos linux windows bsd; do
+            group_supports_platform_for "$group" "$target_platform"
+            rc=$?
+            case "$rc" in
+                0)
+                    ;;
+                1)
+                    continue
+                    ;;
+                *)
+                    return 1
+                    ;;
+            esac
+
+            group_supports_platform_for "$dependency" "$target_platform"
+            rc=$?
+            case "$rc" in
+                0)
+                    ;;
+                1)
+                    print_error "Group '$group' depends on '$dependency', but '$dependency' is not enabled for platform: $target_platform"
+                    return 1
+                    ;;
+                *)
+                    return 1
+                    ;;
+            esac
+        done
+    done
+}
+
+validate_all_group_metadata() {
+    local group
+
+    discover_all_groups
+    if [ ${#ALL_GROUPS[@]} -eq 0 ]; then
+        print_warning "No configuration groups found in Configs/"
+        return 0
+    fi
+
+    for group in "${ALL_GROUPS[@]}"; do
+        load_group_metadata "$group" || return 1
+        validate_group_platform_dependencies "$group" || return 1
+    done
+
+    VISITING_GROUPS=""
+    VISITED_GROUPS=""
+    for group in "${ALL_GROUPS[@]}"; do
+        visit_group_for_validation "$group" || return 1
+    done
+
+    print_success "Group metadata is valid"
 }
 
 visit_group_for_ordering() {
@@ -619,8 +785,26 @@ visit_group_for_ordering() {
 
     VISITING_GROUPS="${VISITING_GROUPS}${VISITING_GROUPS:+ }$group"
 
-    load_group_metadata "$group"
+    load_group_metadata "$group" || return 1
     for dependency in $GROUP_DEPENDS_ON; do
+        if ! group_exists "$dependency"; then
+            print_error "Unknown dependency '$dependency' in $(group_metadata_path "$group")"
+            return 1
+        fi
+
+        group_supports_platform_for "$dependency" "$PLATFORM"
+        case $? in
+            0)
+                ;;
+            1)
+                print_error "Group '$group' depends on '$dependency', but '$dependency' is not enabled for platform: $PLATFORM"
+                return 1
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+
         visit_group_for_ordering "$dependency" || return 1
     done
 
@@ -634,6 +818,7 @@ visit_group_for_ordering() {
 
 resolve_default_group_order() {
     local group
+    local rc=0
 
     SELECTED_GROUPS=()
     ORDERED_GROUPS=()
@@ -642,13 +827,22 @@ resolve_default_group_order() {
 
     discover_all_groups
     for group in "${ALL_GROUPS[@]}"; do
-        if ! group_supports_platform "$group"; then
-            continue
-        fi
-        append_unique_array_item SELECTED_GROUPS "$group"
+        group_supports_platform "$group"
+        rc=$?
+        case "$rc" in
+            0)
+                append_unique_array_item SELECTED_GROUPS "$group"
+                ;;
+            1)
+                continue
+                ;;
+            *)
+                return 1
+                ;;
+        esac
     done
 
-    sort_selected_groups_by_phase
+    sort_selected_groups_by_phase || return 1
     for group in "${SELECTED_GROUPS[@]}"; do
         visit_group_for_ordering "$group" || return 1
     done
@@ -853,9 +1047,19 @@ deploy_groups() {
     echo ""
 
     for group in "${ORDERED_GROUPS[@]}"; do
-        if [ -z "$DEPLOY_GROUPS" ] && ! group_supports_platform "$group"; then
-            print_info "Skipping $group (not enabled for platform: $PLATFORM)"
-            continue
+        if [ -z "$DEPLOY_GROUPS" ]; then
+            group_supports_platform "$group"
+            case $? in
+                0)
+                    ;;
+                1)
+                    print_info "Skipping $group (not enabled for platform: $PLATFORM)"
+                    continue
+                    ;;
+                *)
+                    return 1
+                    ;;
+            esac
         fi
 
         # Special handling for helix - offer to install custom build
@@ -958,15 +1162,30 @@ main() {
 
     # Check if we're already in the repo
     if ! check_if_in_repo; then
-        # Not in repo, need to clone
-        install_nix
-        install_git
-        clone_dotfiles
+        if [ "$VALIDATE_METADATA" = true ]; then
+            if [ -d "$DOTFILES_DIR/Configs" ] && [ -f "$DOTFILES_DIR/setup-tuckr-symlink.sh" ]; then
+                DOTFILES_DIR="$(cd "$DOTFILES_DIR" && pwd)"
+            else
+                print_error "Metadata validation requires a local dotfiles checkout"
+                exit 1
+            fi
+        else
+            # Not in repo, need to clone
+            install_nix
+            install_git
+            clone_dotfiles
+        fi
     else
         # In repo, may still need Nix and Tuckr
-        if ! command_exists nix && [ "$SKIP_NIX" = false ]; then
+        if [ "$VALIDATE_METADATA" = false ] && ! command_exists nix && [ "$SKIP_NIX" = false ]; then
             install_nix
         fi
+    fi
+
+    if [ "$VALIDATE_METADATA" = true ]; then
+        print_header "Validating group metadata"
+        validate_all_group_metadata
+        exit $?
     fi
 
     # Always need tuckr and nushell
