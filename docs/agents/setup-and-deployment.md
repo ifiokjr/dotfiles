@@ -18,12 +18,20 @@ cd ~/path/to/dotfiles
 ## Setup Script Options
 
 - `--cwd PATH`: clone to custom path.
+- `--preset NAME`: choose `core`, `dev`, `workstation`, or `ci`.
 - `--groups GROUPS`: deploy specific comma-separated groups.
 - `--skip-nix`: skip Nix install.
 - `--lite`: enable CLI-focused install and skip GUI-heavy applications.
 - `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
+
+## Presets
+
+- `core`: shell, editor, and foundational CLI tooling.
+- `dev`: `core` plus development tools and managed CLIs.
+- `workstation`: `dev` plus GUI-heavy personal-machine configuration.
+- `ci`: minimal non-interactive setup for CI and containers.
 
 ## Manual Setup
 

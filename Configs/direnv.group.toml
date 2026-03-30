@@ -1,1 +1,2 @@
 description = "direnv configuration for per-directory environment management."
+presets = ["core", "dev", "workstation", "ci"]

@@ -1,3 +1,4 @@
 description = "Helix editor configuration, including optional custom Steel tooling."
 phase = "late"
 depends_on = ["scripts", "nix", "nushell"]
+presets = ["core", "dev", "workstation"]

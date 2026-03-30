@@ -1,1 +1,2 @@
 description = "Lazygit terminal UI configuration for Git workflows."
+presets = ["dev", "workstation"]

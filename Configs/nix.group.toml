@@ -1,3 +1,4 @@
 description = "Nix flake, nix-darwin, and home-manager configuration."
 phase = "early"
 depends_on = ["scripts"]
+presets = ["core", "dev", "workstation", "ci"]

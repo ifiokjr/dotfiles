@@ -1,1 +1,2 @@
 description = "Bash shell configuration and interactive shell defaults."
+presets = ["core", "dev", "workstation", "ci"]
