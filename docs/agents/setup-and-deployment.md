@@ -9,6 +9,9 @@ curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/se
 # Remote install (lite mode)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
 
+# Read-only preflight check
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --doctor
+
 # Local clone and setup
 git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
 cd ~/path/to/dotfiles
@@ -22,6 +25,7 @@ cd ~/path/to/dotfiles
 - `--groups GROUPS`: deploy specific comma-separated groups.
 - `--skip-nix`: skip Nix install.
 - `--lite`: enable CLI-focused install and skip GUI-heavy applications.
+- `--doctor`: run preflight checks without changing the machine.
 - `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
