@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -41,10 +41,10 @@ jobs:
       - name: 🔍 validate nushell scripts (nu-check)
         run: |
           # Check .nu module files
-          for f in $(find . -name '*.nu' -not -path './.git/*'); do
+          while IFS= read -r -d '' f; do
             echo "Checking: $f"
             nu -c "nu-check --as-module '$f'"
-          done
+          done < <(find . -name '*.nu' -not -path './.git/*' -print0)
 
           # Check nushell scripts without .nu extension (have #!/usr/bin/env nu shebang)
           for f in Configs/scripts/.local/bin/*; do
@@ -67,7 +67,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
