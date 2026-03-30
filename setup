@@ -46,6 +46,7 @@ LITE_EXPLICIT=false
 VALIDATE_METADATA=false
 NO_CONFIRM=false
 DOCTOR=false
+DEFAULTED_PRESET=false
 
 # Track what we install for cleanup
 INSTALLED_GIT=false
@@ -1404,13 +1405,21 @@ main() {
         exit 1
     fi
 
+    if [ -z "$DEPLOY_GROUPS" ] && [ -z "$PRESET" ]; then
+        PRESET="core"
+        DEFAULTED_PRESET=true
+    fi
+
     if [ -n "$PRESET" ] && [ "$LITE_EXPLICIT" = false ]; then
         LITE="$(preset_default_lite "$PRESET")"
     fi
 
     export SETUP_LITE="$LITE"
 
-    if [ -n "$PRESET" ]; then
+    if [ "$DEFAULTED_PRESET" = true ]; then
+        print_info "No preset specified; defaulting to the safer '$PRESET' preset"
+        print_info "Preset description: $(preset_description "$PRESET")"
+    elif [ -n "$PRESET" ]; then
         print_info "Using preset '$PRESET': $(preset_description "$PRESET")"
     fi
 

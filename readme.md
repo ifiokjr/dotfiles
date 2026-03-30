@@ -6,14 +6,14 @@ This repository uses [Tuckr](https://github.com/RaphGL/Tuckr), a modern dotfile 
 
 ### Automated Setup (Recommended)
 
-Set up your entire environment with one command:
+Set up your environment with one command:
 
 ```bash
-# Remote installation (fastest way to get started)
+# Remote installation (safe default: core preset)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
-# Remote installation (lite mode - CLI-focused)
-curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
+# Full workstation install
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --preset workstation
 
 # Run a read-only preflight check first
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --doctor
@@ -39,7 +39,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 
 ### Presets
 
-- `core` - shell, editor, and foundational CLI tooling
+- `core` - shell, editor, and foundational CLI tooling; this is now the default setup path
 - `dev` - `core` plus development tools and managed CLIs
 - `workstation` - `dev` plus GUI-heavy personal-machine configuration
 - `ci` - minimal non-interactive setup for CI and containers
