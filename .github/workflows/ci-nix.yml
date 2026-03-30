@@ -106,7 +106,10 @@ jobs:
         run: |
           command -v tuckr && echo "tuckr: ok"
           command -v nu && echo "nushell: ok"
-          tuckr status
+          tuckr status || true
+          test -L "$HOME/.config/nushell/config.nu"
+          test -L "$HOME/.config/helix/config.toml"
+          test -L "$HOME/.zshrc"
 
   setup-macos:
     needs: changes
@@ -148,7 +151,10 @@ jobs:
         run: |
           command -v tuckr && echo "tuckr: ok"
           command -v nu && echo "nushell: ok"
-          tuckr status
+          tuckr status || true
+          test -L "$HOME/.config/nushell/config.nu"
+          test -L "$HOME/.config/helix/config.toml"
+          test -L "$HOME/.zshrc"
 
   docker-integration:
     needs: changes

@@ -3,11 +3,11 @@
 ## Automated Setup (Preferred)
 
 ```bash
-# Remote install
+# Remote install (safe default core preset)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash
 
-# Remote install (lite mode)
-curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
+# Remote install (full workstation setup)
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --preset workstation
 
 # Read-only preflight check
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --doctor
@@ -32,7 +32,7 @@ cd ~/path/to/dotfiles
 
 ## Presets
 
-- `core`: shell, editor, and foundational CLI tooling.
+- `core`: shell, editor, and foundational CLI tooling; now the default setup path.
 - `dev`: `core` plus development tools and managed CLIs.
 - `workstation`: `dev` plus GUI-heavy personal-machine configuration.
 - `ci`: minimal non-interactive setup for CI and containers.
