@@ -45,11 +45,11 @@ jobs:
       run_remote_installer: ${{ steps.filter.outputs.remote_installer }}
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔍 detect file changes
         id: filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             setup:
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -126,7 +126,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -158,7 +158,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🧹 free disk space & remove pre-installed Homebrew (macos)
         run: |
@@ -203,7 +203,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🏗️ build and run docker integration test
         env:

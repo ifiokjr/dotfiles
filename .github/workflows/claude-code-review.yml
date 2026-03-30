@@ -26,11 +26,27 @@ jobs:
 
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      - name: 🔍 detect claude workflow changes
+        id: workflow-changes
+        run: |
+          changed_files="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" -- \
+            .github/workflows/claude-code-review.yml \
+            .github/workflows/claude.yml)"
+
+          if [ -n "$changed_files" ]; then
+            echo "skip_review=true" >> "$GITHUB_OUTPUT"
+            echo "Detected claude workflow changes:"
+            printf '%s\n' "$changed_files"
+          else
+            echo "skip_review=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: 🤖 run claude code review
+        if: steps.workflow-changes.outputs.skip_review != 'true'
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
@@ -40,3 +56,7 @@ jobs:
           prompt: "/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
+
+      - name: ✅ skip claude code review for workflow changes
+        if: steps.workflow-changes.outputs.skip_review == 'true'
+        run: echo "Skipping Claude code review because this PR updates Claude workflow files."
