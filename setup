@@ -17,6 +17,7 @@
 #   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
 #   --skip-nix          Skip Nix installation (use if already installed)
 #   --lite              Install CLI-focused setup and skip GUI-heavy applications
+#   --validate-metadata Validate Configs/*.group.toml files and exit
 #   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
@@ -38,6 +39,7 @@ DOTFILES_DIR=""
 DEPLOY_GROUPS=""
 SKIP_NIX=false
 LITE=false
+VALIDATE_METADATA=false
 NO_CONFIRM=false
 
 # Track what we install for cleanup
@@ -87,12 +89,16 @@ parse_args() {
                 LITE=true
                 shift
                 ;;
+            --validate-metadata)
+                VALIDATE_METADATA=true
+                shift
+                ;;
             --no-confirm)
                 NO_CONFIRM=true
                 shift
                 ;;
             --help)
-                sed -n '2,21p' "$0" | sed 's/^# //'
+                sed -n '2,22p' "$0" | sed 's/^# //'
                 exit 0
                 ;;
             *)
@@ -420,6 +426,429 @@ setup_tuckr_symlink() {
     print_success "Tuckr symlink configured"
 }
 
+list_contains_word() {
+    local list="${1:-}"
+    local word="$2"
+
+    case " $list " in
+        *" $word "*)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+array_contains() {
+    local array_name="$1"
+    local needle="$2"
+    local value
+    local values=()
+
+    eval "values=(\"\${${array_name}[@]-}\")"
+    for value in "${values[@]}"; do
+        if [ "$value" = "$needle" ]; then
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+append_unique_array_item() {
+    local array_name="$1"
+    local value="$2"
+
+    if array_contains "$array_name" "$value"; then
+        return 0
+    fi
+
+    eval "${array_name}+=(\"\$value\")"
+}
+
+group_metadata_path() {
+    printf '%s\n' "$DOTFILES_DIR/Configs/$1.group.toml"
+}
+
+group_reset_metadata() {
+    GROUP_DESCRIPTION=""
+    GROUP_DEPENDS_ON=""
+    GROUP_PHASE="normal"
+    GROUP_PLATFORMS=""
+}
+
+phase_is_valid() {
+    case "$1" in
+        early|bootstrap|normal|late)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+platform_is_valid() {
+    case "$1" in
+        macos|linux|windows|bsd)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+validate_loaded_group_metadata() {
+    local group="$1"
+    local metadata_file
+    local platform
+
+    metadata_file="$(group_metadata_path "$group")"
+
+    if ! phase_is_valid "$GROUP_PHASE"; then
+        print_error "Invalid phase '$GROUP_PHASE' in $metadata_file"
+        return 1
+    fi
+
+    for platform in $GROUP_PLATFORMS; do
+        if ! platform_is_valid "$platform"; then
+            print_error "Invalid platform '$platform' in $metadata_file"
+            return 1
+        fi
+    done
+}
+
+load_group_metadata() {
+    local group="$1"
+    local metadata_file
+    local metadata_lines
+    local key
+    local value
+
+    group_reset_metadata
+    metadata_file="$(group_metadata_path "$group")"
+    if [ -f "$metadata_file" ]; then
+        if ! command_exists nu; then
+            print_error "Nushell is required to read group metadata: $metadata_file"
+            return 1
+        fi
+
+        # shellcheck disable=SC2016
+        if ! metadata_lines="$(GROUP_METADATA_PATH="$metadata_file" nu -c '
+            let data = (open --raw $env.GROUP_METADATA_PATH | from toml)
+            [
+              ["description", ($data | get --optional description | default "")],
+              ["depends_on", (($data | get --optional depends_on | default []) | str join " ")],
+              ["phase", ($data | get --optional phase | default "normal")],
+              ["platforms", (($data | get --optional platforms | default []) | str join " ")]
+            ]
+            | each { |row| $"($row.0)	($row.1)" }
+            | str join (char nl)
+        ')"; then
+            print_error "Invalid group metadata: $metadata_file"
+            return 1
+        fi
+
+        while IFS=$'	' read -r key value; do
+            case "$key" in
+                description)
+                    GROUP_DESCRIPTION="$value"
+                    ;;
+                depends_on)
+                    GROUP_DEPENDS_ON="$value"
+                    ;;
+                phase)
+                    GROUP_PHASE="$value"
+                    ;;
+                platforms)
+                    GROUP_PLATFORMS="$value"
+                    ;;
+            esac
+        done <<< "$metadata_lines"
+    fi
+
+    if [ -z "$GROUP_DESCRIPTION" ]; then
+        GROUP_DESCRIPTION="$group"
+    fi
+
+    validate_loaded_group_metadata "$group"
+}
+
+group_supports_platform_for() {
+    local group="$1"
+    local target_platform="$2"
+
+    if ! load_group_metadata "$group"; then
+        return 2
+    fi
+
+    if [ -n "$GROUP_PLATFORMS" ]; then
+        if list_contains_word "$GROUP_PLATFORMS" "$target_platform"; then
+            return 0
+        fi
+
+        return 1
+    fi
+
+    case "$group" in
+        *_macos)
+            [ "$target_platform" = "macos" ]
+            return $?
+            ;;
+        *_linux)
+            [ "$target_platform" = "linux" ]
+            return $?
+            ;;
+        *_windows)
+            [ "$target_platform" = "windows" ]
+            return $?
+            ;;
+        *_bsd)
+            [ "$target_platform" = "bsd" ]
+            return $?
+            ;;
+        *)
+            return 0
+            ;;
+    esac
+}
+
+group_supports_platform() {
+    group_supports_platform_for "$1" "$PLATFORM"
+}
+
+group_has_repo_hooks() {
+    local group="$1"
+
+    [ -f "$DOTFILES_DIR/Hooks/$group/pre.sh" ] ||
+        [ -f "$DOTFILES_DIR/Hooks/$group/post.sh" ] ||
+        [ -f "$DOTFILES_DIR/Hooks/$group/rm.sh" ]
+}
+
+group_deploy_mode() {
+    if group_has_repo_hooks "$1"; then
+        printf 'set
+'
+    else
+        printf 'add
+'
+    fi
+}
+
+discover_all_groups() {
+    ALL_GROUPS=()
+
+    if [ ! -d "$DOTFILES_DIR/Configs" ]; then
+        return 0
+    fi
+
+    while IFS= read -r -d '' dir; do
+        ALL_GROUPS+=("$(basename "$dir")")
+    done < <(find "$DOTFILES_DIR/Configs" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+}
+
+group_exists() {
+    [ -d "$DOTFILES_DIR/Configs/$1" ]
+}
+
+sort_selected_groups_by_phase() {
+    local early_groups=()
+    local normal_groups=()
+    local late_groups=()
+    local group
+
+    for group in "${SELECTED_GROUPS[@]}"; do
+        load_group_metadata "$group" || return 1
+        case "$GROUP_PHASE" in
+            early|bootstrap)
+                early_groups+=("$group")
+                ;;
+            late)
+                late_groups+=("$group")
+                ;;
+            *)
+                normal_groups+=("$group")
+                ;;
+        esac
+    done
+
+    SELECTED_GROUPS=("${early_groups[@]}" "${normal_groups[@]}" "${late_groups[@]}")
+}
+
+visit_group_for_validation() {
+    local group="$1"
+    local dependency
+
+    if list_contains_word "$VISITED_GROUPS" "$group"; then
+        return 0
+    fi
+
+    if list_contains_word "$VISITING_GROUPS" "$group"; then
+        print_error "Detected a cycle in group metadata around: $group"
+        return 1
+    fi
+
+    VISITING_GROUPS="${VISITING_GROUPS}${VISITING_GROUPS:+ }$group"
+
+    load_group_metadata "$group" || return 1
+    for dependency in $GROUP_DEPENDS_ON; do
+        if ! group_exists "$dependency"; then
+            print_error "Unknown dependency '$dependency' in $(group_metadata_path "$group")"
+            return 1
+        fi
+
+        visit_group_for_validation "$dependency" || return 1
+    done
+
+    VISITING_GROUPS=" ${VISITING_GROUPS} "
+    VISITING_GROUPS="${VISITING_GROUPS/ $group / }"
+    VISITING_GROUPS="${VISITING_GROUPS# }"
+    VISITING_GROUPS="${VISITING_GROUPS% }"
+    VISITED_GROUPS="${VISITED_GROUPS}${VISITED_GROUPS:+ }$group"
+}
+
+validate_group_platform_dependencies() {
+    local group="$1"
+    local dependency
+    local target_platform
+    local rc=0
+
+    load_group_metadata "$group" || return 1
+    for dependency in $GROUP_DEPENDS_ON; do
+        for target_platform in macos linux windows bsd; do
+            group_supports_platform_for "$group" "$target_platform"
+            rc=$?
+            case "$rc" in
+                0)
+                    ;;
+                1)
+                    continue
+                    ;;
+                *)
+                    return 1
+                    ;;
+            esac
+
+            group_supports_platform_for "$dependency" "$target_platform"
+            rc=$?
+            case "$rc" in
+                0)
+                    ;;
+                1)
+                    print_error "Group '$group' depends on '$dependency', but '$dependency' is not enabled for platform: $target_platform"
+                    return 1
+                    ;;
+                *)
+                    return 1
+                    ;;
+            esac
+        done
+    done
+}
+
+validate_all_group_metadata() {
+    local group
+
+    discover_all_groups
+    if [ ${#ALL_GROUPS[@]} -eq 0 ]; then
+        print_warning "No configuration groups found in Configs/"
+        return 0
+    fi
+
+    for group in "${ALL_GROUPS[@]}"; do
+        load_group_metadata "$group" || return 1
+        validate_group_platform_dependencies "$group" || return 1
+    done
+
+    VISITING_GROUPS=""
+    VISITED_GROUPS=""
+    for group in "${ALL_GROUPS[@]}"; do
+        visit_group_for_validation "$group" || return 1
+    done
+
+    print_success "Group metadata is valid"
+}
+
+visit_group_for_ordering() {
+    local group="$1"
+    local dependency
+
+    if list_contains_word "$VISITED_GROUPS" "$group"; then
+        return 0
+    fi
+
+    if list_contains_word "$VISITING_GROUPS" "$group"; then
+        print_error "Detected a cycle in group metadata around: $group"
+        return 1
+    fi
+
+    VISITING_GROUPS="${VISITING_GROUPS}${VISITING_GROUPS:+ }$group"
+
+    load_group_metadata "$group" || return 1
+    for dependency in $GROUP_DEPENDS_ON; do
+        if ! group_exists "$dependency"; then
+            print_error "Unknown dependency '$dependency' in $(group_metadata_path "$group")"
+            return 1
+        fi
+
+        group_supports_platform_for "$dependency" "$PLATFORM"
+        case $? in
+            0)
+                ;;
+            1)
+                print_error "Group '$group' depends on '$dependency', but '$dependency' is not enabled for platform: $PLATFORM"
+                return 1
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+
+        visit_group_for_ordering "$dependency" || return 1
+    done
+
+    VISITING_GROUPS=" ${VISITING_GROUPS} "
+    VISITING_GROUPS="${VISITING_GROUPS/ $group / }"
+    VISITING_GROUPS="${VISITING_GROUPS# }"
+    VISITING_GROUPS="${VISITING_GROUPS% }"
+    VISITED_GROUPS="${VISITED_GROUPS}${VISITED_GROUPS:+ }$group"
+    append_unique_array_item ORDERED_GROUPS "$group"
+}
+
+resolve_default_group_order() {
+    local group
+    local rc=0
+
+    SELECTED_GROUPS=()
+    ORDERED_GROUPS=()
+    VISITING_GROUPS=""
+    VISITED_GROUPS=""
+
+    discover_all_groups
+    for group in "${ALL_GROUPS[@]}"; do
+        group_supports_platform "$group"
+        rc=$?
+        case "$rc" in
+            0)
+                append_unique_array_item SELECTED_GROUPS "$group"
+                ;;
+            1)
+                continue
+                ;;
+            *)
+                return 1
+                ;;
+        esac
+    done
+
+    sort_selected_groups_by_phase || return 1
+    for group in "${SELECTED_GROUPS[@]}"; do
+        visit_group_for_ordering "$group" || return 1
+    done
+}
+
 # Ask user for confirmation
 ask_yes_no() {
     local prompt="$1"
@@ -529,7 +958,7 @@ tuckr_deploy() {
 deploy_groups() {
     print_header "Deploying configuration groups"
 
-    cd "$DOTFILES_DIR"
+    cd "$DOTFILES_DIR" || exit 1
 
     # Pre-create all parent directories that tuckr needs for symlinking.
     # Tuckr creates file-level symlinks but cannot create intermediate
@@ -551,23 +980,11 @@ deploy_groups() {
     local TUCKR
     TUCKR=$(realpath "$(command -v tuckr)")
 
-    # Groups that have hooks and should use 'tuckr set' instead of 'tuckr add'
-    local hook_groups=("nix" "nushell" "claude" "pnpm")
-
-    # Helper: check if a group uses hooks
-    has_hook() {
-        local group="$1"
-        for hg in "${hook_groups[@]}"; do
-            [[ "$group" == "$hg" ]] && return 0
-        done
-        return 1
-    }
-
     # Helper: deploy a group (with hook awareness and --force fallback)
     deploy_one() {
         local group="$1"
-        local mode="add"
-        has_hook "$group" && mode="set"
+        local mode
+        mode="$(group_deploy_mode "$group")"
 
         if [ "$mode" = "set" ]; then
             print_info "Deploying $group (with hooks)"
@@ -575,77 +992,7 @@ deploy_groups() {
             print_info "Deploying $group"
         fi
 
-        if tuckr_deploy "$TUCKR" "$group" "$mode"; then
-            print_success "Deployed $group"
-        else
-            print_error "Failed to deploy $group"
-            DEPLOY_FAILED=true
-        fi
-    }
-
-    # If specific groups are specified via --groups flag
-    if [ -n "$DEPLOY_GROUPS" ]; then
-        IFS=',' read -ra GROUPS <<< "$DEPLOY_GROUPS"
-        for group in "${GROUPS[@]}"; do
-            deploy_one "$group"
-        done
-        return 0
-    fi
-
-    # Get all available groups from Configs directory
-    local all_groups=()
-    if [ -d "Configs" ]; then
-        while IFS= read -r -d '' dir; do
-            local group_name
-            group_name=$(basename "$dir")
-            all_groups+=("$group_name")
-        done < <(find Configs -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
-    fi
-
-    if [ ${#all_groups[@]} -eq 0 ]; then
-        print_warning "No configuration groups found in Configs/"
-        return 1
-    fi
-
-    print_info "Found ${#all_groups[@]} configuration groups"
-    echo ""
-
-    # -----------------------------------------------------------------------
-    # Deployment phases (order matters):
-    #   1. scripts    — other hooks depend on scripts in ~/.local/bin
-    #   2. nix        — installs all tools via darwin-rebuild / home-manager
-    #   3. simple     — groups with no ordering constraints (alphabetical)
-    #   4. late       — nushell (needs starship/carapace from nix)
-    #                   helix  (custom build needs nushell + cargo)
-    #                   claude (needs deno for MCP server)
-    # -----------------------------------------------------------------------
-    local late_groups=("nushell" "helix" "claude")
-
-    is_late() {
-        local group="$1"
-        for lg in "${late_groups[@]}"; do
-            [[ "$group" == "$lg" ]] && return 0
-        done
-        return 1
-    }
-
-    # Phase 1: scripts
-    for g in "${all_groups[@]}"; do
-        if [[ "$g" == "scripts" ]]; then
-            print_info "Deploying scripts (priority)"
-            if tuckr_deploy "$TUCKR" scripts add; then
-                print_success "Deployed scripts"
-            else
-                print_error "Failed to deploy scripts"
-                DEPLOY_FAILED=true
-            fi
-            break
-        fi
-    done
-
-    # Phase 2: nix
-    for g in "${all_groups[@]}"; do
-        if [[ "$g" == "nix" ]]; then
+        if [ "$group" = "nix" ]; then
             echo ""
             if [[ "$PLATFORM" == "macos" ]]; then
                 print_header "Nix Darwin Configuration"
@@ -674,44 +1021,51 @@ deploy_groups() {
                     INSTALLED_NUSHELL=false
                 fi
             fi
+        fi
 
-            if tuckr_deploy "$TUCKR" nix set; then
-                print_success "Deployed nix"
-            else
-                print_error "Failed to deploy nix"
-                DEPLOY_FAILED=true
+        if tuckr_deploy "$TUCKR" "$group" "$mode"; then
+            if [ "$group" = "nix" ] && [[ "$PLATFORM" != "macos" ]] && ! command_exists nu; then
+                print_info "Re-installing temporary nushell after nix deployment"
+                install_nushell
             fi
-            break
+            print_success "Deployed $group"
+        else
+            print_error "Failed to deploy $group"
+            DEPLOY_FAILED=true
         fi
-    done
+    }
 
-    # Phase 3: simple groups (everything except scripts, nix, and late groups)
-    for group in "${all_groups[@]}"; do
-        [[ "$group" == "scripts" ]] && continue
-        [[ "$group" == "nix" ]] && continue
-        is_late "$group" && continue
+    # If specific groups are specified via --groups flag, preserve caller order.
+    if [ -n "$DEPLOY_GROUPS" ]; then
+        IFS=',' read -ra ORDERED_GROUPS <<< "$DEPLOY_GROUPS"
+    else
+        resolve_default_group_order || return 1
+    fi
 
-        # Skip platform-specific groups that don't match the current platform
-        if [[ "$group" == *_macos ]] && [[ "$PLATFORM" != "macos" ]]; then
-            print_info "Skipping $group (macOS-only, current platform: $PLATFORM)"
-            continue
+    if [ ${#ORDERED_GROUPS[@]} -eq 0 ]; then
+        print_warning "No configuration groups found in Configs/"
+        return 1
+    fi
+
+    print_info "Found ${#ORDERED_GROUPS[@]} configuration groups"
+    print_info "Deployment order: ${ORDERED_GROUPS[*]}"
+    echo ""
+
+    for group in "${ORDERED_GROUPS[@]}"; do
+        if [ -z "$DEPLOY_GROUPS" ]; then
+            group_supports_platform "$group"
+            case $? in
+                0)
+                    ;;
+                1)
+                    print_info "Skipping $group (not enabled for platform: $PLATFORM)"
+                    continue
+                    ;;
+                *)
+                    return 1
+                    ;;
+            esac
         fi
-        if [[ "$group" == *_linux ]] && [[ "$PLATFORM" != "linux" ]]; then
-            print_info "Skipping $group (Linux-only, current platform: $PLATFORM)"
-            continue
-        fi
-
-        deploy_one "$group"
-    done
-
-    # Phase 4: late groups (in defined order)
-    for group in "${late_groups[@]}"; do
-        # Verify the group actually exists in Configs/
-        local found=false
-        for g in "${all_groups[@]}"; do
-            [[ "$g" == "$group" ]] && found=true && break
-        done
-        [[ "$found" == "false" ]] && continue
 
         # Special handling for helix - offer to install custom build
         if [[ "$group" == "helix" ]]; then
@@ -813,15 +1167,30 @@ main() {
 
     # Check if we're already in the repo
     if ! check_if_in_repo; then
-        # Not in repo, need to clone
-        install_nix
-        install_git
-        clone_dotfiles
+        if [ "$VALIDATE_METADATA" = true ]; then
+            if [ -d "$DOTFILES_DIR/Configs" ] && [ -f "$DOTFILES_DIR/setup-tuckr-symlink.sh" ]; then
+                DOTFILES_DIR="$(cd "$DOTFILES_DIR" && pwd)"
+            else
+                print_error "Metadata validation requires a local dotfiles checkout"
+                exit 1
+            fi
+        else
+            # Not in repo, need to clone
+            install_nix
+            install_git
+            clone_dotfiles
+        fi
     else
         # In repo, may still need Nix and Tuckr
-        if ! command_exists nix && [ "$SKIP_NIX" = false ]; then
+        if [ "$VALIDATE_METADATA" = false ] && ! command_exists nix && [ "$SKIP_NIX" = false ]; then
             install_nix
         fi
+    fi
+
+    if [ "$VALIDATE_METADATA" = true ]; then
+        print_header "Validating group metadata"
+        validate_all_group_metadata
+        exit $?
     fi
 
     # Always need tuckr and nushell

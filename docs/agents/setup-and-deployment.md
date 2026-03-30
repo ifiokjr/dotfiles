@@ -21,6 +21,7 @@ cd ~/path/to/dotfiles
 - `--groups GROUPS`: deploy specific comma-separated groups.
 - `--skip-nix`: skip Nix install.
 - `--lite`: enable CLI-focused install and skip GUI-heavy applications.
+- `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
 
@@ -43,6 +44,7 @@ tuckr status
 rebuild
 rebuild --lite
 rebuild --no-lite
+./setup --validate-metadata
 tuckr set nix
 ```
 

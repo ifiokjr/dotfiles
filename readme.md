@@ -29,6 +29,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
+- `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--help` - Show help
 
 ### Manual Tuckr Commands
@@ -62,6 +63,12 @@ tuckr status
 ```
 
 The repo can be cloned anywhere. The `setup-tuckr-symlink.sh` script creates a platform-specific symlink from Tuckr's expected location to your actual repo path.
+
+The setup flow layers metadata on top of Tuckr conventions:
+
+- `Configs/<group>/` still defines the deployable Tuckr group
+- `Hooks/<group>/pre.sh|post.sh|rm.sh` still define actual Tuckr hooks
+- `Configs/<group>.group.toml` adds setup-only metadata such as descriptions and dependency ordering
 
 ## Available Groups
 
@@ -162,7 +169,7 @@ Hooks are organized as `Hooks/<group>/<type>.sh`:
 - `post.sh`: Runs after symlinking
 - `rm.sh`: Runs during removal
 
-All hooks must be executable (`chmod +x Hooks/*/post.sh`).
+Only executable hook scripts need `chmod +x`. Setup metadata lives in sidecar TOML files such as `Configs/nix.group.toml` and is not executed by Tuckr directly.
 
 ## Common Workflows
 
@@ -357,6 +364,9 @@ rebuild --lite
 
 # Persist full mode (include GUI-heavy apps)
 rebuild --no-lite
+
+# Validate setup metadata files
+./setup --validate-metadata
 ```
 
 The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS, and successful runs explicitly sync managed global pnpm packages.
