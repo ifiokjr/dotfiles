@@ -461,7 +461,7 @@ append_unique_array_item() {
 }
 
 group_metadata_path() {
-    printf '%s\n' "$DOTFILES_DIR/Hooks/$1/meta.sh"
+    printf '%s\n' "$DOTFILES_DIR/Configs/$1.group.toml"
 }
 
 group_reset_metadata() {
@@ -474,12 +474,47 @@ group_reset_metadata() {
 load_group_metadata() {
     local group="$1"
     local metadata_file
+    local metadata_lines
+    local key
+    local value
 
     group_reset_metadata
     metadata_file="$(group_metadata_path "$group")"
     if [ -f "$metadata_file" ]; then
-        # shellcheck disable=SC1090
-        . "$metadata_file"
+        if ! command_exists nu; then
+            print_error "Nushell is required to read group metadata: $metadata_file"
+            return 1
+        fi
+
+        # shellcheck disable=SC2016
+        metadata_lines="$(GROUP_METADATA_PATH="$metadata_file" nu -c '
+            let data = (open --raw $env.GROUP_METADATA_PATH | from toml)
+            [
+              ["description", ($data | get --optional description | default "")],
+              ["depends_on", (($data | get --optional depends_on | default []) | str join " ")],
+              ["phase", ($data | get --optional phase | default "normal")],
+              ["platforms", (($data | get --optional platforms | default []) | str join " ")]
+            ]
+            | each { |row| $"($row.0)	($row.1)" }
+            | str join (char nl)
+        ')" || return 1
+
+        while IFS=$'	' read -r key value; do
+            case "$key" in
+                description)
+                    GROUP_DESCRIPTION="$value"
+                    ;;
+                depends_on)
+                    GROUP_DEPENDS_ON="$value"
+                    ;;
+                phase)
+                    GROUP_PHASE="$value"
+                    ;;
+                platforms)
+                    GROUP_PLATFORMS="$value"
+                    ;;
+            esac
+        done <<< "$metadata_lines"
     fi
 
     if [ -z "$GROUP_DESCRIPTION" ]; then

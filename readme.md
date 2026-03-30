@@ -67,7 +67,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 - `Configs/<group>/` still defines the deployable Tuckr group
 - `Hooks/<group>/pre.sh|post.sh|rm.sh` still define actual Tuckr hooks
-- `Hooks/<group>/meta.sh` adds setup-only metadata such as descriptions and dependency ordering
+- `Configs/<group>.group.toml` adds setup-only metadata such as descriptions and dependency ordering
 
 ## Available Groups
 
@@ -167,9 +167,8 @@ Hooks are organized as `Hooks/<group>/<type>.sh`:
 - `pre.sh`: Runs before symlinking
 - `post.sh`: Runs after symlinking
 - `rm.sh`: Runs during removal
-- `meta.sh`: Setup metadata used for dependency ordering and human-readable descriptions
 
-Only executable hook scripts need `chmod +x`; `meta.sh` files are sourced by `setup` and are not executed by Tuckr directly.
+Only executable hook scripts need `chmod +x`. Setup metadata lives in sidecar TOML files such as `Configs/nix.group.toml` and is not executed by Tuckr directly.
 
 ## Common Workflows
 
