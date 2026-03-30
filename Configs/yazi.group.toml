@@ -1,1 +1,2 @@
 description = "Yazi terminal file manager configuration."
+presets = ["dev", "workstation"]

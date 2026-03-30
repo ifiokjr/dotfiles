@@ -14,6 +14,7 @@
 #
 # Options:
 #   --cwd PATH          Clone dotfiles to PATH (default: current directory or ~/Developer/.dotfiles)
+#   --preset NAME       Choose a named setup preset: core, dev, workstation, ci
 #   --groups GROUPS     Deploy specific groups (comma-separated, otherwise deploys all)
 #   --skip-nix          Skip Nix installation (use if already installed)
 #   --lite              Install CLI-focused setup and skip GUI-heavy applications
@@ -37,8 +38,10 @@ DOTFILES_REPO="https://github.com/ifiokjr/dotfiles.git"
 DEFAULT_DOTFILES_DIR="$HOME/Developer/.dotfiles"
 DOTFILES_DIR=""
 DEPLOY_GROUPS=""
+PRESET=""
 SKIP_NIX=false
 LITE=false
+LITE_EXPLICIT=false
 VALIDATE_METADATA=false
 NO_CONFIRM=false
 
@@ -77,6 +80,10 @@ parse_args() {
                 DOTFILES_DIR="$2"
                 shift 2
                 ;;
+            --preset)
+                PRESET="$2"
+                shift 2
+                ;;
             --groups)
                 DEPLOY_GROUPS="$2"
                 shift 2
@@ -87,6 +94,7 @@ parse_args() {
                 ;;
             --lite)
                 LITE=true
+                LITE_EXPLICIT=true
                 shift
                 ;;
             --validate-metadata)
@@ -444,10 +452,9 @@ array_contains() {
     local array_name="$1"
     local needle="$2"
     local value
-    local values=()
 
-    eval "values=(\"\${${array_name}[@]-}\")"
-    for value in "${values[@]}"; do
+    eval "set -- \"\${${array_name}[@]}\""
+    for value in "$@"; do
         if [ "$value" = "$needle" ]; then
             return 0
         fi
@@ -473,6 +480,7 @@ group_metadata_path() {
 
 group_reset_metadata() {
     GROUP_DESCRIPTION=""
+    GROUP_PRESETS=""
     GROUP_DEPENDS_ON=""
     GROUP_PHASE="normal"
     GROUP_PLATFORMS=""
@@ -500,10 +508,22 @@ platform_is_valid() {
     esac
 }
 
+preset_is_valid() {
+    case "$1" in
+        core|dev|workstation|ci)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 validate_loaded_group_metadata() {
     local group="$1"
     local metadata_file
     local platform
+    local preset
 
     metadata_file="$(group_metadata_path "$group")"
 
@@ -511,6 +531,13 @@ validate_loaded_group_metadata() {
         print_error "Invalid phase '$GROUP_PHASE' in $metadata_file"
         return 1
     fi
+
+    for preset in $GROUP_PRESETS; do
+        if ! preset_is_valid "$preset"; then
+            print_error "Invalid preset '$preset' in $metadata_file"
+            return 1
+        fi
+    done
 
     for platform in $GROUP_PLATFORMS; do
         if ! platform_is_valid "$platform"; then
@@ -540,6 +567,7 @@ load_group_metadata() {
             let data = (open --raw $env.GROUP_METADATA_PATH | from toml)
             [
               ["description", ($data | get --optional description | default "")],
+              ["presets", (($data | get --optional presets | default []) | str join " ")],
               ["depends_on", (($data | get --optional depends_on | default []) | str join " ")],
               ["phase", ($data | get --optional phase | default "normal")],
               ["platforms", (($data | get --optional platforms | default []) | str join " ")]
@@ -555,6 +583,9 @@ load_group_metadata() {
             case "$key" in
                 description)
                     GROUP_DESCRIPTION="$value"
+                    ;;
+                presets)
+                    GROUP_PRESETS="$value"
                     ;;
                 depends_on)
                     GROUP_DEPENDS_ON="$value"
@@ -629,12 +660,63 @@ group_has_repo_hooks() {
 
 group_deploy_mode() {
     if group_has_repo_hooks "$1"; then
-        printf 'set
-'
+        printf 'set\n'
     else
-        printf 'add
-'
+        printf 'add\n'
     fi
+}
+
+preset_exists() {
+    case "$1" in
+        core | dev | workstation | ci)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+preset_default_lite() {
+    case "$1" in
+        workstation)
+            printf 'false\n'
+            ;;
+        core | dev | ci)
+            printf 'true\n'
+            ;;
+        *)
+            printf 'false\n'
+            ;;
+    esac
+}
+
+preset_description() {
+    case "$1" in
+        core)
+            printf '%s\n' 'Core shell, editor, and foundational CLI tooling.'
+            ;;
+        dev)
+            printf '%s\n' 'Core setup plus developer-focused tools and managed CLIs.'
+            ;;
+        workstation)
+            printf '%s\n' 'Full personal-machine setup, including GUI-heavy applications.'
+            ;;
+        ci)
+            printf '%s\n' 'Minimal non-interactive setup intended for CI and containers.'
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+preset_group_matches() {
+    local group="$1"
+    local preset="$2"
+
+    load_group_metadata "$group"
+    list_contains_word "$GROUP_PRESETS" "$preset"
 }
 
 discover_all_groups() {
@@ -815,6 +897,36 @@ visit_group_for_ordering() {
     VISITING_GROUPS="${VISITING_GROUPS% }"
     VISITED_GROUPS="${VISITED_GROUPS}${VISITED_GROUPS:+ }$group"
     append_unique_array_item ORDERED_GROUPS "$group"
+}
+
+resolve_groups_for_preset() {
+    local preset="$1"
+    local group
+
+    SELECTED_GROUPS=()
+    ORDERED_GROUPS=()
+    VISITING_GROUPS=""
+    VISITED_GROUPS=""
+
+    discover_all_groups
+    for group in "${ALL_GROUPS[@]}"; do
+        if ! group_supports_platform "$group"; then
+            continue
+        fi
+        if preset_group_matches "$group" "$preset"; then
+            append_unique_array_item SELECTED_GROUPS "$group"
+        fi
+    done
+
+    if [ ${#SELECTED_GROUPS[@]} -eq 0 ]; then
+        print_error "No configuration groups matched preset '$preset' on platform '$PLATFORM'"
+        return 1
+    fi
+
+    sort_selected_groups_by_phase
+    for group in "${SELECTED_GROUPS[@]}"; do
+        visit_group_for_ordering "$group" || return 1
+    done
 }
 
 resolve_default_group_order() {
@@ -1024,10 +1136,6 @@ deploy_groups() {
         fi
 
         if tuckr_deploy "$TUCKR" "$group" "$mode"; then
-            if [ "$group" = "nix" ] && [[ "$PLATFORM" != "macos" ]] && ! command_exists nu; then
-                print_info "Re-installing temporary nushell after nix deployment"
-                install_nushell
-            fi
             print_success "Deployed $group"
         else
             print_error "Failed to deploy $group"
@@ -1038,6 +1146,8 @@ deploy_groups() {
     # If specific groups are specified via --groups flag, preserve caller order.
     if [ -n "$DEPLOY_GROUPS" ]; then
         IFS=',' read -ra ORDERED_GROUPS <<< "$DEPLOY_GROUPS"
+    elif [ -n "$PRESET" ]; then
+        resolve_groups_for_preset "$PRESET" || return 1
     else
         resolve_default_group_order || return 1
     fi
@@ -1158,8 +1268,23 @@ main() {
 
     parse_args "$@"
     export NO_CONFIRM
-    export SETUP_LITE="$LITE"
     detect_platform
+
+    if [ -n "$PRESET" ] && ! preset_exists "$PRESET"; then
+        print_error "Unknown preset: $PRESET"
+        print_info "Available presets: core, dev, workstation, ci"
+        exit 1
+    fi
+
+    if [ -n "$PRESET" ] && [ "$LITE_EXPLICIT" = false ]; then
+        LITE="$(preset_default_lite "$PRESET")"
+    fi
+
+    export SETUP_LITE="$LITE"
+
+    if [ -n "$PRESET" ]; then
+        print_info "Using preset '$PRESET': $(preset_description "$PRESET")"
+    fi
 
     if [ "$LITE" = true ]; then
         print_info "Lite mode enabled: GUI-heavy applications will be skipped"

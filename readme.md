@@ -25,12 +25,29 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 
 **Setup Script Options:**
 
+- `--preset <name>` - Choose `core`, `dev`, `workstation`, or `ci`
 - `--groups <groups>` - Deploy only specific groups (comma-separated, otherwise deploys all)
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
 - `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--help` - Show help
+
+### Presets
+
+- `core` - shell, editor, and foundational CLI tooling
+- `dev` - `core` plus development tools and managed CLIs
+- `workstation` - `dev` plus GUI-heavy personal-machine configuration
+- `ci` - minimal non-interactive setup for CI and containers
+
+Examples:
+
+```bash
+./setup --preset core
+./setup --preset dev
+./setup --preset workstation
+./setup --preset ci --no-confirm
+```
 
 ### Manual Tuckr Commands
 

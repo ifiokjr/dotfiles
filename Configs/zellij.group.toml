@@ -1,1 +1,2 @@
 description = "Zellij terminal multiplexer configuration and layouts."
+presets = ["core", "dev", "workstation", "ci"]

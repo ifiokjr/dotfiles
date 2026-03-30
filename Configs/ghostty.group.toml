@@ -1,1 +1,2 @@
 description = "Ghostty terminal emulator configuration."
+presets = ["workstation"]

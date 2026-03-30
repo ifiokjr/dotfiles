@@ -1,1 +1,2 @@
 description = "KDL formatter configuration used by editor and tooling workflows."
+presets = ["dev", "workstation", "ci"]

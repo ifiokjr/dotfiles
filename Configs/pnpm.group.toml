@@ -1,3 +1,4 @@
 description = "Managed global pnpm manifest and lockfile sync."
 phase = "late"
 depends_on = ["scripts", "nix"]
+presets = ["dev", "workstation"]

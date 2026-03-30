@@ -1,1 +1,2 @@
 description = "Zsh compatibility configuration for POSIX shells and external tools."
+presets = ["core", "dev", "workstation", "ci"]

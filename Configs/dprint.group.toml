@@ -1,1 +1,2 @@
 description = "Shared dprint formatter configuration for repository tooling."
+presets = ["core", "dev", "workstation", "ci"]

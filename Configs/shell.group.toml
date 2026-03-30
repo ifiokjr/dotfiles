@@ -1,1 +1,2 @@
 description = "Shared shell environment configuration and common aliases."
+presets = ["core", "dev", "workstation", "ci"]

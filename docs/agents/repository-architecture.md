@@ -22,6 +22,7 @@
 - `setup` now derives default deployment order from optional per-group metadata in `Configs/<group>.group.toml`:
   - human-readable descriptions
   - dependency ordering (for example `nix` depends on `scripts`, `helix` depends on `nushell`)
+  - preset membership (`core`, `dev`, `workstation`, `ci`)
   - coarse phase hints such as `early` and `late`
 - Platform-suffixed groups (for example `_macos`, `_linux`) deploy only on matching platforms, and metadata can further narrow platforms if needed.
 

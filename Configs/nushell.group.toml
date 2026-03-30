@@ -1,3 +1,4 @@
 description = "Nushell configuration and generated vendor autoload integrations."
 phase = "late"
 depends_on = ["scripts", "nix"]
+presets = ["core", "dev", "workstation", "ci"]
