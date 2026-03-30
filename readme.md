@@ -15,6 +15,9 @@ curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/se
 # Remote installation (lite mode - CLI-focused)
 curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --lite
 
+# Run a read-only preflight check first
+curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/setup | bash -s -- --doctor
+
 # Or clone anywhere you like, then run locally
 git clone https://github.com/ifiokjr/dotfiles.git ~/path/to/dotfiles
 cd ~/path/to/dotfiles
@@ -30,6 +33,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
+- `--doctor` - Run preflight checks without changing the machine
 - `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--help` - Show help
 
