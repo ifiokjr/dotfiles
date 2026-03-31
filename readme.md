@@ -35,6 +35,7 @@ The setup script handles everything: Nix installation, repository cloning, Tuckr
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
 - `--doctor` - Run preflight checks without changing the machine
 - `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
+- `--dry-run` - Print the setup execution plan and exit
 - `--help` - Show help
 
 ### Presets
@@ -51,7 +52,10 @@ Examples:
 ./setup --preset dev
 ./setup --preset workstation
 ./setup --preset ci --no-confirm
+./setup --dry-run
 ```
+
+The setup script now prints an execution plan before meaningful deployment work begins so you can see the platform, repository action, bootstrap tools, groups, and hook-bearing groups ahead of time.
 
 ### Manual Tuckr Commands
 

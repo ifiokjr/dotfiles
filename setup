@@ -20,6 +20,7 @@
 #   --lite              Force CLI-focused mode and skip GUI-heavy applications
 #   --doctor            Run preflight checks without changing the machine
 #   --validate-metadata Validate Configs/*.group.toml files and exit
+#   --dry-run           Print the setup plan and exit without making changes
 #   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
@@ -46,6 +47,7 @@ LITE_EXPLICIT=false
 VALIDATE_METADATA=false
 NO_CONFIRM=false
 DOCTOR=false
+DRY_RUN=false
 DEFAULTED_PRESET=false
 
 # Track what we install for cleanup
@@ -97,9 +99,41 @@ Options:
   --lite              Force CLI-focused mode and skip GUI-heavy applications
   --doctor            Run preflight checks without changing the machine
   --validate-metadata Validate Configs/*.group.toml files and exit
+  --dry-run           Print the setup plan and exit without making changes
   --no-confirm        Run headlessly without interactive prompts
   --help              Show this help message
 EOF
+}
+
+apply_bootstrap_defaults() {
+    if [ -n "$PRESET" ]; then
+        case "$PRESET" in
+            core|dev|workstation|ci) ;;
+            *)
+                print_error "Unknown preset: $PRESET"
+                print_info "Available presets: core, dev, workstation, ci"
+                exit 1
+                ;;
+        esac
+    fi
+
+    if [ -z "$DEPLOY_GROUPS" ] && [ -z "$PRESET" ]; then
+        PRESET="core"
+        DEFAULTED_PRESET=true
+    fi
+
+    if [ -n "$PRESET" ] && [ "$LITE_EXPLICIT" = false ]; then
+        case "$PRESET" in
+            workstation)
+                LITE=false
+                ;;
+            *)
+                LITE=true
+                ;;
+        esac
+    fi
+
+    export SETUP_LITE="$LITE"
 }
 
 # Parse command line arguments
@@ -133,6 +167,10 @@ parse_args() {
                 ;;
             --validate-metadata)
                 VALIDATE_METADATA=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN=true
                 shift
                 ;;
             --no-confirm)
@@ -258,6 +296,56 @@ command_exists() {
 # where /usr/bin/git exists but fails until Command Line Tools are installed).
 can_run_git() {
     command_exists git && git --version &> /dev/null
+}
+
+print_preclone_plan() {
+    local bootstrap_tools=()
+    local duration="5–20 minutes"
+
+    if ! can_run_git; then
+        bootstrap_tools+=("git")
+    fi
+
+    echo ""
+    print_header "Setup plan"
+    echo "  • Platform: $PLATFORM"
+    if [ -n "$PRESET" ]; then
+        echo "  • Preset: $PRESET"
+    fi
+    if [ -n "$DEPLOY_GROUPS" ]; then
+        echo "  • Explicit groups: $DEPLOY_GROUPS"
+    fi
+    if [ -d "$DOTFILES_DIR/.git" ]; then
+        echo "  • Reuse existing clone at: $DOTFILES_DIR"
+    else
+        echo "  • Clone repository to: $DOTFILES_DIR"
+    fi
+    if [ "$SKIP_NIX" = true ]; then
+        echo "  • Nix: Skip installation (--skip-nix)"
+    elif command_exists nix && nix --version >/dev/null 2>&1; then
+        echo "  • Nix: Reuse existing installation"
+    else
+        echo "  • Nix: Install Determinate Nix"
+    fi
+    if [ ${#bootstrap_tools[@]} -gt 0 ]; then
+        echo "  • Temporary bootstrap tools: ${bootstrap_tools[*]}"
+    else
+        echo "  • Temporary bootstrap tools: none"
+    fi
+    if [ "$LITE" = true ]; then
+        echo "  • GUI applications: CLI-focused / GUI-heavy applications skipped"
+    else
+        echo "  • GUI applications: GUI-heavy applications may be installed"
+        duration="10–30 minutes"
+    fi
+    if [ "$PRESET" = "workstation" ]; then
+        duration="20–40 minutes"
+    elif [ "$PRESET" = "ci" ]; then
+        duration="5–10 minutes"
+    fi
+    echo "  • Expected duration: $duration"
+    echo "  • Detailed group and hook plan will be shown after the repository-local setup entry point is available"
+    echo ""
 }
 
 # Resolve a working git binary, preferring PATH and then common Nix locations.
@@ -479,6 +567,8 @@ source_setup_libraries() {
     . "$setup_lib_dir/deploy.sh"
     # shellcheck disable=SC1091
     . "$setup_lib_dir/doctor.sh"
+    # shellcheck disable=SC1091
+    . "$setup_lib_dir/plan.sh"
 }
 
 apply_setup_defaults() {
@@ -673,12 +763,18 @@ main() {
     local deploy_exit=0
     local original_args=("$@")
 
+    # shellcheck disable=SC2034
+    STARTED_IN_REPO=false
+
     parse_args "$@"
     export NO_CONFIRM
     detect_platform
+    apply_bootstrap_defaults
 
     if check_if_in_repo; then
         started_in_repo=true
+        # shellcheck disable=SC2034
+        STARTED_IN_REPO=true
         source_setup_libraries
         apply_setup_defaults
     fi
@@ -710,6 +806,11 @@ main() {
     fi
 
     if [ "$started_in_repo" = false ]; then
+        print_preclone_plan
+        if [ "$DRY_RUN" = true ]; then
+            exit 0
+        fi
+
         install_nix
         install_git
         clone_dotfiles
@@ -735,6 +836,17 @@ main() {
         print_info "Lite mode enabled: GUI-heavy applications will be skipped"
     else
         print_info "Full mode enabled: GUI-heavy applications may be installed"
+    fi
+
+    if command_exists nu; then
+        resolve_requested_groups
+        print_execution_plan
+    else
+        print_bootstrap_plan
+    fi
+
+    if [ "$DRY_RUN" = true ]; then
+        exit 0
     fi
 
     install_tuckr

@@ -486,8 +486,11 @@ resolve_groups_for_preset() {
 	discover_all_groups
 
 	for group in "${ALL_GROUPS[@]}"; do
-		group_supports_platform "$group"
-		rc=$?
+		if group_supports_platform "$group"; then
+			rc=0
+		else
+			rc=$?
+		fi
 		case "$rc" in
 		0) ;;
 		1)
@@ -498,8 +501,11 @@ resolve_groups_for_preset() {
 			;;
 		esac
 
-		preset_group_matches "$group" "$preset"
-		rc=$?
+		if preset_group_matches "$group" "$preset"; then
+			rc=0
+		else
+			rc=$?
+		fi
 		case "$rc" in
 		0)
 			append_unique_array_item SELECTED_GROUPS "$group"
