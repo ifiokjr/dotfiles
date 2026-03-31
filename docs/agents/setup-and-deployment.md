@@ -30,6 +30,8 @@ cd ~/path/to/dotfiles
 - `--doctor`: run preflight checks without changing the machine.
 - `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
 - `--dry-run`: print the setup execution plan and exit.
+- `--list-groups`: list available configuration groups.
+- `--explain-group NAME`: show details for one configuration group.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
 
@@ -40,7 +42,7 @@ cd ~/path/to/dotfiles
 - `workstation`: `dev` plus GUI-heavy personal-machine configuration.
 - `ci`: minimal non-interactive setup for CI and containers.
 
-The setup script prints a human-readable execution plan before deployment so users can see the target repo path, Nix/bootstrap expectations, group order, and hook-bearing groups ahead of time.
+The setup script prints a human-readable execution plan before deployment so users can see the target repo path, Nix/bootstrap expectations, group order, and hook-bearing groups ahead of time. It also supports discovery commands such as `./setup --list-groups` and `./setup --explain-group pnpm`.
 
 ## Manual Setup
 

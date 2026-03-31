@@ -40,6 +40,8 @@ If you are setting up a new machine or want the human-oriented walkthrough first
 - `--doctor` - Run preflight checks without changing the machine
 - `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--dry-run` - Print the setup execution plan and exit
+- `--list-groups` - List available configuration groups
+- `--explain-group <name>` - Show details for one configuration group
 - `--help` - Show help
 
 ### Presets
@@ -57,6 +59,8 @@ Examples:
 ./setup --preset workstation
 ./setup --preset ci --no-confirm
 ./setup --dry-run
+./setup --list-groups
+./setup --explain-group pnpm
 ```
 
 The setup script now prints an execution plan before meaningful deployment work begins so you can see the platform, repository action, bootstrap tools, groups, and hook-bearing groups ahead of time.

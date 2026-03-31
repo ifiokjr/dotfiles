@@ -145,6 +145,132 @@ discover_all_groups() {
 	done < <(find "$DOTFILES_DIR/Configs" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
 }
 
+group_platform_summary() {
+	local group="$1"
+
+	load_group_metadata "$group" || return 1
+	if [ -n "$GROUP_PLATFORMS" ]; then
+		printf '%s\n' "$GROUP_PLATFORMS"
+		return 0
+	fi
+
+	case "$group" in
+	*_macos)
+		printf 'macos\n'
+		;;
+	*_linux)
+		printf 'linux\n'
+		;;
+	*_windows)
+		printf 'windows\n'
+		;;
+	*_bsd)
+		printf 'bsd\n'
+		;;
+	*)
+		printf 'all\n'
+		;;
+	esac
+}
+
+group_hook_summary() {
+	local group="$1"
+	local hooks=()
+
+	[ -f "$DOTFILES_DIR/Hooks/$group/pre.sh" ] && hooks+=("pre")
+	[ -f "$DOTFILES_DIR/Hooks/$group/post.sh" ] && hooks+=("post")
+	[ -f "$DOTFILES_DIR/Hooks/$group/rm.sh" ] && hooks+=("rm")
+
+	if [ ${#hooks[@]} -eq 0 ]; then
+		printf 'none\n'
+	else
+		printf '%s\n' "$(join_array_by hooks ', ')"
+	fi
+}
+
+group_deploy_targets() {
+	local group="$1"
+	local group_dir="$DOTFILES_DIR/Configs/$group"
+	local entry
+	local rel
+	local root
+	local target_name
+	local targets=()
+
+	while IFS= read -r -d '' entry; do
+		rel="${entry#"${group_dir}"/}"
+		case "$rel" in
+		.config/*)
+			target_name="$(printf '%s' "$rel" | cut -d/ -f2)"
+			root="$HOME/.config/$target_name"
+			;;
+		.local/*)
+			target_name="$(printf '%s' "$rel" | cut -d/ -f2)"
+			root="$HOME/.local/$target_name"
+			;;
+		Library/*)
+			root="$HOME/$(printf '%s' "$rel" | cut -d/ -f1-2)"
+			;;
+		*)
+			root="$HOME/${rel%%/*}"
+			;;
+		esac
+		append_unique_array_item targets "~${root#"$HOME"}"
+	done < <(find "$group_dir" -mindepth 1 \( -type f -o -type l \) ! -name '.tuckrignore' -print0)
+
+	if [ ${#targets[@]} -eq 0 ]; then
+		printf 'none\n'
+	else
+		printf '%s\n' "$(join_array_by targets ', ')"
+	fi
+}
+
+list_groups() {
+	local group
+
+	discover_all_groups
+	if [ ${#ALL_GROUPS[@]} -eq 0 ]; then
+		print_warning "No configuration groups found in Configs/"
+		return 0
+	fi
+
+	print_header "Available configuration groups"
+	for group in "${ALL_GROUPS[@]}"; do
+		load_group_metadata "$group" || return 1
+		printf '  %-12s %s\n' "$group" "$GROUP_DESCRIPTION"
+	done
+}
+
+explain_group() {
+	local group="$1"
+	local platforms
+	local targets
+	local hooks
+	local presets
+	local depends
+
+	if ! group_exists "$group"; then
+		print_error "Unknown configuration group: $group"
+		return 1
+	fi
+
+	load_group_metadata "$group" || return 1
+	platforms="$(group_platform_summary "$group")"
+	targets="$(group_deploy_targets "$group")"
+	hooks="$(group_hook_summary "$group")"
+	presets="${GROUP_PRESETS:-none}"
+	depends="${GROUP_DEPENDS_ON:-none}"
+
+	print_header "Group: $group"
+	printf '  Description: %s\n' "$GROUP_DESCRIPTION"
+	printf '  Deploys to:  %s\n' "$targets"
+	printf '  Platforms:   %s\n' "$platforms"
+	printf '  Hooks:       %s\n' "$hooks"
+	printf '  Depends on:  %s\n' "$depends"
+	printf '  Presets:     %s\n' "$presets"
+	printf '  Phase:       %s\n' "$GROUP_PHASE"
+}
+
 group_exists() {
 	[ -d "$DOTFILES_DIR/Configs/$1" ]
 }
