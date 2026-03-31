@@ -115,6 +115,7 @@
       "zed"
 
       # Media & Graphics
+      "blackhole-16ch"
       "blender"
       "obs"
       "ollama-app"
