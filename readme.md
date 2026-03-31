@@ -63,7 +63,7 @@ Examples:
 ./setup --explain-group pnpm
 ```
 
-The setup script now prints an execution plan before meaningful deployment work begins so you can see the platform, repository action, bootstrap tools, groups, and hook-bearing groups ahead of time.
+The setup script now prints an execution plan before meaningful deployment work begins so you can see the platform, repository action, bootstrap tools, groups, and hook-bearing groups ahead of time. After a successful run, it also prints a short verification summary for key tools, symlinks, and the Tuckr link state.
 
 ### Manual Tuckr Commands
 
