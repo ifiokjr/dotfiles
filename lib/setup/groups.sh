@@ -655,6 +655,7 @@ resolve_groups_for_preset() {
 resolve_explicit_groups() {
 	local requested_groups="$1"
 	local group
+	local dependency
 
 	ORDERED_GROUPS=()
 	IFS=',' read -r -a ORDERED_GROUPS <<<"$requested_groups"
@@ -664,5 +665,14 @@ resolve_explicit_groups() {
 			print_error "Unknown configuration group: $group"
 			return 1
 		fi
+	done
+
+	for group in "${ORDERED_GROUPS[@]}"; do
+		load_group_metadata "$group" || return 1
+		for dependency in $GROUP_DEPENDS_ON; do
+			if ! array_contains ORDERED_GROUPS "$dependency"; then
+				print_warning "Explicit group selection omits dependency '$dependency' required by '$group'"
+			fi
+		done
 	done
 }

@@ -32,6 +32,9 @@ cd ~/path/to/dotfiles
 - `--dry-run`: print the setup execution plan and exit.
 - `--list-groups`: list available configuration groups.
 - `--explain-group NAME`: show details for one configuration group.
+- `--resume`: resume from the last failed phase or group.
+- `--from TARGET`: resume from a specific phase or deployment group.
+- `--only GROUPS`: retry only the specified comma-separated groups.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
 
@@ -42,7 +45,7 @@ cd ~/path/to/dotfiles
 - `workstation`: `dev` plus GUI-heavy personal-machine configuration.
 - `ci`: minimal non-interactive setup for CI and containers.
 
-The setup script prints a human-readable execution plan before deployment so users can see the target repo path, Nix/bootstrap expectations, group order, and hook-bearing groups ahead of time. It also supports discovery commands such as `./setup --list-groups` and `./setup --explain-group pnpm`. After a successful run, setup prints a short verification summary covering key tools, representative symlinks, and the Tuckr path, and writes `~/.local/state/dotfiles/setup-report.json`.
+The setup script prints a human-readable execution plan before deployment so users can see the target repo path, Nix/bootstrap expectations, group order, and hook-bearing groups ahead of time. It also supports discovery commands such as `./setup --list-groups` and `./setup --explain-group pnpm`. After a successful run, setup prints a short verification summary covering key tools, representative symlinks, and the Tuckr path, and writes `~/.local/state/dotfiles/setup-report.json`. If a run fails, setup records the last phase in `~/.local/state/dotfiles/setup-phase` so `--resume`, `--from`, and `--only` can be used intentionally.
 
 ## Manual Setup
 

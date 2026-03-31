@@ -42,6 +42,9 @@ If you are setting up a new machine or want the human-oriented walkthrough first
 - `--dry-run` - Print the setup execution plan and exit
 - `--list-groups` - List available configuration groups
 - `--explain-group <name>` - Show details for one configuration group
+- `--resume` - Resume from the last failed phase or group
+- `--from <target>` - Resume from a specific phase or deployment group
+- `--only <groups>` - Retry only the specified comma-separated groups
 - `--help` - Show help
 
 ### Presets
@@ -61,9 +64,12 @@ Examples:
 ./setup --dry-run
 ./setup --list-groups
 ./setup --explain-group pnpm
+./setup --resume
+./setup --from nix
+./setup --only pnpm,nushell
 ```
 
-The setup script now prints an execution plan before meaningful deployment work begins so you can see the platform, repository action, bootstrap tools, groups, and hook-bearing groups ahead of time. After a successful run, it also prints a short verification summary for key tools, symlinks, and the Tuckr link state, and writes a machine-readable report to `~/.local/state/dotfiles/setup-report.json`.
+The setup script now prints an execution plan before meaningful deployment work begins so you can see the platform, repository action, bootstrap tools, groups, and hook-bearing groups ahead of time. After a successful run, it also prints a short verification summary for key tools, symlinks, and the Tuckr link state, and writes a machine-readable report to `~/.local/state/dotfiles/setup-report.json`. On failure, it records the last phase so `./setup --resume` and targeted retries are easier to use.
 
 ### Manual Tuckr Commands
 

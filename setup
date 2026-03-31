@@ -23,6 +23,9 @@
 #   --dry-run           Print the setup plan and exit without making changes
 #   --list-groups       List available configuration groups
 #   --explain-group X   Show details for one configuration group
+#   --resume            Resume from the last failed setup phase or group
+#   --from TARGET       Resume from a specific phase or deployment group
+#   --only GROUPS       Retry only the specified comma-separated groups
 #   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
@@ -52,6 +55,8 @@ DOCTOR=false
 DRY_RUN=false
 LIST_GROUPS=false
 EXPLAIN_GROUP=""
+RESUME=false
+FROM_TARGET=""
 DEFAULTED_PRESET=false
 
 # Track what we install for cleanup
@@ -106,6 +111,9 @@ Options:
   --dry-run           Print the setup plan and exit without making changes
   --list-groups       List available configuration groups
   --explain-group X   Show details for one configuration group
+  --resume            Resume from the last failed setup phase or group
+  --from TARGET       Resume from a specific phase or deployment group
+  --only GROUPS       Retry only the specified comma-separated groups
   --no-confirm        Run headlessly without interactive prompts
   --help              Show this help message
 EOF
@@ -185,6 +193,18 @@ parse_args() {
                 ;;
             --explain-group)
                 EXPLAIN_GROUP="$2"
+                shift 2
+                ;;
+            --resume)
+                RESUME=true
+                shift
+                ;;
+            --from)
+                FROM_TARGET="$2"
+                shift 2
+                ;;
+            --only)
+                DEPLOY_GROUPS="$2"
                 shift 2
                 ;;
             --no-confirm)
@@ -587,6 +607,8 @@ source_setup_libraries() {
     . "$setup_lib_dir/verify.sh"
     # shellcheck disable=SC1091
     . "$setup_lib_dir/report.sh"
+    # shellcheck disable=SC1091
+    . "$setup_lib_dir/state.sh"
 }
 
 apply_setup_defaults() {
@@ -598,6 +620,11 @@ apply_setup_defaults() {
 
     if [ -n "$DEPLOY_GROUPS" ] && [ -n "$PRESET" ]; then
         print_info "Explicit groups override preset group selection; preset still controls default lite mode"
+    fi
+
+    if [ "$RESUME" = true ] && [ -n "$FROM_TARGET" ]; then
+        print_error "--resume cannot be combined with --from"
+        exit 1
     fi
 
     if [ -z "$DEPLOY_GROUPS" ] && [ -z "$PRESET" ]; then
@@ -785,6 +812,8 @@ main() {
     SETUP_STARTED_AT="$(date +%s)"
     # shellcheck disable=SC2034
     STARTED_IN_REPO=false
+    # shellcheck disable=SC2034
+    SETUP_TRACK_STATE=false
 
     parse_args "$@"
     export NO_CONFIRM
@@ -822,6 +851,10 @@ main() {
             exit $?
         fi
 
+        if [ "$RESUME" = true ]; then
+            apply_resume_request || exit 1
+        fi
+
         print_header "Validating group metadata"
         validate_all_group_metadata
         exit $?
@@ -857,6 +890,15 @@ main() {
     source_setup_libraries
     apply_setup_defaults
 
+    if [ "$RESUME" = true ]; then
+        apply_resume_request || exit 1
+    fi
+
+    if [ -n "$FROM_TARGET" ] && ! from_target_is_valid "$FROM_TARGET"; then
+        print_error "Unknown resume target: $FROM_TARGET"
+        exit 1
+    fi
+
     if [ "$DEFAULTED_PRESET" = true ]; then
         print_info "No preset specified; defaulting to the safer '$PRESET' preset"
         print_info "Preset description: $(preset_description "$PRESET")"
@@ -872,6 +914,9 @@ main() {
 
     if command_exists nu; then
         resolve_requested_groups
+        if [ -n "$FROM_TARGET" ] && group_exists "$FROM_TARGET"; then
+            trim_ordered_groups_from_target "$FROM_TARGET" || exit 1
+        fi
         print_execution_plan
     else
         print_bootstrap_plan
@@ -881,10 +926,24 @@ main() {
         exit 0
     fi
 
-    install_tuckr
-    install_nushell
+    trap handle_setup_exit EXIT
+    # shellcheck disable=SC2034
+    SETUP_TRACK_STATE=true
 
-    setup_tuckr_symlink
+    if should_run_phase install-tuckr; then
+        write_setup_phase "install-tuckr"
+        install_tuckr
+    fi
+    if should_run_phase install-nushell; then
+        write_setup_phase "install-nushell"
+        install_nushell
+    fi
+
+    if should_run_phase setup-tuckr-symlink; then
+        write_setup_phase "setup-tuckr-symlink"
+        setup_tuckr_symlink
+    fi
+    write_setup_phase "deploy"
     deploy_groups || deploy_exit=$?
 
     # Cleanup
