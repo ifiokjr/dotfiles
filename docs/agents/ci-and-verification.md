@@ -12,6 +12,7 @@ Run before pushing relevant changes:
 ```bash
 dprint check --config Configs/dprint/dprint.json
 shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh
+tests/check-docs-consistency.sh
 
 # If nix files changed
 nix flake check ./Configs/nix/.config/nix --impure --no-build
