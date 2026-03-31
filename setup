@@ -21,6 +21,8 @@
 #   --doctor            Run preflight checks without changing the machine
 #   --validate-metadata Validate Configs/*.group.toml files and exit
 #   --dry-run           Print the setup plan and exit without making changes
+#   --list-groups       List available configuration groups
+#   --explain-group X   Show details for one configuration group
 #   --no-confirm        Run headlessly without interactive prompts
 #   --help              Show this help message
 
@@ -48,6 +50,8 @@ VALIDATE_METADATA=false
 NO_CONFIRM=false
 DOCTOR=false
 DRY_RUN=false
+LIST_GROUPS=false
+EXPLAIN_GROUP=""
 DEFAULTED_PRESET=false
 
 # Track what we install for cleanup
@@ -100,6 +104,8 @@ Options:
   --doctor            Run preflight checks without changing the machine
   --validate-metadata Validate Configs/*.group.toml files and exit
   --dry-run           Print the setup plan and exit without making changes
+  --list-groups       List available configuration groups
+  --explain-group X   Show details for one configuration group
   --no-confirm        Run headlessly without interactive prompts
   --help              Show this help message
 EOF
@@ -172,6 +178,14 @@ parse_args() {
             --dry-run)
                 DRY_RUN=true
                 shift
+                ;;
+            --list-groups)
+                LIST_GROUPS=true
+                shift
+                ;;
+            --explain-group)
+                EXPLAIN_GROUP="$2"
+                shift 2
                 ;;
             --no-confirm)
                 NO_CONFIRM=true
@@ -779,15 +793,27 @@ main() {
         apply_setup_defaults
     fi
 
-    if [ "$VALIDATE_METADATA" = true ]; then
+    if [ "$VALIDATE_METADATA" = true ] || [ "$LIST_GROUPS" = true ] || [ -n "$EXPLAIN_GROUP" ]; then
         if [ "$started_in_repo" = false ]; then
             if [ -d "$DOTFILES_DIR/Configs" ] && [ -d "$DOTFILES_DIR/lib/setup" ] && [ -f "$DOTFILES_DIR/setup" ]; then
                 DOTFILES_DIR="$(cd "$DOTFILES_DIR" && pwd)"
+                # shellcheck disable=SC2034
+                STARTED_IN_REPO=true
                 source_setup_libraries
             else
-                print_error "Metadata validation requires a local dotfiles checkout"
+                print_error "This command requires a local dotfiles checkout"
                 exit 1
             fi
+        fi
+
+        if [ "$LIST_GROUPS" = true ]; then
+            list_groups
+            exit $?
+        fi
+
+        if [ -n "$EXPLAIN_GROUP" ]; then
+            explain_group "$EXPLAIN_GROUP"
+            exit $?
         fi
 
         print_header "Validating group metadata"
