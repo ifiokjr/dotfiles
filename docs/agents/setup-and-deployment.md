@@ -29,6 +29,7 @@ cd ~/path/to/dotfiles
 - `--lite`: enable CLI-focused install and skip GUI-heavy applications.
 - `--doctor`: run preflight checks without changing the machine.
 - `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
+- `--dry-run`: print the setup execution plan and exit.
 - `--no-confirm`: non-interactive mode.
 - `--help`: show help.
 
@@ -38,6 +39,8 @@ cd ~/path/to/dotfiles
 - `dev`: `core` plus development tools and managed CLIs.
 - `workstation`: `dev` plus GUI-heavy personal-machine configuration.
 - `ci`: minimal non-interactive setup for CI and containers.
+
+The setup script prints a human-readable execution plan before deployment so users can see the target repo path, Nix/bootstrap expectations, group order, and hook-bearing groups ahead of time.
 
 ## Manual Setup
 
