@@ -4,7 +4,7 @@ This repository uses [Tuckr](https://github.com/RaphGL/Tuckr), a modern dotfile 
 
 ## Quick Start
 
-For the canonical onboarding flow, start with [docs/getting-started.md](docs/getting-started.md).
+For the canonical onboarding flow, start with [docs/getting-started.md](docs/getting-started.md). It now includes opinionated starter workflows for common goals such as a core shell/editor setup, a full workstation install, CI mode, and incremental Nix + Nushell adoption.
 
 ### Automated Setup (Recommended)
 
