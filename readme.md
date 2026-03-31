@@ -4,6 +4,8 @@ This repository uses [Tuckr](https://github.com/RaphGL/Tuckr), a modern dotfile 
 
 ## Quick Start
 
+For the canonical onboarding flow, start with [docs/getting-started.md](docs/getting-started.md).
+
 ### Automated Setup (Recommended)
 
 Set up your environment with one command:
@@ -25,6 +27,8 @@ cd ~/path/to/dotfiles
 ```
 
 The setup script handles everything: Nix installation, repository cloning, Tuckr configuration, and automatic deployment of all configuration groups.
+
+If you are setting up a new machine or want the human-oriented walkthrough first, use the canonical guide: [docs/getting-started.md](docs/getting-started.md).
 
 **Setup Script Options:**
 

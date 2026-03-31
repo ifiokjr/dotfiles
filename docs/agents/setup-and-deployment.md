@@ -1,5 +1,7 @@
 # Setup And Deployment
 
+For the human-oriented onboarding path, see [../getting-started.md](../getting-started.md).
+
 ## Automated Setup (Preferred)
 
 ```bash
