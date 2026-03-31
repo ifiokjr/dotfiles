@@ -585,6 +585,8 @@ source_setup_libraries() {
     . "$setup_lib_dir/plan.sh"
     # shellcheck disable=SC1091
     . "$setup_lib_dir/verify.sh"
+    # shellcheck disable=SC1091
+    . "$setup_lib_dir/report.sh"
 }
 
 apply_setup_defaults() {
@@ -780,6 +782,8 @@ main() {
     local original_args=("$@")
 
     # shellcheck disable=SC2034
+    SETUP_STARTED_AT="$(date +%s)"
+    # shellcheck disable=SC2034
     STARTED_IN_REPO=false
 
     parse_args "$@"
@@ -905,6 +909,7 @@ main() {
     print_info "Configuration files are now symlinked to your home directory"
     echo ""
     run_setup_verification
+    write_setup_report
     print_header "Next Steps"
 
     if [ "$PLATFORM" = "macos" ]; then
