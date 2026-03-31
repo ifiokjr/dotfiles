@@ -583,6 +583,8 @@ source_setup_libraries() {
     . "$setup_lib_dir/doctor.sh"
     # shellcheck disable=SC1091
     . "$setup_lib_dir/plan.sh"
+    # shellcheck disable=SC1091
+    . "$setup_lib_dir/verify.sh"
 }
 
 apply_setup_defaults() {
@@ -902,6 +904,7 @@ main() {
     print_info "Your dotfiles have been installed to: $DOTFILES_DIR"
     print_info "Configuration files are now symlinked to your home directory"
     echo ""
+    run_setup_verification
     print_header "Next Steps"
 
     if [ "$PLATFORM" = "macos" ]; then
