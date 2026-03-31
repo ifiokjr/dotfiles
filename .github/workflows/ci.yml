@@ -58,6 +58,10 @@ jobs:
         run: |
           dprint check --config Configs/dprint/dprint.json
 
+      - name: ✅ docs consistency check
+        run: |
+          tests/check-docs-consistency.sh
+
   test:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
