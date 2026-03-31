@@ -7,6 +7,7 @@ verify_success() {
 
 verify_warning() {
 	VERIFY_WARNINGS=$((VERIFY_WARNINGS + 1))
+	REPORT_WARNING_MESSAGES+=("$1")
 	print_warning "$1"
 }
 
@@ -27,6 +28,7 @@ run_setup_verification() {
 
 	VERIFY_SUCCESSES=0
 	VERIFY_WARNINGS=0
+	REPORT_WARNING_MESSAGES=()
 
 	print_header "Setup verification"
 
