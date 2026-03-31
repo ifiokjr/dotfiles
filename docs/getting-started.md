@@ -61,6 +61,68 @@ The setup flow can:
 
 The setup script is intentionally metadata-driven, but Tuckr remains the deployment engine.
 
+## Starter Workflows
+
+### I just want my shell and editor
+
+```bash
+./setup --preset core
+```
+
+Expected outcome:
+
+- core shell tooling is deployed
+- Nushell, Zsh compatibility, Helix, and shared scripts are configured
+- GUI-heavy workstation additions stay out of the way
+
+### I want a full macOS workstation
+
+```bash
+./setup --preset workstation
+```
+
+Expected outcome:
+
+- developer tooling plus GUI-heavy workstation configuration is deployed
+- Nix-managed and hook-driven machine setup runs
+- this is the highest-blast-radius onboarding path
+
+### I want a minimal CI or container install
+
+```bash
+./setup --preset ci --no-confirm
+```
+
+Expected outcome:
+
+- a non-interactive, minimal setup path suitable for CI or containers
+- no interactive prompts
+- lighter bootstrap and deployment expectations than a workstation install
+
+### I only want Nix and Nushell
+
+```bash
+./setup --groups scripts,nix,nushell
+```
+
+Expected outcome:
+
+- shared scripts plus Nix and Nushell are deployed
+- a narrower setup than the full presets
+- useful when you want to adopt the stack incrementally
+
+### I want to inspect the plan before changing anything
+
+```bash
+./setup --dry-run
+./setup --doctor
+```
+
+Expected outcome:
+
+- `--dry-run` shows the execution plan
+- `--doctor` checks bootstrap readiness without changing the machine
+
 ## 3. Run Setup
 
 ### Common flags
