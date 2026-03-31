@@ -176,6 +176,29 @@ maybe_install_custom_helix() {
 	echo ""
 }
 
+trim_ordered_groups_from_target() {
+	local target="$1"
+	local filtered_groups=()
+	local seen_target=false
+	local group
+
+	for group in "${ORDERED_GROUPS[@]}"; do
+		if [ "$seen_target" = false ] && [ "$group" = "$target" ]; then
+			seen_target=true
+		fi
+		if [ "$seen_target" = true ]; then
+			filtered_groups+=("$group")
+		fi
+	done
+
+	if [ "$seen_target" = false ]; then
+		print_error "Could not resume from unknown deployment group: $target"
+		return 1
+	fi
+
+	ORDERED_GROUPS=("${filtered_groups[@]}")
+}
+
 resolve_requested_groups() {
 	if [ -n "$DEPLOY_GROUPS" ]; then
 		resolve_explicit_groups "$DEPLOY_GROUPS"
@@ -206,8 +229,15 @@ deploy_groups() {
 	print_info "Deployment order: $(join_array_by ORDERED_GROUPS ', ')"
 	echo ""
 
+	if [ -n "$FROM_TARGET" ] && group_exists "$FROM_TARGET"; then
+		trim_ordered_groups_from_target "$FROM_TARGET" || return 1
+		print_info "Resuming deployment from group: $FROM_TARGET"
+	fi
+
 	DEPLOY_FAILED=false
+	FIRST_FAILED_GROUP=""
 	for group in "${ORDERED_GROUPS[@]}"; do
+		write_setup_phase "deploy:$group"
 		if [ -n "$PRESET" ]; then
 			group_supports_platform "$group"
 			case $? in
@@ -223,6 +253,9 @@ deploy_groups() {
 		fi
 
 		if ! deploy_single_group "$tuckr_bin" "$group"; then
+			if [ -z "$FIRST_FAILED_GROUP" ]; then
+				FIRST_FAILED_GROUP="$group"
+			fi
 			continue
 		fi
 
@@ -233,6 +266,9 @@ deploy_groups() {
 
 	echo ""
 	if [ "$DEPLOY_FAILED" = true ]; then
+		if [ -n "$FIRST_FAILED_GROUP" ]; then
+			write_setup_phase "deploy:$FIRST_FAILED_GROUP"
+		fi
 		print_error "Some groups failed to deploy (see errors above)"
 		return 1
 	fi
