@@ -24,9 +24,70 @@ if [ -d "$HOME/.local/bin" ]; then
 	export PATH="$HOME/.local/bin:$PATH"
 fi
 
+SUDO_KEEPALIVE_PID=""
+SUDO_SESSION_READY=false
+
+ensure_darwin_sudo_session() {
+	if [[ "$OSTYPE" != "darwin"* ]]; then
+		return
+	fi
+	if [ "$SUDO_SESSION_READY" = true ]; then
+		return
+	fi
+
+	echo "Preparing sudo session for nix-darwin..."
+	sudo -v
+
+	local sudoers_extra="/etc/sudoers.d/10-nix-darwin-extra-config"
+	if [ ! -f "$sudoers_extra" ] || ! sudo grep -q "timestamp_type=global" "$sudoers_extra" 2>/dev/null; then
+		echo "Bootstrapping global sudo timestamps..."
+		printf '%s\n' 'Defaults timestamp_type=global' | sudo tee -a "$sudoers_extra" >/dev/null
+		sudo chmod 0440 "$sudoers_extra"
+		echo "Added timestamp_type=global to sudoers"
+	fi
+
+	# Refresh the sudo ticket after any sudoers changes so Homebrew subprocesses
+	# spawned from nix-darwin can reuse the cached credentials across process trees.
+	sudo -v
+	SUDO_SESSION_READY=true
+}
+
+start_darwin_sudo_keepalive() {
+	if [[ "$OSTYPE" != "darwin"* ]]; then
+		return
+	fi
+
+	ensure_darwin_sudo_session
+
+	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
+		return
+	fi
+
+	(
+		while true; do
+			sudo -n true >/dev/null 2>&1 || exit
+			sleep 30
+		done
+	) &
+	SUDO_KEEPALIVE_PID=$!
+}
+
+# shellcheck disable=SC2329
+# Invoked indirectly via trap.
+stop_darwin_sudo_keepalive() {
+	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
+		kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+		wait "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+	fi
+}
+
+trap stop_darwin_sudo_keepalive EXIT
+
 # nix-darwin activation refuses to overwrite /etc files it doesn't manage.
 # Rename any conflicting files so the first darwin-rebuild switch succeeds.
 if [[ "$OSTYPE" == "darwin"* ]]; then
+	ensure_darwin_sudo_session
+	start_darwin_sudo_keepalive
 	for f in /etc/zshenv /etc/zshrc /etc/bashrc /etc/zprofile; do
 		if [ -f "$f" ] && [ ! -L "$f" ]; then
 			echo "Renaming $f → ${f}.before-nix-darwin"
@@ -215,6 +276,9 @@ fi
 REBUILD_EXIT=0
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
+	ensure_darwin_sudo_session
+	start_darwin_sudo_keepalive
+
 	# Back up /etc/shells before nix-darwin takes ownership (one-time)
 	if [ -f /etc/shells ] && [ ! -f /etc/shells.before-nix-darwin ]; then
 		echo "Backing up /etc/shells to /etc/shells.before-nix-darwin"
