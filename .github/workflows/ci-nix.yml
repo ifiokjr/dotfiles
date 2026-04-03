@@ -156,21 +156,18 @@ jobs:
     if: needs.changes.outputs.run_setup == 'true' && needs.changes.outputs.run_macos == 'true'
     name: setup script (macos-latest)
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@v5
 
-      - name: 🧹 free disk space & remove pre-installed Homebrew (macos)
+      - name: 🧹 free disk space (macos)
         run: |
           # Remove Xcode to free ~12GB (nix provides its own build tools)
           sudo rm -rf /Applications/Xcode_*.app
           # Remove simulators
           xcrun simctl delete all 2>/dev/null || true
           sudo rm -rf ~/Library/Developer/CoreSimulator
-          # Completely remove pre-installed Homebrew so nix-homebrew can
-          # install and manage it declaratively from scratch.
-          sudo rm -rf /opt/homebrew/*
-          sudo rm -rf /opt/homebrew/.??*
           df -h /
 
       - name: 🔧 install nix
@@ -182,8 +179,8 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@main
         continue-on-error: true
 
-      - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm --lite
+      - name: 🧪 run setup script (minimal, no nix rebuild)
+        run: ./setup --skip-nix --no-confirm --lite --groups scripts,bash,direnv,dprint,shell,zellij,zsh,nushell,helix
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
