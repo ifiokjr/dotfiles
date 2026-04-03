@@ -36,6 +36,28 @@ def sync_pnpm_global_packages [] {
     }
 }
 
+def ensure_darwin_sudo_session [] {
+    info "Preparing sudo session for nix-darwin..."
+    ^sudo -v
+
+    let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
+    let needs_global = if ($sudoers_extra | path exists) {
+        not (open $sudoers_extra | str contains "timestamp_type=global")
+    } else {
+        true
+    }
+
+    if $needs_global {
+        info "Bootstrapping global sudo timestamps..."
+        ^sudo bash -c $"mkdir -p /etc/sudoers.d && printf '%s\n' 'Defaults timestamp_type=global' >> ($sudoers_extra) && chmod 0440 ($sudoers_extra)"
+        success "Added timestamp_type=global to sudoers"
+    }
+
+    # Refresh the sudo ticket after any sudoers changes so Homebrew subprocesses
+    # spawned from nix-darwin can reuse the cached credentials across process trees.
+    ^sudo -v
+}
+
 def main [
     --skip-check    # Skip flake check before rebuilding
     --update        # Update flake inputs (flake.lock) before rebuilding
@@ -196,6 +218,8 @@ def main [
     let os = (platform os)
 
     if $os == "darwin" {
+        ensure_darwin_sudo_session
+
         # Back up /etc/shells before nix-darwin takes ownership (one-time operation).
         # nix-darwin manages /etc/shells to add nix-installed shells; the backup
         # preserves the original so it can be restored if nix-darwin is removed.
@@ -205,29 +229,19 @@ def main [
             success "Backed up /etc/shells"
         }
 
+        # Rename bootstrapped sudoers file so nix-darwin can take ownership.
+        # nix-darwin manages this file via security.sudo.extraConfig and will
+        # recreate it during activation. If the file exists with content
+        # nix-darwin didn't create, activation aborts.
+        let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
+        if ($sudoers_extra | path exists) and (not ($"($sudoers_extra).before-nix-darwin" | path exists)) {
+            info $"Renaming ($sudoers_extra) for nix-darwin activation"
+            ^sudo mv $sudoers_extra $"($sudoers_extra).before-nix-darwin"
+        }
+
         # Rebuild darwin configuration
         info "Rebuilding nix-darwin configuration..."
         print ""
-
-        # Ensure sudo uses global timestamps so credentials are shared across
-        # all processes. Required because nix-darwin activation runs brew in a
-        # different process tree, and brew's internal sudo calls need the cached
-        # credentials. On sudo 1.9+, !tty_tickets only gives ppid-based timestamps
-        # which don't survive across process trees.
-        # nix-darwin manages this permanently via security.sudo.extraConfig,
-        # but we bootstrap it here for the first run before activation applies it.
-        ^sudo -v
-        let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
-        let needs_global = if ($sudoers_extra | path exists) {
-            not (open $sudoers_extra | str contains "timestamp_type=global")
-        } else {
-            true
-        }
-        if $needs_global {
-            info "Bootstrapping global sudo timestamps..."
-            ^sudo bash -c $"echo 'Defaults timestamp_type=global' >> ($sudoers_extra)"
-            success "Added timestamp_type=global to sudoers"
-        }
 
         # On first run, `darwin-rebuild` CLI may not be installed yet.
         # Use `nix run nix-darwin` from the flake input as fallback.
@@ -243,9 +257,12 @@ def main [
         # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
         #    through to the darwin-rebuild process so it can find gitignored machine.nix
         # 3. `--impure` is needed because machine.nix is gitignored and read via env var
+        # 4. a temporary sudo keepalive prevents repeated Password prompts during long
+        #    nix-darwin activations that invoke Homebrew in separate process trees
         let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
+        let wrapped_rebuild_cmd = $"while true; do sudo -n true || exit; sleep 30; kill -0 $$ || exit; done 2>/dev/null & keepalive=$!; trap 'kill $keepalive' EXIT; ($rebuild_cmd)"
         # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
-        let result = do -i { ^bash -c $rebuild_cmd }
+        let result = do -i { ^bash -c $wrapped_rebuild_cmd }
 
         if ($env.LAST_EXIT_CODE == 0) {
             print ""
