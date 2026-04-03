@@ -229,6 +229,16 @@ def main [
             success "Backed up /etc/shells"
         }
 
+        # Rename bootstrapped sudoers file so nix-darwin can take ownership.
+        # nix-darwin manages this file via security.sudo.extraConfig and will
+        # recreate it during activation. If the file exists with content
+        # nix-darwin didn't create, activation aborts.
+        let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
+        if ($sudoers_extra | path exists) and (not ($"($sudoers_extra).before-nix-darwin" | path exists)) {
+            info $"Renaming ($sudoers_extra) for nix-darwin activation"
+            ^sudo mv $sudoers_extra $"($sudoers_extra).before-nix-darwin"
+        }
+
         # Rebuild darwin configuration
         info "Rebuilding nix-darwin configuration..."
         print ""

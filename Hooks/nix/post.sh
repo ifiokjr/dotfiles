@@ -85,10 +85,13 @@ trap stop_darwin_sudo_keepalive EXIT
 
 # nix-darwin activation refuses to overwrite /etc files it doesn't manage.
 # Rename any conflicting files so the first darwin-rebuild switch succeeds.
+# This includes sudoers.d files we bootstrap for global sudo timestamps —
+# nix-darwin manages that file via security.sudo.extraConfig and will
+# recreate it during activation.
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	ensure_darwin_sudo_session
 	start_darwin_sudo_keepalive
-	for f in /etc/zshenv /etc/zshrc /etc/bashrc /etc/zprofile; do
+	for f in /etc/zshenv /etc/zshrc /etc/bashrc /etc/zprofile /etc/sudoers.d/10-nix-darwin-extra-config; do
 		if [ -f "$f" ] && [ ! -L "$f" ]; then
 			echo "Renaming $f → ${f}.before-nix-darwin"
 			sudo mv "$f" "${f}.before-nix-darwin"
