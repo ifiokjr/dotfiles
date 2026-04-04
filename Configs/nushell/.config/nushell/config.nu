@@ -13,7 +13,7 @@ $env.config = {
         max_size: 100_000
         sync_on_enter: true
         file_format: "sqlite"
-        isolation: false
+        isolation: true
     }
     table: {mode: rounded}
     cursor_shape: {emacs: line, vi_insert: line, vi_normal: block}
