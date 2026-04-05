@@ -92,7 +92,7 @@
       "figma"
       "setapp"
       "slack"
-      # "telegram"
+      "telegram"
       "whatsapp"
 
       # Browsers
@@ -195,10 +195,12 @@
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 
-  # Enable alternative shell support in nix-darwin.
+  # Keep fish intentionally disabled by default.
+  # Enable alternative shell support in nix-darwin when you want Fish available.
   # programs.fish.enable = true;
 
   # Set Git commit hash for darwin-version.
+  # Disabled here because version tracking is handled elsewhere in this flake-based setup.
   # system.configurationRevision = self.rev or self.dirtyRev or null;
 
   # Used for backwards compatibility, please read the changelog before changing.
