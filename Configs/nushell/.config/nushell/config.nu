@@ -62,17 +62,35 @@ $env.config = {
 }
 # Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
 def --env pnpm_auto_activate [] {
-    if (which pnpm-activate-env | is-empty) { return }
+    let debug = ($env | get -o DOTFILES_DEBUG | is-not-empty)
+    if (which pnpm-activate-env | is-empty) {
+        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env not found(ansi reset)" }
+        return
+    }
     let res = (^pnpm-activate-env | complete)
-    if $res.exit_code != 0 { return }
-    if ($res.stdout | str trim) == "" { return }
+    if $res.exit_code != 0 {
+        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env failed(ansi reset)" }
+        return
+    }
     let first = (
-        $res.stdout | lines | first | default ""
+        $res.stdout | str trim | lines | first | default ""
     )
-    let node_bin = (
-        $first | parse "__pnpm_activate_node_bin='{bin}'" | get -o 0.bin | default ""
-    )
-    if $node_bin == "" { return }
+    if $first == "" {
+        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
+        return
+    }
+    let parsed = (try {
+        $first | parse "__pnpm_activate_node_bin='{bin}'"
+    } catch { [] })
+    if ($parsed | is-empty) {
+        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env output did not include node bin(ansi reset)" }
+        return
+    }
+    let node_bin = ($parsed | get -o 0.bin)
+    if $node_bin == "" {
+        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: parsed node bin was empty(ansi reset)" }
+        return
+    }
     if ($env.PATH | any { |p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
 }
 $env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append { |before, after| pnpm_auto_activate })
