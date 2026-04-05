@@ -1,0 +1,2 @@
+description = "Atuin shell history manager — session-first up-arrow, global Ctrl-R."
+presets = ["core", "dev", "workstation"]

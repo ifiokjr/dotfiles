@@ -1,0 +1,16 @@
+## Atuin history configuration
+## https://docs.atuin.sh/configuration/config/
+
+## Accept the first suggestion on Enter (vs putting it on the prompt line).
+enter_accept = true
+
+## Use session-scoped history for the up-arrow key so each terminal
+## navigates its own commands first, then falls back to global history
+## via Ctrl-R. This mirrors the classic zsh/bash per-terminal history UX.
+filter_mode_shell_up_key_binding = "session"
+
+## Global filter mode for Ctrl-R search (see all history across sessions).
+filter_mode = "global"
+
+[sync]
+records = true
