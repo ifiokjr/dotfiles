@@ -70,7 +70,7 @@ def --env pnpm_auto_activate [] {
         $res.stdout | lines | first | default ""
     )
     let node_bin = (
-        $first | parse "__pnpm_activate_node_bin='{bin}'" | get 0.bin? | default ""
+        $first | parse "__pnpm_activate_node_bin='{bin}'" | get -o 0.bin | default ""
     )
     if $node_bin == "" { return }
     if ($env.PATH | any { |p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
