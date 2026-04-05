@@ -11,6 +11,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
   - `nix flake check ./Configs/nix/.config/nix --impure --no-build` (when Nix files change)
   - `rebuild` (when Nix config or packages change)
   - `docker build -t dotfiles-test .` (when Nix config or packages change for Linux confidence)
+- Formatting/style rule: if any line(s) are commented out, include an explanation comment explaining why they are disabled.
 - Git workflow requirements:
   - Use feature branches like `feat/*`, `fix/*`, `ci/*`, `chore/*` (no `codex/` prefix).
   - Use Conventional Commits.
