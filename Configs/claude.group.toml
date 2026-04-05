@@ -1,4 +1,0 @@
-description = "Claude Code settings, MCP registration, and Deno cache bootstrap."
-phase = "late"
-depends_on = ["scripts", "nix"]
-presets = ["dev", "workstation"]

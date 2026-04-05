@@ -14,10 +14,10 @@
  *   - vncdo: https://github.com/sibson/vncdotool
  */
 
-import { execSync, spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
+import { execSync, spawn } from "node:child_process";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -44,7 +44,9 @@ const vmVncInfo: Map<string, VncInfo> = new Map();
 // Helpers
 // ---------------------------------------------------------------------------
 
-function run(cmd: string): { success: boolean; output: string; error?: string } {
+function run(
+	cmd: string,
+): { success: boolean; output: string; error?: string } {
 	try {
 		const out = execSync(cmd, { encoding: "utf8", timeout: 120_000 }).trim();
 		return { success: true, output: out };
@@ -66,9 +68,17 @@ function sshExec(
 	command: string,
 ): { success: boolean; output: string; error?: string } {
 	const ip = getIp(vm);
-	if (!ip) return { success: false, output: "", error: "Cannot resolve VM IP. Is it running?" };
+	if (!ip) {
+		return {
+			success: false,
+			output: "",
+			error: "Cannot resolve VM IP. Is it running?",
+		};
+	}
 	const escaped = command.replaceAll('"', '\\"');
-	return run(`sshpass -p '${DEFAULT_PASS}' ssh ${SSH_OPTS} ${DEFAULT_USER}@${ip} "${escaped}"`);
+	return run(
+		`sshpass -p '${DEFAULT_PASS}' ssh ${SSH_OPTS} ${DEFAULT_USER}@${ip} "${escaped}"`,
+	);
 }
 
 function vncdo(
@@ -77,10 +87,18 @@ function vncdo(
 ): { success: boolean; output: string; error?: string } {
 	const info = vmVncInfo.get(vmName);
 	if (info) {
-		return run(`vncdo -s localhost::${info.port} --password '${info.password}' ${args}`);
+		return run(
+			`vncdo -s localhost::${info.port} --password '${info.password}' ${args}`,
+		);
 	}
 	const ip = getIp(vmName);
-	if (!ip) return { success: false, output: "", error: "Cannot resolve VM IP for VNC" };
+	if (!ip) {
+		return {
+			success: false,
+			output: "",
+			error: "Cannot resolve VM IP for VNC",
+		};
+	}
 	return run(`vncdo -s ${ip}::${VNC_PORT} --password ${DEFAULT_PASS} ${args}`);
 }
 
@@ -95,14 +113,19 @@ function waitForBoot(
 			const test = run(
 				`sshpass -p '${DEFAULT_PASS}' ssh ${SSH_OPTS} ${DEFAULT_USER}@${ip} "echo ready"`,
 			);
-			if (test.success && test.output.includes("ready")) return { success: true, ip };
+			if (test.success && test.output.includes("ready")) {
+				return { success: true, ip };
+			}
 		}
 		execSync("sleep 3");
 	}
 	return { success: false, error: `VM not reachable within ${maxSec}s` };
 }
 
-const ok = (text: string) => ({ content: [{ type: "text" as const, text }], details: {} });
+const ok = (text: string) => ({
+	content: [{ type: "text" as const, text }],
+	details: {},
+});
 const img = (b64: string, msg: string) => ({
 	content: [
 		{ type: "image" as const, data: b64, mimeType: "image/png" },
@@ -151,12 +174,19 @@ export default function tartVmExtension(pi: ExtensionAPI) {
 			"Start a VM headless with Tart's native VNC (--vnc-experimental). Also resumes suspended VMs (~2-5s).",
 		parameters: Type.Object({
 			name: Type.String(),
-			shared_dir: Type.Optional(Type.String({ description: "Host dir to share: label:/path" })),
+			shared_dir: Type.Optional(
+				Type.String({ description: "Host dir to share: label:/path" }),
+			),
 			net_bridged: Type.Optional(
-				Type.String({ description: "Interface for bridged networking, e.g. en0" }),
+				Type.String({
+					description: "Interface for bridged networking, e.g. en0",
+				}),
 			),
 			vnc_legacy: Type.Optional(
-				Type.Boolean({ description: "Use --vnc (guest Screen Sharing) instead of --vnc-experimental" }),
+				Type.Boolean({
+					description:
+						"Use --vnc (guest Screen Sharing) instead of --vnc-experimental",
+				}),
 			),
 		}),
 		async execute(_id, params) {
@@ -167,23 +197,38 @@ export default function tartVmExtension(pi: ExtensionAPI) {
 			if (shared_dir) cmd += ` --dir=${shared_dir}`;
 
 			const stdoutFile = `${SCREENSHOT_DIR}/tart-${name}-stdout.log`;
-			spawn("bash", ["-c", `${cmd} > ${stdoutFile} 2>&1`], { detached: true, stdio: "ignore" }).unref();
+			spawn("bash", ["-c", `${cmd} > ${stdoutFile} 2>&1`], {
+				detached: true,
+				stdio: "ignore",
+			}).unref();
 
 			if (!vnc_legacy) {
 				execSync("sleep 5");
 				try {
 					const content = readFileSync(stdoutFile, "utf8");
 					const match = content.match(/vnc:\/\/:([^@]+)@[^:]+:(\d+)/);
-					if (match) vmVncInfo.set(name, { port: parseInt(match[2] as string), password: match[1] as string });
+					if (match) {
+						vmVncInfo.set(name, {
+							port: parseInt(match[2] as string),
+							password: match[1] as string,
+						});
+					}
 				} catch { /* VNC info unavailable */ }
 			}
 
 			const boot = waitForBoot(name, 90);
 			const vncInfo = vmVncInfo.get(name);
 			if (boot.success) {
-				const lines = [`VM "${name}" running`, `IP: ${boot.ip}`, `SSH: ssh admin@${boot.ip}`];
+				const lines = [
+					`VM "${name}" running`,
+					`IP: ${boot.ip}`,
+					`SSH: ssh admin@${boot.ip}`,
+				];
 				if (vncInfo) {
-					lines.push(`VNC: vnc://localhost:${vncInfo.port} (host-side)`, `VNC password: ${vncInfo.password}`);
+					lines.push(
+						`VNC: vnc://localhost:${vncInfo.port} (host-side)`,
+						`VNC password: ${vncInfo.password}`,
+					);
 				} else {
 					lines.push(`VNC: vnc://${boot.ip} (guest Screen Sharing)`);
 				}
@@ -220,7 +265,8 @@ export default function tartVmExtension(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "vm_suspend",
 		label: "VM Suspend",
-		description: "Suspend a VM. Resume with vm_start in ~2-5s (warm VM pattern).",
+		description:
+			"Suspend a VM. Resume with vm_start in ~2-5s (warm VM pattern).",
 		parameters: Type.Object({ name: Type.String() }),
 		async execute(_id, { name }) {
 			const r = run(`tart suspend ${name}`);
@@ -237,14 +283,19 @@ export default function tartVmExtension(pi: ExtensionAPI) {
 		parameters: Type.Object({ name: Type.String(), command: Type.String() }),
 		async execute(_id, { name, command }) {
 			const r = sshExec(name, command);
-			return ok(r.success ? (r.output || "(no output)") : `Failed: ${r.error}\n${r.output}`);
+			return ok(
+				r.success
+					? (r.output || "(no output)")
+					: `Failed: ${r.error}\n${r.output}`,
+			);
 		},
 	});
 
 	pi.registerTool({
 		name: "vm_screenshot",
 		label: "VM Screenshot",
-		description: "Capture the VM screen via VNC. Returns a PNG image. No guest tools needed.",
+		description:
+			"Capture the VM screen via VNC. Returns a PNG image. No guest tools needed.",
 		parameters: Type.Object({ name: Type.String() }),
 		async execute(_id, { name }) {
 			const ts = Date.now();
@@ -316,7 +367,8 @@ export default function tartVmExtension(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "vm_key",
 		label: "VM Key",
-		description: 'Press a key/combo in the VM via VNC (e.g. enter, ctrl-c, cmd-space).',
+		description:
+			"Press a key/combo in the VM via VNC (e.g. enter, ctrl-c, cmd-space).",
 		parameters: Type.Object({ name: Type.String(), key: Type.String() }),
 		async execute(_id, { name, key }) {
 			const r = vncdo(name, `key ${key}`);
@@ -338,12 +390,13 @@ export default function tartVmExtension(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "vm_configure",
 		label: "VM Configure",
-		description: "Set CPU, memory, or display for a VM. VM must be stopped first.",
+		description:
+			"Set CPU, memory, or display for a VM. VM must be stopped first.",
 		parameters: Type.Object({
 			name: Type.String(),
 			cpu: Type.Optional(Type.Number()),
 			memory: Type.Optional(Type.Number({ description: "MB" })),
-			display: Type.Optional(Type.String({ description: 'e.g. 1920x1080' })),
+			display: Type.Optional(Type.String({ description: "e.g. 1920x1080" })),
 		}),
 		async execute(_id, { name, cpu, memory, display }) {
 			let cmd = `tart set ${name}`;

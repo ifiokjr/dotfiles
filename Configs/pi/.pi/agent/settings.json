@@ -2,7 +2,7 @@
 	"lastChangelogVersion": "0.57.1",
 	"defaultProvider": "openai-codex",
 	"defaultModel": "gpt-5.4",
-	"defaultThinkingLevel": "xhigh",
+	"defaultThinkingLevel": "medium",
 	"packages": [
 		"npm:@ifi/oh-pi",
 		{
