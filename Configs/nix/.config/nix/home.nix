@@ -140,6 +140,7 @@ in
       double-conversion
       dust
       gawk
+      hyperfine
       gnumake
       gzip
       nix-prefetch
