@@ -106,13 +106,12 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 17 configuration groups organized in `Configs/`:
+The repository contains 16 configuration groups organized in `Configs/`:
 
 | Group       | Platform | Purpose                                         | Hook      |
 | ----------- | -------- | ----------------------------------------------- | --------- |
 | **nix**     | All      | System configuration with Nix flakes            | `post.sh` |
 | **nushell** | All      | Nushell shell configuration & modules           | `post.sh` |
-| **claude**  | All      | Claude Code settings & MCP server               | `post.sh` |
 | **scripts** | All      | Custom utility scripts (~/.local/bin)           | None      |
 | **shell**   | All      | Shared POSIX env (PATH, vars, secrets)          | None      |
 | **bash**    | All      | Bash shell config sourcing shared env           | None      |
@@ -130,7 +129,7 @@ The repository contains 17 configuration groups organized in `Configs/`:
 
 **Platform-specific groups** (suffixed with `_macos`, `_linux`, etc.) only deploy on matching platforms.
 
-**Deployment ordering:** The setup script deploys groups in explicit phases: `scripts` first (hooks depend on it), then `nix` (installs all tools), then simple groups (alphabetical), then late groups in order: `nushell` (needs starship/carapace from nix), `helix` (custom build needs nushell + cargo), `claude` (needs deno for MCP server).
+**Deployment ordering:** The setup script deploys groups in explicit phases: `scripts` first (hooks depend on it), then `nix` (installs all tools), then simple groups (alphabetical), then late groups in order: `nushell` (needs starship/carapace from nix), `helix` (custom build needs nushell + cargo).
 
 ## Architecture
 
@@ -145,7 +144,6 @@ The repository contains 17 configuration groups organized in `Configs/`:
 │   ├── shell/                 # Shared POSIX env (env.sh, .hushlogin)
 │   ├── bash/                  # Bash shell config (.bashrc, .bash_profile)
 │   ├── zsh/                   # Zsh shell config (.zshrc, .zprofile)
-│   ├── claude/                # Claude Code settings & MCP server
 │   ├── helix/                 # Helix editor config & Steel plugins
 │   ├── ghostty/               # Ghostty terminal config
 │   ├── zellij/                # Terminal multiplexer
@@ -159,8 +157,7 @@ The repository contains 17 configuration groups organized in `Configs/`:
 ├── Hooks/                      # Pre/post deployment scripts
 │   ├── nix/post.sh            # Rebuilds system after Nix changes
 │   ├── nushell/post.sh        # Generates vendor autoload, sets default shell
-│   ├── pnpm/post.sh           # Syncs managed global pnpm packages
-│   └── claude/post.sh         # Registers MCP server, caches Deno deps
+│   └── pnpm/post.sh           # Syncs managed global pnpm packages
 ├── setup                       # Automated setup script
 ├── setup-tuckr-symlink.sh     # Bootstrap script for platform symlink
 └── readme.md                   # Full documentation
@@ -190,7 +187,6 @@ Hooks are organized as `Hooks/<group>/pre.sh`, `Hooks/<group>/post.sh`, or `Hook
 1. **`Hooks/nix/post.sh`** - Automatically rebuilds system configuration after Nix config deployment (darwin-rebuild on macOS, home-manager switch on Linux)
 2. **`Hooks/nushell/post.sh`** - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
 3. **`Hooks/pnpm/post.sh`** - Syncs managed pnpm global manifests and installs global packages
-4. **`Hooks/claude/post.sh`** - Registers tart-vm MCP server with Claude Code, caches Deno dependencies
 
 ## Nushell Development Notes
 

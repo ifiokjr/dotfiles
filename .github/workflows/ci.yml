@@ -35,7 +35,7 @@ jobs:
 
       - name: 🔍 shellcheck bash scripts
         run: |
-          shellcheck setup setup-tuckr-symlink.sh Hooks/nix/post.sh Hooks/nushell/post.sh Hooks/claude/post.sh \
+          shellcheck setup setup-tuckr-symlink.sh Hooks/nix/post.sh Hooks/nushell/post.sh Hooks/pnpm/post.sh \
             Configs/shell/.config/shell/env.sh Configs/bash/.bashrc
 
       - name: 🔍 validate nushell scripts (nu-check)

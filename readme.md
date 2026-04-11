@@ -147,12 +147,6 @@ The setup flow layers metadata on top of Tuckr conventions:
 - `commands` - List all custom scripts with descriptions
 - `test_scripts` - Run the test suite for nushell scripts
 
-#### `claude`
-
-**Location:** `Configs/claude/` **Deploys:** `~/.claude/` and `~/.config/claude/` **Description:** Claude Code settings including attribution preferences and MCP server for tart VM control.
-
-**Hook:** `post_claude` - Registers tart-vm MCP server with Claude Code, caches Deno dependencies
-
 ### Development Tools
 
 #### `nix`
@@ -197,7 +191,6 @@ Tuckr supports hooks that run at different stages of deployment:
 
 - **`Hooks/nix/post.sh`**: Rebuilds system after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux), auto-generates machine.nix if missing
 - **`Hooks/nushell/post.sh`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
-- **`Hooks/claude/post.sh`**: Registers tart-vm MCP server with Claude Code, caches Deno dependencies
 - **`Hooks/pnpm/post.sh`**: Syncs managed pnpm global manifests and installs global packages with lockfile enforcement
 
 ### Hook Naming Convention
