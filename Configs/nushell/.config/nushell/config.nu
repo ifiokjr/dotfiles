@@ -19,7 +19,7 @@ $env.config = {
     cursor_shape: {emacs: line, vi_insert: line, vi_normal: block}
     hooks: {
         pre_prompt: [
-            {|| 
+            {||
                 # Direnv integration - loads/unloads environment variables based
                 # on .envrc files. Runs before every prompt (like zsh precmd) so
                 # it catches: directory changes, `direnv allow`, and file edits.
@@ -50,7 +50,7 @@ $env.config = {
         ]
         env_change: {
             PWD: [
-                {|| 
+                {||
                     # Directory stack — push current directory, deduplicate, cap at 10.
                     # Mirrors zsh auto_pushd behaviour used by oh-my-zsh's `d` command.
                     let dir = ($env.PWD | path expand)
