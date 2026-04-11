@@ -78,9 +78,9 @@
       # Keep rebuilds predictable and avoid repeated sudo prompts from Homebrew
       # maintenance work on every activation. Declarative installs/removals still
       # apply, but bulk updates should be run explicitly outside `rebuild`.
-      autoUpdate = false;
-      upgrade = false;
-      cleanup = "uninstall";
+      autoUpdate = true;
+      upgrade = true;
+      cleanup = "zap";
       extraFlags = [
         "--verbose"
       ];
@@ -121,7 +121,6 @@
       "blackhole-16ch"
       "blender"
       "obs"
-      "ollama-app"
       "vlc"
 
       # Utilities

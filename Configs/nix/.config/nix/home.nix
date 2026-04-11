@@ -71,7 +71,7 @@ in
       neovim
       nixd
       nixfmt
-      ollama
+      extra.ollama
       opencode
       pulumi-bin
       pulumi-esc
@@ -139,6 +139,7 @@ in
       diffutils
       double-conversion
       dust
+      gawk
       gnumake
       gzip
       nix-prefetch
