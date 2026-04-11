@@ -72,9 +72,12 @@ def --env pnpm_auto_activate [] {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env failed(ansi reset)" }
         return
     }
-    let first = (
-        $res.stdout | str trim | lines | first | default ""
-    )
+    let output_lines = ($res.stdout | str trim | lines)
+    if ($output_lines | is-empty) {
+        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
+        return
+    }
+    let first = ($output_lines | first)
     if $first == "" {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
         return
@@ -101,6 +104,8 @@ secrets load
 # General aliases
 # Reload shell
 alias s = exec nu
+# Job control
+alias fg = job unfreeze
 # Nix
 alias update = nix flake update --flake $"($env.HOME)/.config/nix"
 # Editors
@@ -284,7 +289,7 @@ alias gmtl = git mergetool --no-prompt
 alias gp = git push
 alias gpd = git push --dry-run
 alias gpf = git push --force-with-lease --force-if-includes
-alias "gpf!" = git push --force
+alias gp! = git push --force-with-lease --force-if-includes
 alias gpnv = git push --no-verify
 alias "gpnv!" = git push --force-with-lease --force-if-includes --no-verify
 alias gpfnv = git push --force-with-lease --force-if-includes --no-verify
