@@ -137,7 +137,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
-- `rebuild` - Cross-platform system rebuild (darwin-rebuild on macOS, home-manager switch on Linux); successful runs also sync managed global pnpm packages, and `rebuild --update` refreshes `flake.lock` before rebuilding
+- `rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `rebuild --update` refreshes `flake.lock` before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
 - `pnpm:global:sync` - Symlink global pnpm manifests and install pinned global packages
@@ -189,7 +189,7 @@ Tuckr supports hooks that run at different stages of deployment:
 
 ### Active Hooks
 
-- **`Hooks/nix/post.sh`**: Rebuilds system after nix config changes (darwin-rebuild on macOS, home-manager switch on Linux), auto-generates machine.nix if missing
+- **`Hooks/nix/post.sh`**: Rebuilds system after nix config changes (`nh darwin switch` on macOS, `nh home switch` on Linux), auto-generates machine.nix if missing
 - **`Hooks/nushell/post.sh`**: Generates vendor autoload scripts, sets nushell as default shell, creates macOS config symlink
 - **`Hooks/pnpm/post.sh`**: Syncs managed pnpm global manifests and installs global packages with lockfile enforcement
 
@@ -407,7 +407,7 @@ The `rebuild` script increases the file descriptor limit to 10,240 before runnin
 
 ```bash
 # Increase limit, then rebuild
-ulimit -n 10240 && sudo darwin-rebuild switch --flake ~/.config/nix#default --impure
+ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR="$HOME/.config/nix" nh darwin switch ~/.config/nix -H default --impure
 ```
 
 **Why this happens:**
@@ -494,7 +494,7 @@ A Docker-based integration test validates the full setup + rebuild flow on Linux
 docker build -t dotfiles-test . && docker run --rm dotfiles-test
 ```
 
-This builds an Ubuntu 24.04 container, runs the setup script, triggers `home-manager switch` via `rebuild`, and verifies the result.
+This builds an Ubuntu 24.04 container, runs the setup script, triggers `nh home switch` via `rebuild`, and verifies the result.
 
 ### Script Tests
 

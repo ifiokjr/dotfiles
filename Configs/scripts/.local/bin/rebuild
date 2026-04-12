@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 # Rebuild system configuration (cross-platform)
-# macOS: darwin-rebuild switch (nix-darwin + home-manager)
-# Linux: home-manager switch (standalone home-manager)
+# macOS: nh darwin switch (nix-darwin + home-manager)
+# Linux: nh home switch (standalone home-manager)
 # This script ensures machine.nix exists and then rebuilds the system
 
 use nu_modules/print_utils.nu *
@@ -240,24 +240,24 @@ def main [
         }
 
         # Rebuild darwin configuration
-        info "Rebuilding nix-darwin configuration..."
+        info "Rebuilding nix-darwin configuration with nh..."
         print ""
 
-        # On first run, `darwin-rebuild` CLI may not be installed yet.
-        # Use `nix run nix-darwin` from the flake input as fallback.
-        let darwin_cmd = if (which darwin-rebuild | is-not-empty) {
-            $"darwin-rebuild switch --flake '($flake_dir)#default' --impure"
+        # On first run, `nh` may not be installed yet.
+        # Use `nix run nixpkgs#nh` as a bootstrap fallback.
+        let darwin_cmd = if (which nh | is-not-empty) {
+            $"nh darwin switch '($flake_dir)' -H default --impure"
         } else {
-            info "darwin-rebuild not found, using nix run for first-time setup..."
-            $"nix run nix-darwin/master -- switch --flake '($flake_dir)#default' --impure"
+            info "nh not found, using nix run nixpkgs#nh for first-time setup..."
+            $"nix run nixpkgs#nh -- darwin switch '($flake_dir)' -H default --impure"
         }
 
         # Wrap in bash -c because:
         # 1. `ulimit -n 10240` raises macOS file descriptor limit (nix builds open many files)
         # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
-        #    through to the darwin-rebuild process so it can find gitignored machine.nix
+        #    through to nh so it can find gitignored machine.nix via the linked config dir
         # 3. `--impure` is needed because machine.nix is gitignored and read via env var
-        # 4. a temporary sudo keepalive prevents repeated Password prompts during long
+        # 4. a temporary sudo keepalive prevents repeated password prompts during long
         #    nix-darwin activations that invoke Homebrew in separate process trees
         let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
         let wrapped_rebuild_cmd = $"while true; do sudo -n true || exit; sleep 30; kill -0 $$ || exit; done 2>/dev/null & keepalive=$!; trap 'kill $keepalive' EXIT; ($rebuild_cmd)"
@@ -277,19 +277,19 @@ def main [
             exit 1
         }
     } else {
-        # Linux: use standalone home-manager switch
-        info "Rebuilding home-manager configuration..."
+        # Linux: use nh home switch
+        info "Rebuilding home-manager configuration with nh..."
         print ""
 
-        let hm_flake = $"($flake_dir)#($config.username)@($config.system)"
+        let hm_configuration = $"($config.username)@($config.system)"
 
-        # On first run, `home-manager` CLI may not be installed yet.
-        # Use `nix run home-manager` from the flake input as fallback.
-        let hm_cmd = if (which home-manager | is-not-empty) {
-            $"home-manager switch --flake '($hm_flake)' --impure"
+        # On first run, `nh` may not be installed yet.
+        # Use `nix run nixpkgs#nh` as a bootstrap fallback.
+        let hm_cmd = if (which nh | is-not-empty) {
+            $"nh home switch '($flake_dir)' -c '($hm_configuration)' --impure"
         } else {
-            info "home-manager not found, using nix run for first-time setup..."
-            $"nix run home-manager -- switch --flake '($hm_flake)' --impure"
+            info "nh not found, using nix run nixpkgs#nh for first-time setup..."
+            $"nix run nixpkgs#nh -- home switch '($flake_dir)' -c '($hm_configuration)' --impure"
         }
 
         # Explicitly pass USER and HOME so home-manager activation can verify the

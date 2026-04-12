@@ -20,10 +20,10 @@ Unescaped parentheses can trigger command substitution.
 
 ```bash
 # macOS
-darwin-rebuild switch --flake ~/.config/nix#default --impure
+nh darwin switch ~/.config/nix -H default --impure
 
 # Linux/standalone Home Manager
-home-manager switch --flake ~/.config/nix#username@system --impure
+nh home switch ~/.config/nix -c username@system --impure
 ```
 
 ## Nix CLI Preference

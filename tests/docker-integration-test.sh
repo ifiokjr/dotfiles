@@ -61,7 +61,7 @@ else
 	fail "setup --lite did not set lite = true in machine.nix"
 fi
 
-# ----- Step 2: Run rebuild (home-manager switch on Linux) -----
+# ----- Step 2: Run rebuild (nh home switch on Linux) -----
 step "Running rebuild"
 nu "$HOME/.local/bin/rebuild" --skip-check
 pass "rebuild completed"

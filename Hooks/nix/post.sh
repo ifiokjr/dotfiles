@@ -84,7 +84,7 @@ stop_darwin_sudo_keepalive() {
 trap stop_darwin_sudo_keepalive EXIT
 
 # nix-darwin activation refuses to overwrite /etc files it doesn't manage.
-# Rename any conflicting files so the first darwin-rebuild switch succeeds.
+# Rename any conflicting files so the first nh darwin switch succeeds.
 # This includes sudoers.d files we bootstrap for global sudo timestamps —
 # nix-darwin manages that file via security.sudo.extraConfig and will
 # recreate it during activation.
@@ -152,7 +152,7 @@ if [ -n "${GITHUB_TOKEN:-}" ]; then
 		echo "access-tokens = github.com=$GITHUB_TOKEN" >>"$USER_NIX_CONF"
 		echo "Configured GitHub access token in user nix.conf"
 	fi
-	# Also configure in system nix.conf so sudo operations (darwin-rebuild) can
+	# Also configure in system nix.conf so sudo operations (nh darwin switch) can
 	# access the token. sudo changes the user context, so the user nix.conf isn't read.
 	if [ -d /etc/nix ] && ! sudo grep -q "access-tokens" /etc/nix/nix.conf 2>/dev/null; then
 		echo "access-tokens = github.com=$GITHUB_TOKEN" | sudo tee -a /etc/nix/nix.conf >/dev/null
@@ -288,38 +288,38 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 		sudo mv /etc/shells /etc/shells.before-nix-darwin
 	fi
 
-	# Build darwin-rebuild command (with nix run fallback for first-time setup)
-	if command -v darwin-rebuild &>/dev/null; then
-		DARWIN_CMD="darwin-rebuild switch --flake '${NIX_FLAKE_DIR}#default' --impure"
+	# Build nh darwin command (with nix run fallback for first-time setup)
+	if command -v nh &>/dev/null; then
+		DARWIN_CMD="nh darwin switch '${NIX_FLAKE_DIR}' -H default --impure"
 	else
-		echo "darwin-rebuild not found, using nix run for first-time setup..."
-		DARWIN_CMD="nix run nix-darwin/master -- switch --flake '${NIX_FLAKE_DIR}#default' --impure"
+		echo "nh not found, using nix run nixpkgs#nh for first-time setup..."
+		DARWIN_CMD="nix run nixpkgs#nh -- darwin switch '${NIX_FLAKE_DIR}' -H default --impure"
 	fi
 
 	REBUILD_CMD="ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${DARWIN_CMD}"
 	echo "Running: $REBUILD_CMD"
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
-		echo "WARNING: darwin-rebuild failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
+		echo "WARNING: nh darwin switch failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
 	else
 		echo "Configuration rebuilt successfully! (darwin + home-manager)"
 	fi
 else
-	# Linux: standalone home-manager switch
-	HM_FLAKE="${NIX_FLAKE_DIR}#${CFG_USERNAME}@${CFG_SYSTEM}"
+	# Linux: standalone nh home switch
+	HM_CONFIGURATION="${CFG_USERNAME}@${CFG_SYSTEM}"
 
-	if command -v home-manager &>/dev/null; then
-		HM_CMD="home-manager switch --flake '${HM_FLAKE}' --impure"
+	if command -v nh &>/dev/null; then
+		HM_CMD="nh home switch '${NIX_FLAKE_DIR}' -c '${HM_CONFIGURATION}' --impure"
 	else
-		echo "home-manager not found, using nix run for first-time setup..."
-		HM_CMD="nix run home-manager -- switch --flake '${HM_FLAKE}' --impure"
+		echo "nh not found, using nix run nixpkgs#nh for first-time setup..."
+		HM_CMD="nix run nixpkgs#nh -- home switch '${NIX_FLAKE_DIR}' -c '${HM_CONFIGURATION}' --impure"
 	fi
 
 	REBUILD_CMD="${SUDO_PREFIX} USER=${CFG_USERNAME} HOME=${HOME} NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${HM_CMD}"
 	echo "Running: $REBUILD_CMD"
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
-		echo "WARNING: home-manager rebuild failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
+		echo "WARNING: nh home switch failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
 	else
 		echo "Configuration rebuilt successfully! (home-manager)"
 	fi

@@ -140,9 +140,10 @@ in
       double-conversion
       dust
       gawk
-      hyperfine
       gnumake
       gzip
+      hyperfine
+      nh
       nix-prefetch
       nixpkgs-review
       openssh

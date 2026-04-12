@@ -97,10 +97,10 @@ deploy_single_group() {
 		echo ""
 		if [ "$PLATFORM" = "macos" ]; then
 			print_header "Nix Darwin Configuration"
-			echo -e "${YELLOW}Note:${NC} nix deployment will run 'darwin-rebuild switch' which requires sudo"
+			echo -e "${YELLOW}Note:${NC} nix deployment will run 'nh darwin switch' which requires sudo"
 		else
 			print_header "Nix Home Manager Configuration"
-			echo -e "${YELLOW}Note:${NC} nix deployment will run 'home-manager switch'"
+			echo -e "${YELLOW}Note:${NC} nix deployment will run 'nh home switch'"
 		fi
 		print_info "This may take several minutes..."
 		echo ""

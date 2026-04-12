@@ -57,7 +57,7 @@ The setup flow can:
 - create the Tuckr symlink expected by the repo layout
 - deploy selected config groups into your home directory via symlinks
 - run post-hooks for groups such as `nix`, `nushell`, `pnpm`, and `claude`
-- rebuild system or home-manager configuration when the `nix` group is deployed
+- rebuild system or Home Manager configuration via `nh` when the `nix` group is deployed
 
 The setup script is intentionally metadata-driven, but Tuckr remains the deployment engine.
 
@@ -141,8 +141,8 @@ Expected outcome:
 Typical expectations:
 
 - `core` on an already-prepared machine: several minutes
-- `workstation` on macOS: potentially much longer because Nix, home-manager, and GUI-heavy packages may be involved
-- `nix` deployment may trigger a full rebuild or `home-manager switch`
+- `workstation` on macOS: potentially much longer because Nix, Home Manager, and GUI-heavy packages may be involved
+- `nix` deployment may trigger a full rebuild or `nh home switch`
 - macOS runs may request `sudo`
 
 If you are unsure, start with `--doctor` and the default `core` preset.
