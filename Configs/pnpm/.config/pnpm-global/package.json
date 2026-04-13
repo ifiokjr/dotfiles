@@ -15,52 +15,5 @@
 		"tailwindcss-language-server": "^0.0.1",
 		"typescript-language-server": "^5.1.3",
 		"vscode-langservers-extracted": "^4.10.0"
-	},
-	"dependenciesMeta": {
-		"@openai/codex": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"@anthropic-ai/claude-code": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"@devcontainers/cli": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"@google/gemini-cli": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"@googleworkspace/cli": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"@mariozechner/pi-coding-agent": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"bash-language-server": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"eslint": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"npm": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"opencode-ai": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"sql-formatter": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"svelte-language-server": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"tailwindcss-language-server": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"typescript-language-server": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		},
-		"vscode-langservers-extracted": {
-			"node": "/Users/ifiokjr/Library/pnpm/nodejs/24.14.0/bin/node"
-		}
 	}
 }
