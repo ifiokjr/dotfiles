@@ -1,33 +1,33 @@
 {
-  "lastChangelogVersion": "0.66.1",
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.4",
-  "defaultThinkingLevel": "high",
-  "packages": [
-    "npm:@ifi/oh-pi",
-    {
-      "source": "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/extensions",
-      "extensions": [
-        "-extensions/safe-guard.ts"
-      ]
-    },
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/ant-colony",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/themes",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/prompts",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/skills",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/subagents",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/plan",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/spec",
-    "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/web-remote"
-  ],
-  "quietStartup": true,
-  "enabledModels": [
-    "openai-codex/gpt-5.4",
-    "openai-codex/gpt-5.4-mini",
-    "openai-codex/gpt-5.3-codex-spark",
-    "openai-codex/gpt-5.3-codex",
-    "anthropic/claude-sonnet-4-6",
-    "anthropic/claude-opus-4-6",
-    "anthropic/claude-haiku-4-5"
-  ]
+	"lastChangelogVersion": "0.66.1",
+	"defaultProvider": "openai-codex",
+	"defaultModel": "gpt-5.4",
+	"defaultThinkingLevel": "high",
+	"packages": [
+		"npm:@ifi/oh-pi",
+		{
+			"source": "/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/extensions",
+			"extensions": [
+				"-extensions/safe-guard.ts"
+			]
+		},
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/ant-colony",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/themes",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/prompts",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/skills",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/subagents",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/plan",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/spec",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/web-remote"
+	],
+	"quietStartup": true,
+	"enabledModels": [
+		"openai-codex/gpt-5.4",
+		"openai-codex/gpt-5.4-mini",
+		"openai-codex/gpt-5.3-codex-spark",
+		"openai-codex/gpt-5.3-codex",
+		"anthropic/claude-sonnet-4-6",
+		"anthropic/claude-opus-4-6",
+		"anthropic/claude-haiku-4-5"
+	]
 }
