@@ -118,6 +118,7 @@ alias cl = clear
 alias pinentry = pinentry-mac
 alias cc = claude --dangerously-skip-permissions
 alias co = codex --dangerously-bypass-approvals-and-sandbox
+alias oc = opencode
 alias g = git
 alias md = mkdir
 alias rd = rmdir
