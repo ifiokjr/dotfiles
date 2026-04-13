@@ -254,12 +254,11 @@ def main [
 
         # Wrap in bash -c because:
         # 1. `ulimit -n 10240` raises macOS file descriptor limit (nix builds open many files)
-        # 2. `sudo` with inline env var (`NIX_USER_CONFIG_DIR`) passes the config path
-        #    through to nh so it can find gitignored machine.nix via the linked config dir
-        # 3. `--impure` is needed because machine.nix is gitignored and read via env var
-        # 4. a temporary sudo keepalive prevents repeated password prompts during long
+        # 2. `--impure` is needed because machine.nix is gitignored and read via env var
+        # 3. a temporary sudo keepalive prevents repeated password prompts during long
         #    nix-darwin activations that invoke Homebrew in separate process trees
-        let rebuild_cmd = $"ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
+        # Note: nh darwin manages sudo internally; do not wrap the command in sudo.
+        let rebuild_cmd = $"ulimit -n 10240 && NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
         let wrapped_rebuild_cmd = $"while true; do sudo -n true || exit; sleep 30; kill -0 $$ || exit; done 2>/dev/null & keepalive=$!; trap 'kill $keepalive' EXIT; ($rebuild_cmd)"
         # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
         let result = do -i { ^bash -c $wrapped_rebuild_cmd }
