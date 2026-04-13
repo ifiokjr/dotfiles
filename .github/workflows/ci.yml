@@ -31,7 +31,13 @@ jobs:
           nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
             nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
             nixpkgs#racket-minimal
-          raco pkg install --skip-installed --auto --scope user --no-docs fmt || true
+          # Ensure nix profile bin is in PATH for raco
+          export PATH="$HOME/.nix-profile/bin:$PATH"
+          export HOME="$HOME"
+          # Install fmt package for raco
+          raco pkg install --skip-installed --auto --scope user --no-docs fmt
+          # Verify raco fmt works
+          raco fmt --help
 
       - name: 🔍 shellcheck bash scripts
         run: |
