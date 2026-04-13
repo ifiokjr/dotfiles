@@ -29,17 +29,11 @@ jobs:
       - name: 📦 install lint tools
         run: |
           nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
-            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
-            nixpkgs#racket-minimal
-          # Add nix profile and raco paths to GITHUB_PATH for subsequent steps
+            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt
+          # Add nix profile to GITHUB_PATH for subsequent steps
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
-          # Install fmt package for raco (will auto-update dependencies)
-          raco pkg install --update --auto --scope user --no-docs fmt
-          # Add raco bin directory to GITHUB_PATH
-          RACKET_BIN="$(racket -e '(display (path->string (find-system-path '"'"'bin-dir'"'"')))')"
-          echo "$RACKET_BIN" >> "$GITHUB_PATH"
-          # Verify raco fmt works
-          raco fmt --help
+          # Note: raco fmt is optional - Scheme files (.scm) are excluded from dprint in CI
+          # because the racket package in nixpkgs has version conflicts with pretty-expressive
 
       - name: 🔍 shellcheck bash scripts
         run: |
