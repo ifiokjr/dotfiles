@@ -33,8 +33,10 @@ jobs:
             nixpkgs#racket
           # Add nix profile to GITHUB_PATH for subsequent steps
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
-          # Install raco fmt - it will auto-install/update dependencies including pretty-expressive
-          raco pkg install --auto --scope user --no-docs pretty-expressive fmt
+          # Force install newer pretty-expressive to override the one bundled with racket
+          raco pkg install --auto --scope user --no-docs --force pretty-expressive
+          # Now install fmt
+          raco pkg install --auto --scope user --no-docs fmt
           # Verify raco fmt works
           raco fmt --help
 
