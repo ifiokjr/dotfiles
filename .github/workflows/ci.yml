@@ -31,11 +31,13 @@ jobs:
           nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
             nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
             nixpkgs#racket-minimal
-          # Ensure nix profile bin is in PATH for raco
-          export PATH="$HOME/.nix-profile/bin:$PATH"
-          export HOME="$HOME"
+          # Add nix profile and raco paths to GITHUB_PATH for subsequent steps
+          echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
           # Install fmt package for raco
           raco pkg install --skip-installed --auto --scope user --no-docs fmt
+          # Add raco bin directory to GITHUB_PATH
+          RACKET_BIN="$(racket -e '(display (path->string (find-system-path '"'"'bin-dir'"'"')))')"
+          echo "$RACKET_BIN" >> "$GITHUB_PATH"
           # Verify raco fmt works
           raco fmt --help
 
