@@ -187,22 +187,17 @@ in
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
     ]
-    ++ lib.optionals pkgs.stdenv.isDarwin (
-      [
-        # macOS-only packages
-        _1password-cli
-        cocoapods
-        fvm # Flutter Version Management (macOS/Windows only)
-        mas
-        pinentry_mac
-        powershell
-        swiftformat
-        swiftlint
-      ]
-      ++ lib.optionals (!lite) [
-        code-cursor
-      ]
-    )
+    ++ lib.optionals pkgs.stdenv.isDarwin ([
+      # macOS-only packages
+      _1password-cli
+      cocoapods
+      fvm # Flutter Version Management (macOS/Windows only)
+      mas
+      pinentry_mac
+      powershell
+      swiftformat
+      swiftlint
+    ])
     ++ lib.optionals pkgs.stdenv.isLinux (
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       lib.optionals (!lite) [
