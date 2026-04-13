@@ -73,8 +73,7 @@
 		"**/snapshots",
 		"**/target",
 		"**/node_modules",
-		"**/skills/**",
-		"**/*.scm"
+		"**/skills/**"
 	],
 	"plugins": [
 		"https://plugins.dprint.dev/typescript-0.95.15.wasm",
