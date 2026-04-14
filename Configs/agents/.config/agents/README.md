@@ -45,16 +45,43 @@ OpenCode-specific configuration:
 3. Tool-specific config files (e.g., `~/.config/opencode/config.json`)
 4. Default behavior (lowest)
 
+## OpenCode Plugins
+
+OpenCode plugins are managed via [OCX](https://github.com/kdcokenny/ocx) (OpenCode eXtensions manager).
+
+Installed plugins:
+
+| Plugin | Source | Description |
+| ------ | ------ | ----------- |
+| **opencode-worktree** | `kdco/worktree` | Git worktrees with automatic terminal spawning |
+
+### Installing Plugins
+
+Plugins are automatically installed by the `Hooks/agents/post.sh` hook when the `agents` config group is deployed. To install manually:
+
+```bash
+# Install OCX (if not already installed)
+npm install -g @kdcokenny/ocx
+
+# Add a plugin
+ocx add kdco/worktree --from https://registry.kdco.dev
+
+# List installed plugins
+ocx list
+```
+
 ## Adding New AI Tools
 
 When adding a new AI tool:
 
 1. Create its config directory under `.config/<tool>/`
 2. Add any environment variables to `agents.env.sh`
-3. Document the tool in this README
-4. Update the table above
+3. For OpenCode plugins, add installation to `Hooks/agents/post.sh`
+4. Document the tool in this README
+5. Update the table above
 
 ## Related
 
 - [Shell environment](../shell/.config/shell/env.sh) - Sources this configuration
 - [Pi config](../../pi/.pi/agent/settings.json) - Pi-specific settings
+- [Agents hook](../../../Hooks/agents/post.sh) - Post-install plugin setup
