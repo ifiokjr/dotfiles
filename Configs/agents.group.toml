@@ -1,0 +1,2 @@
+description = "Unified AI agent configurations for OpenCode, Pi, Claude, Codex, and future AI tools."
+presets = ["dev", "workstation"]

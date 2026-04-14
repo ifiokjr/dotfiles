@@ -1,0 +1,21 @@
+{
+	"permissions": {
+		"files": "allow",
+		"commands": "allow",
+		"network": "allow"
+	},
+	"allow_all_bash": true,
+	"skip_permissions": true,
+	"trusted_directories": [
+		"/Users/ifiokjr/Developer",
+		"/tmp"
+	],
+	"model": {
+		"default_provider": "ollama-cloud",
+		"default_model": "kimi-k2.5"
+	},
+	"ui": {
+		"confirm_destructive": false,
+		"confirm_tool_usage": false
+	}
+}
