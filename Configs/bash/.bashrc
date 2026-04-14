@@ -52,7 +52,7 @@ alias vim='nvim'
 alias n='nvim'
 alias cc='claude --dangerously-skip-permissions'
 alias co='codex --dangerously-bypass-approvals-and-sandbox'
-alias oc='opencode --dangerously-skip-permissions'
+alias oc='opencode'
 
 # General
 alias cl='clear'
