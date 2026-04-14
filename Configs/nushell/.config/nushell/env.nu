@@ -116,7 +116,6 @@ $env.PATH = (
 $env.OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS = true
 $env.OPENCODE_ALLOW_ALL_BASH = true
 $env.OPENCODE_TRUSTED_DIRECTORIES = "/Users/ifiokjr/Developer,/tmp"
-
 # ---------------------------------------------------------------------------
 # Directory stack (like zsh auto_pushd)
 # ---------------------------------------------------------------------------

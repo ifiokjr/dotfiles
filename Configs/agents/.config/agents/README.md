@@ -4,23 +4,27 @@ This directory centralizes configuration for all AI coding agents and tools.
 
 ## Supported Tools
 
-| Tool | Config Location | Description |
-|------|----------------|-------------|
+| Tool         | Config Location       | Description                                 |
+| ------------ | --------------------- | ------------------------------------------- |
 | **OpenCode** | `~/.config/opencode/` | Universal AI agent with multi-model support |
-| **Pi** | `~/.pi/agent/` | AI-powered development environment |
-| **Claude** | `~/.config/claude/` | Claude Desktop app configuration |
-| **Codex** | `~/.codex/` | OpenAI's Codex CLI tool |
+| **Pi**       | `~/.pi/agent/`        | AI-powered development environment          |
+| **Claude**   | `~/.config/claude/`   | Claude Desktop app configuration            |
+| **Codex**    | `~/.codex/`           | OpenAI's Codex CLI tool                     |
 
 ## Configuration Files
 
 ### `agents.env.sh`
+
 Environment variables that control agent behavior across all tools:
+
 - `OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS=true` - Skip all permission prompts
 - `OPENCODE_ALLOW_ALL_BASH=true` - Allow any bash command execution
 - `OPENCODE_TRUSTED_DIRECTORIES` - Comma-separated list of auto-allowed paths
 
 ### `opencode/config.json`
+
 OpenCode-specific configuration:
+
 - Full file access permissions
 - Trusted directory list
 - Default model/provider settings
