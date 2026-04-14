@@ -107,6 +107,22 @@ done
 unset _p
 
 # ---------------------------------------------------------------------------
+# OpenCode
+# ---------------------------------------------------------------------------
+# Deprecated: These environment variables are now managed via the 'agents' config group
+# See: Configs/agents/.config/agents/agents.env.sh
+# Kept here temporarily for backward compatibility during transition
+export OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS=true
+export OPENCODE_ALLOW_ALL_BASH=true
+export OPENCODE_TRUSTED_DIRECTORIES="/Users/ifiokjr/Developer,/tmp"
+
+# Source the unified agents configuration (overrides above if present)
+if [ -f "$HOME/.config/agents/agents.env.sh" ]; then
+	# shellcheck disable=SC1091
+	. "$HOME/.config/agents/agents.env.sh"
+fi
+
+# ---------------------------------------------------------------------------
 # Secrets (optional, not committed)
 # ---------------------------------------------------------------------------
 if [ -f "$HOME/.env.dotfiles" ]; then
