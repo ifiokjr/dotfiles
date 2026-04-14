@@ -1,10 +1,10 @@
 {
 	"dependencies": {
-		"@anthropic-ai/claude-code": "^2.1.104",
-		"@devcontainers/cli": "^0.85.0",
-		"@google/gemini-cli": "^0.37.1",
+		"@anthropic-ai/claude-code": "^2.1.107",
+		"@devcontainers/cli": "^0.86.0",
+		"@google/gemini-cli": "^0.37.2",
 		"@googleworkspace/cli": "^0.22.5",
-		"@mariozechner/pi-coding-agent": "^0.66.1",
+		"@mariozechner/pi-coding-agent": "^0.67.1",
 		"@openai/codex": "^0.120.0",
 		"bash-language-server": "^5.6.0",
 		"eslint": "^10.2.0",
