@@ -73,7 +73,13 @@ if [ -x "$NU_PATH" ]; then
 
 	# Generate atuin init
 	if command -v atuin &>/dev/null; then
-		atuin init nu >"$VENDOR_AUTOLOAD_DIR/atuin.nu"
+		ATUIN_AUTOLOAD_FILE="$VENDOR_AUTOLOAD_DIR/atuin.nu"
+		atuin init nu >"$ATUIN_AUTOLOAD_FILE"
+		# Older Atuin-generated Nushell init scripts used `job spawn -t <name>`,
+		# but Nushell 0.112+ removed `-t`. Normalize the generated script so the
+		# integration works across mixed Atuin/Nushell upgrade states.
+		sed -i '' -E 's/job spawn -t [^ ]+ \{/job spawn {/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null ||
+			sed -i -E 's/job spawn -t [^ ]+ \{/job spawn {/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null || true
 		echo -e "${GREEN}✓${NC} Generated atuin.nu"
 	else
 		echo -e "${YELLOW}!${NC} atuin not found, skipping atuin.nu"
