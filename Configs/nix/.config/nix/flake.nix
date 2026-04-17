@@ -40,9 +40,25 @@
       homebrew-bundle,
     }:
     let
+      supportedSystems = [
+        "aarch64-darwin"
+        "x86_64-darwin"
+        "aarch64-linux"
+        "x86_64-linux"
+      ];
+
+      forAllSystems =
+        f:
+        builtins.listToAttrs (
+          map (system: {
+            name = system;
+            value = f system;
+          }) supportedSystems
+        );
+
       # Helper function to create configurations for a specific user.
       # Darwin-specific package workarounds are applied as an overlay so every
-      # consumer (including serpl) benefits.
+      # consumer (including setup bootstrap and CI) benefits.
       darwinWorkaroundsOverlay =
         final: prev:
         prev.lib.optionalAttrs prev.stdenv.isDarwin {
@@ -63,9 +79,9 @@
           });
 
           # Nushell 0.112.1 currently fails Darwin sandboxed REPL tests with
-          # `I/O error: Operation not permitted (os error 1)` while checking
-          # `env_shlvl_in_repl` and `env_shlvl_in_exec_repl`. Skip checks until
-          # nixpkgs updates to a fixed revision.
+          # permission errors while checking `env_shlvl_in_repl` and
+          # `env_shlvl_in_exec_repl`. Skip checks until nixpkgs updates to a
+          # fixed revision.
           nushell =
             if prev.nushell.version == "0.112.1" then
               prev.nushell.overrideAttrs (_: {
@@ -227,5 +243,19 @@
             lite = machineConfig.lite or false;
           };
         };
+
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+            overlays = [ darwinWorkaroundsOverlay ];
+          };
+        in
+        {
+          ci-nushell = pkgs.nushell;
+        }
+      );
     };
 }

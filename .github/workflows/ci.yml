@@ -89,7 +89,10 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@main
 
       - name: 📦 install nushell
-        run: nix profile add nixpkgs#nushell
+        run: |
+          # Use the repo flake package so Darwin CI gets the same nushell
+          # workaround as local setup/bootstrap.
+          nix profile add .#ci-nushell
 
       - name: 🧪 run test suite
         run: |

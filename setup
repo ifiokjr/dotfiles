@@ -534,6 +534,8 @@ install_tuckr() {
 
 # Install nushell via nix profile if needed (scripts require it)
 install_nushell() {
+    local nushell_ref
+
     if command_exists nu; then
         print_success "Nushell is already available"
         return 0
@@ -541,7 +543,16 @@ install_nushell() {
 
     print_header "Installing nushell temporarily"
 
-    if ! run_nix profile add nixpkgs#nushell; then
+    nushell_ref="nixpkgs#nushell"
+
+    # When setup is running from the checked out dotfiles repository, prefer the
+    # flake-provided CI/bootstrap package so Darwin workarounds (like disabling
+    # flaky upstream nushell tests) are applied consistently.
+    if [ -f "$DOTFILES_DIR/Configs/nix/.config/nix/flake.nix" ]; then
+        nushell_ref="$DOTFILES_DIR/Configs/nix/.config/nix#ci-nushell"
+    fi
+
+    if ! run_nix profile add "$nushell_ref"; then
         print_error "Failed to install nushell"
         exit 1
     fi
