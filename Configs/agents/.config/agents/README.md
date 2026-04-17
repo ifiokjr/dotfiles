@@ -51,8 +51,8 @@ OpenCode plugins are managed via [OCX](https://github.com/kdcokenny/ocx) (OpenCo
 
 Installed plugins:
 
-| Plugin | Source | Description |
-| ------ | ------ | ----------- |
+| Plugin                | Source          | Description                                    |
+| --------------------- | --------------- | ---------------------------------------------- |
 | **opencode-worktree** | `kdco/worktree` | Git worktrees with automatic terminal spawning |
 
 ### Installing Plugins

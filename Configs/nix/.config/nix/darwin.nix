@@ -194,6 +194,12 @@
   # Necessary for using flakes on this system.
   nix.settings.experimental-features = "nix-command flakes";
 
+  # Use the official Nix binary cache to avoid building from source
+  nix.settings.substituters = [
+    "https://cache.nixos.org"
+    "https://cache.flakehub.com"
+  ];
+
   # Keep fish intentionally disabled by default.
   # Enable alternative shell support in nix-darwin when you want Fish available.
   # programs.fish.enable = true;

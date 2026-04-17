@@ -61,6 +61,18 @@
                 --replace-warn "GO_LDFLAGS += -linkmode=external" ""
             '';
           });
+
+          # Nushell 0.112.1 currently fails Darwin sandboxed REPL tests with
+          # `I/O error: Operation not permitted (os error 1)` while checking
+          # `env_shlvl_in_repl` and `env_shlvl_in_exec_repl`. Skip checks until
+          # nixpkgs updates to a fixed revision.
+          nushell =
+            if prev.nushell.version == "0.112.1" then
+              prev.nushell.overrideAttrs (_: {
+                doCheck = false;
+              })
+            else
+              prev.nushell;
         };
 
       mkDarwinConfig =
