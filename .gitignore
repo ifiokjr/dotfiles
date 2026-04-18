@@ -46,6 +46,7 @@ logs/
 **/machine.nix
 **/nix.conf
 .bash_profile
+Configs/git/.gitconfig
 
 # Environment files with secrets
 .env

@@ -1,0 +1,10 @@
+[alias]
+	st = status --short --branch
+	br = branch --sort=-committerdate
+	co = checkout
+	sw = switch
+	ci = commit
+	amend = commit --amend --no-edit
+	unstage = restore --staged --
+	last = log -1 HEAD --stat
+	graph = log --graph --decorate --oneline --all

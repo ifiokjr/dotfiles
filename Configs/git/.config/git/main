@@ -1,0 +1,33 @@
+[init]
+	defaultBranch = main
+
+[core]
+	editor = hx
+	excludesFile = ~/.gitignore
+
+[push]
+	default = current
+
+[pager]
+	branch = false
+
+[diff]
+	tool = default-difftool
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[rerere]
+	enabled = 1
+
+[gpg]
+	program = gpg
+	# Keep SSH signing disabled here because portable dotfiles should not assume
+	# a machine-specific SSH signing key is available on every host.
+	# format = ssh
+
+[http]
+	cainfo = /etc/ssl/cert.pem

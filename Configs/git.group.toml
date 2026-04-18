@@ -1,0 +1,2 @@
+description = "Portable Git includes and shared config files managed under ~/.config/git/."
+presets = ["core", "dev", "workstation", "ci"]
