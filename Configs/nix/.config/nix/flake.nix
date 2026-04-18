@@ -183,18 +183,28 @@
       # or fall back to the flake's directory via self.outPath + "/machine.nix"
       loadMachineConfig =
         let
-          # Use NIX_USER_CONFIG_DIR if set (passed through sudo by rebuild script)
-          # Falls back to self.outPath for backwards compatibility
+          # Prefer the explicit user config directory passed by rebuild/setup.
           configDir = builtins.getEnv "NIX_USER_CONFIG_DIR";
-          configPath = if configDir != "" then configDir + "/machine.nix" else self.outPath + "/machine.nix";
+          homeDir = builtins.getEnv "HOME";
+          candidatePaths = builtins.filter (path: path != "") [
+            (if configDir != "" then configDir + "/machine.nix" else "")
+            # Some CI/home-manager entry points do not preserve
+            # NIX_USER_CONFIG_DIR, but HOME remains available with --impure.
+            (if homeDir != "" then homeDir + "/.config/nix/machine.nix" else "")
+            # Backwards-compatible fallback for callers that keep machine.nix
+            # next to the flake itself.
+            (self.outPath + "/machine.nix")
+          ];
+          configPath = builtins.head (builtins.filter builtins.pathExists candidatePaths);
         in
-        if builtins.pathExists configPath then
+        if builtins.any builtins.pathExists candidatePaths then
           import configPath
         else
           throw ''
             machine.nix not found!
 
-            Expected location: ${toString configPath}
+            Checked locations:
+            ${builtins.concatStringsSep "\n" (map (path: "  - " + toString path) candidatePaths)}
 
             This file should be created from machine.nix.example.
 

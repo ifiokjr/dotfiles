@@ -2,7 +2,7 @@
 	"lastChangelogVersion": "0.67.6",
 	"defaultProvider": "openai-codex",
 	"defaultModel": "gpt-5.4",
-	"defaultThinkingLevel": "high",
+	"defaultThinkingLevel": "medium",
 	"packages": [
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/extensions",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/ant-colony",

@@ -90,9 +90,10 @@ jobs:
 
       - name: 📦 install nushell
         run: |
-          # Use the repo flake package so Darwin CI gets the same nushell
-          # workaround as local setup/bootstrap.
-          nix profile add .#ci-nushell
+          # The flake lives under Configs/nix/.config/nix, not the repo root.
+          # Use the repo flake package so CI gets the same nushell workaround
+          # as local setup/bootstrap.
+          nix profile add ./Configs/nix/.config/nix#ci-nushell
 
       - name: 🧪 run test suite
         run: |
