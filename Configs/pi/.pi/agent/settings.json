@@ -1,8 +1,8 @@
 {
-	"lastChangelogVersion": "0.67.6",
+	"lastChangelogVersion": "0.70.5",
 	"defaultProvider": "openai-codex",
-	"defaultModel": "gpt-5.4",
-	"defaultThinkingLevel": "medium",
+	"defaultModel": "gpt-5.5",
+	"defaultThinkingLevel": "high",
 	"packages": [
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/extensions",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/ant-colony",
@@ -17,21 +17,27 @@
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/cursor",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/ollama",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/adaptive-routing",
-		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/diagnostics"
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/diagnostics",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/background-tasks",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/pi-bash-live-view",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/pi-pretty",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/pi-remote-tailscale",
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/analytics-extension"
 	],
 	"quietStartup": true,
 	"enabledModels": [
+		"ollama-cloud/kimi-k2.6",
+		"ollama-cloud/glm-5.1",
+		"openai-codex/gpt-5.5",
 		"openai-codex/gpt-5.4",
 		"openai-codex/gpt-5.4-mini",
 		"openai-codex/gpt-5.3-codex-spark",
 		"openai-codex/gpt-5.3-codex",
-		"ollama-cloud/glm-5.1",
-		"ollama-cloud/gemma4:31b",
 		"ollama-cloud/minimax-m2.7",
-		"ollama-cloud/deepseek-v3.2",
 		"ollama-cloud/ministral-3:8b",
-		"ollama-cloud/qwen3-vl:235b",
-		"ollama-cloud/qwen3-coder:480b",
-		"ollama-cloud/kimi-k2.5"
+		"ollama-cloud/qwen3.5:397b",
+		"ollama-cloud/gemma4:31b",
+		"ollama-cloud/deepseek-v4-flash",
+		"cursor/composer-2"
 	]
 }
