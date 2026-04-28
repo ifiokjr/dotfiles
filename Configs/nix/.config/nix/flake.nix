@@ -71,12 +71,20 @@
           # direnv's GNUmakefile unconditionally enables `-linkmode=external`
           # on Darwin, but nixpkgs builds direnv with `CGO_ENABLED=0`.
           # Remove that linker flag so static non-CGO builds succeed again.
-          direnv = prev.direnv.overrideAttrs (old: {
-            postPatch = (old.postPatch or "") + ''
-              substituteInPlace GNUmakefile \
-                --replace-warn "GO_LDFLAGS += -linkmode=external" ""
-            '';
-          });
+          # direnv 2.37.1 can also hang indefinitely in checkPhase on Darwin
+          # after a nixpkgs update, so disable checks for that affected release.
+          direnv = prev.direnv.overrideAttrs (
+            old:
+            {
+              postPatch = (old.postPatch or "") + ''
+                substituteInPlace GNUmakefile \
+                  --replace-warn "GO_LDFLAGS += -linkmode=external" ""
+              '';
+            }
+            // prev.lib.optionalAttrs (prev.direnv.version == "2.37.1") {
+              doCheck = false;
+            }
+          );
 
           # Nushell 0.112.1 currently fails Darwin sandboxed REPL tests with
           # permission errors while checking `env_shlvl_in_repl` and
