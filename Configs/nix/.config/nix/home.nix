@@ -43,10 +43,10 @@ in
       bat
       biome
       bun
+      cargo-clean-recursive
       cargo-sweep
       cargo-update
       cloudflared
-      extra.cursor-cli
       deno
       devenv
       direnv

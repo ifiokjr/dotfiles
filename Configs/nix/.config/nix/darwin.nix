@@ -135,6 +135,7 @@
       "ledger-wallet"
       "nordvpn"
       "qbittorrent"
+      "raycast"
       "the-unarchiver"
       "vysor"
 
