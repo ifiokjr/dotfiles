@@ -78,8 +78,10 @@
       # Keep rebuilds predictable and avoid repeated sudo prompts from Homebrew
       # maintenance work on every activation. Declarative installs/removals still
       # apply, but bulk updates should be run explicitly outside `rebuild`.
-      autoUpdate = true;
-      upgrade = true;
+      # Charles 5.1 is one example of a cask upgrade that triggers nested
+      # privileged uninstall/install hooks during activation.
+      autoUpdate = false;
+      upgrade = false;
       cleanup = "zap";
       extraFlags = [
         "--verbose"
@@ -152,8 +154,11 @@
   # Note: on sudo 1.9+, `!tty_tickets` only gives ppid-based timestamps
   # which don't survive across different process trees. `timestamp_type=global`
   # is the correct setting for this use case.
+  # `timestamp_timeout` is set to 15 minutes so a single authentication
+  # covers the nix-darwin rebuild without prompting again.
   security.sudo.extraConfig = ''
     Defaults timestamp_type=global
+    Defaults timestamp_timeout=15
   '';
 
   # Enable zsh system-wide
