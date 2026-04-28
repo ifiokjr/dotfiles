@@ -13,9 +13,10 @@ export def config-dir [] {
 export def flake-dir [] {
     let link_dir = (config-dir)
     let flake_nix = $"($link_dir)/flake.nix"
-    if ($flake_nix | path exists) { 
-    # path expand resolves the symlink; dirname gives the flake root
-    ($flake_nix | path expand | path dirname) } else {
+    if ($flake_nix | path exists) {
+        # path expand resolves the symlink; dirname gives the flake root
+        ($flake_nix | path expand | path dirname)
+    } else {
         # CI/workflow checkouts may run without ~/.config/nix symlinks deployed.
         # In that case, fall back to the flake path inside the checked out repo.
         let repo_root = try {
@@ -32,9 +33,11 @@ export def machine-config-path [] { $"(config-dir)/machine.nix" }
 # Set the machine.nix lite mode flag (inserts the field if missing).
 export def set-lite-mode [value: bool, --path(-p): string] {
     let target_path = ($path | default (machine-config-path))
-    if not ($target_path | path exists) { error make {
-        msg: $"machine.nix not found at: ($target_path)"
-    } }
+    if not ($target_path | path exists) {
+        error make {
+            msg: $"machine.nix not found at: ($target_path)"
+        }
+    }
     let content = (open $target_path --raw)
     let lite_value = (if $value { "true" } else { "false" })
     let lite_line = $"  lite = ($lite_value);"
@@ -51,9 +54,11 @@ export def set-lite-mode [value: bool, --path(-p): string] {
 # values with regex rather than invoking the nix evaluator.
 export def parse-machine-config [] {
     let path = (machine-config-path)
-    if not ($path | path exists) { error make {
-        msg: $"machine.nix not found at: ($path)"
-    } }
+    if not ($path | path exists) {
+        error make {
+            msg: $"machine.nix not found at: ($path)"
+        }
+    }
     let content = (open $path --raw)
     # `parse --regex` returns a table; `.get capture0.0` grabs the first match
     let username = ($content | parse --regex 'username = "([^"]+)"' | get capture0.0)

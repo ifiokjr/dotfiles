@@ -75,6 +75,7 @@ in
       opencode
       pulumi-bin
       pulumi-esc
+      python3
       extra.knope
       extra.mdt
       extra.racket-minimal
