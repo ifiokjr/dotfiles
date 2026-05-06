@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Pre-push hook: detect secrets in all new commits before they are pushed.
+set -euo pipefail
+
+# If gitleaks is not available, skip gracefully rather than blocking pushes.
+if ! command -v gitleaks &>/dev/null; then
+  echo "⚠  gitleaks not found — skipping secret detection."
+  echo "   Install it: nix profile add nixpkgs#gitleaks"
+  exit 0
+fi
+
+# Detect the commit range to scan.
+# shellcheck disable=SC2034 # $remote is available for future use.
+remote="${1:-origin}"
+local_ref="${2:-}"
+remote_ref="${4:-}"
+
+if [ -n "$local_ref" ] && [ -n "$remote_ref" ]; then
+  gitleaks protect --verbose --commits="$remote_ref..$local_ref"
+else
+  # Fallback: scan all commits on the current branch against the default remote.
+  gitleaks protect --verbose
+fi

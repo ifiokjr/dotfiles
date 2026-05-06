@@ -69,6 +69,7 @@ $env.NDK_HOME = if ($ndk_base | path exists) {
 # ---------------------------------------------------------------------------
 let os_name = (^uname -s | str trim)
 $env.PNPM_HOME = if $os_name == "Darwin" { $"($env.HOME)/Library/pnpm" } else { $"($env.HOME)/.local/share/pnpm" }
+$env.NODE_VERSION = ($env | get -o NODE_VERSION | default "24.14.0")
 # ---------------------------------------------------------------------------
 # GPG
 # ---------------------------------------------------------------------------

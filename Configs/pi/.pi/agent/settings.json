@@ -1,11 +1,10 @@
 {
-	"lastChangelogVersion": "0.70.5",
+	"lastChangelogVersion": "0.73.0",
 	"defaultProvider": "openai-codex",
 	"defaultModel": "gpt-5.5",
 	"defaultThinkingLevel": "high",
 	"packages": [
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/extensions",
-		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/ant-colony",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/subagents",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/plan",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/spec",
@@ -38,6 +37,8 @@
 		"ollama-cloud/qwen3.5:397b",
 		"ollama-cloud/gemma4:31b",
 		"ollama-cloud/deepseek-v4-flash",
-		"cursor/composer-2"
+		"ollama-cloud/deepseek-v4-pro",
+		"xiaomi-token-plan-ams/mimo-v2.5",
+		"xiaomi-token-plan-ams/mimo-v2.5-pro"
 	]
 }

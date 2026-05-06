@@ -19,7 +19,7 @@ $env.config = {
     cursor_shape: {emacs: line, vi_insert: line, vi_normal: block}
     hooks: {
         pre_prompt: [
-            {||
+            {|| 
                 # Direnv integration - loads/unloads environment variables based
                 # on .envrc files. Runs before every prompt (like zsh precmd) so
                 # it catches: directory changes, `direnv allow`, and file edits.
@@ -50,7 +50,7 @@ $env.config = {
         ]
         env_change: {
             PWD: [
-                {||
+                {|| 
                     # Directory stack — push current directory, deduplicate, cap at 10.
                     # Mirrors zsh auto_pushd behaviour used by oh-my-zsh's `d` command.
                     let dir = ($env.PWD | path expand)
@@ -60,41 +60,61 @@ $env.config = {
         }
     }
 }
-# Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
+# Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion, falling back
+# to $env.NODE_VERSION outside a pnpm workspace.
+def pnpm_default_node_workspace [] {
+    let node_version = ($env | get -o NODE_VERSION | default "")
+    if $node_version == "" { return "" }
+    let cache_home = ($env | get -o XDG_CACHE_HOME | default $"($env.HOME)/.cache")
+    let cache_dir = ($cache_home | path join "dotfiles")
+    mkdir $cache_dir
+    let workspace_file = ($cache_dir | path join "pnpm-default-workspace.yaml")
+    $"useNodeVersion: ($node_version)\n" | save --force $workspace_file
+    $workspace_file
+}
+def --env pnpm_apply_activate_output [output: string] {
+    let output_lines = ($output | str trim | lines)
+    if ($output_lines | is-empty) { return }
+    let pnpm_home = (try {
+        $output_lines | parse "__pnpm_activate_pnpm_home='{pnpm_home}'" | get 0.pnpm_home
+    } catch { "" })
+    let node_bin = (try {
+        $output_lines | parse "__pnpm_activate_node_bin='{node_bin}'" | get 0.node_bin
+    } catch { "" })
+    if $pnpm_home != "" {
+        $env.PNPM_HOME = $pnpm_home
+        if ($env.PATH | any { |p| $p == $pnpm_home }) == false { $env.PATH = ($env.PATH | prepend $pnpm_home) }
+    }
+    if $node_bin != "" {
+        if ($env.PATH | any { |p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
+    }
+}
 def --env pnpm_auto_activate [] {
     let debug = ($env | get -o DOTFILES_DEBUG | is-not-empty)
     if (which pnpm-activate-env | is-empty) {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env not found(ansi reset)" }
         return
     }
-    let res = (^pnpm-activate-env | complete)
+    let res = (^pnpm-activate-env --print-export | complete)
     if $res.exit_code != 0 {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env failed(ansi reset)" }
         return
     }
-    let output_lines = ($res.stdout | str trim | lines)
-    if ($output_lines | is-empty) {
-        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
-        return
+    mut activate_output = $res.stdout
+    if ($activate_output | str trim) == "" {
+        let default_workspace = (pnpm_default_node_workspace)
+        if $default_workspace == "" {
+            if $debug { print "(ansi yellow)pnpm_auto_activate skipped: NODE_VERSION is empty(ansi reset)" }
+            return
+        }
+        let default_res = (^pnpm-activate-env --print-export --workspace-file $default_workspace | complete)
+        if $default_res.exit_code != 0 {
+            if $debug { print "(ansi yellow)pnpm_auto_activate skipped: default NODE_VERSION activation failed(ansi reset)" }
+            return
+        }
+        $activate_output = $default_res.stdout
     }
-    let first = ($output_lines | first)
-    if $first == "" {
-        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
-        return
-    }
-    let parsed = (try {
-        $first | parse "__pnpm_activate_node_bin='{bin}'"
-    } catch { [] })
-    if ($parsed | is-empty) {
-        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env output did not include node bin(ansi reset)" }
-        return
-    }
-    let node_bin = ($parsed | get -o 0.bin)
-    if $node_bin == "" {
-        if $debug { print "(ansi yellow)pnpm_auto_activate skipped: parsed node bin was empty(ansi reset)" }
-        return
-    }
-    if ($env.PATH | any { |p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
+    pnpm_apply_activate_output $activate_output
 }
 $env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append { |before, after| pnpm_auto_activate })
 pnpm_auto_activate

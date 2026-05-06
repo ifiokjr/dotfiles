@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Pre-commit hook: detect secrets in staged changes before they are committed.
+set -euo pipefail
+
+# If gitleaks is not available, skip gracefully rather than blocking commits.
+if ! command -v gitleaks &>/dev/null; then
+  echo "⚠  gitleaks not found — skipping secret detection."
+  echo "   Install it: nix profile add nixpkgs#gitleaks"
+  exit 0
+fi
+
+gitleaks protect --verbose --staged

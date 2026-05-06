@@ -40,3 +40,13 @@ config_path.write_text(expected + ('\n' + remaining if remaining else ''))
 PY
 
 echo "Ensured ~/.gitconfig includes the managed ~/.config/git includes block"
+
+# Configure the local git hooks path so pre-commit/pre-push hooks are active
+# in this dotfiles repository only (not globally).
+REPO_HOOKS_DIR="$HOME/.dotfiles/.githooks"
+if [ -d "$REPO_HOOKS_DIR" ]; then
+	git -C "$HOME/.dotfiles" config core.hooksPath "$REPO_HOOKS_DIR"
+	echo "Set local core.hooksPath to $REPO_HOOKS_DIR for dotfiles repo"
+else
+	echo "⚠  $REPO_HOOKS_DIR not found — skipping local hooksPath setup"
+fi

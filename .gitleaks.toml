@@ -1,0 +1,17 @@
+# Gitleaks configuration for ifiokjr/dotfiles
+# See: https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks for dotfiles"
+
+[allowlist]
+description = "Global allow list"
+paths = [
+	'''Configs/git/.config/git/.*''',
+	'''\.gitleaks\.toml$''',
+]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key"
+regex = '''(?i)(?:api[_-]?key|apikey|api[_-]?secret)\s*[=:]\s*['"]?[a-zA-Z0-9]{32,}['"]?'''
+tags = ["key", "api"]

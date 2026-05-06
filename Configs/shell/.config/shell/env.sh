@@ -67,6 +67,7 @@ if [ "$(uname -s)" = "Darwin" ]; then
 else
 	export PNPM_HOME="$HOME/.local/share/pnpm"
 fi
+export NODE_VERSION="${NODE_VERSION:-24.14.0}"
 
 # ---------------------------------------------------------------------------
 # GPG
@@ -105,6 +106,23 @@ for _p in "$ANDROID_HOME/cmdline-tools/latest/bin" \
 	case ":$PATH:" in *":$_p:"*) ;; *) export PATH="$PATH:$_p" ;; esac
 done
 unset _p
+
+# Activate Node.js from pnpm-workspace.yaml useNodeVersion when available, and
+# fall back to NODE_VERSION outside a pnpm workspace.
+if command -v pnpm-activate-env >/dev/null 2>&1; then
+	_pnpm_activate_output="$(pnpm-activate-env --print-export 2>/dev/null || true)"
+	if [ -z "$_pnpm_activate_output" ] && [ -n "${NODE_VERSION:-}" ]; then
+		_pnpm_cache_home="${XDG_CACHE_HOME:-$HOME/.cache}"
+		_pnpm_default_workspace="$_pnpm_cache_home/dotfiles/pnpm-default-workspace.yaml"
+		mkdir -p "$(dirname "$_pnpm_default_workspace")"
+		printf 'useNodeVersion: %s\n' "$NODE_VERSION" >"$_pnpm_default_workspace"
+		_pnpm_activate_output="$(pnpm-activate-env --print-export --workspace-file "$_pnpm_default_workspace" 2>/dev/null || true)"
+	fi
+	if [ -n "$_pnpm_activate_output" ]; then
+		eval "$_pnpm_activate_output"
+	fi
+fi
+unset _pnpm_activate_output _pnpm_cache_home _pnpm_default_workspace
 
 # ---------------------------------------------------------------------------
 # OpenCode

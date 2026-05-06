@@ -471,13 +471,31 @@ to update flake inputs (including `ifiokjr-nixpkgs`) and refresh `flake.lock` be
 
 ### Node.js Version Management
 
+The default Node.js version is configured with `NODE_VERSION` in the shell environment files and is used when the current directory is not inside a pnpm workspace with `useNodeVersion`.
+
+```bash
+# Configs/shell/.config/shell/env.sh
+export NODE_VERSION="${NODE_VERSION:-24.14.0}"
+```
+
+```nu
+# Configs/nushell/.config/nushell/env.nu
+$env.NODE_VERSION = ($env | get -o NODE_VERSION | default "24.14.0")
+```
+
+Project-local pnpm workspaces override the default with:
+
+```yaml
+useNodeVersion: 22.14.0
+```
+
 Use:
 
 ```bash
 update:node
 ```
 
-to install/activate the latest Node.js version via `pnpm env use --global latest`.
+to install/activate the latest LTS Node.js version via `pnpm env use --global lts`.
 
 ### Global pnpm Packages
 
