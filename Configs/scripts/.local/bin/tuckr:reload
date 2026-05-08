@@ -1,0 +1,129 @@
+#!/usr/bin/env nu
+# Reload tuckr configuration groups (non-destructive)
+# Shows current status and re-applies any missing or changed symlinks.
+# Uses `tuckr add` for regular groups and `tuckr set` for hook groups.
+
+use nu_modules/print_utils.nu *
+use nu_modules/platform.nu
+
+def detect_tuckr_location [] {
+    let os = (platform os)
+    match $os {
+        "darwin" => { $"($env.HOME)/Library/Application Support/dotfiles" }
+        _ => { $"($env.HOME)/.config/dotfiles" }
+    }
+}
+
+def is_platform_group [group: string] {
+    ["_macos" "_linux" "_bsd" "_windows"] | any { |suffix| $group | str ends-with $suffix }
+}
+
+def matches_platform [group: string] {
+    let os = (platform os)
+    match $os {
+        "darwin" => { $group | str ends-with "_macos" }
+        "linux" => { $group | str ends-with "_linux" }
+        _ => { false }
+    }
+}
+
+def main [
+    --help (-h)     # Show this help message and exit
+    --force         # Pass --force to tuckr (overwrite existing files)
+    --dry-run       # Print what would happen without changing files
+] {
+    let tuckr_location = (detect_tuckr_location)
+
+    if not ($tuckr_location | path exists) {
+        err $"Tuckr dotfiles location not found: ($tuckr_location)"
+        warn "Run setup-tuckr-symlink.sh first."
+        exit 1
+    }
+
+    let configs_dir = $"($tuckr_location)/Configs"
+    if not ($configs_dir | path exists) {
+        err $"Configs directory not found: ($configs_dir)"
+        exit 1
+    }
+
+    # Get all group directories
+    let all_groups = (ls $configs_dir
+        | where type == "dir"
+        | get name
+        | each { |path| $path | path basename }
+        | sort)
+
+    if ($all_groups | is-empty) {
+        warn "No configuration groups found in Configs directory"
+        exit 0
+    }
+
+    # Filter platform-specific groups
+    let groups = ($all_groups
+        | where { |group|
+            if (is_platform_group $group) {
+                matches_platform $group
+            } else {
+                true
+            }
+        })
+
+    # Define ordering: nix first, then alphabetical, then late groups
+    let primary_groups = ["nix"]
+    let late_groups = ["nushell" "helix" "claude"]
+    let hook_groups = ["nix" "nushell" "claude"]
+
+    let ordered = (
+        ($groups | where { |g| $g in $primary_groups })
+        | append ($groups | where { |g| not ($g in $primary_groups) and not ($g in $late_groups) })
+        | append ($groups | where { |g| $g in $late_groups })
+    )
+
+    header "Tuckr Config Reload"
+    print ""
+    info $"Location: ($tuckr_location)"
+    info $"Groups: ($ordered | str join ', ')"
+    print ""
+
+    # Show current status
+    info "Current tuckr status:"
+    do -i { ^tuckr status }
+    print ""
+
+    # Build tuckr args
+    let tuckr_args = []
+    let tuckr_args = if $dry_run { $tuckr_args | append "--dry-run" } else { $tuckr_args }
+    let tuckr_args = if $force { $tuckr_args | append "--force" } else { $tuckr_args }
+
+    # Determine if a group uses hooks
+    def is_hook_group [group: string] {
+        $group in $hook_groups
+    }
+
+    for group in $ordered {
+        if $dry_run {
+            if (is_hook_group $group) {
+                info $"[dry-run] tuckr set ($tuckr_args | str join ' ') ($group)"
+            } else {
+                info $"[dry-run] tuckr add ($tuckr_args | str join ' ') ($group)"
+            }
+        } else {
+            if (is_hook_group $group) {
+                info $"Reloading group: ($group) (with hooks)..."
+                do -i { ^tuckr set ...$tuckr_args $group }
+            } else {
+                info $"Reloading group: ($group)..."
+                do -i { ^tuckr add ...$tuckr_args $group }
+            }
+
+            if ($env.LAST_EXIT_CODE != 0) {
+                warn $"Failed to reload group: ($group)"
+            } else {
+                success $"Group reloaded: ($group)"
+            }
+        }
+    }
+
+    print ""
+    success "Tuckr reload complete!"
+}

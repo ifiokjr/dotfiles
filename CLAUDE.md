@@ -76,6 +76,8 @@ tuckr add --force <group>      # Deploy with overwrite of existing files
 tuckr rm <group>               # Remove symlinks for a group
 tuckr set <group>              # Deploy and run hooks (preferred for groups with hooks)
 tuckr status                   # Check deployment status of all groups
+tuckr:reload                   # Reload all groups non-destructively (shows status, re-applies symlinks)
+tuckr:redeploy                 # Full forced redeploy of all groups in order
 ```
 
 ### Nix Commands
