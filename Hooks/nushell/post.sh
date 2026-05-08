@@ -54,19 +54,6 @@ if [ -x "$NU_PATH" ]; then
 	VENDOR_AUTOLOAD_DIR=$("$NU_PATH" -c '$nu.data-dir | path join "vendor/autoload"')
 	mkdir -p "$VENDOR_AUTOLOAD_DIR"
 
-	# Generate devenv auto-activation hook (devenv 2.1+)
-	if command -v devenv &>/dev/null; then
-		DEVENV_AUTOLOAD_FILE="$VENDOR_AUTOLOAD_DIR/devenv.nu"
-		if devenv hook nu >"$DEVENV_AUTOLOAD_FILE" 2>/dev/null; then
-			echo -e "${GREEN}✓${NC} Generated devenv.nu"
-		else
-			rm -f "$DEVENV_AUTOLOAD_FILE"
-			echo -e "${YELLOW}!${NC} devenv hook nu failed, skipping devenv.nu"
-		fi
-	else
-		echo -e "${YELLOW}!${NC} devenv not found, skipping devenv.nu"
-	fi
-
 	# Generate starship init (per https://starship.rs/guide/)
 	if command -v starship &>/dev/null; then
 		# shellcheck disable=SC2016

@@ -18,6 +18,36 @@ $env.config = {
     table: {mode: rounded}
     cursor_shape: {emacs: line, vi_insert: line, vi_normal: block}
     hooks: {
+        pre_prompt: [
+            {||
+                # Direnv integration - loads/unloads environment variables based
+                # on .envrc files. Runs before every prompt (like zsh precmd) so
+                # it catches: directory changes, `direnv allow`, and file edits.
+                # Based on: https://direnv.net/docs/hook.html
+                if (which direnv | is-empty) { return }
+                # Capture stdout/stderr so direnv/devenv build errors don't corrupt prompt rendering.
+                # (e.g. "↑↓ navigatedirenv: failed to build the devenv environment")
+                let result = (^direnv export json | complete)
+                if ($result.exit_code != 0) {
+                    if ($env | get -o DOTFILES_DEBUG | is-not-empty) {
+                        let err = ($result.stderr | str trim)
+                        if ($err | is-not-empty) { print $"(ansi yellow)direnv skipped:(ansi reset) ($err)" }
+                    }
+                    return
+                }
+                let stdout = ($result.stdout | str trim)
+                if ($stdout | is-empty) { return }
+                let direnv_out = (try {
+                    $stdout | from json
+                } catch { {} })
+                if ($direnv_out | is-empty) { return }
+                let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
+                    let path_as_list = ($direnv_out | get PATH | split row (char esep))
+                    $direnv_out | merge { PATH: $path_as_list }
+                } else { $direnv_out }
+                $env_to_load | load-env
+            }
+        ]
         env_change: {
             PWD: [
                 {||
