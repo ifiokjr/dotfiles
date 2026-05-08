@@ -160,6 +160,8 @@ The setup flow layers metadata on top of Tuckr conventions:
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
 - `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
+- `tuckr:reload` - Non-destructive reload of all tuckr groups (shows status, re-applies missing/changed symlinks)
+- `tuckr:redeploy` - Full forced redeploy of all tuckr groups in consistent order (nix first, then alphabetical, then late groups)
 - `commands` - List all custom scripts with descriptions
 - `test_scripts` - Run the test suite for nushell scripts
 

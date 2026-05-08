@@ -86,6 +86,7 @@ def run_with_darwin_sudo_keepalive [command: string] {
 }
 
 def main [
+    --help (-h)     # Show this help message and exit
     --skip-check    # Skip flake check before rebuilding
     --update        # Update flake inputs (flake.lock) before rebuilding
     --brew          # With --update on macOS, also run `brew upgrade --cask --greedy` (slow)
