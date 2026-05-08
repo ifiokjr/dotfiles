@@ -28,8 +28,8 @@ HISTCONTROL=ignoreboth:erasedups
 # ---------------------------------------------------------------------------
 # Tool integrations (all guarded by command -v)
 # ---------------------------------------------------------------------------
-if command -v direnv &>/dev/null; then
-	eval "$(direnv hook bash)"
+if command -v devenv &>/dev/null; then
+	eval "$(devenv hook bash 2>/dev/null || true)"
 fi
 
 if command -v starship &>/dev/null; then
