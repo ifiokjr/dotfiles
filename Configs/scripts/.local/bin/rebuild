@@ -7,6 +7,7 @@
 use nu_modules/print_utils.nu *
 use nu_modules/platform.nu
 use nu_modules/nix_config.nu
+use nu_modules/version_tracker.nu
 
 def sync_pnpm_global_packages [] {
     let primary_sync_script = $"($env.HOME)/.local/bin/pnpm:global:sync"
@@ -272,6 +273,12 @@ def main [
         }
     }
 
+    # ── Capture package state before rebuild ─────────────────────────────────
+    let before_hm = (version_tracker capture-hm-profile)
+    let before_darwin = (version_tracker capture-darwin-profile)
+    let before_pnpm = (version_tracker capture-pnpm-globals)
+    let before_brew = if $os == "darwin" { (version_tracker capture-brew-packages) } else { null }
+
     if $os == "darwin" {
         ensure_darwin_sudo_session
 
@@ -363,4 +370,67 @@ def main [
             exit 1
         }
     }
+
+    # ── Diff and display package version changes ───────────────────────────────
+    let after_hm = (version_tracker capture-hm-profile)
+    let after_darwin = (version_tracker capture-darwin-profile)
+    let after_pnpm = (version_tracker capture-pnpm-globals)
+    let after_brew = if $os == "darwin" { (version_tracker capture-brew-packages) } else { null }
+
+    mut log_lines = []
+
+    # Nix darwin system closure diff
+    if $os == "darwin" and ($before_darwin | is-not-empty) and ($after_darwin | is-not-empty) {
+        let nix_diff = (version_tracker diff-nix-closures $before_darwin $after_darwin)
+        if ($nix_diff | is-not-empty) {
+            print ""
+            version_tracker print-nix-diff $nix_diff "Nix system closure changes"
+            $log_lines = ($log_lines | append ["Nix system closure changes:"] | append $nix_diff)
+        }
+    }
+
+    # Nix home-manager closure diff
+    if ($before_hm | is-not-empty) and ($after_hm | is-not-empty) {
+        let hm_diff = (version_tracker diff-nix-closures $before_hm $after_hm)
+        if ($hm_diff | is-not-empty) {
+            print ""
+            version_tracker print-nix-diff $hm_diff "Home-manager closure changes"
+            $log_lines = ($log_lines | append ["Home-manager closure changes:"] | append $hm_diff)
+        }
+    }
+
+    # pnpm global diff
+    if ($before_pnpm | is-not-empty) or ($after_pnpm | is-not-empty) {
+        let pnpm_diff = (version_tracker diff-package-lists $before_pnpm $after_pnpm)
+        let pnpm_total = ($pnpm_diff.added | length) + ($pnpm_diff.removed | length) + ($pnpm_diff.changed | length)
+        if $pnpm_total > 0 {
+            print ""
+            version_tracker print-package-diff $pnpm_diff "pnpm global package changes"
+            $log_lines = ($log_lines | append ["pnpm global package changes:"])
+            $log_lines = ($log_lines | append ($pnpm_diff.added | each { |it| $"  + ($it.name) ($it.new)" }))
+            $log_lines = ($log_lines | append ($pnpm_diff.removed | each { |it| $"  - ($it.name) ($it.old)" }))
+            $log_lines = ($log_lines | append ($pnpm_diff.changed | each { |it| $"  ~ ($it.name): ($it.old) -> ($it.new)" }))
+        }
+    }
+
+    # Homebrew diff
+    if $os == "darwin" and (($before_brew | is-not-empty) or ($after_brew | is-not-empty)) {
+        let brew_diff = (version_tracker diff-package-lists $before_brew $after_brew)
+        let brew_total = ($brew_diff.added | length) + ($brew_diff.removed | length) + ($brew_diff.changed | length)
+        if $brew_total > 0 {
+            print ""
+            version_tracker print-package-diff $brew_diff "Homebrew package changes"
+            $log_lines = ($log_lines | append ["Homebrew package changes:"])
+            $log_lines = ($log_lines | append ($brew_diff.added | each { |it| $"  + ($it.name) ($it.new)" }))
+            $log_lines = ($log_lines | append ($brew_diff.removed | each { |it| $"  - ($it.name) ($it.old)" }))
+            $log_lines = ($log_lines | append ($brew_diff.changed | each { |it| $"  ~ ($it.name): ($it.old) -> ($it.new)" }))
+        }
+    }
+
+    # Persist changes to log file
+    if ($log_lines | is-not-empty) {
+        version_tracker log-rebuild-summary $log_lines
+    }
+
+    print ""
 }
