@@ -29,7 +29,7 @@ jobs:
       - name: 📦 install lint tools
         run: |
           nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
-            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt \
+            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt nixpkgs#taplo \
             nixpkgs#racket
           # Add nix profile to GITHUB_PATH for subsequent steps
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"

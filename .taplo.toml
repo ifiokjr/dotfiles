@@ -1,0 +1,7 @@
+# Taplo configuration for dprint exec plugin
+# Aligns with dprint.json: useTabs=true, indentWidth=2
+
+[formatting]
+indent_string = "\t"
+reorder_keys = false
+align_entries = false

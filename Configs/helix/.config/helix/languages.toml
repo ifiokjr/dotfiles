@@ -92,7 +92,13 @@ auto-format = true
 
 [[language]]
 name = "rust"
-language-servers = [{ name = "testing-ls", only-features = ["diagnostics"] }, "rust-analyzer", "tailwindcss-ls"]
+language-servers = [
+	{ name = "testing-ls", only-features = [
+		"diagnostics",
+	] },
+	"rust-analyzer",
+	"tailwindcss-ls",
+]
 indent = { tab-width = 2, unit = "\t" }
 formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
 auto-format = true
@@ -118,7 +124,9 @@ completion = [{ name = "binary", completion = "filename" }]
 
 [language.debugger.templates.args]
 program = "{0}"
-initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+initCommands = [
+	"command script import /usr/local/etc/lldb_vscode_rustc_primer.py",
+]
 
 [[language.debugger.templates]]
 name = "binary (terminal)"
@@ -128,7 +136,9 @@ completion = [{ name = "binary", completion = "filename" }]
 [language.debugger.templates.args]
 program = "{0}"
 runInTerminal = true
-initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+initCommands = [
+	"command script import /usr/local/etc/lldb_vscode_rustc_primer.py",
+]
 
 [[language.debugger.templates]]
 name = "attach"
@@ -137,7 +147,9 @@ completion = ["pid"]
 
 [language.debugger.templates.args]
 pid = "{0}"
-initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+initCommands = [
+	"command script import /usr/local/etc/lldb_vscode_rustc_primer.py",
+]
 
 [[language.debugger.templates]]
 name = "gdbserver attach"
@@ -155,7 +167,9 @@ attachCommands = [
 	"file {1}",
 	"attach {2}",
 ]
-initCommands = ["command script import /usr/local/etc/lldb_vscode_rustc_primer.py"]
+initCommands = [
+	"command script import /usr/local/etc/lldb_vscode_rustc_primer.py",
+]
 
 [[language]]
 name = "scheme"
@@ -220,7 +234,9 @@ name = "typescript"
 indent = { tab-width = 2, unit = "\t" }
 roots = ["deno.json", "deno.jsonc", "package.json"]
 language-servers = [
-	{ name = "testing-ls", only-features = ["diagnostics"] },
+	{ name = "testing-ls", only-features = [
+		"diagnostics",
+	] },
 	"typescript-language-server",
 	"vscode-eslint-language-server",
 	"deno-lsp",
@@ -232,7 +248,9 @@ auto-format = true
 name = "tsx"
 indent = { tab-width = 2, unit = "\t" }
 language-servers = [
-	{ name = "testing-ls", only-features = ["diagnostics"] },
+	{ name = "testing-ls", only-features = [
+		"diagnostics",
+	] },
 	"tailwindcss-ls",
 	"typescript-language-server",
 	"vscode-eslint-language-server",
@@ -245,7 +263,9 @@ auto-format = true
 name = "javascript"
 indent = { tab-width = 2, unit = "\t" }
 language-servers = [
-	{ name = "testing-ls", only-features = ["diagnostics"] },
+	{ name = "testing-ls", only-features = [
+		"diagnostics",
+	] },
 	"typescript-language-server",
 	"vscode-eslint-language-server",
 	"deno-lsp",
@@ -257,7 +277,9 @@ auto-format = true
 name = "jsx"
 indent = { tab-width = 2, unit = "\t" }
 language-servers = [
-	{ name = "testing-ls", only-features = ["diagnostics"] },
+	{ name = "testing-ls", only-features = [
+		"diagnostics",
+	] },
 	"tailwindcss-ls",
 	"typescript-language-server",
 	"vscode-eslint-language-server",
