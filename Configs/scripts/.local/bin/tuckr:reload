@@ -109,7 +109,7 @@ def main [
             }
         } else {
             if (is_hook_group $group) {
-                info $"Reloading group: ($group) (with hooks)..."
+                info $"Reloading group: ($group) — with hooks..."
                 do -i { ^tuckr set ...$tuckr_args $group }
             } else {
                 info $"Reloading group: ($group)..."
