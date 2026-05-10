@@ -41,7 +41,7 @@ export def capture-pnpm-globals [] {
         $result | from json
     } catch { return null }
     if ($parsed | is-empty) { return null }
-    let root = if ($parsed | describe) == "list" {
+    let root = if ($parsed | describe | str contains "list") {
         $parsed | get 0
     } else {
         $parsed
@@ -49,8 +49,13 @@ export def capture-pnpm-globals [] {
     let deps = try {
         $root | get --optional dependencies
     } catch { return null }
-    if ($deps | is-empty) { return null }
-    $deps | items { |name, info| { name: $name, version: $info.version } }
+    let deps_type = try {
+        $deps | describe
+    } catch { "nothing" }
+    if ($deps_type | str contains "nothing") or (not ($deps_type | str starts-with "record")) {
+        return null
+    }
+    $deps | items { |name, info| { name: $name, version: ($info | get --optional version | default "") } }
 }
 # ─────────────────────────────────────────────────────────────────────────────
 # Homebrew
