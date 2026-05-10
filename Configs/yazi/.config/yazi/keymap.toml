@@ -1,4 +1,6 @@
 [mgr]
 prepend_keymap = [
-	{ on = ["<A-e>"], run = "shell 'zellij action focus-next-pane' --confirm", desc = "Focus editor pane" },
+	{ on = [
+		"<A-e>",
+	], run = "shell 'zellij action focus-next-pane' --confirm", desc = "Focus editor pane" },
 ]
