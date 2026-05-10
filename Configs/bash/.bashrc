@@ -32,7 +32,7 @@ if command -v direnv &>/dev/null; then
 	eval "$(direnv hook bash)"
 fi
 
-if command -v devenv &>/dev/null; then
+if command -v devenv &>/dev/null && devenv --help 2>/dev/null | grep -Eq '^[[:space:]]+hook[[:space:]]'; then
 	eval "$(devenv hook bash)"
 fi
 

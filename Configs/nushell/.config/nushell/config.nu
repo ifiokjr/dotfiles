@@ -60,10 +60,7 @@ $env.config = {
         }
     }
 }
-# Devenv 2.1+ auto-activation for trusted devenv projects.
-mkdir ~/.cache/devenv
-devenv hook nu | save --force ~/.cache/devenv/hook.nu
-source ~/.cache/devenv/hook.nu
+# Devenv 2.x no longer exposes `devenv hook`; use `devenv shell` or direnv per-project instead.
 # Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
 def --env pnpm_auto_activate [] {
     let debug = ($env | get -o DOTFILES_DEBUG | is-not-empty)
