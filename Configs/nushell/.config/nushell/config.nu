@@ -62,19 +62,25 @@ $env.config = {
 }
 # Devenv 2.1+ auto-activation for trusted devenv projects.
 # Cache the hook output; regenerate when devenv binary changes.
-mkdir $"($env.HOME)/.cache/devenv"
+# Note: nushell's `source` requires a literal path (not a variable)
+# and the file must exist at parse time, so we ensure it always exists.
+mkdir ~/.cache/devenv
 let devenv_bin = (which devenv | get path.0 | default '')
-let devenv_hook_cache = $"($env.HOME)/.cache/devenv/hook.nu"
 let needs_regen = if ($devenv_bin | is-empty) { false } else {
-    let cache_exists = ($devenv_hook_cache | path exists)
+    let cache_exists = ($"($env.HOME)/.cache/devenv/hook.nu" | path exists)
     if not $cache_exists { true } else {
-        let cache_mtime = (ls -l $devenv_hook_cache | get modified.0)
+        let cache_mtime = (ls -l $"($env.HOME)/.cache/devenv/hook.nu" | get modified.0)
         let bin_mtime = (ls -l $devenv_bin | get modified.0)
         ($cache_mtime < $bin_mtime)
     }
 }
 if $needs_regen {
-    devenv hook nu | save --force $devenv_hook_cache
+    devenv hook nu | save --force ~/.cache/devenv/hook.nu
+}
+# Create empty placeholder if cache doesn't exist (e.g. devenv not installed)
+# so that the `source` below doesn't fail at parse time.
+if not ("~/.cache/devenv/hook.nu" | path expand | path exists) {
+    "" | save --force ~/.cache/devenv/hook.nu
 }
 source ~/.cache/devenv/hook.nu
 # Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
