@@ -61,9 +61,22 @@ $env.config = {
     }
 }
 # Devenv 2.1+ auto-activation for trusted devenv projects.
-mkdir ~/.cache/devenv
-devenv hook nu | save --force ~/.cache/devenv/hook.nu
-source ~/.cache/devenv/hook.nu
+# Cache the hook output; regenerate when devenv binary changes.
+mkdir $"($env.HOME)/.cache/devenv"
+let devenv_bin = (which devenv | get path.0 | default '')
+let devenv_hook_cache = $"($env.HOME)/.cache/devenv/hook.nu"
+let needs_regen = if ($devenv_bin | is-empty) { false } else {
+    let cache_exists = ($devenv_hook_cache | path exists)
+    if not $cache_exists { true } else {
+        let cache_mtime = (ls -l $devenv_hook_cache | get modified.0)
+        let bin_mtime = (ls -l $devenv_bin | get modified.0)
+        ($cache_mtime < $bin_mtime)
+    }
+}
+if $needs_regen {
+    devenv hook nu | save --force $devenv_hook_cache
+}
+source $devenv_hook_cache
 # Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
 def --env pnpm_auto_activate [] {
     let debug = ($env | get -o DOTFILES_DEBUG | is-not-empty)

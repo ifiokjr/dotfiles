@@ -36,7 +36,7 @@ export SUDO_EDITOR="hx"
 # macOS
 # ---------------------------------------------------------------------------
 export MACOSX_DEPLOYMENT_TARGET="12.0"
-ARCHFLAGS="-arch $(uname -m)"
+ARCHFLAGS="-arch arm64"
 export ARCHFLAGS
 
 # ---------------------------------------------------------------------------
@@ -62,11 +62,7 @@ unset _ndk_base
 # ---------------------------------------------------------------------------
 # pnpm
 # ---------------------------------------------------------------------------
-if [ "$(uname -s)" = "Darwin" ]; then
-	export PNPM_HOME="$HOME/Library/pnpm"
-else
-	export PNPM_HOME="$HOME/.local/share/pnpm"
-fi
+export PNPM_HOME="$HOME/Library/pnpm"
 
 # ---------------------------------------------------------------------------
 # GPG
