@@ -121,3 +121,27 @@ $env.OPENCODE_TRUSTED_DIRECTORIES = "/Users/ifiokjr/Developer,/tmp"
 $env.DIRSTACK = [
     $env.PWD
 ]
+
+# ---------------------------------------------------------------------------
+# Devenv hook cache (runs in env.nu so the file exists before config.nu parses)
+# ---------------------------------------------------------------------------
+# Nushell's `source` is a parser keyword that resolves paths at parse time.
+# Any runtime code in config.nu would execute too late. Since env.nu is
+# fully parsed and executed before config.nu, we create/refresh the cache here.
+mkdir ~/.cache/devenv
+let devenv_bin = (which devenv | get path.0 | default '')
+let needs_regen = if ($devenv_bin | is-empty) { false } else {
+    let cache_exists = ($"($env.HOME)/.cache/devenv/hook.nu" | path exists)
+    if not $cache_exists { true } else {
+        let cache_mtime = (ls -l $"($env.HOME)/.cache/devenv/hook.nu" | get modified.0)
+        let bin_mtime = (ls -l $devenv_bin | get modified.0)
+        ($cache_mtime < $bin_mtime)
+    }
+}
+if $needs_regen {
+    devenv hook nu | save --force ~/.cache/devenv/hook.nu
+}
+# Create empty placeholder if cache doesn't exist (e.g. devenv not installed)
+if not ("~/.cache/devenv/hook.nu" | path expand | path exists) {
+    "" | save --force ~/.cache/devenv/hook.nu
+}
