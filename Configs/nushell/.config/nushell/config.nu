@@ -76,7 +76,7 @@ let needs_regen = if ($devenv_bin | is-empty) { false } else {
 if $needs_regen {
     devenv hook nu | save --force $devenv_hook_cache
 }
-source $devenv_hook_cache
+source ~/.cache/devenv/hook.nu
 # Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
 def --env pnpm_auto_activate [] {
     let debug = ($env | get -o DOTFILES_DEBUG | is-not-empty)
