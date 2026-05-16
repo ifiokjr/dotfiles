@@ -249,27 +249,4 @@ in
   programs = {
     home-manager.enable = true;
   };
-
-  # ---------------------------------------------------------------------------
-  # Tailscale systemd user service (Linux standalone home-manager)
-  # ---------------------------------------------------------------------------
-  # On macOS, nix-darwin handles tailscaled via services.tailscale.enable.
-  # On Linux with standalone home-manager (not NixOS), we need a user-level
-  # systemd service. On NixOS, use services.tailscale.enable in your
-  # system config instead — this user service is only for non-NixOS Linux.
-  systemd.user.services.tailscaled = lib.mkIf pkgs.stdenv.isLinux {
-    Unit = {
-      Description = "Tailscale node daemon";
-      After = [ "network-online.target" ];
-      Wants = [ "network-online.target" ];
-    };
-    Service = {
-      ExecStart = "${pkgs.tailscale}/bin/tailscaled --state ${config.xdg.stateHome}/tailscale/tailscaled.state --socket ${config.xdg.runtimeDir}/tailscale/tailscaled.sock";
-      Restart = "on-failure";
-      RestartSec = "5";
-      RuntimeDirectory = "tailscale";
-      StateDirectory = "tailscale";
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
 }

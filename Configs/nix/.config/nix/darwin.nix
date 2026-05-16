@@ -124,10 +124,11 @@
       "blender"
       "obs"
       "vlc"
+    ];
+  };
 
-  # Enable Tailscale background service
+  # Enable Tailscale background service (launchd daemon on macOS, systemd on Linux)
   services.tailscale.enable = true;
-
   # Use Tailscale as exit node / subnet router on this machine (optional)
   # services.tailscale.useRoutingFeatures = "both";
 
