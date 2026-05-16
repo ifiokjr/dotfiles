@@ -63,12 +63,11 @@ def ensure_darwin_sudo_session [] {
     }
 
     let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
-    let needs_bootstrap = if ($sudoers_extra | path exists) {
-        let content = (open $sudoers_extra)
-        (not ($content | str contains "timestamp_type=global")) or (not ($content | str contains "timestamp_timeout=15"))
-    } else {
-        true
-    }
+    let has_timestamp_type = do -i { ^sudo grep -q "timestamp_type=global" $sudoers_extra }
+    let type_missing = ($env.LAST_EXIT_CODE != 0)
+    let has_timestamp_timeout = do -i { ^sudo grep -q "timestamp_timeout=15" $sudoers_extra }
+    let timeout_missing = ($env.LAST_EXIT_CODE != 0)
+    let needs_bootstrap = $type_missing or $timeout_missing
 
     if $needs_bootstrap {
         info "Bootstrapping global sudo timestamps with 15min timeout..."
