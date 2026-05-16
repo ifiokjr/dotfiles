@@ -125,9 +125,11 @@
       "obs"
       "vlc"
 
-
-  # Enable the Tailscale background service (launchd daemon + CLI)
+  # Enable Tailscale background service
   services.tailscale.enable = true;
+
+  # Use Tailscale as exit node / subnet router on this machine (optional)
+  # services.tailscale.useRoutingFeatures = "both";
 
       # Utilities
       "alt-tab"
