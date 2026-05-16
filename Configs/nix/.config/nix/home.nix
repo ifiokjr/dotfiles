@@ -188,6 +188,7 @@ in
     ++ lib.optionals (!lite) [
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
+      extra.ironclaw
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin ([
       # macOS-only packages
