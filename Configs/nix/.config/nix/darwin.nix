@@ -124,13 +124,6 @@
       "blender"
       "obs"
       "vlc"
-    ];
-  };
-
-  # Enable Tailscale background service (launchd daemon on macOS, systemd on Linux)
-  services.tailscale.enable = true;
-  # Use Tailscale as exit node / subnet router on this machine (optional)
-  # services.tailscale.useRoutingFeatures = "both";
 
       # Utilities
       "alt-tab"
@@ -154,6 +147,11 @@
       "zoom"
     ];
   };
+
+  # Enable Tailscale background service (launchd daemon on macOS, systemd on Linux)
+  services.tailscale.enable = true;
+  # Use Tailscale as exit node / subnet router (optional)
+  # services.tailscale.useRoutingFeatures = "both";
 
   # Use global sudo timestamp so credentials are shared across all processes.
   # Required because nix-darwin's Homebrew module runs `brew bundle` in a
