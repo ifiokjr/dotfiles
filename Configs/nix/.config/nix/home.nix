@@ -264,11 +264,9 @@ in
       Wants = [ "network-online.target" ];
     };
     Service = {
-      ExecStart = "${pkgs.tailscale}/bin/tailscaled --state ${config.xdg.stateHome}/tailscale/tailscaled.state --socket ${config.xdg.runtimeDir}/tailscale/tailscaled.sock";
+      ExecStart = "${pkgs.tailscale}/bin/tailscaled --state ~/.local/state/tailscale/tailscaled.state --socket ~/.local/state/tailscale/tailscaled.sock";
       Restart = "on-failure";
       RestartSec = "5";
-      RuntimeDirectory = "tailscale";
-      StateDirectory = "tailscale";
     };
     Install.WantedBy = [ "default.target" ];
   };
