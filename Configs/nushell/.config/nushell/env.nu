@@ -121,7 +121,6 @@ $env.OPENCODE_TRUSTED_DIRECTORIES = "/Users/ifiokjr/Developer,/tmp"
 $env.DIRSTACK = [
     $env.PWD
 ]
-
 # ---------------------------------------------------------------------------
 # Devenv hook cache (runs in env.nu so the file exists before config.nu parses)
 # ---------------------------------------------------------------------------

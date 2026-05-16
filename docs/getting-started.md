@@ -128,11 +128,17 @@ Expected outcome:
 ### Common flags
 
 - `--preset <name>`: choose `core`, `dev`, `workstation`, or `ci`
-- `--groups <comma,list>`: deploy only specific groups
+- `--groups <comma,list>`: deploy specific groups (comma-separated; overrides preset selection)
 - `--cwd <path>`: clone to a custom location
 - `--skip-nix`: skip Nix installation
 - `--lite`: force CLI-focused mode
 - `--no-confirm`: run without interactive confirmation
+- `--dry-run`: show the execution plan without making changes
+- `--list-groups`: list available configuration groups
+- `--explain-group <name>`: show details for one configuration group
+- `--resume`: resume from the last failed phase or group
+- `--from <target>`: resume from a specific phase or deployment group
+- `--only <groups>`: retry only the specified comma-separated groups
 - `--validate-metadata`: validate `Configs/*.group.toml` and exit
 - `--help`: print setup help
 

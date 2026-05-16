@@ -1,7 +1,7 @@
 {
-	"lastChangelogVersion": "0.70.5",
-	"defaultProvider": "openai-codex",
-	"defaultModel": "gpt-5.5",
+	"lastChangelogVersion": "0.73.1",
+	"defaultProvider": "ollama-cloud",
+	"defaultModel": "glm-5.1",
 	"defaultThinkingLevel": "high",
 	"packages": [
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/extensions",
@@ -22,7 +22,8 @@
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/pi-bash-live-view",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/pi-pretty",
 		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/pi-remote-tailscale",
-		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/analytics-extension"
+		"/Users/ifiokjr/Developer/projects/aipi/oh-pi/packages/analytics-extension",
+		"npm:pi-web-access"
 	],
 	"quietStartup": true,
 	"enabledModels": [
@@ -38,6 +39,6 @@
 		"ollama-cloud/qwen3.5:397b",
 		"ollama-cloud/gemma4:31b",
 		"ollama-cloud/deepseek-v4-flash",
-		"cursor/composer-2"
+		"xiaomi-token-plan-ams/mimo-v2.5-pro"
 	]
 }
