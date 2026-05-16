@@ -296,7 +296,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 		DARWIN_CMD="nix run nixpkgs#nh -- darwin switch '${NIX_FLAKE_DIR}' -H default --impure"
 	fi
 
-	REBUILD_CMD="ulimit -n 10240 && sudo NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${DARWIN_CMD}"
+	REBUILD_CMD="ulimit -n 10240 && NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${DARWIN_CMD}"
 	echo "Running: $REBUILD_CMD"
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
