@@ -8,16 +8,7 @@
 
 let
   extraPackages = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
-  extra =
-    extraPackages
-    // lib.optionalAttrs pkgs.stdenv.isLinux {
-      # Work around a pnpm-standalone installCheck regression on Linux where the
-      # packaged `pnpm-activate-env` helper invokes a temporary script via
-      # `/usr/bin/env`, which is unavailable inside Nix build sandboxes.
-      pnpm-standalone = extraPackages.pnpm-standalone.overrideAttrs (_: {
-        doInstallCheck = false;
-      });
-    };
+  extra = extraPackages;
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -166,7 +157,7 @@ in
 
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
-      extra.pnpm-standalone
+      extra.pnpm
 
       # Fonts
       fontforge
