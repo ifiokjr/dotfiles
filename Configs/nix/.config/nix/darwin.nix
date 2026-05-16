@@ -125,6 +125,9 @@
       "obs"
       "vlc"
 
+      # Networking
+      "tailscale"
+
       # Utilities
       "alt-tab"
       "flux-app"
