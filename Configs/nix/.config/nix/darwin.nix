@@ -125,8 +125,9 @@
       "obs"
       "vlc"
 
-      # Networking
-      "tailscale"
+
+  # Enable the Tailscale background service (launchd daemon + CLI)
+  services.tailscale.enable = true;
 
       # Utilities
       "alt-tab"

@@ -157,6 +157,7 @@ in
       scooter
       sshpass
       sqld
+      tailscale
       tealdeer
       tuckr
       uv
