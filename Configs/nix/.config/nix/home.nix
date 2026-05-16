@@ -41,31 +41,24 @@ in
       deno
       devenv
       direnv
-      dotnet-sdk
       dprint
-      emscripten
-      evcxr
       fluxcd
       gh
       git
       git-filter-repo
       git-lfs
-      go
       graphite-cli
       jdk17
       kubernetes-helm
       lazygit
       lld
       llvm
-      maestro
-      mise
+mise
       neovim
       nixd
       nixfmt
       extra.ollama
       opencode
-      pulumi-bin
-      pulumi-esc
       python3
       extra.knope
       extra.mdt
@@ -157,11 +150,11 @@ in
 
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
+      extra.ironclaw
       extra.pnpm
 
       # Fonts
       fontforge
-      google-fonts # Includes Duru Sans, Kranky, Rubik, Short Stack, etc.
       inconsolata
       recursive
       roboto
@@ -173,24 +166,36 @@ in
       nerd-fonts.fira-mono
       nerd-fonts.hack
       nerd-fonts.mononoki
-      nerd-fonts.noto
       nerd-fonts.profont
       nerd-fonts.sauce-code-pro
       nerd-fonts.symbols-only
     ]
     ++ lib.optionals (!lite) [
+      # Heavy/optional packages skipped in lite mode (~8 GB saved)
+      dotnet-sdk
+      emscripten
+      evcxr
+      go
+      google-fonts # 2.3 GB — 1800+ fonts
+      maestro
+      pulumi-bin # 4.4 GB — install on-demand for infra work
+      pulumi-esc
+      racket-minimal
+
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
-      extra.ironclaw
     ]
-    ++ lib.optionals pkgs.stdenv.isDarwin ([
-      # macOS-only packages
+    ++ lib.optionals pkgs.stdenv.isDarwin (lib.optionals (!lite) [
+      # macOS-only packages (heavy, skipped in lite mode)
+      powershell
+    ]
+    ++ [
+      # macOS-only packages (always installed)
       _1password-cli
       cocoapods
       fvm # Flutter Version Management (macOS/Windows only)
       mas
       pinentry_mac
-      powershell
       swiftformat
       swiftlint
     ])
@@ -220,9 +225,10 @@ in
   };
 
   # Activation scripts
-  home.activation.installRacketPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+  # Racket fmt package — only install when racket is available (non-lite mode)
+  home.activation.installRacketPackages = lib.mkIf (!lite) (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     ${extra.racket-minimal}/bin/raco pkg install --skip-installed --auto --scope user fmt || true
-  '';
+  '');
 
   # Keep pnpm global packages in sync from the managed manifest when available.
   # This is best-effort to avoid making activation fail when pnpm is unavailable.
