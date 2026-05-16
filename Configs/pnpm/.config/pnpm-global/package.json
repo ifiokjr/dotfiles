@@ -10,7 +10,7 @@
 		"eslint": "^10.4.0",
 		"hunkdiff": "^0.12.1",
 		"npm": "^11.14.1",
-		"opencode-ai": "1.15.0",
+		"opencode-ai": "1.15.1",
 		"sql-formatter": "^15.7.4",
 		"svelte-language-server": "^0.18.0",
 		"tailwindcss-language-server": "^0.0.1",

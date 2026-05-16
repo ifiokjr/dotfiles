@@ -37,7 +37,7 @@ If you are setting up a new machine or want the human-oriented walkthrough first
 **Setup Script Options:**
 
 - `--preset <name>` - Choose `core`, `dev`, `workstation`, or `ci`
-- `--groups <groups>` - Deploy only specific groups (comma-separated, otherwise deploys all)
+- `--groups <groups>` - Deploy specific groups (comma-separated; overrides preset selection)
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
@@ -49,6 +49,7 @@ If you are setting up a new machine or want the human-oriented walkthrough first
 - `--resume` - Resume from the last failed phase or group
 - `--from <target>` - Resume from a specific phase or deployment group
 - `--only <groups>` - Retry only the specified comma-separated groups
+- `--no-confirm` - Run headlessly without interactive prompts
 - `--help` - Show help
 
 ### Presets
