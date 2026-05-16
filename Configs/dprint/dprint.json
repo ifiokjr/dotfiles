@@ -11,12 +11,6 @@
 				]
 			},
 			{
-				"command": "raco fmt",
-				"exts": [
-					"scm"
-				]
-			},
-			{
 				"command": "nixfmt",
 				"exts": [
 					"nix"

@@ -342,14 +342,6 @@ for p in \
 	fi
 done
 
-# Install raco fmt package (needed by dprint for .scm files).
-if command -v raco &>/dev/null; then
-	echo "Installing raco fmt package..."
-	raco pkg install --skip-installed --auto --scope user fmt || echo "Warning: raco pkg install fmt failed"
-else
-	echo "Warning: raco not found after rebuild, skipping fmt package install"
-fi
-
 # Explicitly reconcile managed pnpm globals after a successful rebuild so
 # global CLI tools are installed even when activation hooks were best-effort.
 if [ "$REBUILD_EXIT" -eq 0 ]; then

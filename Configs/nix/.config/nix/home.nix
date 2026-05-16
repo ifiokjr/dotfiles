@@ -53,7 +53,7 @@ in
       lazygit
       lld
       llvm
-mise
+      mise
       neovim
       nixd
       nixfmt
@@ -62,7 +62,6 @@ mise
       python3
       extra.knope
       extra.mdt
-      extra.racket-minimal
       rustup
       secretspec
       spec-kit
@@ -180,25 +179,26 @@ mise
       maestro
       pulumi-bin # 4.4 GB — install on-demand for infra work
       pulumi-esc
-      racket-minimal
 
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
     ]
-    ++ lib.optionals pkgs.stdenv.isDarwin (lib.optionals (!lite) [
-      # macOS-only packages (heavy, skipped in lite mode)
-      powershell
-    ]
-    ++ [
-      # macOS-only packages (always installed)
-      _1password-cli
-      cocoapods
-      fvm # Flutter Version Management (macOS/Windows only)
-      mas
-      pinentry_mac
-      swiftformat
-      swiftlint
-    ])
+    ++ lib.optionals pkgs.stdenv.isDarwin (
+      lib.optionals (!lite) [
+        # macOS-only packages (heavy, skipped in lite mode)
+        powershell
+      ]
+      ++ [
+        # macOS-only packages (always installed)
+        _1password-cli
+        cocoapods
+        fvm # Flutter Version Management (macOS/Windows only)
+        mas
+        pinentry_mac
+        swiftformat
+        swiftlint
+      ]
+    )
     ++ lib.optionals pkgs.stdenv.isLinux (
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       lib.optionals (!lite) [
@@ -223,12 +223,6 @@ mise
     #   org.gradle.daemon.idletimeout=3600000
     # '';
   };
-
-  # Activation scripts
-  # Racket fmt package — only install when racket is available (non-lite mode)
-  home.activation.installRacketPackages = lib.mkIf (!lite) (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    ${extra.racket-minimal}/bin/raco pkg install --skip-installed --auto --scope user fmt || true
-  '');
 
   # Keep pnpm global packages in sync from the managed manifest when available.
   # This is best-effort to avoid making activation fail when pnpm is unavailable.
