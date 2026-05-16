@@ -151,6 +151,8 @@ in
       openssl
       orchard
       podman
+      postgresql_17
+      postgresql17Packages.pgvector
       protobuf
       scooter
       sshpass
