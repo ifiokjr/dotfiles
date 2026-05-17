@@ -111,10 +111,13 @@ def main [
     --no-lite       # Set machine.nix default to full mode (include GUI-heavy apps)
     --desktop       # Set machine.nix isDesktop = true (enable Docker via podman on macOS)
     --no-desktop    # Set machine.nix isDesktop = false
+    --latest        # Update dotfiles repo to the latest version before rebuilding
+    --force         # With --latest, force-reset to latest even with local changes
 ] {
-    let nix_config = (nix_config config-dir)
-    let machine_config = $"($nix_config)/machine.nix"
-    let machine_example = $"($nix_config)/machine.nix.example"
+    if $force and not $latest {
+        err "--force requires --latest"
+        exit 1
+    }
 
     if $lite and $no_lite {
         err "Cannot use both --lite and --no-lite"
@@ -130,6 +133,51 @@ def main [
         err "--brew requires --update"
         exit 1
     }
+
+    # Update dotfiles repo to latest version when --latest is passed.
+    # With --force, discards any local changes before pulling.
+    if $latest {
+        let repo_dir = (nix_config flake-dir)
+
+        # Change into the repo directory so git commands work correctly
+        # (the flake dir resolves symlinks to the actual repo checkout).
+        cd $repo_dir
+
+        let has_changes = try {
+            ^git diff --quiet
+            ^git diff --staged --quiet
+            false
+        } catch { true }
+
+        if $has_changes and not $force {
+            err "Dotfiles repo has local changes. Use --force to discard them and reset to latest."
+            err "Stash or commit your changes first, or run: rebuild --latest --force"
+            exit 1
+        }
+
+        if $has_changes and $force {
+            warn "Discarding local changes in dotfiles repo (--force)"
+            ^git checkout -- .
+            ^git clean -fd
+        }
+
+        info "Pulling latest dotfiles..."
+        let pull_ok = try {
+            ^git pull --rebase
+            true
+        } catch { false }
+
+        if $pull_ok {
+            success "Dotfiles updated to latest"
+        } else {
+            err "Failed to pull latest dotfiles"
+            exit 1
+        }
+    }
+
+    let nix_config = (nix_config config-dir)
+    let machine_config = $"($nix_config)/machine.nix"
+    let machine_example = $"($nix_config)/machine.nix.example"
 
     # Configure GitHub access token for nix to avoid API rate limits when
     # fetching nixpkgs. Uses GITHUB_TOKEN if available (e.g. in CI).
