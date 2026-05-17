@@ -12,4 +12,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-exec "$SCRIPT_DIR/setup" "$@"
+# Resolve the dotfiles repository root (walk up from Configs/scripts/.local/bin/)
+DOTFILES_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+exec "$DOTFILES_ROOT/setup" "$@"

@@ -44,7 +44,7 @@ jobs:
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/nix/post.sh Hooks/nushell/post.sh Hooks/pnpm/post.sh \
             Configs/shell/.config/shell/env.sh Configs/bash/.bashrc \
-            "setup:dotfiles" "uninstall:dotfiles" "reset:dotfiles" tests/setup-uninstall-reset-test.sh
+            Configs/scripts/.local/bin/setup:dotfiles Configs/scripts/.local/bin/uninstall:dotfiles Configs/scripts/.local/bin/reset:dotfiles tests/setup-uninstall-reset-test.sh
 
       - name: 🔍 validate nushell scripts (nu-check)
         run: |
@@ -109,18 +109,18 @@ jobs:
       - name: 🔧 verify setup/uninstall/reset scripts
         run: |
           echo "--- Testing setup:dotfiles --help ---"
-          ./setup:dotfiles --help
+          Configs/scripts/.local/bin/setup:dotfiles --help
           echo ""
           echo "--- Testing uninstall:dotfiles --help ---"
-          ./uninstall:dotfiles --help
+          Configs/scripts/.local/bin/uninstall:dotfiles --help
           echo ""
           echo "--- Testing reset:dotfiles script exists and is executable ---"
-          test -x ./reset:dotfiles && echo "reset:dotfiles is executable"
+          test -x Configs/scripts/.local/bin/reset:dotfiles && echo "reset:dotfiles is executable"
           echo ""
           echo "--- Testing setup:dotfiles --dry-run (lite mode) ---"
-          ./setup:dotfiles --dry-run --lite --no-confirm
+          Configs/scripts/.local/bin/setup:dotfiles --dry-run --lite --no-confirm
           echo ""
           echo "--- Testing setup:dotfiles --list-groups ---"
-          ./setup:dotfiles --list-groups
+          Configs/scripts/.local/bin/setup:dotfiles --list-groups
           echo ""
           echo "All script verification tests passed!"

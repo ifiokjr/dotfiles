@@ -61,21 +61,21 @@ else
 fi
 
 # Check setup script exists
-if [ -f "$DOTFILES_DIR/setup:dotfiles" ]; then
+if [ -f "$DOTFILES_DIR/Configs/scripts/.local/bin/setup:dotfiles" ]; then
 	pass "setup:dotfiles script exists"
 else
 	fail "setup:dotfiles script missing"
 fi
 
 # Check uninstall script exists
-if [ -f "$DOTFILES_DIR/uninstall:dotfiles" ]; then
+if [ -f "$DOTFILES_DIR/Configs/scripts/.local/bin/uninstall:dotfiles" ]; then
 	pass "uninstall:dotfiles script exists"
 else
 	fail "uninstall:dotfiles script missing"
 fi
 
 # Check reset script exists
-if [ -f "$DOTFILES_DIR/reset:dotfiles" ]; then
+if [ -f "$DOTFILES_DIR/Configs/scripts/.local/bin/reset:dotfiles" ]; then
 	pass "reset:dotfiles script exists"
 else
 	fail "reset:dotfiles script missing"
@@ -125,7 +125,7 @@ cp -r "$DOTFILES_DIR" "$DOTFILES_BACKUP"
 pass "Created backup of dotfiles at $DOTFILES_BACKUP"
 
 # Run uninstall with --no-confirm and --keep-nix so we can re-setup
-if ./uninstall:dotfiles --no-confirm --keep-nix --cwd "$DOTFILES_DIR"; then
+if ./Configs/scripts/.local/bin/uninstall:dotfiles --no-confirm --keep-nix --cwd "$DOTFILES_DIR"; then
 	pass "uninstall:dotfiles completed successfully"
 else
 	fail "uninstall:dotfiles failed"
@@ -186,7 +186,7 @@ fi
 cd "$DOTFILES_DIR"
 
 # Run setup with --no-confirm --lite --skip-nix (nix is already installed)
-if SETUP_ALLOW_NIX_HOOK_FAILURE=true ./setup:dotfiles --no-confirm --lite --skip-nix --cwd "$DOTFILES_DIR"; then
+if SETUP_ALLOW_NIX_HOOK_FAILURE=true ./Configs/scripts/.local/bin/setup:dotfiles --no-confirm --lite --skip-nix --cwd "$DOTFILES_DIR"; then
 	pass "setup:dotfiles re-run completed successfully"
 else
 	# Setup may fail on some hooks in Docker (e.g., nix hook during rebuild)
