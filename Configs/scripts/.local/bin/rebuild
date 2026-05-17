@@ -214,13 +214,37 @@ def main [
     print $"  Lite: ($config.lite)"
     print ""
 
+    # Rebuild must work even when the user's shell has not loaded Nix yet.
+    # Put known Nix/Darwin profile locations ahead of the inherited PATH before
+    # running nix, nix-env, darwin-rebuild, or nh. nh remains the primary macOS
+    # rebuild command; this just ensures nh can find nix.
+    let current_path = if (($env.PATH | describe) | str starts-with "list") { $env.PATH } else { $env.PATH | split row (char esep) }
+    let bootstrap_path = [
+        "/nix/var/nix/profiles/default/bin"
+        "/run/current-system/sw/bin"
+        $"/etc/profiles/per-user/($config.username)/bin"
+        $"($env.HOME)/.nix-profile/bin"
+        $"($env.HOME)/.local/state/nix/profiles/home-manager/home-path/bin"
+        $"($env.HOME)/.local/bin"
+        "/usr/local/bin"
+        "/usr/bin"
+        "/bin"
+        "/usr/sbin"
+        "/sbin"
+    ]
+    $env.PATH = ($bootstrap_path | where { |dir| ($dir | path exists) } | append $current_path | uniq)
+
+    if (which nix | is-empty) {
+        err "nix not found after bootstrapping PATH; expected /nix/var/nix/profiles/default/bin/nix or /run/current-system/sw/bin/nix"
+        exit 1
+    }
+
     # Detect root-only nix install (Docker/containers without systemd).
     # When true, nix commands need sudo with HOME preserved.
     # If the nix daemon socket exists (e.g. manually started), sudo is not needed.
     let root_only_nix = (not ("/run/systemd/system" | path exists)) and (not ("/nix/var/nix/daemon-socket/socket" | path exists)) and ((^id -u | str trim) != "0")
 
     # Build the sudo prefix for nix commands when running root-only nix.
-    # Nix binaries are symlinked to /usr/local/bin by setup, so PATH isn't needed.
     let sudo_prefix = if $root_only_nix { "sudo" } else { "" }
 
     # Use resolved flake dir for nix commands so symlinked flake.nix doesn't produce invalid paths

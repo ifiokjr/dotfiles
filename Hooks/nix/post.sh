@@ -24,6 +24,33 @@ if [ -d "$HOME/.local/bin" ]; then
 	export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# setup may run before the user's shell has loaded Nix. Put known Nix/Darwin
+# profile locations ahead of the inherited PATH so nh can find nix during
+# first-time bootstrap and partially-activated states.
+PROFILE_USER="${USER:-$(whoami)}"
+for p in \
+	"/nix/var/nix/profiles/default/bin" \
+	"/run/current-system/sw/bin" \
+	"/etc/profiles/per-user/${PROFILE_USER}/bin" \
+	"$HOME/.nix-profile/bin" \
+	"$HOME/.local/state/nix/profiles/home-manager/home-path/bin" \
+	"$HOME/.local/bin" \
+	"/usr/local/bin" \
+	"/usr/bin" \
+	"/bin" \
+	"/usr/sbin" \
+	"/sbin"; do
+	if [ -d "$p" ]; then
+		export PATH="$p:$PATH"
+	fi
+done
+
+if ! command -v nix >/dev/null 2>&1; then
+	echo "ERROR: nix not found after bootstrapping PATH" >&2
+	echo "Expected /nix/var/nix/profiles/default/bin/nix or /run/current-system/sw/bin/nix" >&2
+	exit 1
+fi
+
 SUDO_KEEPALIVE_PID=""
 SUDO_SESSION_READY=false
 
@@ -83,6 +110,19 @@ stop_darwin_sudo_keepalive() {
 
 trap stop_darwin_sudo_keepalive EXIT
 
+backup_for_nix_darwin() {
+	local f="$1"
+	local target
+	if [ -f "$f" ] && [ ! -L "$f" ]; then
+		target="${f}.before-nix-darwin"
+		if sudo test -e "$target"; then
+			target="${target}.$(date +%Y%m%d%H%M%S)"
+		fi
+		echo "Renaming $f → $target"
+		sudo mv "$f" "$target"
+	fi
+}
+
 # nix-darwin activation refuses to overwrite /etc files it doesn't manage.
 # Rename any conflicting files so the first nh darwin switch succeeds.
 # This includes sudoers.d files we bootstrap for global sudo timestamps —
@@ -92,10 +132,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	ensure_darwin_sudo_session
 	start_darwin_sudo_keepalive
 	for f in /etc/zshenv /etc/zshrc /etc/bashrc /etc/zprofile /etc/sudoers.d/10-nix-darwin-extra-config; do
-		if [ -f "$f" ] && [ ! -L "$f" ]; then
-			echo "Renaming $f → ${f}.before-nix-darwin"
-			sudo mv "$f" "${f}.before-nix-darwin"
-		fi
+		backup_for_nix_darwin "$f"
 	done
 fi
 
