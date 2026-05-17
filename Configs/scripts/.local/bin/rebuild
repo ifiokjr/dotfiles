@@ -281,12 +281,21 @@ def main [
     if $os == "darwin" {
         ensure_darwin_sudo_session
 
-        # Back up /etc/shells before nix-darwin takes ownership (one-time operation).
-        # nix-darwin manages /etc/shells to add nix-installed shells; the backup
-        # preserves the original so it can be restored if nix-darwin is removed.
-        if ("/etc/shells" | path exists) and (not ("/etc/shells.before-nix-darwin" | path exists)) {
-            info "Backing up /etc/shells to /etc/shells.before-nix-darwin"
-            ^sudo mv /etc/shells /etc/shells.before-nix-darwin
+        # Back up /etc/shells before nix-darwin takes ownership.
+        # If a previous backup exists from an earlier failed setup, use a timestamped
+        # backup name so the current regular file still gets moved out of the way.
+        # Once nix-darwin owns /etc/shells it is a symlink, which this intentionally skips.
+        let should_move_shells = do -i { ^sudo /bin/sh -c "test -f /etc/shells && ! test -L /etc/shells" }
+        if ($env.LAST_EXIT_CODE == 0) {
+            let base_target = "/etc/shells.before-nix-darwin"
+            let target_exists = do -i { ^sudo /bin/sh -c "test -e /etc/shells.before-nix-darwin" }
+            let target = if ($env.LAST_EXIT_CODE == 0) {
+                $"($base_target).(date now | format date '%Y%m%d%H%M%S')"
+            } else {
+                $base_target
+            }
+            info $"Backing up /etc/shells to ($target)"
+            ^sudo mv /etc/shells $target
             success "Backed up /etc/shells"
         }
 

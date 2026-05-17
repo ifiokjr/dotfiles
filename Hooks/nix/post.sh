@@ -282,10 +282,17 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	ensure_darwin_sudo_session
 	start_darwin_sudo_keepalive
 
-	# Back up /etc/shells before nix-darwin takes ownership (one-time)
-	if [ -f /etc/shells ] && [ ! -f /etc/shells.before-nix-darwin ]; then
-		echo "Backing up /etc/shells to /etc/shells.before-nix-darwin"
-		sudo mv /etc/shells /etc/shells.before-nix-darwin
+	# Back up /etc/shells before nix-darwin takes ownership.
+	# If a previous backup exists from an earlier failed setup, use a timestamped
+	# backup name so the current regular file still gets moved out of the way.
+	# Once nix-darwin owns /etc/shells it is a symlink, which this intentionally skips.
+	if [ -f /etc/shells ] && [ ! -L /etc/shells ]; then
+		target="/etc/shells.before-nix-darwin"
+		if sudo test -e "$target"; then
+			target="${target}.$(date +%Y%m%d%H%M%S)"
+		fi
+		echo "Backing up /etc/shells to $target"
+		sudo mv /etc/shells "$target"
 	fi
 
 	# Build nh darwin command (with nix run fallback for first-time setup)
