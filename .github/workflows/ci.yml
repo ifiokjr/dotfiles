@@ -43,7 +43,8 @@ jobs:
       - name: 🔍 shellcheck bash scripts
         run: |
           shellcheck setup setup-tuckr-symlink.sh Hooks/nix/post.sh Hooks/nushell/post.sh Hooks/pnpm/post.sh \
-            Configs/shell/.config/shell/env.sh Configs/bash/.bashrc
+            Configs/shell/.config/shell/env.sh Configs/bash/.bashrc \
+            "setup:dotfiles" "uninstall:dotfiles" "reset:dotfiles" tests/setup-uninstall-reset-test.sh
 
       - name: 🔍 validate nushell scripts (nu-check)
         run: |
@@ -104,3 +105,22 @@ jobs:
           nu Configs/scripts/.local/bin/generate-machine-config --output /tmp/test-machine.nix
           cat /tmp/test-machine.nix
           rm /tmp/test-machine.nix
+
+      - name: 🔧 verify setup/uninstall/reset scripts
+        run: |
+          echo "--- Testing setup:dotfiles --help ---"
+          ./setup:dotfiles --help
+          echo ""
+          echo "--- Testing uninstall:dotfiles --help ---"
+          ./uninstall:dotfiles --help
+          echo ""
+          echo "--- Testing reset:dotfiles script exists and is executable ---"
+          test -x ./reset:dotfiles && echo "reset:dotfiles is executable"
+          echo ""
+          echo "--- Testing setup:dotfiles --dry-run (lite mode) ---"
+          ./setup:dotfiles --dry-run --lite --no-confirm
+          echo ""
+          echo "--- Testing setup:dotfiles --list-groups ---"
+          ./setup:dotfiles --list-groups
+          echo ""
+          echo "All script verification tests passed!"

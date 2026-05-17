@@ -19,4 +19,5 @@ RUN --mount=type=secret,id=github_token,required=false \
     SETUP_ALLOW_NIX_HOOK_FAILURE=true \
     ./setup --no-confirm --lite
 
-CMD ["bash", "-lc", "tests/docker-integration-test.sh"]
+# Run initial setup verification, then the uninstall/reset cycle test.
+CMD ["bash", "-lc", "set -e; echo '=== Phase 1: Integration verification ==='; tests/docker-integration-test.sh; echo ''; echo '=== Phase 2: Setup/Uninstall/Reset Cycle ==='; tests/setup-uninstall-reset-test.sh"]
