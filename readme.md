@@ -186,9 +186,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 **Hook:** `post_pnpm` - Resolves pnpm's active global directory and symlinks/installs the managed global package set.
 
-#### `pi`
-
-**Location:** `Configs/pi/.pi/` **Deploys:** `~/.pi/` **Description:** Pi coding agent configuration including global settings, keybindings, package sources, and symlinked custom skills.
+Pi remains installed through the managed pnpm packages, but `~/.pi/` is intentionally user-managed instead of synced by Tuckr.
 
 #### `dprint`
 

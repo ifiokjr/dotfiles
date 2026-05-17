@@ -18,7 +18,7 @@ export OPENCODE_TRUSTED_DIRECTORIES="/Users/ifiokjr/Developer:/Users/ifiokjr/Dev
 # ---------------------------------------------------------------------------
 # Pi Agent Configuration
 # ---------------------------------------------------------------------------
-# Pi uses settings.json for configuration
+# Pi uses user-managed settings.json for configuration
 # Located at: ~/.pi/agent/settings.json
 
 # ---------------------------------------------------------------------------

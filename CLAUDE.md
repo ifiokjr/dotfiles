@@ -108,7 +108,7 @@ vim <dotfiles-repo>/Configs/nushell/.config/nushell/config.nu
 
 ## Configuration Groups
 
-The repository contains 16 configuration groups organized in `Configs/`:
+This guide highlights the core configuration groups organized in `Configs/`:
 
 | Group       | Platform | Purpose                                         | Hook      |
 | ----------- | -------- | ----------------------------------------------- | --------- |
@@ -123,7 +123,6 @@ The repository contains 16 configuration groups organized in `Configs/`:
 | **zellij**  | All      | Terminal multiplexer config & layouts           | None      |
 | **direnv**  | All      | Directory-specific environment variables        | None      |
 | **pnpm**    | All      | Managed global pnpm package set                 | `post.sh` |
-| **pi**      | All      | Pi coding agent configuration                   | None      |
 | **dprint**  | All      | Multi-language code formatter                   | None      |
 | **kdl**     | All      | KDL document formatter                          | None      |
 | **lazygit** | All      | Git TUI configuration                           | None      |
@@ -151,7 +150,6 @@ The repository contains 16 configuration groups organized in `Configs/`:
 │   ├── zellij/                # Terminal multiplexer
 │   ├── direnv/                # Environment management
 │   ├── pnpm/                  # Managed global pnpm package manifest
-│   ├── pi/                    # Pi coding agent config
 │   ├── dprint/                # Code formatter
 │   ├── kdl/                   # KDL formatter
 │   ├── lazygit/               # Git TUI
