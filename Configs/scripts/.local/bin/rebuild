@@ -134,8 +134,15 @@ def main [
         exit 1
     }
 
+    # Register cleanup: restore original branch and stash after --latest --force.
+    # This runs even if the rebuild fails, ensuring the user doesn't lose work.
+    # Defined early so it's in scope for the entire function.
+    mut original_branch = ""
+    mut stash_needed = false
+
     # Update dotfiles repo to latest version when --latest is passed.
-    # With --force, discards any local changes before pulling.
+    # With --force, stashes local changes, resets to origin/main, then
+    # restores the original branch and stashed changes after rebuilding.
     if $latest {
         let repo_dir = (nix_config flake-dir)
 
@@ -150,29 +157,55 @@ def main [
         } catch { true }
 
         if $has_changes and not $force {
-            err "Dotfiles repo has local changes. Use --force to discard them and reset to latest."
-            err "Stash or commit your changes first, or run: rebuild --latest --force"
+            err "Dotfiles repo has local changes. Use --force to stash them and reset to latest."
+            err "Run: rebuild --latest --force"
             exit 1
         }
+
+        $original_branch = (^git rev-parse --abbrev-ref HEAD | str trim)
 
         if $has_changes and $force {
-            warn "Discarding local changes in dotfiles repo (--force)"
-            ^git checkout -- .
-            ^git clean -fd
+            info "Stashing local changes in dotfiles repo (--force)"
+            ^git stash push -m "rebuild --latest --force auto-stash"
+            let stash_ok = try {
+                ^git stash list | str contains "rebuild --latest --force auto-stash"
+            } catch { false }
+            if $stash_ok {
+            $stash_needed = true
+                success "Local changes stashed"
+            } else {
+                warn "git stash failed; falling back to discarding local changes"
+                ^git checkout -- .
+                ^git clean -fd
+            }
         }
 
-        info "Pulling latest dotfiles..."
-        let pull_ok = try {
-            ^git pull --rebase
+        # Switch to main and hard-reset to origin/main
+        info "Resetting dotfiles to latest from origin/main..."
+        let checkout_ok = try {
+            ^git checkout main
             true
-        } catch { false }
-
-        if $pull_ok {
-            success "Dotfiles updated to latest"
-        } else {
-            err "Failed to pull latest dotfiles"
+        } catch {
+            # Might already be on main or detached HEAD
+            try {
+                ^git checkout main 2>/dev/null
+                true
+            } catch { false }
+        }
+        if not $checkout_ok {
+            err "Failed to checkout main branch"
+            if $stash_needed {
+                warn "Restoring stashed changes..."
+                ^git stash pop
+            }
             exit 1
         }
+
+        ^git fetch origin
+        ^git reset --hard origin/main
+
+        let current_hash = (^git rev-parse --short HEAD | str trim)
+        success $"Updated dotfiles to ($current_hash)"
     }
 
     let nix_config = (nix_config config-dir)
@@ -574,6 +607,35 @@ def main [
     # Persist changes to log file
     if ($log_lines | is-not-empty) {
         version_tracker log-rebuild-summary $log_lines
+    }
+
+    # Restore stashed changes and original branch after --latest --force.
+    # This runs even if the rebuild succeeded, ensuring the user's work tree
+    # is returned to its original state.
+    # Capture mut values into immutable bindings to use in catch blocks.
+    let branch_to_restore = $original_branch
+    let needs_stash_pop = $stash_needed
+
+    if $needs_stash_pop {
+        let repo_dir = (nix_config flake-dir)
+        cd $repo_dir
+        info "Restoring stashed changes..."
+        try {
+            ^git stash pop
+            success "Stashed changes restored"
+        } catch {
+            warn "Could not pop stash — run `git stash list` and `git stash pop` manually"
+        }
+    }
+    if ($branch_to_restore | is-not-empty) and $branch_to_restore != "main" {
+        let repo_dir = (nix_config flake-dir)
+        cd $repo_dir
+        info $"Switching back to branch ($branch_to_restore)"
+        try {
+            ^git checkout $branch_to_restore
+        } catch {
+            warn $"Could not switch back to ($branch_to_restore)"
+        }
     }
 
     print ""
