@@ -390,7 +390,7 @@
   # the system vulnerable. Set minimumVersion to the oldest supported release.
   system.activationScripts.minimumMacOSVersion.text =
     let
-      minimumVersion = "15.0"; # macOS Sequoia 15.0+
+      minimumVersion = "26.5"; # macOS 26.5+
     in
     ''
       #!/bin/sh
@@ -402,9 +402,8 @@
       if [ "$MAJOR" -lt "$REQ_MAJOR" ] || { [ "$MAJOR" -eq "$REQ_MAJOR" ] && [ "$MINOR" -lt "$REQ_MINOR" ]; }; then
         echo >&2 ""
         echo >&2 "⚠️  WARNING: macOS version $CURRENT is below minimum ${minimumVersion}"
-        echo >&2 "    macOS Sequoia 15.0+ is required for security compliance."
-        echo >&2 "    Run: softwareupdate --install --all"
-        echo >&2 "    Or: rebuild --update-os"
+        echo >&2 "    macOS 26.5+ is required for security compliance."
+        echo >&2 "    Run: rebuild --update-os"
         echo >&2 ""
       fi
     '';

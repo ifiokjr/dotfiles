@@ -113,7 +113,7 @@ def main [
     --no-desktop    # Set machine.nix isDesktop = false
     --latest        # Update dotfiles repo to the latest version before rebuilding
     --force         # With --latest, force-reset to latest even with local changes
-    --update-os     # Install all available macOS software updates before rebuilding (slow)
+    --rebuild-os   # Install all available macOS software updates before rebuilding (slow)
 ] {
     if $force and not $latest {
         err "--force requires --latest"
@@ -354,7 +354,7 @@ def main [
     # Install all available macOS software updates before rebuilding.
     # This is a no-op on Linux. On macOS it runs `softwareupdate --install --all`
     # which includes security patches and OS version upgrades. Requires sudo.
-    if $update_os and $os == "darwin" {
+    if $rebuild_os and $os == "darwin" {
         info "Installing macOS software updates (this may take a while)..."
         ensure_darwin_sudo_session
         let os_update_ok = run_with_darwin_sudo_keepalive "softwareupdate --install --all"
@@ -364,8 +364,8 @@ def main [
             warn "macOS software update failed or no updates available (continuing)"
         }
         print ""
-    } else if $update_os and $os != "darwin" {
-        warn "--update-os is only supported on macOS"
+    } else if $rebuild_os and $os != "darwin" {
+        warn "--rebuild-os is only supported on macOS"
     }
 
     # Update flake inputs (only when --update is passed)
