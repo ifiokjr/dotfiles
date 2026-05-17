@@ -116,6 +116,7 @@
         "db-browser-for-sqlite"
         "dbeaver-community"
         "gdevelop"
+        "ghostty"
         "orbstack"
         "podman-desktop"
         "react-native-debugger"
