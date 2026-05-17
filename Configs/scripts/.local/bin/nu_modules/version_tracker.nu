@@ -35,8 +35,9 @@ export def diff-nix-closures [old_path: string, new_path: string] {
 # Return a list of {name, version} records for managed pnpm global project packages.
 export def capture-pnpm-globals [] {
     if (which pnpm | is-empty) { return null }
-    if not ($"($env.HOME)/.config/pnpm-global/package.json" | path exists) { return null }
-    let result = (^bash -lc 'cd "$HOME/.config/pnpm-global" && pnpm list --json' | complete)
+    let runtime_dir = ($env.XDG_DATA_HOME? | default ($env.HOME | path join ".local/share") | path join "pnpm-global")
+    if not ($runtime_dir | path join "package.json" | path exists) { return null }
+    let result = (^bash -lc 'cd "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global" && pnpm list --json' | complete)
     if ($result.exit_code != 0) { return null }
     let parsed = try {
         $result.stdout | from json

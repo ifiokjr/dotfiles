@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="$HOME/.config/pnpm-global"
-cd "$PROJECT_DIR"
+RUNTIME_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global"
+cd "$RUNTIME_DIR"
 
 pnpm list "$@"

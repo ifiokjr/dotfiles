@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install managed pnpm CLI tools from the Tuckr-managed project at
-# ~/.config/pnpm-global. Binaries are exposed by putting that project's
-# node_modules/.bin directory on PATH.
+# Install managed pnpm CLI tools from Tuckr-managed manifests at
+# ~/.config/pnpm-global into a runtime project outside the Tuckr group. This
+# keeps generated node_modules out of dotfiles while still letting git pull
+# update the managed package.json and lockfile.
 
 QUIET=false
 NO_FAIL=false
@@ -20,8 +21,8 @@ while [ "$#" -gt 0 ]; do
       cat <<'USAGE'
 Usage: pnpm:global:sync [--quiet] [--no-fail]
 
-Install managed CLI packages from ~/.config/pnpm-global using normal project
-pnpm install semantics.
+Install managed CLI packages from ~/.config/pnpm-global into the runtime
+project at ~/.local/share/pnpm-global.
 
 Options:
   --quiet    Suppress info output
@@ -80,14 +81,29 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit $?
 fi
 
-PROJECT_DIR="$HOME/.config/pnpm-global"
-if [ ! -f "$PROJECT_DIR/package.json" ]; then
-  info "No $PROJECT_DIR/package.json found; skipping managed pnpm global sync"
+SOURCE_DIR="$HOME/.config/pnpm-global"
+RUNTIME_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global"
+
+if [ ! -f "$SOURCE_DIR/package.json" ]; then
+  info "No $SOURCE_DIR/package.json found; skipping managed pnpm global sync"
   exit 0
 fi
 
-mkdir -p "$PROJECT_DIR"
-cd "$PROJECT_DIR"
+mkdir -p "$RUNTIME_DIR"
+
+for manifest in package.json pnpm-lock.yaml pnpm-workspace.yaml; do
+  src="$SOURCE_DIR/$manifest"
+  dest="$RUNTIME_DIR/$manifest"
+
+  if [ -f "$src" ]; then
+    rm -f "$dest"
+    ln -s "$src" "$dest"
+  elif [ -L "$dest" ]; then
+    rm -f "$dest"
+  fi
+done
+
+cd "$RUNTIME_DIR"
 
 if [ -f pnpm-lock.yaml ]; then
   if pnpm install --frozen-lockfile --ignore-scripts; then

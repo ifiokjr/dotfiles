@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_DIR="$HOME/.config/pnpm-global"
-cd "$PROJECT_DIR"
+SOURCE_DIR="$HOME/.config/pnpm-global"
+cd "$SOURCE_DIR"
 
-pnpm update "$@"
+pnpm update --lockfile-only "$@"
+pnpm:global:sync
 
 cat <<'NEXT'
 
-Updated the managed pnpm global project.
+Updated the managed pnpm global manifests.
 Review and commit the updated files in Configs/pnpm/.config/pnpm-global.
 NEXT

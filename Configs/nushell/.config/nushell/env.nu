@@ -94,7 +94,7 @@ let path_prepend = [
     $"($env.HOME)/.local/bin"
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.shorebird/bin"
-    $"($env.HOME)/.config/pnpm-global/node_modules/.bin"
+    $"($env.XDG_DATA_HOME? | default ($env.HOME | path join '.local/share'))/pnpm-global/node_modules/.bin"
     $env.PNPM_HOME
     $"($env.HOME)/.local/share/solana/install/active_release/bin"
     $"($env.HOME)/fvm/default/bin"
