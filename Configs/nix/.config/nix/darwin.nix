@@ -24,6 +24,15 @@
     shell = pkgs.nushell;
   };
 
+  # SSH remote login — key-only auth, no root login
+  services.openssh = {
+    enable = true;
+    extraConfig = ''
+      PasswordAuthentication no
+      PermitRootLogin no
+    '';
+  };
+
   # Set primary user for darwin options that require it
   system.primaryUser = username;
 
