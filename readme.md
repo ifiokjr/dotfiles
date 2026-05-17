@@ -157,7 +157,8 @@ The setup flow layers metadata on top of Tuckr conventions:
 - `rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `rebuild --update` refreshes `flake.lock` before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
-- `pnpm:global:sync` - Symlink global pnpm manifests and install pinned global packages
+- `pnpm:global:sync` - Install the managed pnpm global project packages
+- `pnpm:global:add/remove/update/list` - Manage packages in the pnpm global project
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Interactive environment variables setup (API keys, tokens)
 - `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
@@ -182,9 +183,9 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 #### `pnpm`
 
-**Location:** `Configs/pnpm/.config/pnpm-global/` **Deploys:** `~/.config/pnpm-global/` **Description:** Managed global pnpm manifest (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`) for deterministic global package installs on macOS and Linux.
+**Location:** `Configs/pnpm/.config/pnpm-global/` **Deploys:** `~/.config/pnpm-global/` **Description:** Managed pnpm project (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`) for deterministic CLI tool installs on macOS and Linux.
 
-**Hook:** `post_pnpm` - Resolves pnpm's active global directory and symlinks/installs the managed global package set.
+**Hook:** `post_pnpm` - Runs `pnpm:global:sync`, which installs the managed project with normal `pnpm install` semantics. Shell startup adds `~/.config/pnpm-global/node_modules/.bin` to PATH.
 
 Pi remains installed through the managed pnpm packages, but `~/.pi/` is intentionally user-managed instead of synced by Tuckr.
 
@@ -548,9 +549,9 @@ Use:
 tuckr set pnpm
 ```
 
-to sync `~/.config/pnpm-global` into pnpm's active global directory (resolved from `pnpm root -g`) and install packages from the committed lockfile.
+to install the Tuckr-managed project at `~/.config/pnpm-global` from the committed lockfile. Shell startup adds `~/.config/pnpm-global/node_modules/.bin` to PATH, so installed CLI binaries are available globally without using pnpm's special global install mode.
 
-The sync script also strips pnpm-generated `dependenciesMeta.*.node` entries from the managed manifest and lockfile, so machine-specific Node.js paths are not committed.
+Use `pnpm:global:add <pkg>`, `pnpm:global:remove <pkg>`, `pnpm:global:update [pkg]`, and `pnpm:global:list` to manage this project intentionally, then commit the resulting `Configs/pnpm/.config/pnpm-global/package.json` and `pnpm-lock.yaml` changes.
 
 Successful `rebuild` runs invoke the same managed sync explicitly, so global CLI packages like Pi stay installed after Nix/home-manager updates.
 

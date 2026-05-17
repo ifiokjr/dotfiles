@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ "$#" -eq 0 ]; then
+  cat >&2 <<'USAGE'
+Usage: pnpm:global:add <pkg...>
+
+Add packages to the Tuckr-managed pnpm global project at ~/.config/pnpm-global.
+USAGE
+  exit 1
+fi
+
+PROJECT_DIR="$HOME/.config/pnpm-global"
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR"
+
+pnpm add "$@"
+
+cat <<'NEXT'
+
+Added package(s) to the managed pnpm global project.
+Review and commit the updated files in Configs/pnpm/.config/pnpm-global.
+NEXT

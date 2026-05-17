@@ -32,10 +32,11 @@ export def diff-nix-closures [old_path: string, new_path: string] {
 # ─────────────────────────────────────────────────────────────────────────────
 # pnpm globals
 # ─────────────────────────────────────────────────────────────────────────────
-# Return a list of {name, version} records for globally installed pnpm packages.
+# Return a list of {name, version} records for managed pnpm global project packages.
 export def capture-pnpm-globals [] {
     if (which pnpm | is-empty) { return null }
-    let result = (^pnpm list -g --json | complete)
+    if not ($"($env.HOME)/.config/pnpm-global/package.json" | path exists) { return null }
+    let result = (^bash -lc 'cd "$HOME/.config/pnpm-global" && pnpm list --json' | complete)
     if ($result.exit_code != 0) { return null }
     let parsed = try {
         $result.stdout | from json

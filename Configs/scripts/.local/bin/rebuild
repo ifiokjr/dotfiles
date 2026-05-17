@@ -383,21 +383,21 @@ def main [
         }
         print ""
 
-        # Update pnpm global dependencies to their latest compatible versions
-        if (which pnpm | is-not-empty) {
-            info "Updating pnpm global dependencies..."
+        # Update managed pnpm global project dependencies to their latest compatible versions
+        if (which pnpm:global:update | is-not-empty) {
+            info "Updating managed pnpm global dependencies..."
             let pnpm_ok = try {
-                ^bash -c 'if [ -z "${PNPM_HOME:-}" ]; then if [ "$(uname -s)" = "Darwin" ]; then PNPM_HOME="$HOME/Library/pnpm"; else PNPM_HOME="$HOME/.local/share/pnpm"; fi; fi; mkdir -p "$PNPM_HOME" "$PNPM_HOME/bin"; export PNPM_HOME PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"; pnpm update -g -L'
+                ^pnpm:global:update
                 true
             } catch { false }
             if $pnpm_ok {
-                success "pnpm global dependencies updated"
+                success "Managed pnpm global dependencies updated"
             } else {
-                warn "pnpm global update failed \(continuing\)"
+                warn "Managed pnpm global update failed \(continuing\)"
             }
             print ""
         } else {
-            warn "pnpm not found, skipping global dependency update"
+            warn "pnpm:global:update not found, skipping managed pnpm global dependency update"
         }
 
         if $brew {

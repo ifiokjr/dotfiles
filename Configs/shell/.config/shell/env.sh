@@ -83,6 +83,7 @@ export DIRENV_LOG_FORMAT=""
 for _p in "$HOME/.local/bin" \
 	"$HOME/.cargo/bin" \
 	"$HOME/.shorebird/bin" \
+	"$HOME/.config/pnpm-global/node_modules/.bin" \
 	"$PNPM_HOME" \
 	"$HOME/.local/share/solana/install/active_release/bin" \
 	"$HOME/fvm/default/bin" \
