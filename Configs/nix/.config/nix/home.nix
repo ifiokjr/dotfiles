@@ -150,7 +150,7 @@ in
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
       extra.ironclaw
-      extra.pnpm
+      extra.pnpm-11
       extra.op # 1password
 
       # Fonts
