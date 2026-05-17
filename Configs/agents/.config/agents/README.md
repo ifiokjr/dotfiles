@@ -83,5 +83,5 @@ When adding a new AI tool:
 ## Related
 
 - [Shell environment](../shell/.config/shell/env.sh) - Sources this configuration
-- [Pi config](../../pi/.pi/agent/settings.json) - Pi-specific settings
+- Pi config lives in user-managed `~/.pi/agent/settings.json`
 - [Agents hook](../../../Hooks/agents/post.sh) - Post-install plugin setup

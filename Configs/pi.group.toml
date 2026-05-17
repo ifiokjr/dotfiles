@@ -1,2 +1,0 @@
-description = "Pi coding agent configuration, skills, and package sources."
-presets = ["dev", "workstation"]
