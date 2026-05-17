@@ -330,14 +330,28 @@ def main [
             success "Backed up /etc/shells"
         }
 
-        # Rename bootstrapped sudoers file so nix-darwin can take ownership.
-        # nix-darwin manages this file via security.sudo.extraConfig and will
-        # recreate it during activation. If the file exists with content
-        # nix-darwin didn't create, activation aborts.
+        # Rename a bootstrapped sudoers file so nix-darwin can take ownership.
+        # nix-darwin recreates this file via security.sudo.extraConfig during activation.
+        # If a previous backup already exists, use a timestamped name rather than
+        # leaving an unmanaged regular file in place. Already-managed symlinks are skipped.
         let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
-        if ($sudoers_extra | path exists) and (not ($"($sudoers_extra).before-nix-darwin" | path exists)) {
-            info $"Renaming ($sudoers_extra) for nix-darwin activation"
-            ^sudo mv $sudoers_extra $"($sudoers_extra).before-nix-darwin"
+        let should_move_sudoers_extra = try {
+            ^sudo /bin/sh -c "test -f /etc/sudoers.d/10-nix-darwin-extra-config && ! test -L /etc/sudoers.d/10-nix-darwin-extra-config"
+            true
+        } catch { false }
+        if $should_move_sudoers_extra {
+            let base_target = $"($sudoers_extra).before-nix-darwin"
+            let target_exists = try {
+                ^sudo /bin/sh -c "test -e /etc/sudoers.d/10-nix-darwin-extra-config.before-nix-darwin"
+                true
+            } catch { false }
+            let target = if $target_exists {
+                $"($base_target).(date now | format date '%Y%m%d%H%M%S')"
+            } else {
+                $base_target
+            }
+            info $"Renaming ($sudoers_extra) to ($target) for nix-darwin activation"
+            ^sudo mv $sudoers_extra $target
         }
 
         # Rebuild darwin configuration
