@@ -109,6 +109,8 @@ def main [
     --brew          # With --update on macOS, also run `brew upgrade --cask --greedy` (slow)
     --lite          # Set machine.nix default to lite mode (skip GUI-heavy apps)
     --no-lite       # Set machine.nix default to full mode (include GUI-heavy apps)
+    --desktop       # Set machine.nix isDesktop = true (enable Docker via podman on macOS)
+    --no-desktop    # Set machine.nix isDesktop = false
 ] {
     let nix_config = (nix_config config-dir)
     let machine_config = $"($nix_config)/machine.nix"
@@ -116,6 +118,11 @@ def main [
 
     if $lite and $no_lite {
         err "Cannot use both --lite and --no-lite"
+        exit 1
+    }
+
+    if $desktop and $no_desktop {
+        err "Cannot use both --desktop and --no-desktop"
         exit 1
     }
 
@@ -198,6 +205,15 @@ def main [
         success "Updated machine.nix default: lite = false"
     }
 
+    # Persist desktop mode choice into machine.nix when explicitly requested.
+    if $desktop {
+        nix_config set-desktop-mode true
+        success "Updated machine.nix default: isDesktop = true"
+    } else if $no_desktop {
+        nix_config set-desktop-mode false
+        success "Updated machine.nix default: isDesktop = false"
+    }
+
     # Show current configuration
     info $"Reading machine configuration from: ($machine_config)"
     let config = (nix_config parse-machine-config)
@@ -212,6 +228,7 @@ def main [
     print $"  Username: ($config.username)"
     print $"  System: ($config.system)"
     print $"  Lite: ($config.lite)"
+    print $"  Desktop: ($config.isDesktop)"
     print ""
 
     # Rebuild must work even when the user's shell has not loaded Nix yet.

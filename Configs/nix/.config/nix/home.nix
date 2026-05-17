@@ -2,6 +2,7 @@
   pkgs,
   lib,
   lite ? false,
+  isDesktop ? false,
   ifiokjr-nixpkgs,
   ...
 }:
@@ -197,7 +198,14 @@ in
         google-chrome
         ungoogled-chromium
       ]
-    );
+    )
+    ++ lib.optionals (isDesktop && lite && pkgs.stdenv.isDarwin) [
+      # Docker compatibility layer via podman (for lite macOS desktops like Mac Mini)
+      # Provides `docker` and `docker-compose` commands backed by podman
+      (pkgs.writeShellScriptBin "docker" ''exec podman "$@"'')
+      (pkgs.writeShellScriptBin "docker-compose" ''exec podman-compose "$@"'')
+      pkgs.podman-compose
+    ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
@@ -221,6 +229,16 @@ in
       "$HOME/.local/bin/pnpm:global:sync" --quiet --no-fail || true
     fi
   '';
+
+  # Initialize podman VM for Docker compatibility on lite macOS desktops.
+  # Idempotent: podman machine init fails silently if a machine already exists.
+  home.activation.initPodmanMachine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
+    lib.optionalString (isDesktop && lite && pkgs.stdenv.isDarwin) ''
+      if command -v podman >/dev/null 2>&1; then
+        ${pkgs.podman}/bin/podman machine init 2>/dev/null || true
+      fi
+    ''
+  );
 
   # Environment variables
   home.sessionVariables = {

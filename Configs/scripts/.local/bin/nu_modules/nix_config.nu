@@ -30,6 +30,26 @@ export def flake-dir [] {
 }
 # Path to machine.nix
 export def machine-config-path [] { $"(config-dir)/machine.nix" }
+# Set the machine.nix desktop mode flag (inserts the field if missing).
+# When isDesktop=true AND lite=true on macOS, enables Docker via podman.
+export def set-desktop-mode [value: bool, --path(-p): string] {
+    let target_path = ($path | default (machine-config-path))
+    if not ($target_path | path exists) {
+        error make {
+            msg: $"machine.nix not found at: ($target_path)"
+        }
+    }
+    let content = (open $target_path --raw)
+    let desktop_value = (if $value { "true" } else { "false" })
+    let desktop_line = $"  isDesktop = ($desktop_value);"
+    let updated = if ($content | str contains "isDesktop =") {
+        $content | str replace --regex '(?m)^\s*isDesktop\s*=\s*(true|false);\s*$' $desktop_line
+    } else {
+        let with_desktop = $"\n  # Desktop machine — enables Docker via podman on lite macOS\n($desktop_line)\n}"
+        $content | str replace --regex '\n\}\s*$' $with_desktop
+    }
+    $updated | save -f $target_path
+}
 # Set the machine.nix lite mode flag (inserts the field if missing).
 export def set-lite-mode [value: bool, --path(-p): string] {
     let target_path = ($path | default (machine-config-path))
@@ -69,10 +89,13 @@ export def parse-machine-config [] {
     } catch { "" }
     # lite is optional — older machine.nix files may not have it
     let lite = try { (($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
+    # isDesktop is optional — older machine.nix files may not have it
+    let isDesktop = try { (($content | parse --regex 'isDesktop\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
     {
         username: $username
         system: $system
         hostname: $hostname
         lite: $lite
+        isDesktop: $isDesktop
     }
 }
