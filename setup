@@ -469,6 +469,43 @@ ensure_macos_developer_tools() {
     return 1
 }
 
+# Install Rosetta 2 on Apple Silicon Macs.
+# Required for x86_64 binaries (including some Nix packages) to run.
+# Safe to call on Intel Macs — exits silently.
+ensure_rosetta() {
+	if [ "$PLATFORM" != "macos" ]; then
+		return 0
+	fi
+
+	if [ "$(uname -m)" != "arm64" ]; then
+		return 0
+	fi
+
+	# Check if Rosetta is already installed (OAH = OS Assisted Hardware).
+	if /usr/bin/pgrep -q oahd 2>/dev/null; then
+		print_success "Rosetta 2 is already installed"
+		return 0
+	fi
+
+	# Also check via arch command as a fallback.
+	if /usr/bin/arch -x86_64 /usr/bin/true 2>/dev/null; then
+		print_success "Rosetta 2 is already available"
+		return 0
+	fi
+
+	print_header "Installing Rosetta 2"
+	print_info "Rosetta 2 is required to run x86_64 binaries on Apple Silicon"
+
+	if ! /usr/sbin/softwareupdate --install-rosetta --agree-to-license; then
+		print_error "Failed to install Rosetta 2"
+		print_info "You can install it manually by running:"
+		print_info "  softwareupdate --install-rosetta --agree-to-license"
+		exit 1
+	fi
+
+	print_success "Rosetta 2 installed successfully"
+}
+
 # Run nix commands, using sudo when nix was installed root-only (--init none).
 # Nix binaries are symlinked to /usr/local/bin so PATH isn't needed.
 # HOME is preserved so profile installs go to the calling user's profile.
@@ -887,6 +924,7 @@ main() {
             exit 0
         fi
 
+        ensure_rosetta
         install_nix
         install_git
         clone_dotfiles
@@ -894,6 +932,7 @@ main() {
         exec "$DOTFILES_DIR/setup" "${original_args[@]}"
     fi
 
+    ensure_rosetta
     if ! command_exists nix && [ "$SKIP_NIX" = false ]; then
         install_nix
     fi
