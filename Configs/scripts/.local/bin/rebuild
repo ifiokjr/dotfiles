@@ -387,7 +387,7 @@ def main [
         if (which pnpm | is-not-empty) {
             info "Updating pnpm global dependencies..."
             let pnpm_ok = try {
-                ^pnpm update -g -L
+                ^bash -c 'if [ -z "${PNPM_HOME:-}" ]; then if [ "$(uname -s)" = "Darwin" ]; then PNPM_HOME="$HOME/Library/pnpm"; else PNPM_HOME="$HOME/.local/share/pnpm"; fi; fi; mkdir -p "$PNPM_HOME" "$PNPM_HOME/bin"; export PNPM_HOME PATH="$PNPM_HOME/bin:$PNPM_HOME:$PATH"; pnpm update -g -L'
                 true
             } catch { false }
             if $pnpm_ok {
