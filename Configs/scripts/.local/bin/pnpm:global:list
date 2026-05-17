@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="$HOME/.config/pnpm-global"
+cd "$PROJECT_DIR"
+
+pnpm list "$@"

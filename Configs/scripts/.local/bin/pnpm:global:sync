@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync global pnpm package manifests from ~/.config/pnpm-global into the
-# active global pnpm directory (resolved dynamically via `pnpm root -g`).
+# Install managed pnpm CLI tools from the Tuckr-managed project at
+# ~/.config/pnpm-global. Binaries are exposed by putting that project's
+# node_modules/.bin directory on PATH.
 
 QUIET=false
 NO_FAIL=false
@@ -18,6 +19,9 @@ while [ "$#" -gt 0 ]; do
     -h|--help)
       cat <<'USAGE'
 Usage: pnpm:global:sync [--quiet] [--no-fail]
+
+Install managed CLI packages from ~/.config/pnpm-global using normal project
+pnpm install semantics.
 
 Options:
   --quiet    Suppress info output
@@ -51,88 +55,6 @@ fail() {
   return 1
 }
 
-sanitize_manifest_dependencies_meta() {
-  local manifest_path="$1"
-  local manifest_dir
-
-  [ -f "$manifest_path" ] || return 0
-
-  manifest_dir="$(dirname "$manifest_path")"
-
-  if (
-    cd "$manifest_dir"
-    node - "$manifest_path" <<'NODE'
-const fs = require('fs');
-const manifestPath = process.argv[2];
-const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-
-if (!Object.prototype.hasOwnProperty.call(manifest, 'dependenciesMeta')) {
-  process.exit(10);
-}
-
-delete manifest.dependenciesMeta;
-fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, '\t')}\n`);
-NODE
-  ); then
-    info "Removed pnpm-generated dependenciesMeta from $manifest_path"
-  else
-    local status=$?
-    case "$status" in
-      10) ;;
-      *)
-        fail "Failed to sanitize $manifest_path"
-        return $?
-        ;;
-    esac
-  fi
-}
-
-sanitize_lockfile_dependencies_meta() {
-  local lockfile_path="$1"
-
-  [ -f "$lockfile_path" ] || return 0
-
-  local tmpfile
-  tmpfile="$(mktemp)"
-
-  if awk '
-    BEGIN {
-      skipping = 0
-      removed = 0
-    }
-    /^    dependenciesMeta:$/ {
-      skipping = 1
-      removed = 1
-      next
-    }
-    skipping && (/^    [^ ]/ || /^[^ ]/) {
-      skipping = 0
-    }
-    !skipping {
-      print
-    }
-    END {
-      if (!removed) exit 10
-    }
-  ' "$lockfile_path" > "$tmpfile"; then
-    mv "$tmpfile" "$lockfile_path"
-    info "Removed pnpm-generated dependenciesMeta from $lockfile_path"
-  else
-    local status=$?
-    rm -f "$tmpfile"
-    case "$status" in
-      10) ;;
-      *)
-        fail "Failed to sanitize $lockfile_path"
-        return $?
-        ;;
-    esac
-  fi
-}
-
-# Home Manager activation hooks may run in a non-login shell where PATH does
-# not include nix profile bins yet. Ensure common nix profile locations exist
-# on PATH before checking for pnpm.
 user_name="${USER:-}"
 if [ -z "$user_name" ]; then
   user_name="$(id -un 2>/dev/null || true)"
@@ -154,101 +76,31 @@ done
 unset _p user_name profile_paths
 
 if ! command -v pnpm >/dev/null 2>&1; then
-  fail "pnpm is not installed; skipping pnpm global sync"
+  fail "pnpm is not installed; skipping managed pnpm global sync"
   exit $?
 fi
 
-if [ -z "${PNPM_HOME:-}" ]; then
-  if [ "$(uname -s)" = "Darwin" ]; then
-    PNPM_HOME="$HOME/Library/pnpm"
-  else
-    PNPM_HOME="$HOME/.local/share/pnpm"
-  fi
-  export PNPM_HOME
-fi
-
-mkdir -p "$PNPM_HOME" "$PNPM_HOME/bin"
-case ":$PATH:" in
-  *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-
-SANITIZE_MANIFESTS=true
-if ! command -v node >/dev/null 2>&1; then
-  SANITIZE_MANIFESTS=false
-  warn "node is not installed; skipping pnpm global manifest sanitization"
-fi
-
-SOURCE_DIR="$HOME/.config/pnpm-global"
-if [ ! -f "$SOURCE_DIR/package.json" ]; then
-  info "No $SOURCE_DIR/package.json found; skipping pnpm global sync"
+PROJECT_DIR="$HOME/.config/pnpm-global"
+if [ ! -f "$PROJECT_DIR/package.json" ]; then
+  info "No $PROJECT_DIR/package.json found; skipping managed pnpm global sync"
   exit 0
 fi
 
-# pnpm may add dependenciesMeta.*.node during global installs, which hardcodes
-# a machine-specific Node.js path into the managed manifest and lockfile.
-if [ "$SANITIZE_MANIFESTS" = true ]; then
-  sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
-  sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR"
+
+if [ -f pnpm-lock.yaml ]; then
+  if pnpm install --frozen-lockfile --ignore-scripts; then
+    info "Managed pnpm global packages synced"
+    exit 0
+  fi
+
+  warn "pnpm install with frozen lockfile failed; retrying without --frozen-lockfile..."
 fi
 
-if ! GLOBAL_ROOT="$(pnpm root -g 2>/dev/null)"; then
-  fail "Failed to resolve pnpm global root with 'pnpm root -g'"
+if ! pnpm install --ignore-scripts; then
+  fail "Managed pnpm global package install failed"
   exit $?
 fi
 
-GLOBAL_DIR="$(dirname "$GLOBAL_ROOT")"
-mkdir -p "$GLOBAL_DIR"
-
-for manifest in package.json pnpm-lock.yaml pnpm-workspace.yaml; do
-  src="$SOURCE_DIR/$manifest"
-  dest="$GLOBAL_DIR/$manifest"
-
-  if [ -f "$src" ]; then
-    rm -f "$dest"
-    ln -sfn "$src" "$dest"
-    info "Linked $dest -> $src"
-  elif [ -L "$dest" ]; then
-    rm -f "$dest"
-    info "Removed stale symlink $dest"
-  fi
-done
-
-mapfile -t GLOBAL_PACKAGE_SPECS < <(
-  node - "$SOURCE_DIR/package.json" <<'NODE'
-const fs = require('fs');
-const manifestPath = process.argv[2];
-const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-const dependencies = manifest.dependencies || {};
-
-for (const [name, version] of Object.entries(dependencies)) {
-  console.log(`${name}@${version}`);
-}
-NODE
-)
-
-if [ "${#GLOBAL_PACKAGE_SPECS[@]}" -eq 0 ]; then
-  info "No managed pnpm global dependencies found"
-  exit 0
-fi
-
-# pnpm v11 no longer supports `pnpm install -g` from a package manifest.
-# Keep the manifest as the source of truth, but install entries via `pnpm add -g`.
-if ! pnpm add -g --ignore-scripts "${GLOBAL_PACKAGE_SPECS[@]}"; then
-  rm -f "$SOURCE_DIR/pnpm-lock.yaml" "$GLOBAL_DIR/pnpm-lock.yaml"
-  if ! pnpm add -g --ignore-scripts "${GLOBAL_PACKAGE_SPECS[@]}"; then
-    fail "pnpm global add failed"
-    exit $?
-  fi
-fi
-
-if [ "$SANITIZE_MANIFESTS" = true ]; then
-  sanitize_manifest_dependencies_meta "$SOURCE_DIR/package.json"
-  sanitize_lockfile_dependencies_meta "$SOURCE_DIR/pnpm-lock.yaml"
-fi
-
-info "pnpm global packages synced"
+info "Managed pnpm global packages synced"

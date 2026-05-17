@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Sync pnpm global manifests and reconcile global package installs.
+# Install the Tuckr-managed pnpm global project dependencies.
 SYNC_SCRIPT="$HOME/.local/bin/pnpm:global:sync"
 
 # Fallback for partial/manual deployments where scripts group is not linked yet.

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_DIR="$HOME/.config/pnpm-global"
+cd "$PROJECT_DIR"
+
+pnpm update "$@"
+
+cat <<'NEXT'
+
+Updated the managed pnpm global project.
+Review and commit the updated files in Configs/pnpm/.config/pnpm-global.
+NEXT
