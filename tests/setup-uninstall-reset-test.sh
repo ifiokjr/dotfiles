@@ -84,8 +84,8 @@ fi
 # Check Tuckr symlink
 TUCKR_LOCATION=""
 case "$(uname -s)" in
-	Darwin*) TUCKR_LOCATION="$HOME/Library/Application Support/dotfiles" ;;
-	Linux*) TUCKR_LOCATION="$HOME/.config/dotfiles" ;;
+Darwin*) TUCKR_LOCATION="$HOME/Library/Application Support/dotfiles" ;;
+Linux*) TUCKR_LOCATION="$HOME/.config/dotfiles" ;;
 esac
 
 if [ -L "$TUCKR_LOCATION" ]; then
@@ -104,7 +104,7 @@ else
 fi
 
 # Check nix is available
-if command -v nix &> /dev/null; then
+if command -v nix &>/dev/null; then
 	pass "Nix is available"
 else
 	fail "Nix is not available"
@@ -163,7 +163,7 @@ else
 fi
 
 # Nix should still be available (we used --keep-nix)
-if command -v nix &> /dev/null; then
+if command -v nix &>/dev/null; then
 	pass "Nix is still available (--keep-nix worked)"
 else
 	fail "Nix was removed despite --keep-nix"
