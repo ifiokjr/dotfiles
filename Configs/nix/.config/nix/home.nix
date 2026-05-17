@@ -64,7 +64,6 @@ in
       extra.mdt
       rustup
       secretspec
-      spec-kit
 
       # Shell & Terminal
       bashInteractive
@@ -151,6 +150,7 @@ in
       extra.cargo-interactive-update
       extra.ironclaw
       extra.pnpm
+      extra.op # 1password
 
       # Fonts
       fontforge
@@ -187,16 +187,6 @@ in
       lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
         powershell
-      ]
-      ++ [
-        # macOS-only packages (always installed)
-        _1password-cli
-        cocoapods
-        fvm # Flutter Version Management (macOS/Windows only)
-        mas
-        pinentry_mac
-        swiftformat
-        swiftlint
       ]
     )
     ++ lib.optionals pkgs.stdenv.isLinux (

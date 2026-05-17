@@ -51,13 +51,16 @@
       mkalias # For creating app aliases in /Applications
       tart # macOS VMs on Apple Silicon
       xcodes # Install and manage multiple Xcode versions
-
-      # Core system libraries that other packages depend on
       apple-sdk_26
       libiconv
       fontconfig
       freetype
       jdk # Some system tools may need Java
+      cocoapods
+      mas
+      pinentry_mac
+      swiftformat
+      swiftlint
     ]
   );
 
