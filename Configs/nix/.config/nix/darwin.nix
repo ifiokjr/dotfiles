@@ -377,5 +377,35 @@
       StandardHideDesktopIcons = false;
       StandardHideWidgets = false;
     };
+
+    # Automatically install macOS software updates (security patches, OS upgrades).
+    # This enables System Preferences → Software Update → "Automatically keep
+    # my Mac up to date" and installs available updates automatically.
+    SoftwareUpdate.AutomaticallyInstallMacOSUpdates = true;
   };
+
+  # Enforce minimum macOS version during system activation.
+  # Prints a warning if the running macOS version is below the minimum.
+  # Security patches are critical — running an outdated macOS version leaves
+  # the system vulnerable. Set minimumVersion to the oldest supported release.
+  system.activationScripts.minimumMacOSVersion.text =
+    let
+      minimumVersion = "15.0"; # macOS Sequoia 15.0+
+    in
+    ''
+      #!/bin/sh
+      CURRENT=$(/usr/bin/sw_vers -productVersion)
+      MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+      MINOR=$(echo "$CURRENT" | cut -d. -f2)
+      REQ_MAJOR=$(echo "${minimumVersion}" | cut -d. -f1)
+      REQ_MINOR=$(echo "${minimumVersion}" | cut -d. -f2)
+      if [ "$MAJOR" -lt "$REQ_MAJOR" ] || { [ "$MAJOR" -eq "$REQ_MAJOR" ] && [ "$MINOR" -lt "$REQ_MINOR" ]; }; then
+        echo >&2 ""
+        echo >&2 "⚠️  WARNING: macOS version $CURRENT is below minimum ${minimumVersion}"
+        echo >&2 "    macOS Sequoia 15.0+ is required for security compliance."
+        echo >&2 "    Run: softwareupdate --install --all"
+        echo >&2 "    Or: rebuild --update-os"
+        echo >&2 ""
+      fi
+    '';
 }
