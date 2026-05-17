@@ -91,65 +91,69 @@
         "--verbose"
       ];
     };
-    casks = lib.optionals (!lite) [
-      # Productivity & Communication
-      "1password"
-      "discord"
-      "figma"
-      "setapp"
-      "slack"
-      "telegram"
-      "whatsapp"
+    casks =
+      lib.optionals (!lite) [
+        # Productivity & Communication
+        "1password"
+        "discord"
+        "figma"
+        "setapp"
+        "slack"
+        "telegram"
+        "whatsapp"
 
-      # Browsers
-      "brave-browser"
-      "firefox"
-      "google-chrome"
-      "microsoft-edge"
+        # Browsers
+        "brave-browser"
+        "firefox"
+        "google-chrome"
+        "microsoft-edge"
 
-      # Development
-      "android-ndk"
-      "android-studio"
-      "charles"
-      "cursor"
-      "db-browser-for-sqlite"
-      "dbeaver-community"
-      "gdevelop"
-      "ghostty"
-      "orbstack"
-      "podman-desktop"
-      "react-native-debugger"
-      "reactotron"
-      "visual-studio-code"
-      "zed"
+        # Development
+        "android-ndk"
+        "android-studio"
+        "charles"
+        "cursor"
+        "db-browser-for-sqlite"
+        "dbeaver-community"
+        "gdevelop"
+        "orbstack"
+        "podman-desktop"
+        "react-native-debugger"
+        "reactotron"
+        "visual-studio-code"
+        "zed"
 
-      # Media & Graphics
-      "blackhole-16ch"
-      "blender"
-      "obs"
-      "vlc"
+        # Media & Graphics
+        "blackhole-16ch"
+        "blender"
+        "obs"
+        "vlc"
 
-      # Utilities
-      "alt-tab"
-      "flux-app"
-      "geekbench"
-      "google-drive"
-      "gpg-suite"
-      "jordanbaird-ice"
-      "ledger-wallet"
-      "nordvpn"
-      "qbittorrent"
-      "raycast"
-      "the-unarchiver"
-      "vysor"
+        # Utilities
+        "alt-tab"
+        "flux-app"
+        "geekbench"
+        "google-drive"
+        "gpg-suite"
+        "jordanbaird-ice"
+        "ledger-wallet"
+        "nordvpn"
+        "qbittorrent"
+        "raycast"
+        "the-unarchiver"
+        "vysor"
 
-      # Gaming
-      "steam"
+        # Gaming
+        "steam"
 
-      # Communication
-      "duet"
-      "zoom"
-    ];
+        # Communication
+        "duet"
+        "zoom"
+      ]
+      ++ lib.optionals (isDesktop && lite) [
+        # Essential desktop apps for lite macOS machines
+        "ghostty" # Terminal emulator — needed even in lite mode on desktop machines
+      ];
   };
 
   # Enable Tailscale background service (launchd daemon on macOS, systemd on Linux)
