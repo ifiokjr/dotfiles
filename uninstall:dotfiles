@@ -1,0 +1,437 @@
+#!/usr/bin/env bash
+#
+# uninstall:dotfiles — Completely removes everything the dotfiles setup installed.
+#
+# This script reverses the setup process by:
+# 1. Removing the Tuckr symlink
+# 2. Removing the dotfiles state directory
+# 3. Removing generated machine.nix
+# 4. Removing the dotfiles repository
+# 5. Uninstalling Nix (optional, default: yes)
+#
+# Usage:
+#   ./uninstall:dotfiles [options]
+#
+# Options:
+#   --cwd PATH          Dotfiles directory (default: ~/Developer/.dotfiles)
+#   --keep-nix          Skip Nix uninstallation
+#   --no-confirm        Run without interactive prompts
+#   --help              Show this help message
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m' # No Color
+
+# Configuration
+DEFAULT_DOTFILES_DIR="$HOME/Developer/.dotfiles"
+DOTFILES_DIR=""
+KEEP_NIX=false
+NO_CONFIRM=false
+
+# Print functions
+print_header() {
+	echo -e "${BOLD}${CYAN}==>${NC} ${BOLD}$1${NC}"
+}
+
+print_success() {
+	echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+	echo -e "${RED}✗${NC} $1"
+}
+
+print_warning() {
+	echo -e "${YELLOW}⚠${NC} $1"
+}
+
+print_info() {
+	echo -e "${BLUE}→${NC} $1"
+}
+
+show_help() {
+	cat << 'EOF'
+#
+# uninstall:dotfiles — Completely removes everything the dotfiles setup installed.
+#
+# Usage:
+#   ./uninstall:dotfiles [options]
+#
+# Options:
+#   --cwd PATH          Dotfiles directory (default: ~/Developer/.dotfiles)
+#   --keep-nix          Skip Nix uninstallation
+#   --no-confirm        Run without interactive prompts
+#   --help              Show this help message
+EOF
+}
+
+parse_args() {
+	while [[ $# -gt 0 ]]; do
+		case $1 in
+			--cwd)
+				DOTFILES_DIR="$2"
+				shift 2
+				;;
+			--keep-nix)
+				KEEP_NIX=true
+				shift
+				;;
+			--no-confirm)
+				NO_CONFIRM=true
+				shift
+				;;
+			--help)
+				show_help
+				exit 0
+				;;
+			*)
+				print_error "Unknown option: $1"
+				echo "Run with --help for usage information"
+				exit 1
+				;;
+		esac
+	done
+
+	# Set default if not specified
+	if [ -z "$DOTFILES_DIR" ]; then
+		DOTFILES_DIR="$DEFAULT_DOTFILES_DIR"
+	fi
+}
+
+# Detect platform
+detect_platform() {
+	case "$(uname -s)" in
+		Darwin*) PLATFORM="macos" ;;
+		Linux*) PLATFORM="linux" ;;
+		*) PLATFORM="unknown" ;;
+	esac
+	print_info "Platform detected: $PLATFORM"
+}
+
+# Ask for confirmation unless --no-confirm was passed
+confirm() {
+	local prompt="$1"
+
+	if [ "$NO_CONFIRM" = true ]; then
+		print_info "Non-interactive mode: proceeding with '$prompt'"
+		return 0
+	fi
+
+	local response
+	while true; do
+		read -rp "$(echo -e "${CYAN}?${NC} $prompt [y/N]: ")" response
+		case "$response" in
+			[Yy] | [Yy][Ee][Ss])
+				return 0
+				;;
+			[Nn] | [Nn][Oo] | "")
+				return 1
+				;;
+			*)
+				print_warning "Please answer yes or no"
+				;;
+		esac
+	done
+}
+
+# Get Tuckr symlink location for current platform
+get_tuckr_location() {
+	case "$PLATFORM" in
+		macos)
+			echo "$HOME/Library/Application Support/dotfiles"
+			;;
+		linux | *)
+			echo "$HOME/.config/dotfiles"
+			;;
+	esac
+}
+
+# Remove the Tuckr symlink
+remove_tuckr_symlink() {
+	local tuckr_location
+	tuckr_location="$(get_tuckr_location)"
+
+	print_header "Removing Tuckr symlink"
+
+	if [ -L "$tuckr_location" ]; then
+		print_info "Removing symlink: $tuckr_location"
+		rm "$tuckr_location"
+		print_success "Tuckr symlink removed"
+	elif [ -e "$tuckr_location" ]; then
+		print_warning "Path exists but is not a symlink: $tuckr_location"
+		if confirm "Remove directory at $tuckr_location?"; then
+			print_info "Removing directory: $tuckr_location"
+			rm -rf "$tuckr_location"
+			print_success "Directory removed"
+		else
+			print_info "Skipping: $tuckr_location"
+		fi
+	else
+		print_info "No Tuckr symlink found at $tuckr_location"
+	fi
+}
+
+# Remove the dotfiles state directory
+remove_state_dir() {
+	local state_dir="$HOME/.local/state/dotfiles"
+
+	print_header "Removing setup state directory"
+
+	if [ -d "$state_dir" ]; then
+		print_info "Removing: $state_dir"
+		rm -rf "$state_dir"
+		print_success "State directory removed"
+	else
+		print_info "No state directory found at $state_dir"
+	fi
+}
+
+# Remove generated machine.nix
+remove_machine_nix() {
+	local machine_nix="$HOME/.config/nix/machine.nix"
+
+	print_header "Removing generated machine.nix"
+
+	if [ -f "$machine_nix" ] && [ ! -L "$machine_nix" ]; then
+		print_info "Removing generated file: $machine_nix"
+		rm -f "$machine_nix"
+		print_success "machine.nix removed"
+	elif [ -f "$machine_nix" ] && [ -L "$machine_nix" ]; then
+		print_info "machine.nix is a symlink (managed by tuckr), skipping"
+	else
+		print_info "No generated machine.nix found at $machine_nix"
+	fi
+}
+
+# Remove the dotfiles repository
+remove_dotfiles_dir() {
+	print_header "Removing dotfiles repository"
+
+	if [ -d "$DOTFILES_DIR" ]; then
+		if confirm "Remove dotfiles repository at $DOTFILES_DIR?"; then
+			print_info "Removing: $DOTFILES_DIR"
+			rm -rf "$DOTFILES_DIR"
+			print_success "Dotfiles repository removed"
+		else
+			print_info "Skipping dotfiles directory removal"
+		fi
+	else
+		print_info "No dotfiles directory found at $DOTFILES_DIR"
+	fi
+}
+
+# Run nix profile remove with sudo if needed (root-only nix installs)
+run_nix_profile_remove() {
+	if [ "$(uname -s)" = "Linux" ] && [ ! -d /run/systemd/system ] && [ "$(id -u)" -ne 0 ]; then
+		sudo HOME="$HOME" nix profile remove "$@" || true
+	else
+		nix profile remove "$@" || true
+	fi
+}
+
+# Remove temporary nix profile packages
+remove_nix_profile_packages() {
+	print_header "Removing temporary nix profile packages"
+
+	local packages=("tuckr" "nushell" "git")
+	local removed_any=false
+
+	for pkg in "${packages[@]}"; do
+		# Check if the package regex matches anything in the profile
+		local profile_list
+		profile_list="$(nix profile list 2>/dev/null || true)"
+		if echo "$profile_list" | grep -q "$pkg"; then
+			print_info "Removing $pkg from nix profile"
+			# Attempt removal but don't fail if it errors
+			if run_nix_profile_remove --regex ".*${pkg}.*"; then
+				print_success "Removed $pkg"
+			else
+				print_warning "Could not remove $pkg (may already be removed)"
+			fi
+			removed_any=true
+		fi
+	done
+
+	if [ "$removed_any" = false ]; then
+		print_info "No temporary nix profile packages found"
+	fi
+}
+
+# Run nix commands, using sudo when nix was installed root-only (--init none).
+run_nix() {
+	if [ "$(uname -s)" = "Linux" ] && [ ! -d /run/systemd/system ] && [ "$(id -u)" -ne 0 ]; then
+		sudo HOME="$HOME" nix "$@"
+	else
+		nix "$@"
+	fi
+}
+
+# Uninstall Nix entirely
+uninstall_nix() {
+	print_header "Uninstalling Nix"
+
+	# Check if Nix is actually installed
+	if ! command -v nix &> /dev/null; then
+		print_info "Nix is not installed, nothing to remove"
+		return 0
+	fi
+
+	if ! confirm "This will completely uninstall Nix and all related packages. Continue?"; then
+		print_info "Skipping Nix uninstallation"
+		return 0
+	fi
+
+	# macOS: run the Determinate Nix uninstaller
+	if [ "$PLATFORM" = "macos" ]; then
+		if [ -f /nix/nix-installer ]; then
+			print_info "Running Determinate Nix uninstaller"
+			if sudo /nix/nix-installer uninstall; then
+				print_success "Nix uninstalled successfully"
+			else
+				print_warning "Nix uninstaller reported errors (may already be partially uninstalled)"
+			fi
+		else
+			print_warning "Nix uninstaller not found at /nix/nix-installer"
+			print_info "You may need to uninstall Nix manually"
+		fi
+	# Linux: try the Determinate Nix uninstaller first, then fall back
+	elif [ "$PLATFORM" = "linux" ]; then
+		if [ -f /nix/nix-installer ]; then
+			print_info "Running Determinate Nix uninstaller"
+			if sudo /nix/nix-installer uninstall; then
+				print_success "Nix uninstalled successfully"
+			else
+				print_warning "Nix uninstaller reported errors"
+			fi
+		else
+			print_warning "Nix uninstaller not found at /nix/nix-installer"
+			print_info "Attempting manual Nix removal..."
+
+			# Stop nix-daemon if running
+			if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+				# shellcheck disable=SC1091
+				. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+				sudo launchctl unload /Library/LaunchDaemons/org.nixos.nix-daemon.plist 2>/dev/null || true
+			fi
+
+			# Remove nix store and config
+			sudo rm -rf /nix 2>/dev/null || true
+			print_info "Manual removal attempted"
+		fi
+	fi
+}
+
+# Remove nix-related config files and directories
+remove_nix_config() {
+	print_header "Cleaning up Nix configuration"
+
+	local nix_conf_dir="$HOME/.config/nix"
+	local nix_conf="$HOME/.config/nix/nix.conf"
+
+	# Remove nix.conf access-tokens if we wrote them
+	if [ -f "$nix_conf" ]; then
+		if grep -q "access-tokens" "$nix_conf" 2>/dev/null; then
+			print_info "Removing access-tokens from $nix_conf (nix may have been removed, so manual removal needed)"
+			# Use sed to remove the access-tokens line
+			sed -i.bak '/^access-tokens/d' "$nix_conf" 2>/dev/null || true
+			rm -f "$nix_conf.bak" 2>/dev/null || true
+		fi
+	fi
+
+	# Only remove nix config dir if it's empty and not a symlink
+	if [ -d "$nix_conf_dir" ] && [ ! -L "$nix_conf_dir" ]; then
+		if [ -z "$(ls -A "$nix_conf_dir" 2>/dev/null)" ]; then
+			print_info "Removing empty nix config directory: $nix_conf_dir"
+			rmdir "$nix_conf_dir" 2>/dev/null || true
+		else
+			print_info "Nix config directory not empty, leaving in place: $nix_conf_dir"
+		fi
+	fi
+}
+
+main() {
+	echo ""
+	echo -e "${BOLD}${RED}╔════════════════════════════════════════╗${NC}"
+	echo -e "${BOLD}${RED}║                                        ║${NC}"
+	echo -e "${BOLD}${RED}║      Dotfiles Uninstall                ║${NC}"
+	echo -e "${BOLD}${RED}║                                        ║${NC}"
+	echo -e "${BOLD}${RED}╚════════════════════════════════════════╝${NC}"
+	echo ""
+
+	parse_args "$@"
+	detect_platform
+
+	print_warning "This will remove dotfiles configuration from this machine."
+	print_warning "The following will be removed:"
+
+	echo ""
+	echo -e "  ${RED}•${NC} Tuckr symlink"
+	echo -e "  ${RED}•${NC} Setup state directory (~/.local/state/dotfiles)"
+	if [ -f "$HOME/.config/nix/machine.nix" ] && [ ! -L "$HOME/.config/nix/machine.nix" ]; then
+		echo -e "  ${RED}•${NC} Generated machine.nix"
+	fi
+	# shellcheck disable=SC2015
+	if [ -d "$DOTFILES_DIR" ]; then
+		echo -e "  ${RED}•${NC} Dotfiles repository ($DOTFILES_DIR)"
+	else
+		echo -e "  ${CYAN}•${NC} Dotfiles directory not found"
+	fi
+	if [ "$KEEP_NIX" = false ] && command -v nix &> /dev/null; then
+		echo -e "  ${RED}•${NC} Nix package manager and all packages"
+	elif [ "$KEEP_NIX" = true ]; then
+		echo -e "  ${CYAN}•${NC} Nix: will be kept (--keep-nix)"
+	fi
+	echo ""
+
+	if [ "$NO_CONFIRM" = false ]; then
+		if ! confirm "Proceed with uninstall?"; then
+			print_info "Uninstall cancelled"
+			exit 0
+		fi
+	fi
+
+	# Step 1: Remove the Tuckr symlink
+	remove_tuckr_symlink
+
+	# Step 2: Remove state directory
+	remove_state_dir
+
+	# Step 3: Remove generated machine.nix
+	remove_machine_nix
+
+	# Step 4: Remove temporary nix profile packages (tuckr, nushell, git)
+	# Only if nix is still installed
+	if command -v nix &> /dev/null; then
+		remove_nix_profile_packages
+	fi
+
+	# Step 5: Remove the dotfiles repository
+	remove_dotfiles_dir
+
+	# Step 6: Uninstall Nix (unless --keep-nix)
+	if [ "$KEEP_NIX" = false ]; then
+		uninstall_nix
+	fi
+
+	# Step 7: Clean up nix config
+	remove_nix_config
+
+	echo ""
+	echo -e "${GREEN}${BOLD}╔════════════════════════════════════════╗${NC}"
+	echo -e "${GREEN}${BOLD}║                                        ║${NC}"
+	echo -e "${GREEN}${BOLD}║      Uninstall Complete!               ║${NC}"
+	echo -e "${GREEN}${BOLD}║                                        ║${NC}"
+	echo -e "${GREEN}${BOLD}╚════════════════════════════════════════╝${NC}"
+	echo ""
+	print_info "All dotfiles configuration has been removed from this machine."
+	echo ""
+}
+
+main "$@"

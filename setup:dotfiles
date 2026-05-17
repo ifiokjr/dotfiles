@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+#
+# setup:dotfiles — Convenience wrapper for the setup script.
+#
+# Passes all arguments through to ./setup.
+#
+# Usage:
+#   ./setup:dotfiles [options]
+#
+# See ./setup --help for available options.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$SCRIPT_DIR/setup" "$@"

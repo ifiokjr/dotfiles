@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# reset:dotfiles — First uninstall, then re-setup dotfiles from scratch.
+#
+# Runs uninstall:dotfiles first to completely remove everything,
+# then runs setup:dotfiles to re-install with the same parameters.
+#
+# Usage:
+#   ./reset:dotfiles [options]
+#
+# Options are passed through to both uninstall:dotfiles and setup:dotfiles.
+# The --keep-nix flag is only meaningful for uninstall:dotfiles.
+#
+# See ./setup --help for setup options.
+# See ./uninstall:dotfiles --help for uninstall options.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Colors for output
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+echo ""
+echo -e "${BOLD}${CYAN}╔════════════════════════════════════════╗${NC}"
+echo -e "${BOLD}${CYAN}║                                        ║${NC}"
+echo -e "${BOLD}${CYAN}║      Dotfiles Reset                    ║${NC}"
+echo -e "${BOLD}${CYAN}║                                        ║${NC}"
+echo -e "${BOLD}${CYAN}╚════════════════════════════════════════╝${NC}"
+echo ""
+
+echo -e "${CYAN}Phase 1/2:${NC} Uninstalling dotfiles..."
+"$SCRIPT_DIR/uninstall:dotfiles" "$@"
+
+echo ""
+echo -e "${CYAN}Phase 2/2:${NC} Setting up dotfiles..."
+"$SCRIPT_DIR/setup:dotfiles" "$@"
+
+echo ""
+echo -e "${GREEN}${BOLD}Reset complete!${NC}"
