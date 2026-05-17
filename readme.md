@@ -185,7 +185,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 **Location:** `Configs/pnpm/.config/pnpm-global/` **Deploys:** `~/.config/pnpm-global/` **Description:** Managed pnpm project (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`) for deterministic CLI tool installs on macOS and Linux.
 
-**Hook:** `post_pnpm` - Runs `pnpm:global:sync`, which installs the managed project with normal `pnpm install` semantics. Shell startup adds `~/.config/pnpm-global/node_modules/.bin` to PATH.
+**Hook:** `post_pnpm` - Runs `pnpm:global:sync`, which links the managed manifests into `~/.local/share/pnpm-global` and installs there with normal `pnpm install` semantics. Shell startup adds `~/.local/share/pnpm-global/node_modules/.bin` to PATH.
 
 Pi remains installed through the managed pnpm packages, but `~/.pi/` is intentionally user-managed instead of synced by Tuckr.
 
@@ -549,7 +549,7 @@ Use:
 tuckr set pnpm
 ```
 
-to install the Tuckr-managed project at `~/.config/pnpm-global` from the committed lockfile. Shell startup adds `~/.config/pnpm-global/node_modules/.bin` to PATH, so installed CLI binaries are available globally without using pnpm's special global install mode.
+to install the Tuckr-managed manifests from `~/.config/pnpm-global` into the runtime project at `~/.local/share/pnpm-global` from the committed lockfile. Shell startup adds `~/.local/share/pnpm-global/node_modules/.bin` to PATH, so installed CLI binaries are available globally without using pnpm's special global install mode or putting generated `node_modules` inside the Tuckr group.
 
 Use `pnpm:global:add <pkg>`, `pnpm:global:remove <pkg>`, `pnpm:global:update [pkg]`, and `pnpm:global:list` to manage this project intentionally, then commit the resulting `Configs/pnpm/.config/pnpm-global/package.json` and `pnpm-lock.yaml` changes.
 

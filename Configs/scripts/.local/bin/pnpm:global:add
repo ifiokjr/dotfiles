@@ -5,19 +5,20 @@ if [ "$#" -eq 0 ]; then
   cat >&2 <<'USAGE'
 Usage: pnpm:global:add <pkg...>
 
-Add packages to the Tuckr-managed pnpm global project at ~/.config/pnpm-global.
+Add packages to the Tuckr-managed pnpm global manifests at ~/.config/pnpm-global.
 USAGE
   exit 1
 fi
 
-PROJECT_DIR="$HOME/.config/pnpm-global"
-mkdir -p "$PROJECT_DIR"
-cd "$PROJECT_DIR"
+SOURCE_DIR="$HOME/.config/pnpm-global"
+mkdir -p "$SOURCE_DIR"
+cd "$SOURCE_DIR"
 
-pnpm add "$@"
+pnpm add --lockfile-only "$@"
+pnpm:global:sync
 
 cat <<'NEXT'
 
-Added package(s) to the managed pnpm global project.
+Added package(s) to the managed pnpm global manifests.
 Review and commit the updated files in Configs/pnpm/.config/pnpm-global.
 NEXT

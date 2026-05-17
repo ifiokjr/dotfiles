@@ -5,18 +5,19 @@ if [ "$#" -eq 0 ]; then
   cat >&2 <<'USAGE'
 Usage: pnpm:global:remove <pkg...>
 
-Remove packages from the Tuckr-managed pnpm global project at ~/.config/pnpm-global.
+Remove packages from the Tuckr-managed pnpm global manifests at ~/.config/pnpm-global.
 USAGE
   exit 1
 fi
 
-PROJECT_DIR="$HOME/.config/pnpm-global"
-cd "$PROJECT_DIR"
+SOURCE_DIR="$HOME/.config/pnpm-global"
+cd "$SOURCE_DIR"
 
-pnpm remove "$@"
+pnpm remove --lockfile-only "$@"
+pnpm:global:sync
 
 cat <<'NEXT'
 
-Removed package(s) from the managed pnpm global project.
+Removed package(s) from the managed pnpm global manifests.
 Review and commit the updated files in Configs/pnpm/.config/pnpm-global.
 NEXT
