@@ -39,8 +39,8 @@ importers:
         specifier: ^11.14.1
         version: 11.14.1
       opencode-ai:
-        specifier: 1.15.1
-        version: 1.15.1
+        specifier: 1.15.3
+        version: 1.15.3
       sql-formatter:
         specifier: ^15.7.4
         version: 15.7.4
@@ -477,72 +477,72 @@ packages:
   '@lydell/node-pty@1.1.0':
     resolution: {integrity: sha512-VDD8LtlMTOrPKWMXUAcB9+LTktzuunqrMwkYR1DMRBkS6LQrCt+0/Ws1o2rMml/n3guePpS7cxhHF7Nm5K4iMw==}
 
-  '@mariozechner/clipboard-darwin-arm64@0.3.2':
-    resolution: {integrity: sha512-uBf6K7Je1ihsgvmWxA8UCGCeI+nbRVRXoarZdLjl6slz94Zs1tNKFZqx7aCI5O1i3e0B6ja82zZ06BWrl0MCVw==}
+  '@mariozechner/clipboard-darwin-arm64@0.3.6':
+    resolution: {integrity: sha512-HjaisYCAbHi/1+N1yDAQHc8ZXGffufIUT5NSOSVR3f3AuMDusxTtnbK8tZ7JFDkShua1oNGZoNwQHsc8MPtE0Q==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@mariozechner/clipboard-darwin-universal@0.3.2':
-    resolution: {integrity: sha512-mxSheKTW2U9LsBdXy0SdmdCAE5HqNS9QUmpNHLnfJ+SsbFKALjEZc5oRrVMXxGQSirDvYf5bjmRyT0QYYonnlg==}
+  '@mariozechner/clipboard-darwin-universal@0.3.6':
+    resolution: {integrity: sha512-8BWtPjOtJOJoykml3w0fx0zRrfWP31mXrJwfoA7xzNprkZw1uolCNfgmjDiVBseoKjp16EGITz7bN+61qn8dWA==}
     engines: {node: '>= 10'}
     os: [darwin]
 
-  '@mariozechner/clipboard-darwin-x64@0.3.2':
-    resolution: {integrity: sha512-U1BcVEoidvwIp95+HJswSW+xr28EQiHR7rZjH6pn8Sja5yO4Yoe3yCN0Zm8Lo72BbSOK/fTSq0je7CJpaPCspg==}
+  '@mariozechner/clipboard-darwin-x64@0.3.6':
+    resolution: {integrity: sha512-p9syiZD1kU4I+1ya7f7g+zD1GiUvR8fdlRlNmgsZNWlyjtc8rlV2EjTLd/35x1LsdBq020GVvtzp0ZmPgBI09Q==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
 
-  '@mariozechner/clipboard-linux-arm64-gnu@0.3.2':
-    resolution: {integrity: sha512-BsinwG3yWTIjdgNCxsFlip7LkfwPk+ruw/aFCXHUg/fb5XC/Ksp+YMQ7u0LUtiKzIv/7LMXgZInJQH6gxbAaqQ==}
+  '@mariozechner/clipboard-linux-arm64-gnu@0.3.6':
+    resolution: {integrity: sha512-5JFf5rGofrm+V29HNF+wLthXphHdQpMbKDUYJ5tML6/Z5DLlLOV/9Ak4kDPtYyZ+Dzf+kAusE0VsFg4+tfP1IA==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@mariozechner/clipboard-linux-arm64-musl@0.3.2':
-    resolution: {integrity: sha512-0/Gi5Xq2V6goXBop19ePoHvXsmJD9SzFlO3S+d6+T2b+BlPcpOu3Oa0wTjl+cZrLAAEzA86aPNBI+VVAFDFPKw==}
+  '@mariozechner/clipboard-linux-arm64-musl@0.3.6':
+    resolution: {integrity: sha512-JlVjxxw0GbGC0djXYWRIqyteO3J1KZ/QG3udlEFaOD5TLOM1FnmXXAPDQBqr+aBVr720ef9K00dirYnJ0LDCtw==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.2':
-    resolution: {integrity: sha512-2AFFiXB24qf0zOZsxI1GJGb9wQGlOJyN6UwoXqmKS3dpQi/l6ix30IzDDA4c4ZcCcx4D+9HLYXhC1w7Sov8pXA==}
+  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.6':
+    resolution: {integrity: sha512-4t8BUi5zZ+L77otFQVnVSlaTyAX4TVk9EqQm4syMrEQp96trFEHEwwNHcNEBGzYv5+K7mxay50TthYkz47OWzQ==}
     engines: {node: '>= 10'}
     cpu: [riscv64]
     os: [linux]
     libc: [glibc]
 
-  '@mariozechner/clipboard-linux-x64-gnu@0.3.2':
-    resolution: {integrity: sha512-v6fVnsn7WMGg73Dab8QMwyFce7tzGfgEixKgzLP8f1GJqkJZi5zO4k4FOHzSgUufgLil63gnxvMpjWkgfeQN7A==}
+  '@mariozechner/clipboard-linux-x64-gnu@0.3.6':
+    resolution: {integrity: sha512-trtPwcNLW37irwQCJLtCxLw757jjJZk3TSnY/MU9bhtWtA3K9b/eLW0e4RGhUXDoFRds9opNWWaUDuFLa8dm0w==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@mariozechner/clipboard-linux-x64-musl@0.3.2':
-    resolution: {integrity: sha512-xVUtnoMQ8v2JVyfJLKKXACA6avdnchdbBkTsZs8BgJQo29qwCp5NIHAUO8gbJ40iaEGToW5RlmVk2M9V0HsHEw==}
+  '@mariozechner/clipboard-linux-x64-musl@0.3.6':
+    resolution: {integrity: sha512-WfnzIvOCCWQiN0MmltCEo6cLceUDbYe+I7xyFZjaps5A+2Op/M2CY7Rey+C4ucQhrvmpoHmTSFgY9ODWk7snoA==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@mariozechner/clipboard-win32-arm64-msvc@0.3.2':
-    resolution: {integrity: sha512-AEgg95TNi8TGgak2wSXZkXKCvAUTjWoU1Pqb0ON7JHrX78p616XUFNTJohtIon3e0w6k0pYPZeCuqRCza/Tqeg==}
+  '@mariozechner/clipboard-win32-arm64-msvc@0.3.6':
+    resolution: {integrity: sha512-+8+1aHYsBPUjmW3otmWlg+Hijt0iJvoBBs5e0mxFeUd4gDaKMB8Bn6x7c6KVtscg7E5j5NFXnwQqNSIAO4p8zQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [win32]
 
-  '@mariozechner/clipboard-win32-x64-msvc@0.3.2':
-    resolution: {integrity: sha512-tGRuYpZwDOD7HBrCpyRuhGnHHSCknELvqwKKUG4JSfSB7JIU7LKRh6zx6fMUOQd8uISK35TjFg5UcNih+vJhFA==}
+  '@mariozechner/clipboard-win32-x64-msvc@0.3.6':
+    resolution: {integrity: sha512-S4xfPmERC8ZkiLHe3vekZCjdDwNEETCuvCgQK2kP6/TnvmUkq1y2Pk+DjM4t8uh9KMX9bH4zs5ePcKa8GTXmfg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
 
-  '@mariozechner/clipboard@0.3.5':
-    resolution: {integrity: sha512-D3F+UrU9CR7roJt0zDLp6Oc+4/KlLDIrN4frH+6V90SJNW2KKUec1oCQIPaaDjCqeOsQyX9dyqYbImIQIM45PA==}
+  '@mariozechner/clipboard@0.3.6':
+    resolution: {integrity: sha512-MXdtr+6+ntlIVHdrZYuZNQydu6o8yZswFJ2Ln81j2O/Y9B/LDHvEaIm95xWNPkjGTWriSOeLnQJRFs6dYb60bg==}
     engines: {node: '>= 10'}
 
   '@mariozechner/pi-agent-core@0.73.1':
@@ -1595,8 +1595,8 @@ packages:
   highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
 
-  hono@4.12.18:
-    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
+  hono@4.12.19:
+    resolution: {integrity: sha512-xa3eYXYXx68XTT4hZ7dRzsXBhaq85ToSrlUJNoR0gwz/1Ap/CNwX47wfvV7pc/xWhjKVVkLT7zBJy8chhNguqQ==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@9.0.3:
@@ -2041,69 +2041,69 @@ packages:
       zod:
         optional: true
 
-  opencode-ai@1.15.1:
-    resolution: {integrity: sha512-xLb1NuYZcMJ1p33hC/kgTMcJAueACVTfX6ps91a54GOFTM/wFp7br0t2cqHopEU9paqItbAnQwZB573qmPKH6w==}
+  opencode-ai@1.15.3:
+    resolution: {integrity: sha512-nQQfqqRqDo4NIvc4wwLd7+jvKStlbPal6HuuJMbkpLlW6nOraI4z506+unWtP4L3KDh6mIGXTlaFCjAyiBFZlA==}
     cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
 
-  opencode-darwin-arm64@1.15.1:
-    resolution: {integrity: sha512-eNgIfATsnHcud4Pr58OIR+TJGSsDvWmyNlfSDVVgP92qdnHFdZ5YsHKjcUGmeuuUN+oZwPb/z5nZSrkf+CCB2g==}
+  opencode-darwin-arm64@1.15.3:
+    resolution: {integrity: sha512-sok6WUDVInfUz61NgDg8tN7RxW24oe+wloVQRRHtwxyBtXqFOmRAcumwQR+Mqga3OtMAFi7GSrGARxyUaAWdWQ==}
     cpu: [arm64]
     os: [darwin]
 
-  opencode-darwin-x64-baseline@1.15.1:
-    resolution: {integrity: sha512-XDx90Hhj+SPUxu0rqewsNR10JTny7+VE4C5pjWB04I6eoiEuBWy2EMvPXPg2FUA5Suz1PXXJ6yThfRtOxXNHuw==}
+  opencode-darwin-x64-baseline@1.15.3:
+    resolution: {integrity: sha512-SZ/reZ9Cn/GW18QKH7wxDFvxheF2ILDgy68SZauXo5qkbQsHWPjHILrJFdgd5zJdX8cTa9NBMhjiB4yns+QtBA==}
     cpu: [x64]
     os: [darwin]
 
-  opencode-darwin-x64@1.15.1:
-    resolution: {integrity: sha512-tNbzF6n+TczILEqo0adtup1ZXBgAcqftQd11+eQohGxtNAjmD7Z/gCTVpEzh9GlHUPzUEuREZ4gRAbJmPpafBQ==}
+  opencode-darwin-x64@1.15.3:
+    resolution: {integrity: sha512-36nGgyl/XOMDVw2FFAnnwpa5vM23rxfzQ4GSyJkXPph7EatE1TWjdemkiXRIZXgL7GAYSCO/OYtlPaxIyvdrhg==}
     cpu: [x64]
     os: [darwin]
 
-  opencode-linux-arm64-musl@1.15.1:
-    resolution: {integrity: sha512-UuoizYN32eTWmQT494bw70Sq4AByS0pGk46Mo/z+KzV+KTQlsDXRQrnKATKYFDqE2T3c1VsPM1KqRV/DqvnXxw==}
+  opencode-linux-arm64-musl@1.15.3:
+    resolution: {integrity: sha512-l/s38bfeLFaS9E4wI6uPE5Jgk5rNB6i7geDTLXJDq5s5rS4fJjnxxrz5rFBJbrrkhw/lK+MX5lenaWE1Ol4oQg==}
     cpu: [arm64]
     os: [linux]
 
-  opencode-linux-arm64@1.15.1:
-    resolution: {integrity: sha512-MG6tuLZqzDjHGeaotejhYuuv2USR0y3v8N+6g5gWPHScX/iJWkJDMFBeT6+KOV/CWawrGRqZfBDfdJSKirX2LQ==}
+  opencode-linux-arm64@1.15.3:
+    resolution: {integrity: sha512-8Bn4JjCTJBYZGXpXnfCgLz5pdomM+QkL5Vu6yw95P88WWCxe5Ky8sannxZCnGXA2nZKTSVEUY5yTkgfFt2Ys3Q==}
     cpu: [arm64]
     os: [linux]
 
-  opencode-linux-x64-baseline-musl@1.15.1:
-    resolution: {integrity: sha512-Is50zWUqa9fIJ+tiDOpxENcgn2XBk0QKNEocbu/x9aOdpfFsHhtxe33zi/+9CNdSr+O/6y9jRAMGn7AirJyZlg==}
+  opencode-linux-x64-baseline-musl@1.15.3:
+    resolution: {integrity: sha512-/ieK3IAC8px3C3PGYOprKUZRRBBNrhW8tNmrZgIQ8MKk7nhm11pNssVhIi+3FEpxZLFroQiTxhqDwge/9tx/EA==}
     cpu: [x64]
     os: [linux]
 
-  opencode-linux-x64-baseline@1.15.1:
-    resolution: {integrity: sha512-ExKWMk/6ULM9HBda2KKZJNE5Ejzaa51QWpr7+Ljv1AlazxQQZKwJfqcZcSNfk0YsgXDESw2w2dwBmOcMaxQZKA==}
+  opencode-linux-x64-baseline@1.15.3:
+    resolution: {integrity: sha512-bfKTSoS0hfoi6Xa6j+1WkQOrfO+z8MQqOCKxi37aT1TNZ831zW4DVGgU5ZKJKzyD9SAVFQLCRIes6b7FfkkOrA==}
     cpu: [x64]
     os: [linux]
 
-  opencode-linux-x64-musl@1.15.1:
-    resolution: {integrity: sha512-feNjVo7XGjqFHf5lejxuyZIkNi9Yi4B2H3w+p2SF9vcyUdPaJnta2/6Os7Pf8kwElRs6EnWRyUO2JVg4hjAjjg==}
+  opencode-linux-x64-musl@1.15.3:
+    resolution: {integrity: sha512-6I1mnIDQMOSwCBrKBExtY4+LJsB0BwANi7XL0e12R1dAtnSuk3nOyzcKVoGmpnV3C/7k9PIH8xsAcmd2A/jA7w==}
     cpu: [x64]
     os: [linux]
 
-  opencode-linux-x64@1.15.1:
-    resolution: {integrity: sha512-mKRg+iHdwEYNDS+DYa9VQnN903zlw8FInCQRGpY155aR/AF1r3hIn+7IopOTDAwqkutL9vJWMXELxmNpPdaTQg==}
+  opencode-linux-x64@1.15.3:
+    resolution: {integrity: sha512-aFVaBXGo9VJI4rIdMs/VnWTys0twgh8Lw6YsuCZfNbulQI38h7uy+4Fh5oqIRTpbMMX6o9g5igxRxaLZJRNW5w==}
     cpu: [x64]
     os: [linux]
 
-  opencode-windows-arm64@1.15.1:
-    resolution: {integrity: sha512-M3Wz4U+hF8paqrBpOWPqOM16MhDDZsnb0EZc1fFdKMfu1a8g2oR3gtq1heQgUOKd8FHaeDQHvBYOqaaJdoaCmA==}
+  opencode-windows-arm64@1.15.3:
+    resolution: {integrity: sha512-jbsr/5cIYXxqZwbBYwNmwVceU/HRrn9zcSm8curi/Myuc8JXUxxlC0vk98Lv0/Ek+guogHDg3dKMQSMbPmmDpw==}
     cpu: [arm64]
     os: [win32]
 
-  opencode-windows-x64-baseline@1.15.1:
-    resolution: {integrity: sha512-sFvI5sY4kijrkIt9qry34aqZASRo9jJKBLm6PH/zZbGdRtvFM32/n+A26Z/NDbowya8fOtj7MX2Ih5DvR9Md1A==}
+  opencode-windows-x64-baseline@1.15.3:
+    resolution: {integrity: sha512-wGbcrA7271nmbyPsQOlXqVpeH6MyzGIuyc5MyN8cEh0rfDEKthHLgUus6FuUWNttHXqy35h5hPTuAmJv/VGzLw==}
     cpu: [x64]
     os: [win32]
 
-  opencode-windows-x64@1.15.1:
-    resolution: {integrity: sha512-MdCBncbhpcImw3zjYBuoI+ZqfMR1uI4mc8KCltwIgI2DrxuOZNe66A/3feOhWd9MQQ2c2PSdyyJfW9PE0FA/Ow==}
+  opencode-windows-x64@1.15.3:
+    resolution: {integrity: sha512-/AoLA/C9Z/bRxSQvqgKdGWKQnL1UbybyZchSdwB+kU0+oaJ7RZz0KmCkDjUFGEGeYYYHrQ5Lz21vaqCjeEkk1w==}
     cpu: [x64]
     os: [win32]
 
@@ -2265,8 +2265,8 @@ packages:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
 
-  qs@6.15.1:
-    resolution: {integrity: sha512-6YHEFRL9mfgcAvql/XhwTvf5jKcOiiupt2FiJxHkiX1z4j7WL8J/jRHYLluORvc1XxB5rV20KoeK00gVJamspg==}
+  qs@6.15.2:
+    resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
     engines: {node: '>=0.6'}
 
   queue-microtask@1.2.3:
@@ -3198,9 +3198,9 @@ snapshots:
 
   '@googleworkspace/cli@0.22.5': {}
 
-  '@hono/node-server@1.19.14(hono@4.12.18)':
+  '@hono/node-server@1.19.14(hono@4.12.19)':
     dependencies:
-      hono: 4.12.18
+      hono: 4.12.19
     optional: true
 
   '@humanfs/core@0.19.2':
@@ -3450,48 +3450,48 @@ snapshots:
       '@lydell/node-pty-win32-x64': 1.1.0
     optional: true
 
-  '@mariozechner/clipboard-darwin-arm64@0.3.2':
+  '@mariozechner/clipboard-darwin-arm64@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-darwin-universal@0.3.2':
+  '@mariozechner/clipboard-darwin-universal@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-darwin-x64@0.3.2':
+  '@mariozechner/clipboard-darwin-x64@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-linux-arm64-gnu@0.3.2':
+  '@mariozechner/clipboard-linux-arm64-gnu@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-linux-arm64-musl@0.3.2':
+  '@mariozechner/clipboard-linux-arm64-musl@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.2':
+  '@mariozechner/clipboard-linux-riscv64-gnu@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-linux-x64-gnu@0.3.2':
+  '@mariozechner/clipboard-linux-x64-gnu@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-linux-x64-musl@0.3.2':
+  '@mariozechner/clipboard-linux-x64-musl@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-win32-arm64-msvc@0.3.2':
+  '@mariozechner/clipboard-win32-arm64-msvc@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard-win32-x64-msvc@0.3.2':
+  '@mariozechner/clipboard-win32-x64-msvc@0.3.6':
     optional: true
 
-  '@mariozechner/clipboard@0.3.5':
+  '@mariozechner/clipboard@0.3.6':
     optionalDependencies:
-      '@mariozechner/clipboard-darwin-arm64': 0.3.2
-      '@mariozechner/clipboard-darwin-universal': 0.3.2
-      '@mariozechner/clipboard-darwin-x64': 0.3.2
-      '@mariozechner/clipboard-linux-arm64-gnu': 0.3.2
-      '@mariozechner/clipboard-linux-arm64-musl': 0.3.2
-      '@mariozechner/clipboard-linux-riscv64-gnu': 0.3.2
-      '@mariozechner/clipboard-linux-x64-gnu': 0.3.2
-      '@mariozechner/clipboard-linux-x64-musl': 0.3.2
-      '@mariozechner/clipboard-win32-arm64-msvc': 0.3.2
-      '@mariozechner/clipboard-win32-x64-msvc': 0.3.2
+      '@mariozechner/clipboard-darwin-arm64': 0.3.6
+      '@mariozechner/clipboard-darwin-universal': 0.3.6
+      '@mariozechner/clipboard-darwin-x64': 0.3.6
+      '@mariozechner/clipboard-linux-arm64-gnu': 0.3.6
+      '@mariozechner/clipboard-linux-arm64-musl': 0.3.6
+      '@mariozechner/clipboard-linux-riscv64-gnu': 0.3.6
+      '@mariozechner/clipboard-linux-x64-gnu': 0.3.6
+      '@mariozechner/clipboard-linux-x64-musl': 0.3.6
+      '@mariozechner/clipboard-win32-arm64-msvc': 0.3.6
+      '@mariozechner/clipboard-win32-x64-msvc': 0.3.6
     optional: true
 
   '@mariozechner/pi-agent-core@0.73.1(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.20.1)(zod@4.4.3)':
@@ -3551,7 +3551,7 @@ snapshots:
       uuid: 14.0.0
       yaml: 2.9.0
     optionalDependencies:
-      '@mariozechner/clipboard': 0.3.5
+      '@mariozechner/clipboard': 0.3.6
     transitivePeerDependencies:
       - '@modelcontextprotocol/sdk'
       - bufferutil
@@ -3583,7 +3583,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.29.0(zod@4.4.3)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.18)
+      '@hono/node-server': 1.19.14(hono@4.12.19)
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       content-type: 1.0.5
@@ -3593,7 +3593,7 @@ snapshots:
       eventsource-parser: 3.0.8
       express: 5.2.1
       express-rate-limit: 8.5.2(express@5.2.1)
-      hono: 4.12.18
+      hono: 4.12.19
       jose: 6.2.3
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -4028,7 +4028,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.7.2
       on-finished: 2.4.1
-      qs: 6.15.1
+      qs: 6.15.2
       raw-body: 3.0.2
       type-is: 2.1.0
     transitivePeerDependencies:
@@ -4455,7 +4455,7 @@ snapshots:
       once: 1.4.0
       parseurl: 1.3.3
       proxy-addr: 2.0.7
-      qs: 6.15.1
+      qs: 6.15.2
       range-parser: 1.2.1
       router: 2.2.0
       send: 1.2.1
@@ -4710,7 +4710,7 @@ snapshots:
 
   highlight.js@10.7.3: {}
 
-  hono@4.12.18:
+  hono@4.12.19:
     optional: true
 
   hosted-git-info@9.0.3:
@@ -5081,55 +5081,55 @@ snapshots:
       ws: 8.20.1
       zod: 4.4.3
 
-  opencode-ai@1.15.1:
+  opencode-ai@1.15.3:
     optionalDependencies:
-      opencode-darwin-arm64: 1.15.1
-      opencode-darwin-x64: 1.15.1
-      opencode-darwin-x64-baseline: 1.15.1
-      opencode-linux-arm64: 1.15.1
-      opencode-linux-arm64-musl: 1.15.1
-      opencode-linux-x64: 1.15.1
-      opencode-linux-x64-baseline: 1.15.1
-      opencode-linux-x64-baseline-musl: 1.15.1
-      opencode-linux-x64-musl: 1.15.1
-      opencode-windows-arm64: 1.15.1
-      opencode-windows-x64: 1.15.1
-      opencode-windows-x64-baseline: 1.15.1
+      opencode-darwin-arm64: 1.15.3
+      opencode-darwin-x64: 1.15.3
+      opencode-darwin-x64-baseline: 1.15.3
+      opencode-linux-arm64: 1.15.3
+      opencode-linux-arm64-musl: 1.15.3
+      opencode-linux-x64: 1.15.3
+      opencode-linux-x64-baseline: 1.15.3
+      opencode-linux-x64-baseline-musl: 1.15.3
+      opencode-linux-x64-musl: 1.15.3
+      opencode-windows-arm64: 1.15.3
+      opencode-windows-x64: 1.15.3
+      opencode-windows-x64-baseline: 1.15.3
 
-  opencode-darwin-arm64@1.15.1:
+  opencode-darwin-arm64@1.15.3:
     optional: true
 
-  opencode-darwin-x64-baseline@1.15.1:
+  opencode-darwin-x64-baseline@1.15.3:
     optional: true
 
-  opencode-darwin-x64@1.15.1:
+  opencode-darwin-x64@1.15.3:
     optional: true
 
-  opencode-linux-arm64-musl@1.15.1:
+  opencode-linux-arm64-musl@1.15.3:
     optional: true
 
-  opencode-linux-arm64@1.15.1:
+  opencode-linux-arm64@1.15.3:
     optional: true
 
-  opencode-linux-x64-baseline-musl@1.15.1:
+  opencode-linux-x64-baseline-musl@1.15.3:
     optional: true
 
-  opencode-linux-x64-baseline@1.15.1:
+  opencode-linux-x64-baseline@1.15.3:
     optional: true
 
-  opencode-linux-x64-musl@1.15.1:
+  opencode-linux-x64-musl@1.15.3:
     optional: true
 
-  opencode-linux-x64@1.15.1:
+  opencode-linux-x64@1.15.3:
     optional: true
 
-  opencode-windows-arm64@1.15.1:
+  opencode-windows-arm64@1.15.3:
     optional: true
 
-  opencode-windows-x64-baseline@1.15.1:
+  opencode-windows-x64-baseline@1.15.3:
     optional: true
 
-  opencode-windows-x64@1.15.1:
+  opencode-windows-x64@1.15.3:
     optional: true
 
   optionator@0.9.4:
@@ -5303,7 +5303,7 @@ snapshots:
 
   punycode@2.3.1: {}
 
-  qs@6.15.1:
+  qs@6.15.2:
     dependencies:
       side-channel: 1.1.0
     optional: true
