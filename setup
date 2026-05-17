@@ -291,10 +291,50 @@ install_nix() {
         exit 1
     fi
 
-    # Source nix
+    # Source nix so it's available in the current shell
     if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
         # shellcheck disable=SC1091
         . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+    fi
+
+    # The Determinate Nix installer may report success even when it didn't
+    # actually install (e.g. it found a stale /nix/receipt.json from a prior
+    # install and exited with "already completed"). Detect that and force a
+    # reinstall by removing the stale receipt first.
+    if ! command -v nix &> /dev/null; then
+        print_warning "Nix installer completed but nix is not on PATH"
+        print_info "Checking for stale /nix/receipt.json that may block reinstallation"
+
+        if [ -f /nix/receipt.json ]; then
+            print_info "Removing stale /nix/receipt.json and retrying installation"
+            sudo rm -f /nix/receipt.json
+
+            # If /nix is mostly empty (just the receipt and maybe the
+            # uninstaller), remove it entirely so the installer gets a
+            # clean slate.
+            if [ -d /nix ] && ! find /nix -mindepth 1 -maxdepth 1 ! -name 'nix-installer' ! -name 'receipt.json' -print -quit | grep -q .; then
+                print_info "Removing empty /nix directory"
+                sudo rm -rf /nix
+            fi
+
+            if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}"; then
+                print_error "Failed to install Nix on second attempt"
+                exit 1
+            fi
+
+            # Re-source after reinstall
+            if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+                # shellcheck disable=SC1091
+                . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+            fi
+        fi
+
+        # Final verification
+        if ! command -v nix &> /dev/null; then
+            print_error "Nix is still not available after installation"
+            print_info "You may need to restart your terminal and re-run setup with --skip-nix"
+            exit 1
+        fi
     fi
 
     # Configure GitHub access token if available to avoid API rate limits when
@@ -612,6 +652,15 @@ clone_dotfiles() {
 
     # Create parent directory if it doesn't exist
     mkdir -p "$(dirname "$DOTFILES_DIR")"
+
+    # The current working directory may have been deleted (e.g. by a prior uninstall
+    # that removed the dotfiles dir we were running from). Git and other tools fail
+    # with "Unable to read current working directory" when the CWD is gone.  Switch
+    # to a guaranteed-existent directory before cloning.
+    if [ ! -d "$(pwd -P 2>/dev/null || true)" ]; then
+        print_info "Current working directory no longer exists, switching to HOME"
+        cd "$HOME" || cd / || true
+    fi
 
     if ! git_bin="$(find_working_git)"; then
         print_error "No executable git binary found (install may be incomplete)"

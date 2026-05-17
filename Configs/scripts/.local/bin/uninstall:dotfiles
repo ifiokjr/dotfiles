@@ -3,11 +3,13 @@
 # uninstall:dotfiles — Completely removes everything the dotfiles setup installed.
 #
 # This script reverses the setup process by:
+# 0. Resetting the login shell to the system default (if it points to a Nix path)
 # 1. Removing the Tuckr symlink
 # 2. Removing the dotfiles state directory
 # 3. Removing generated machine.nix
 # 4. Removing the dotfiles repository
 # 5. Uninstalling Nix (optional, default: yes)
+# 6. Cleaning stale Nix paths from /etc/shells
 #
 # Usage:
 #   ./uninstall:dotfiles [options]
@@ -141,6 +143,16 @@ confirm() {
 	done
 }
 
+# Detect the system's default shell (the one that ships with the OS).
+# Returns /bin/zsh on macOS (since Catalina) and /bin/bash on Linux.
+get_system_default_shell() {
+	if [ "$PLATFORM" = "macos" ]; then
+		echo "/bin/zsh"
+	else
+		echo "/bin/bash"
+	fi
+}
+
 # Get Tuckr symlink location for current platform
 get_tuckr_location() {
 	case "$PLATFORM" in
@@ -151,6 +163,105 @@ get_tuckr_location() {
 			echo "$HOME/.config/dotfiles"
 			;;
 	esac
+}
+
+# Reset the login shell back to the system default.
+# This must run BEFORE Nix is uninstalled, because the current login shell
+# likely points to /run/current-system/sw/bin/nu which won't exist after
+# Nix is removed, leaving the user unable to open a terminal.
+reset_login_shell() {
+	print_header "Resetting login shell to system default"
+
+	local default_shell
+	default_shell="$(get_system_default_shell)"
+
+	# Detect current login shell: macOS uses dscl, Linux uses /etc/passwd
+	local current_shell
+	if [ "$PLATFORM" = "macos" ]; then
+		current_shell="$(dscl . -read "/Users/$(whoami)" UserShell 2>/dev/null | awk '{print $2}')"
+	else
+		current_shell="$(getent passwd "$(whoami)" 2>/dev/null | cut -d: -f7)"
+	fi
+
+	# If we couldn't detect it, or it's already the default, nothing to do
+	if [ -z "$current_shell" ]; then
+		print_warning "Could not detect current login shell"
+		return 0
+	fi
+
+	if [ "$current_shell" = "$default_shell" ]; then
+		print_info "Login shell is already set to $default_shell"
+		return 0
+	fi
+
+	# Check if the current shell is a Nix-managed path that will disappear
+	local needs_reset=false
+	case "$current_shell" in
+		/run/current-system/*|/nix/*|/etc/profiles/*|*.nix-profile/*)
+			needs_reset=true
+			;;
+	esac
+
+	if [ "$needs_reset" = false ]; then
+		print_info "Login shell is $current_shell (not a Nix path, leaving as-is)"
+		return 0
+	fi
+
+	# Ensure the default shell exists and is in /etc/shells
+	if [ ! -x "$default_shell" ]; then
+		print_error "System default shell $default_shell does not exist or is not executable"
+		print_info "You may need to manually run: chsh -s /bin/bash"
+		return 0
+	fi
+
+	if ! grep -qx "$default_shell" /etc/shells 2>/dev/null; then
+		print_info "Adding $default_shell to /etc/shells"
+		echo "$default_shell" | sudo tee -a /etc/shells > /dev/null
+	fi
+
+	if chsh -s "$default_shell"; then
+		print_success "Login shell reset to $default_shell"
+	else
+		print_warning "chsh failed — you may need to manually run: chsh -s $default_shell"
+	fi
+}
+
+# Remove nushell entry from /etc/shells if it was added by setup.
+# This prevents stale Nix paths from remaining in /etc/shells after uninstall.
+clean_etc_shells() {
+	print_header "Cleaning /etc/shells"
+
+	local nix_paths_removed=0
+	local nix_shell_patterns=(
+		'/run/current-system/sw/bin/nu'
+		'/nix/'
+	)
+
+	# Remove nushell entries that point to Nix paths (they won't work after uninstall)
+	for pattern in "${nix_shell_patterns[@]}"; do
+		# Use a temp file to safely edit /etc/shells
+		local tmp_file
+		tmp_file="$(mktemp)"
+		if grep -v "$pattern" /etc/shells > "$tmp_file" 2>/dev/null; then
+			local before after
+			before="$(wc -l < /etc/shells 2>/dev/null || echo 0)"
+			after="$(wc -l < "$tmp_file" 2>/dev/null || echo 0)"
+			if [ "$before" -ne "$after" ]; then
+				if sudo cp "$tmp_file" /etc/shells; then
+					local count=$((before - after))
+					print_success "Removed $count stale Nix shell entr(y/ies) matching '$pattern' from /etc/shells"
+					nix_paths_removed=$((nix_paths_removed + count))
+				else
+					print_warning "Could not update /etc/shells (need sudo?)"
+				fi
+			fi
+		fi
+		rm -f "$tmp_file"
+	done
+
+	if [ "$nix_paths_removed" -eq 0 ]; then
+		print_info "No stale Nix shell entries found in /etc/shells"
+	fi
 }
 
 # Remove the Tuckr symlink
@@ -277,10 +388,15 @@ run_nix() {
 uninstall_nix() {
 	print_header "Uninstalling Nix"
 
-	# Check if Nix is actually installed
 	if ! command -v nix &> /dev/null; then
-		print_info "Nix is not installed, nothing to remove"
-		return 0
+		# Nix might not be on PATH but /nix could still exist (e.g. after profile
+		# removals or a partial uninstall). Check for /nix/receipt.json to decide
+		# if there is anything to clean up.
+		if [ ! -d /nix ]; then
+			print_info "Nix is not installed and /nix does not exist, nothing to remove"
+			return 0
+		fi
+		print_info "Nix binary not on PATH, but /nix directory exists — will attempt cleanup"
 	fi
 
 	if ! confirm "This will completely uninstall Nix and all related packages. Continue?"; then
@@ -326,6 +442,23 @@ uninstall_nix() {
 			print_info "Manual removal attempted"
 		fi
 	fi
+
+	# Always clean up /nix/receipt.json if it still exists. A stale receipt
+	# prevents the Determinate Nix installer from re-installing (it reports
+	# "already completed" and exits). This must happen after the uninstaller
+	# runs so that the uninstaller can use it if it needs to.
+	if [ -f /nix/receipt.json ]; then
+		print_info "Removing stale /nix/receipt.json"
+		sudo rm -f /nix/receipt.json
+	fi
+
+	# If /nix still exists but is empty (or only has empty dirs), remove it.
+	# The Determinate uninstaller should handle this, but some edge cases
+	# (like the uninstaller itself being deleted mid-run) can leave it behind.
+	if [ -d /nix ] && ! find /nix -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+		print_info "Removing empty /nix directory"
+		sudo rm -rf /nix
+	fi
 }
 
 # Remove nix-related config files and directories
@@ -368,10 +501,24 @@ main() {
 	parse_args "$@"
 	detect_platform
 
+	echo ""
 	print_warning "This will remove dotfiles configuration from this machine."
 	print_warning "The following will be removed:"
-
 	echo ""
+
+	# Detect current login shell to show in the warning
+	local current_shell=""
+	if [ "$PLATFORM" = "macos" ]; then
+		current_shell="$(dscl . -read "/Users/$(whoami)" UserShell 2>/dev/null | awk '{print $2}')"
+	else
+		current_shell="$(getent passwd "$(whoami)" 2>/dev/null | cut -d: -f7)"
+	fi
+	case "$current_shell" in
+		/run/current-system/*|/nix/*|/etc/profiles/*|*.nix-profile/*)
+			echo -e "  ${RED}•${NC} Login shell: $current_shell → will be reset to $(get_system_default_shell)"
+			;;
+	esac
+
 	echo -e "  ${RED}•${NC} Tuckr symlink"
 	echo -e "  ${RED}•${NC} Setup state directory (~/.local/state/dotfiles)"
 	if [ -f "$HOME/.config/nix/machine.nix" ] && [ ! -L "$HOME/.config/nix/machine.nix" ]; then
@@ -385,6 +532,7 @@ main() {
 	fi
 	if [ "$KEEP_NIX" = false ] && command -v nix &> /dev/null; then
 		echo -e "  ${RED}•${NC} Nix package manager and all packages"
+		echo -e "  ${RED}•${NC} Stale Nix shell entries from /etc/shells"
 	elif [ "$KEEP_NIX" = true ]; then
 		echo -e "  ${CYAN}•${NC} Nix: will be kept (--keep-nix)"
 	fi
@@ -396,6 +544,11 @@ main() {
 			exit 0
 		fi
 	fi
+
+	# Step 0: Reset login shell to system default BEFORE removing anything.
+	# This must happen first — if the user's shell is /run/current-system/sw/bin/nu,
+	# they'll be locked out of the terminal once Nix is removed.
+	reset_login_shell
 
 	# Step 1: Remove the Tuckr symlink
 	remove_tuckr_symlink
@@ -422,6 +575,9 @@ main() {
 
 	# Step 7: Clean up nix config
 	remove_nix_config
+
+	# Step 8: Clean stale Nix entries from /etc/shells
+	clean_etc_shells
 
 	echo ""
 	echo -e "${GREEN}${BOLD}╔════════════════════════════════════════╗${NC}"
