@@ -23,11 +23,11 @@ export def diff-nix-closures [old_path: string, new_path: string] {
     if ($old_path | is-empty) or ($new_path | is-empty) {
         return null
     }
-    let result = do -i { ^nix store diff-closures $old_path $new_path }
-    if ($env.LAST_EXIT_CODE != 0) {
+    let result = (^nix store diff-closures $old_path $new_path | complete)
+    if ($result.exit_code != 0) {
         return null
     }
-    $result | lines | where $it != ""
+    $result.stdout | lines | where $it != ""
 }
 # ─────────────────────────────────────────────────────────────────────────────
 # pnpm globals
@@ -35,10 +35,10 @@ export def diff-nix-closures [old_path: string, new_path: string] {
 # Return a list of {name, version} records for globally installed pnpm packages.
 export def capture-pnpm-globals [] {
     if (which pnpm | is-empty) { return null }
-    let result = do -i { ^pnpm list -g --json }
-    if ($env.LAST_EXIT_CODE != 0) { return null }
+    let result = (^pnpm list -g --json | complete)
+    if ($result.exit_code != 0) { return null }
     let parsed = try {
-        $result | from json
+        $result.stdout | from json
     } catch { return null }
     if ($parsed | is-empty) { return null }
     let root = if ($parsed | describe | str contains "list") {
@@ -63,9 +63,9 @@ export def capture-pnpm-globals [] {
 # Return a list of {name, version} records for installed Homebrew formulae/casks.
 export def capture-brew-packages [] {
     if (which brew | is-empty) { return null }
-    let result = do -i { ^brew list --versions }
-    if ($env.LAST_EXIT_CODE != 0) { return null }
-    $result | lines | where $it != "" | parse "{name} {version}" | default "" version
+    let result = (^brew list --versions | complete)
+    if ($result.exit_code != 0) { return null }
+    $result.stdout | lines | where $it != "" | parse "{name} {version}" | default "" version
 }
 # ─────────────────────────────────────────────────────────────────────────────
 # Generic diff helpers

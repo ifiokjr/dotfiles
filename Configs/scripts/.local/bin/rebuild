@@ -27,9 +27,12 @@ def sync_pnpm_global_packages [] {
     }
 
     info "Syncing managed pnpm global packages..."
-    do -i { ^bash $sync_script }
+    let sync_ok = try {
+        ^bash $sync_script
+        true
+    } catch { false }
 
-    if ($env.LAST_EXIT_CODE == 0) {
+    if $sync_ok {
         success "Managed pnpm global packages synced"
     } else {
         err "Failed to sync managed pnpm global packages"
@@ -46,15 +49,22 @@ def ensure_darwin_sudo_session [] {
     # #includedir directive. If it is missing, all security.sudo.extraConfig
     # settings (including timestamp_type=global) are silently ignored.
     let sudoers_main = "/etc/sudoers"
-    let has_includedir = do -i {
-        ^sudo grep -q "#includedir.*/etc/sudoers.d" $sudoers_main
-    }
-    if ($env.LAST_EXIT_CODE != 0) {
+    let has_includedir = try {
+        ^sudo grep -q "#includedir.*/etc/sudoers.d" $sudoers_main e> /dev/null
+        true
+    } catch { false }
+    if not $has_includedir {
         info "Bootstrapping #includedir into /etc/sudoers..."
         ^sudo cp $sudoers_main $"($sudoers_main).before-nix-darwin-includedir"
-        ^sudo bash -c $"printf '\\n# nix-darwin managed extra config\\n#includedir /etc/sudoers.d\\n' >> ($sudoers_main)"
-        let visudo_ok = do -i { ^sudo visudo -c -f $sudoers_main }
-        if ($env.LAST_EXIT_CODE != 0) {
+        ^sudo bash -c $"printf '
+# nix-darwin managed extra config
+#includedir /etc/sudoers.d
+' >> ($sudoers_main)"
+        let visudo_ok = try {
+            ^sudo visudo -c -f $sudoers_main
+            true
+        } catch { false }
+        if not $visudo_ok {
             err "visudo rejected the modified /etc/sudoers; restoring backup"
             ^sudo cp $"($sudoers_main).before-nix-darwin-includedir" $sudoers_main
             exit 1
@@ -63,11 +73,15 @@ def ensure_darwin_sudo_session [] {
     }
 
     let sudoers_extra = "/etc/sudoers.d/10-nix-darwin-extra-config"
-    let has_timestamp_type = do -i { ^sudo grep -q "timestamp_type=global" $sudoers_extra }
-    let type_missing = ($env.LAST_EXIT_CODE != 0)
-    let has_timestamp_timeout = do -i { ^sudo grep -q "timestamp_timeout=15" $sudoers_extra }
-    let timeout_missing = ($env.LAST_EXIT_CODE != 0)
-    let needs_bootstrap = $type_missing or $timeout_missing
+    let has_timestamp_type = try {
+        ^sudo grep -q "timestamp_type=global" $sudoers_extra e> /dev/null
+        true
+    } catch { false }
+    let has_timestamp_timeout = try {
+        ^sudo grep -q "timestamp_timeout=15" $sudoers_extra e> /dev/null
+        true
+    } catch { false }
+    let needs_bootstrap = (not $has_timestamp_type) or (not $has_timestamp_timeout)
 
     if $needs_bootstrap {
         info "Bootstrapping global sudo timestamps with 15min timeout..."
@@ -82,7 +96,10 @@ def ensure_darwin_sudo_session [] {
 
 def run_with_darwin_sudo_keepalive [command: string] {
     let wrapped_cmd = $"while true; do sudo -v >/dev/null 2>&1; sleep 30; kill -0 $$ || break; done >/dev/null 2>&1 & keepalive=$!; trap 'kill $keepalive' EXIT; ($command)"
-    do -i { ^bash -c $wrapped_cmd }
+    try {
+        ^bash -c $wrapped_cmd
+        true
+    } catch { false }
 }
 
 def main [
@@ -215,8 +232,11 @@ def main [
     if $update {
         info "Updating flake inputs..."
         let update_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake update --flake '($flake_dir)'"
-        let update_result = do -i { ^bash -c $update_cmd }
-        if ($env.LAST_EXIT_CODE == 0) {
+        let update_ok = try {
+            ^bash -c $update_cmd
+            true
+        } catch { false }
+        if $update_ok {
             success "Flake lock updated"
         } else {
             warn "Flake update failed \(continuing\)"
@@ -226,8 +246,11 @@ def main [
         # Update pnpm global dependencies to their latest compatible versions
         if (which pnpm | is-not-empty) {
             info "Updating pnpm global dependencies..."
-            let pnpm_result = do -i { ^pnpm update -g -L }
-            if ($env.LAST_EXIT_CODE == 0) {
+            let pnpm_ok = try {
+                ^pnpm update -g -L
+                true
+            } catch { false }
+            if $pnpm_ok {
                 success "pnpm global dependencies updated"
             } else {
                 warn "pnpm global update failed \(continuing\)"
@@ -246,8 +269,8 @@ def main [
             if (which brew | is-not-empty) {
                 info "Updating Homebrew casks with --greedy \(slow\)..."
                 ensure_darwin_sudo_session
-                let brew_result = run_with_darwin_sudo_keepalive "brew upgrade --cask --greedy"
-                if ($env.LAST_EXIT_CODE == 0) {
+                let brew_ok = run_with_darwin_sudo_keepalive "brew upgrade --cask --greedy"
+                if $brew_ok {
                     success "Homebrew casks updated"
                 } else {
                     warn "Homebrew cask upgrade failed \(continuing\)"
@@ -263,10 +286,12 @@ def main [
     # `nix flake check` validates the flake.nix outputs without building everything
     if not $skip_check {
         info "Checking flake configuration..."
-        # `do -i` suppresses the error so we can continue even if check fails
         let check_cmd = $"($sudo_prefix) NIX_USER_CONFIG_DIR='($nix_config)' nix flake check '($flake_dir)' --impure"
-        let check_result = do -i { ^bash -c $check_cmd }
-        if ($env.LAST_EXIT_CODE != 0) {
+        let check_ok = try {
+            ^bash -c $check_cmd
+            true
+        } catch { false }
+        if not $check_ok {
             # \( and \) escape parentheses in nushell string interpolation
             warn "Flake check reported issues \(continuing anyway\)"
         }
@@ -285,11 +310,17 @@ def main [
         # If a previous backup exists from an earlier failed setup, use a timestamped
         # backup name so the current regular file still gets moved out of the way.
         # Once nix-darwin owns /etc/shells it is a symlink, which this intentionally skips.
-        let should_move_shells = do -i { ^sudo /bin/sh -c "test -f /etc/shells && ! test -L /etc/shells" }
-        if ($env.LAST_EXIT_CODE == 0) {
+        let should_move_shells = try {
+            ^sudo /bin/sh -c "test -f /etc/shells && ! test -L /etc/shells"
+            true
+        } catch { false }
+        if $should_move_shells {
             let base_target = "/etc/shells.before-nix-darwin"
-            let target_exists = do -i { ^sudo /bin/sh -c "test -e /etc/shells.before-nix-darwin" }
-            let target = if ($env.LAST_EXIT_CODE == 0) {
+            let target_exists = try {
+                ^sudo /bin/sh -c "test -e /etc/shells.before-nix-darwin"
+                true
+            } catch { false }
+            let target = if $target_exists {
                 $"($base_target).(date now | format date '%Y%m%d%H%M%S')"
             } else {
                 $base_target
@@ -329,10 +360,9 @@ def main [
         #    nix-darwin activations that invoke Homebrew in separate process trees
         # Note: nh darwin manages sudo internally; do not wrap the command in sudo.
         let rebuild_cmd = $"ulimit -n 10240 && NIX_USER_CONFIG_DIR='($nix_config)' ($darwin_cmd)"
-        # `do -i` ignores errors so we can check $env.LAST_EXIT_CODE manually below
-        let result = run_with_darwin_sudo_keepalive $rebuild_cmd
+        let rebuild_ok = run_with_darwin_sudo_keepalive $rebuild_cmd
 
-        if ($env.LAST_EXIT_CODE == 0) {
+        if $rebuild_ok {
             print ""
             sync_pnpm_global_packages
             print ""
@@ -363,9 +393,12 @@ def main [
         # Explicitly pass USER and HOME so home-manager activation can verify the
         # target user. Without this, bash -c subshells may not inherit these vars.
         let rebuild_cmd = $"($sudo_prefix) USER=($config.username) HOME=($env.HOME) NIX_USER_CONFIG_DIR='($nix_config)' ($hm_cmd)"
-        let result = do -i { ^bash -c $rebuild_cmd }
+        let rebuild_ok = try {
+            ^bash -c $rebuild_cmd
+            true
+        } catch { false }
 
-        if ($env.LAST_EXIT_CODE == 0) {
+        if $rebuild_ok {
             print ""
             sync_pnpm_global_packages
             print ""
