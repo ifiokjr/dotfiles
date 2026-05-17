@@ -12,6 +12,16 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# Resolve the dotfiles repository root (walk up from Configs/scripts/.local/bin/)
-DOTFILES_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+# Resolve the dotfiles repository root (walk up from Configs/scripts/.local/bin/).
+# This may fail if called after the dotfiles directory was deleted (e.g. during
+# reset:dotfiles).  In that case, fall back to the default location.
+DOTFILES_ROOT="$(cd "$SCRIPT_DIR/../../../.." 2>/dev/null && pwd)" || {
+    DOTFILES_ROOT="$HOME/Developer/.dotfiles"
+}
+
+# If the CWD was deleted (common during reset), switch to a safe directory.
+if [ ! -d "$(pwd -P 2>/dev/null || true)" ]; then
+    cd "$HOME" || cd /
+fi
+
 exec "$DOTFILES_ROOT/setup" "$@"

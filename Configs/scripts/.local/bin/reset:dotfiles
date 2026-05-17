@@ -3,7 +3,7 @@
 # reset:dotfiles — First uninstall, then re-setup dotfiles from scratch.
 #
 # Runs uninstall:dotfiles first to completely remove everything,
-# then runs setup:dotfiles to re-install with the same parameters.
+# then re-clones the dotfiles repo and runs setup:dotfiles.
 #
 # Usage:
 #   ./reset:dotfiles [options]
@@ -13,10 +13,13 @@
 #
 # See ./setup --help for setup options.
 # See ./uninstall:dotfiles --help for uninstall options.
+#
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+DOTFILES_REPO="https://github.com/ifiokjr/dotfiles.git"
+DEFAULT_DOTFILES_DIR="$HOME/Developer/.dotfiles"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -35,9 +38,41 @@ echo ""
 echo -e "${CYAN}Phase 1/2:${NC} Uninstalling dotfiles..."
 "$SCRIPT_DIR/uninstall:dotfiles" "$@"
 
-echo ""
-echo -e "${CYAN}Phase 2/2:${NC} Setting up dotfiles..."
-"$SCRIPT_DIR/setup:dotfiles" "$@"
+# After uninstall, the dotfiles directory (and our script) may be gone.
+# CWD may also point to a deleted directory. Fix both before proceeding.
+if [ ! -d "$DEFAULT_DOTFILES_DIR" ]; then
+    echo ""
+    echo -e "${CYAN}Phase 2/2:${NC} Cloning fresh dotfiles and setting up..."
 
-echo ""
-echo -e "${GREEN}${BOLD}Reset complete!${NC}"
+    # The CWD may have been deleted by the uninstall; switch to HOME.
+    if [ ! -d "$(pwd -P 2>/dev/null || true)" ]; then
+        cd "$HOME" || cd /
+    fi
+
+    # Clone the repo and run the setup script from the fresh clone.
+    if command -v git >/dev/null 2>&1; then
+        git clone "$DOTFILES_REPO" "$DEFAULT_DOTFILES_DIR"
+    else
+        echo -e "\033[0;31m✗\033[0m git not found — cannot clone dotfiles repo."
+        echo "  Please install git and re-run: $DEFAULT_DOTFILES_DIR/setup"
+        exit 1
+    fi
+
+    exec "$DEFAULT_DOTFILES_DIR/setup" "$@"
+else
+    # Repo directory still exists (user declined removal or --keep flags).
+    # Try to use the local setup script; fall back to the setup at root.
+    echo ""
+    echo -e "${CYAN}Phase 2/2:${NC} Setting up dotfiles..."
+
+    # CWD may still have been deleted; ensure we're in a valid directory.
+    if [ ! -d "$(pwd -P 2>/dev/null || true)" ]; then
+        cd "$DEFAULT_DOTFILES_DIR" || cd "$HOME" || cd /
+    fi
+
+    if [ -x "$DEFAULT_DOTFILES_DIR/Configs/scripts/.local/bin/setup:dotfiles" ]; then
+        exec "$DEFAULT_DOTFILES_DIR/Configs/scripts/.local/bin/setup:dotfiles" "$@"
+    else
+        exec "$DEFAULT_DOTFILES_DIR/setup" "$@"
+    fi
+fi
