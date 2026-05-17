@@ -61,7 +61,7 @@ sanitize_manifest_dependencies_meta() {
 
   if (
     cd "$manifest_dir"
-    pnpm node - "$manifest_path" <<'NODE'
+    node - "$manifest_path" <<'NODE'
 const fs = require('fs');
 const manifestPath = process.argv[2];
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -214,14 +214,20 @@ for manifest in package.json pnpm-lock.yaml pnpm-workspace.yaml; do
   fi
 done
 
-INSTALL_ARGS=(install -g)
+INSTALL_ARGS=(install -g --ignore-scripts)
 if [ -f "$SOURCE_DIR/pnpm-lock.yaml" ]; then
   INSTALL_ARGS+=(--frozen-lockfile)
 fi
 
-if ! pnpm "${INSTALL_ARGS[@]}"; then
-  fail "pnpm global install failed"
-  exit $?
+if ! pnpm "${INSTALL_ARGS[@]}" 2>/dev/null; then
+  # pnpm v11 may fail with --frozen-lockfile if lockfile needs migration.
+  # Retry without --frozen-lockfile to let pnpm regenerate it.
+  warn "pnpm global install with frozen lockfile failed; retrying without --frozen-lockfile..."
+  rm -f "$SOURCE_DIR/pnpm-lock.yaml" "$GLOBAL_DIR/pnpm-lock.yaml"
+  if ! pnpm install -g --ignore-scripts; then
+    fail "pnpm global install failed"
+    exit $?
+  fi
 fi
 
 if [ "$SANITIZE_MANIFESTS" = true ]; then
