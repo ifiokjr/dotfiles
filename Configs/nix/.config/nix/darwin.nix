@@ -5,6 +5,7 @@
   self,
   username,
   lite ? false,
+  isDesktop ? false,
   ifiokjr-nixpkgs,
   homebrew-core,
   homebrew-cask,

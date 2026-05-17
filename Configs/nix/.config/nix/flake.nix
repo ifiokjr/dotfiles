@@ -104,6 +104,7 @@
           system ? "aarch64-darwin",
           username,
           lite ? false,
+          isDesktop ? false,
         }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -118,6 +119,7 @@
                 inherit
                   username
                   lite
+                  isDesktop
                   ifiokjr-nixpkgs
                   homebrew-core
                   homebrew-cask
@@ -132,7 +134,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = {
-                inherit ifiokjr-nixpkgs lite;
+                inherit ifiokjr-nixpkgs lite isDesktop;
               };
               home-manager.users.${username} = {
                 imports = [ ./home.nix ];
@@ -149,6 +151,7 @@
           system,
           username,
           lite ? false,
+          isDesktop ? false,
           homeDirectory ? null,
         }:
         let
@@ -169,7 +172,7 @@
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           extraSpecialArgs = {
-            inherit ifiokjr-nixpkgs lite;
+            inherit ifiokjr-nixpkgs lite isDesktop;
           };
           modules = [
             ./home.nix
@@ -246,6 +249,7 @@
           system = machineConfig.system;
           username = machineConfig.username;
           lite = machineConfig.lite or false;
+          isDesktop = machineConfig.isDesktop or false;
         };
 
       # Standalone home-manager configuration (for Linux or non-Darwin use)
@@ -259,6 +263,7 @@
             system = machineConfig.system;
             username = machineConfig.username;
             lite = machineConfig.lite or false;
+            isDesktop = machineConfig.isDesktop or false;
           };
         };
 

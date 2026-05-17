@@ -15,4 +15,8 @@
   # Optional: Lite profile (CLI-focused, skips GUI-heavy applications)
   # Set to true when using `./setup --lite`
   lite = false;
+
+  # Optional: Desktop machine — enables Docker via podman on macOS (lite desktops)
+  # Set to true on always-plugged-in desktops (e.g. Mac Mini)
+  isDesktop = false;
 }
