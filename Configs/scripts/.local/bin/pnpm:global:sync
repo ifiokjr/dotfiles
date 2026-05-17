@@ -218,18 +218,30 @@ for manifest in package.json pnpm-lock.yaml pnpm-workspace.yaml; do
   fi
 done
 
-INSTALL_ARGS=(install -g --ignore-scripts)
-if [ -f "$SOURCE_DIR/pnpm-lock.yaml" ]; then
-  INSTALL_ARGS+=(--frozen-lockfile)
+mapfile -t GLOBAL_PACKAGE_SPECS < <(
+  node - "$SOURCE_DIR/package.json" <<'NODE'
+const fs = require('fs');
+const manifestPath = process.argv[2];
+const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+const dependencies = manifest.dependencies || {};
+
+for (const [name, version] of Object.entries(dependencies)) {
+  console.log(`${name}@${version}`);
+}
+NODE
+)
+
+if [ "${#GLOBAL_PACKAGE_SPECS[@]}" -eq 0 ]; then
+  info "No managed pnpm global dependencies found"
+  exit 0
 fi
 
-if ! pnpm "${INSTALL_ARGS[@]}" 2>/dev/null; then
-  # pnpm v11 may fail with --frozen-lockfile if lockfile needs migration.
-  # Retry without --frozen-lockfile to let pnpm regenerate it.
-  warn "pnpm global install with frozen lockfile failed; retrying without --frozen-lockfile..."
+# pnpm v11 no longer supports `pnpm install -g` from a package manifest.
+# Keep the manifest as the source of truth, but install entries via `pnpm add -g`.
+if ! pnpm add -g --ignore-scripts "${GLOBAL_PACKAGE_SPECS[@]}"; then
   rm -f "$SOURCE_DIR/pnpm-lock.yaml" "$GLOBAL_DIR/pnpm-lock.yaml"
-  if ! pnpm install -g --ignore-scripts; then
-    fail "pnpm global install failed"
+  if ! pnpm add -g --ignore-scripts "${GLOBAL_PACKAGE_SPECS[@]}"; then
+    fail "pnpm global add failed"
     exit $?
   fi
 fi
