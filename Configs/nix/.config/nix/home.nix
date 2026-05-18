@@ -226,6 +226,7 @@ in
   # Keep pnpm global packages in sync from the managed manifest when available.
   # This is best-effort to avoid making activation fail when pnpm is unavailable.
   home.activation.syncPnpmGlobalPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    echo "==> Syncing pnpm global packages (home-manager activation)..."
     if [ -x "$HOME/.local/bin/pnpm:global:sync" ]; then
       "$HOME/.local/bin/pnpm:global:sync" --quiet --no-fail || true
     fi
@@ -235,6 +236,7 @@ in
   # Idempotent: podman machine init fails silently if a machine already exists.
   home.activation.initPodmanMachine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
     lib.optionalString (isDesktop && lite && pkgs.stdenv.isDarwin) ''
+      echo "==> Initializing podman VM (lite macOS desktop)..."
       if command -v podman >/dev/null 2>&1; then
         ${pkgs.podman}/bin/podman machine init 2>/dev/null || true
       fi

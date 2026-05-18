@@ -4,7 +4,7 @@ set -euo pipefail
 # Rebuild system configuration after nix config changes.
 # This hook inlines the rebuild logic in bash so it does not depend on nushell
 # (which may have been removed from the nix profile moments before).
-echo "Rebuilding system configuration..."
+echo "==> Rebuilding system configuration..."
 
 # Source nix environment if available (needed when hook runs in a fresh shell,
 # e.g. during setup where the parent process has nix in PATH but child doesn't)
@@ -62,15 +62,15 @@ ensure_darwin_sudo_session() {
 		return
 	fi
 
-	echo "Preparing sudo session for nix-darwin..."
+	echo "==> Preparing sudo session for nix-darwin..."
 	sudo -v
 
 	local sudoers_extra="/etc/sudoers.d/10-nix-darwin-extra-config"
 	if [ ! -f "$sudoers_extra" ] || ! sudo grep -q "timestamp_type=global" "$sudoers_extra" 2>/dev/null; then
-		echo "Bootstrapping global sudo timestamps..."
-		printf '%s\n' 'Defaults timestamp_type=global' | sudo tee -a "$sudoers_extra" >/dev/null
+		echo "==> Bootstrapping global sudo timestamps..."
+		printf '%s\n' 'Defaults timestamp_type=global' 'Defaults timestamp_timeout=15' | sudo tee -a "$sudoers_extra" >/dev/null
 		sudo chmod 0440 "$sudoers_extra"
-		echo "Added timestamp_type=global to sudoers"
+		echo "Added timestamp_type=global and timestamp_timeout=15 to sudoers"
 	fi
 
 	# Refresh the sudo ticket after any sudoers changes so Homebrew subprocesses
@@ -97,6 +97,7 @@ start_darwin_sudo_keepalive() {
 		done
 	) &
 	SUDO_KEEPALIVE_PID=$!
+	echo "==> Started sudo keepalive (pid $SUDO_KEEPALIVE_PID)"
 }
 
 # shellcheck disable=SC2329
@@ -105,6 +106,7 @@ stop_darwin_sudo_keepalive() {
 	if [ -n "$SUDO_KEEPALIVE_PID" ] && kill -0 "$SUDO_KEEPALIVE_PID" 2>/dev/null; then
 		kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
 		wait "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+		echo "==> Stopped sudo keepalive"
 	fi
 }
 
@@ -328,7 +330,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 		if sudo test -e "$target"; then
 			target="${target}.$(date +%Y%m%d%H%M%S)"
 		fi
-		echo "Backing up /etc/shells to $target"
+		echo "==> Backing up /etc/shells to $target"
 		sudo mv /etc/shells "$target"
 	fi
 
@@ -341,12 +343,15 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	fi
 
 	REBUILD_CMD="ulimit -n 10240 && NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${DARWIN_CMD}"
-	echo "Running: $REBUILD_CMD"
+	# Time the rebuild so we can report how long it took.
+	REBUILD_START=$(date +%s)
+	echo "==> Starting nix-darwin rebuild (may prompt for sudo)..."
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
+	REBUILD_ELAPSED=$(( $(date +%s) - REBUILD_START ))
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
-		echo "WARNING: nh darwin switch failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
+		echo "==> nix-darwin rebuild FAILED after ${REBUILD_ELAPSED}s (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
 	else
-		echo "Configuration rebuilt successfully! (darwin + home-manager)"
+		echo "==> nix-darwin rebuild SUCCEEDED after ${REBUILD_ELAPSED}s! (darwin + home-manager)"
 	fi
 else
 	# Linux: build and activate the standalone home-manager configuration directly.
@@ -357,12 +362,15 @@ else
 	HM_CMD="nix build '${NIX_FLAKE_DIR}#homeConfigurations.${HM_CONFIGURATION}.activationPackage' --impure --out-link '${HM_PROFILE_LINK}' && '${HM_PROFILE_LINK}/activate'"
 
 	REBUILD_CMD="${SUDO_PREFIX} USER=${CFG_USERNAME} HOME=${HOME} NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${HM_CMD}"
-	echo "Running: $REBUILD_CMD"
+	# Time the rebuild so we can report how long it took.
+	REBUILD_START=$(date +%s)
+	echo "==> Starting home-manager activation..."
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
+	REBUILD_ELAPSED=$(( $(date +%s) - REBUILD_START ))
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
-		echo "WARNING: home-manager activation failed (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
+		echo "==> home-manager activation FAILED after ${REBUILD_ELAPSED}s (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
 	else
-		echo "Configuration rebuilt successfully! (home-manager)"
+		echo "==> home-manager activation SUCCEEDED after ${REBUILD_ELAPSED}s!"
 	fi
 fi
 
@@ -372,11 +380,13 @@ fi
 # directory, tuckr status reports nix as "Not Symlinked" because the file
 # exists in the source without a corresponding symlink in ~/.config/nix/.
 # ---------------------------------------------------------------------------
+echo "==> Cleaning up flake.lock..."
 rm -f "$NIX_FLAKE_DIR/flake.lock"
 
 # ---------------------------------------------------------------------------
 # Post-rebuild: add profile paths so newly installed tools are found
 # ---------------------------------------------------------------------------
+echo "==> Post-rebuild: adding profile paths to PATH..."
 for p in \
 	"/etc/profiles/per-user/${USER:-$(whoami)}/bin" \
 	"$HOME/.local/state/nix/profiles/home-manager/home-path/bin" \
@@ -386,8 +396,11 @@ for p in \
 	fi
 done
 
+# ---------------------------------------------------------------------------
 # Explicitly reconcile managed pnpm globals after a successful rebuild so
 # global CLI tools are installed even when activation hooks were best-effort.
+# ---------------------------------------------------------------------------
+echo "==> Post-rebuild: syncing pnpm global packages..."
 if [ "$REBUILD_EXIT" -eq 0 ]; then
 	PNPM_SYNC_SCRIPT="$HOME/.local/bin/pnpm:global:sync"
 	if [ ! -x "$PNPM_SYNC_SCRIPT" ]; then
@@ -405,13 +418,13 @@ if [ "$REBUILD_EXIT" -eq 0 ]; then
 			SYNC_ARGS+=(--no-fail)
 		fi
 
-		echo "Syncing managed pnpm global packages..."
+		echo "==> Syncing managed pnpm global packages..."
 		if ! "$PNPM_SYNC_SCRIPT" "${SYNC_ARGS[@]}"; then
-			echo "ERROR: managed pnpm global package sync failed"
+			echo "==> ERROR: managed pnpm global package sync failed"
 			REBUILD_EXIT=1
 		fi
 	else
-		echo "ERROR: pnpm:global:sync not found after rebuild"
+		echo "==> ERROR: pnpm:global:sync not found after rebuild"
 		REBUILD_EXIT=1
 	fi
 fi
