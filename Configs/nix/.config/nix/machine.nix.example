@@ -19,4 +19,10 @@
   # Optional: Desktop machine — enables Docker via podman on macOS (lite desktops)
   # Set to true on always-plugged-in desktops (e.g. Mac Mini)
   isDesktop = false;
+
+  # Optional: Always-on mode — prevents the machine from sleeping
+  # On macOS: sets computer sleep to "never", keeps display sleep at 10 min,
+  # enables the screensaver (Aerial/Grounds) with password lock.
+  # Intended for always-plugged-in desktops and servers.
+  alwaysOn = false;
 }

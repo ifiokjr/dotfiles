@@ -69,6 +69,28 @@ export def set-lite-mode [value: bool, --path(-p): string] {
     }
     $updated | save -f $target_path
 }
+# Set the machine.nix always-on mode flag (inserts the field if missing).
+# When alwaysOn=true on macOS, the machine never sleeps and the screensaver
+# activates with password lock after display sleep. Intended for always-plugged-in
+# desktops (e.g. Mac Mini) that must stay reachable at all times.
+export def set-always-on-mode [value: bool, --path(-p): string] {
+    let target_path = ($path | default (machine-config-path))
+    if not ($target_path | path exists) {
+        error make {
+            msg: $"machine.nix not found at: ($target_path)"
+        }
+    }
+    let content = (open $target_path --raw)
+    let always_on_value = (if $value { "true" } else { "false" })
+    let always_on_line = $"  alwaysOn = ($always_on_value);"
+    let updated = if ($content | str contains "alwaysOn =") {
+        $content | str replace --regex '(?m)^\s*alwaysOn\s*=\s*(true|false);\s*$' $always_on_line
+    } else {
+        let with_always_on = $"\n  # Always-on — prevents sleep, enables screensaver with lock\n($always_on_line)\n}"
+        $content | str replace --regex '\n\}\s*$' $with_always_on
+    }
+    $updated | save -f $target_path
+}
 # Parse machine.nix and return {username, system, hostname} record.
 # machine.nix is a simple Nix attrset (not a module), so we extract
 # values with regex rather than invoking the nix evaluator.
@@ -91,11 +113,14 @@ export def parse-machine-config [] {
     let lite = try { (($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
     # isDesktop is optional — older machine.nix files may not have it
     let isDesktop = try { (($content | parse --regex 'isDesktop\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
+    # alwaysOn is optional — older machine.nix files may not have it
+    let alwaysOn = try { (($content | parse --regex 'alwaysOn\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
     {
         username: $username
         system: $system
         hostname: $hostname
         lite: $lite
         isDesktop: $isDesktop
+        alwaysOn: $alwaysOn
     }
 }

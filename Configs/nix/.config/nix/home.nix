@@ -3,6 +3,7 @@
   lib,
   lite ? false,
   isDesktop ? false,
+  alwaysOn ? false,
   ifiokjr-nixpkgs,
   ...
 }:
@@ -64,7 +65,7 @@ in
       extra.knope
       extra.mdt
       rustup
-      secretspec
+      extra.secretspec
 
       # Shell & Terminal
       bashInteractive
