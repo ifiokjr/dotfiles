@@ -438,12 +438,11 @@
   # that module uses `systemsetup`, which doesn't persist settings across
   # reboots on Apple Silicon. Similarly, system.defaults.screensaver has
   # known reliability issues (nix-darwin #908, #1207).
-  system.activationScripts.alwaysOn =
-    lib.optionalString (alwaysOn && pkgs.stdenv.isDarwin) ''
-      echo "==> Configuring always-on power management (pmset)..."
-      /usr/sbin/pmset -a sleep 0 displaysleep 10 disksleep 0
-      echo "==> Enabling screensaver password lock..."
-      /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
-      /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
-    '';
+  system.activationScripts.alwaysOn = lib.optionalString (alwaysOn && pkgs.stdenv.isDarwin) ''
+    echo "==> Configuring always-on power management (pmset)..."
+    /usr/sbin/pmset -a sleep 0 displaysleep 10 disksleep 0
+    echo "==> Enabling screensaver password lock..."
+    /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
+    /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
+  '';
 }
