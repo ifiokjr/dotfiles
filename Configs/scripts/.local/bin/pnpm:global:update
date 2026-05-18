@@ -4,6 +4,12 @@ set -euo pipefail
 SOURCE_DIR="$HOME/.config/pnpm-global"
 cd "$SOURCE_DIR"
 
+# Ensure nix-managed pnpm is on PATH so pnpm update works.
+for _p in "$HOME/.nix-profile/bin" "/run/current-system/sw/bin" "/nix/var/nix/profiles/default/bin" "/etc/profiles/per-user/${USER:-$(id -un 2>/dev/null)}/bin"; do
+  [ -d "$_p" ] && case ":$PATH:" in *":$_p:"*) ;; *) export PATH="$_p:$PATH" ;; esac
+done
+unset _p
+
 pnpm update --lockfile-only "$@"
 pnpm:global:sync
 
