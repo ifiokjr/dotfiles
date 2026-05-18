@@ -112,7 +112,7 @@ def main [
     --desktop       # Set machine.nix isDesktop = true (enable Docker via podman on macOS)
     --no-desktop    # Set machine.nix isDesktop = false
     --latest        # Update dotfiles repo to the latest version before rebuilding
-    --force         # With --latest, force-reset to latest even with local changes
+    --force         # With --latest, hard-reset to origin/main (discards local changes and branch)
     --rebuild-os   # Install all available macOS software updates before rebuilding (slow)
     --always-on    # Set machine.nix alwaysOn = true (never sleep, screensaver with lock)
     --no-always-on # Set machine.nix alwaysOn = false
@@ -142,15 +142,20 @@ def main [
         exit 1
     }
 
-    # Register cleanup: restore original branch and stash after --latest --force.
+    # Register cleanup: restore original branch and stash after --latest.
     # This runs even if the rebuild fails, ensuring the user doesn't lose work.
     # Defined early so it's in scope for the entire function.
+    # Only used when --force is NOT passed (the default stash-and-restore behavior).
     mut original_branch = ""
     mut stash_needed = false
 
     # Update dotfiles repo to latest version when --latest is passed.
-    # With --force, stashes local changes, resets to origin/main, then
-    # restores the original branch and stashed changes after rebuilding.
+    #
+    # Without --force: stashes local changes, resets to origin/main, rebuilds,
+    # then restores the original branch and pops the stash. Safe and reversible.
+    #
+    # With --force: hard-resets to origin/main, discarding all local changes
+    # and any feature branch. Intended for when you want a clean slate.
     if $latest {
         let repo_dir = (nix_config flake-dir)
 
@@ -158,62 +163,68 @@ def main [
         # (the flake dir resolves symlinks to the actual repo checkout).
         cd $repo_dir
 
-        let has_changes = try {
-            ^git diff --quiet
-            ^git diff --staged --quiet
-            false
-        } catch { true }
-
-        if $has_changes and not $force {
-            err "Dotfiles repo has local changes. Use --force to stash them and reset to latest."
-            err "Run: rebuild --latest --force"
-            exit 1
-        }
-
-        $original_branch = (^git rev-parse --abbrev-ref HEAD | str trim)
-
-        if $has_changes and $force {
-            info "Stashing local changes in dotfiles repo (--force)"
-            ^git stash push -m "rebuild --latest --force auto-stash"
-            let stash_ok = try {
-                ^git stash list | str contains "rebuild --latest --force auto-stash"
-            } catch { false }
-            if $stash_ok {
-            $stash_needed = true
-                success "Local changes stashed"
-            } else {
-                warn "git stash failed; falling back to discarding local changes"
-                ^git checkout -- .
-                ^git clean -fd
-            }
-        }
-
-        # Switch to main and hard-reset to origin/main
-        info "Resetting dotfiles to latest from origin/main..."
-        let checkout_ok = try {
+        if $force {
+            # --force: throw away everything, reset to origin/main
+            info "Hard-resetting dotfiles to origin/main (--force)"
+            ^git fetch origin
             ^git checkout main
-            true
-        } catch {
-            # Might already be on main or detached HEAD
-            try {
-                ^git checkout main 2>/dev/null
-                true
-            } catch { false }
-        }
-        if not $checkout_ok {
-            err "Failed to checkout main branch"
-            if $stash_needed {
-                warn "Restoring stashed changes..."
-                ^git stash pop
+            ^git reset --hard origin/main
+
+            let current_hash = (^git rev-parse --short HEAD | str trim)
+            success $"Hard-reset dotfiles to ($current_hash)"
+        } else {
+            # Default: stash changes, reset to origin/main, restore after rebuild
+            let has_changes = try {
+                ^git diff --quiet
+                ^git diff --staged --quiet
+                false
+            } catch { true }
+
+            $original_branch = (^git rev-parse --abbrev-ref HEAD | str trim)
+
+            if $has_changes {
+                info "Stashing local changes in dotfiles repo"
+                ^git stash push -m "rebuild --latest auto-stash"
+                let stash_ok = try {
+                    ^git stash list | str contains "rebuild --latest auto-stash"
+                } catch { false }
+                if $stash_ok {
+                    $stash_needed = true
+                    success "Local changes stashed"
+                } else {
+                    warn "git stash failed; falling back to discarding local changes"
+                    ^git checkout -- .
+                    ^git clean -fd
+                }
             }
-            exit 1
+
+            # Switch to main and reset to origin/main
+            info "Resetting dotfiles to latest from origin/main..."
+            let checkout_ok = try {
+                ^git checkout main
+                true
+            } catch {
+                # Might already be on main or detached HEAD
+                try {
+                    ^git checkout main 2>/dev/null
+                    true
+                } catch { false }
+            }
+            if not $checkout_ok {
+                err "Failed to checkout main branch"
+                if $stash_needed {
+                    warn "Restoring stashed changes..."
+                    ^git stash pop
+                }
+                exit 1
+            }
+
+            ^git fetch origin
+            ^git reset --hard origin/main
+
+            let current_hash = (^git rev-parse --short HEAD | str trim)
+            success $"Updated dotfiles to ($current_hash)"
         }
-
-        ^git fetch origin
-        ^git reset --hard origin/main
-
-        let current_hash = (^git rev-parse --short HEAD | str trim)
-        success $"Updated dotfiles to ($current_hash)"
     }
 
     let nix_config = (nix_config config-dir)
@@ -643,9 +654,10 @@ def main [
         version_tracker log-rebuild-summary $log_lines
     }
 
-    # Restore stashed changes and original branch after --latest --force.
+    # Restore stashed changes and original branch after --latest (without --force).
     # This runs even if the rebuild succeeded, ensuring the user's work tree
-    # is returned to its original state.
+    # is returned to its original state. Skipped entirely when --force is used
+    # since --force does a hard reset that discards local state intentionally.
     # Capture mut values into immutable bindings to use in catch blocks.
     let branch_to_restore = $original_branch
     let needs_stash_pop = $stash_needed
