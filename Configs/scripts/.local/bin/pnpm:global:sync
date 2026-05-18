@@ -89,6 +89,23 @@ if [ ! -f "$SOURCE_DIR/package.json" ]; then
   exit 0
 fi
 
+# Clean up stale node_modules from the old layout where pnpm installed directly
+# into the Tuckr-managed config directory.
+if [ -d "$SOURCE_DIR/node_modules" ]; then
+  info "Removing stale $SOURCE_DIR/node_modules (generated artifacts belong in $RUNTIME_DIR)"
+  rm -rf "$SOURCE_DIR/node_modules"
+fi
+
+# Ensure runtime bin directory is on PATH so newly installed CLIs are
+# immediately available (e.g. during rebuild or activation hooks).
+RUNTIME_BIN="$RUNTIME_DIR/node_modules/.bin"
+if [ -d "$RUNTIME_BIN" ]; then
+  case ":$PATH:" in
+    *":$RUNTIME_BIN:"*) ;;
+    *) export PATH="$RUNTIME_BIN:$PATH" ;;
+  esac
+fi
+
 mkdir -p "$RUNTIME_DIR"
 
 for manifest in package.json pnpm-lock.yaml pnpm-workspace.yaml; do

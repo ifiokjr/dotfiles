@@ -14,6 +14,12 @@ SOURCE_DIR="$HOME/.config/pnpm-global"
 mkdir -p "$SOURCE_DIR"
 cd "$SOURCE_DIR"
 
+# Ensure nix-managed pnpm is on PATH so pnpm add works.
+for _p in "$HOME/.nix-profile/bin" "/run/current-system/sw/bin" "/nix/var/nix/profiles/default/bin" "/etc/profiles/per-user/${USER:-$(id -un 2>/dev/null)}/bin"; do
+  [ -d "$_p" ] && case ":$PATH:" in *":$_p:"*) ;; *) export PATH="$_p:$PATH" ;; esac
+done
+unset _p
+
 pnpm add --lockfile-only "$@"
 pnpm:global:sync
 
