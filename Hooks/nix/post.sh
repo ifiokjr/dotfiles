@@ -347,7 +347,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	REBUILD_START=$(date +%s)
 	echo "==> Starting nix-darwin rebuild (may prompt for sudo)..."
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
-	REBUILD_ELAPSED=$(( $(date +%s) - REBUILD_START ))
+	REBUILD_ELAPSED=$(($(date +%s) - REBUILD_START))
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
 		echo "==> nix-darwin rebuild FAILED after ${REBUILD_ELAPSED}s (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
 	else
@@ -366,7 +366,7 @@ else
 	REBUILD_START=$(date +%s)
 	echo "==> Starting home-manager activation..."
 	bash -c "$REBUILD_CMD" || REBUILD_EXIT=$?
-	REBUILD_ELAPSED=$(( $(date +%s) - REBUILD_START ))
+	REBUILD_ELAPSED=$(($(date +%s) - REBUILD_START))
 	if [ "$REBUILD_EXIT" -ne 0 ]; then
 		echo "==> home-manager activation FAILED after ${REBUILD_ELAPSED}s (exit $REBUILD_EXIT), continuing with post-rebuild steps..."
 	else
