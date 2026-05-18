@@ -103,7 +103,7 @@ $env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD |
 pnpm_auto_activate
 # Secrets
 use modules/secrets.nu
-secrets load
+ssload
 # General aliases
 # Reload shell
 alias s = exec nu
