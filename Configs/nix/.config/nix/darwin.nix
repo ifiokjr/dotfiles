@@ -23,14 +23,18 @@
     name = username;
     home = "/Users/${username}";
     shell = pkgs.nushell;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDlSgKQ+IIL2bR6mT46DUtplpvs2zvj/e7HyMX+irBIV"
+    ];
   };
 
-  # SSH remote login — key-only auth, no root login
+  # SSH remote login — key-only auth, no root login, allow only the configured user
   services.openssh = {
     enable = true;
     extraConfig = ''
       PasswordAuthentication no
       PermitRootLogin no
+      AllowUsers ${username}
     '';
   };
 
