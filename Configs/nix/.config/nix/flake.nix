@@ -105,6 +105,7 @@
           username,
           lite ? false,
           isDesktop ? false,
+          alwaysOn ? false,
         }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -120,6 +121,7 @@
                   username
                   lite
                   isDesktop
+                  alwaysOn
                   ifiokjr-nixpkgs
                   homebrew-core
                   homebrew-cask
@@ -134,7 +136,12 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = {
-                inherit ifiokjr-nixpkgs lite isDesktop;
+                inherit
+                  ifiokjr-nixpkgs
+                  lite
+                  isDesktop
+                  alwaysOn
+                  ;
               };
               home-manager.users.${username} = {
                 imports = [ ./home.nix ];
@@ -152,6 +159,7 @@
           username,
           lite ? false,
           isDesktop ? false,
+          alwaysOn ? false,
           homeDirectory ? null,
         }:
         let
@@ -172,7 +180,12 @@
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           extraSpecialArgs = {
-            inherit ifiokjr-nixpkgs lite isDesktop;
+            inherit
+              ifiokjr-nixpkgs
+              lite
+              isDesktop
+              alwaysOn
+              ;
           };
           modules = [
             ./home.nix
@@ -250,6 +263,7 @@
           username = machineConfig.username;
           lite = machineConfig.lite or false;
           isDesktop = machineConfig.isDesktop or false;
+          alwaysOn = machineConfig.alwaysOn or false;
         };
 
       # Standalone home-manager configuration (for Linux or non-Darwin use)
@@ -264,6 +278,7 @@
             username = machineConfig.username;
             lite = machineConfig.lite or false;
             isDesktop = machineConfig.isDesktop or false;
+            alwaysOn = machineConfig.alwaysOn or false;
           };
         };
 

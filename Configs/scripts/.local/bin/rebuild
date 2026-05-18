@@ -114,6 +114,8 @@ def main [
     --latest        # Update dotfiles repo to the latest version before rebuilding
     --force         # With --latest, force-reset to latest even with local changes
     --rebuild-os   # Install all available macOS software updates before rebuilding (slow)
+    --always-on    # Set machine.nix alwaysOn = true (never sleep, screensaver with lock)
+    --no-always-on # Set machine.nix alwaysOn = false
 ] {
     if $force and not $latest {
         err "--force requires --latest"
@@ -127,6 +129,11 @@ def main [
 
     if $desktop and $no_desktop {
         err "Cannot use both --desktop and --no-desktop"
+        exit 1
+    }
+
+    if $always_on and $no_always_on {
+        err "Cannot use both --always-on and --no-always-on"
         exit 1
     }
 
@@ -294,6 +301,15 @@ def main [
     } else if $no_desktop {
         nix_config set-desktop-mode false
         success "Updated machine.nix default: isDesktop = false"
+    }
+
+    # Persist always-on mode choice into machine.nix when explicitly requested.
+    if $always_on {
+        nix_config set-always-on-mode true
+        success "Updated machine.nix default: alwaysOn = true (machine will never sleep)"
+    } else if $no_always_on {
+        nix_config set-always-on-mode false
+        success "Updated machine.nix default: alwaysOn = false"
     }
 
     # Show current configuration

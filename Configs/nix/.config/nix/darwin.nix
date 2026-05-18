@@ -6,6 +6,7 @@
   username,
   lite ? false,
   isDesktop ? false,
+  alwaysOn ? false,
   ifiokjr-nixpkgs,
   homebrew-core,
   homebrew-cask,
@@ -22,6 +23,15 @@
     name = username;
     home = "/Users/${username}";
     shell = pkgs.nushell;
+  };
+
+  # SSH remote login — key-only auth, no root login
+  services.openssh = {
+    enable = true;
+    extraConfig = ''
+      PasswordAuthentication no
+      PermitRootLogin no
+    '';
   };
 
   # Set primary user for darwin options that require it
@@ -412,4 +422,25 @@
         echo >&2 ""
       fi
     '';
+
+  # ── Always-on mode ──────────────────────────────────────────────────────
+  # When alwaysOn=true and running macOS, the machine never sleeps and the
+  # screensaver activates instead.  Intended for always-plugged-in desktops
+  # and servers (e.g. Mac Mini) that must stay reachable at all times.
+  #
+  # • Computer sleep  → never (system stays fully awake)
+  # • Display sleep   → 10 min (saves power, triggers screensaver)
+  # • Hard disk sleep  → never
+  # • Screensaver      → enabled with password lock after 5 s grace
+  #   (uses the default macOS screensaver — Aerial on supported machines)
+  power.sleep = lib.optionalAttrs (alwaysOn && pkgs.stdenv.isDarwin) {
+    computer = "never";
+    display = 10;
+    harddisk = "never";
+  };
+
+  system.defaults.screensaver = lib.optionalAttrs (alwaysOn && pkgs.stdenv.isDarwin) {
+    askForPassword = true;
+    askForPasswordDelay = 5;
+  };
 }
