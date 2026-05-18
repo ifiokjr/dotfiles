@@ -223,6 +223,13 @@ in
     # '';
   };
 
+  # Print progress marker before home-manager writes all managed files.
+  # The writeBoundary is the long silent phase where hundreds of symlinks
+  # are created. This marker tells the user something is happening.
+  home.activation.preWriteBoundary = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+    echo "==> Writing home-manager configuration..."
+  '';
+
   # Keep pnpm global packages in sync from the managed manifest when available.
   # This is best-effort to avoid making activation fail when pnpm is unavailable.
   home.activation.syncPnpmGlobalPackages = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

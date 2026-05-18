@@ -336,10 +336,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 
 	# Build nh darwin command (with nix run fallback for first-time setup)
 	if command -v nh &>/dev/null; then
-		DARWIN_CMD="nh darwin switch '${NIX_FLAKE_DIR}' -H default --impure"
+		DARWIN_CMD="nh darwin switch '${NIX_FLAKE_DIR}' -H default --impure --verbose"
 	else
 		echo "nh not found, using nix run nixpkgs#nh for first-time setup..."
-		DARWIN_CMD="nix run nixpkgs#nh -- darwin switch '${NIX_FLAKE_DIR}' -H default --impure"
+		DARWIN_CMD="nix run nixpkgs#nh -- darwin switch '${NIX_FLAKE_DIR}' -H default --impure --verbose"
 	fi
 
 	REBUILD_CMD="ulimit -n 10240 && NIX_USER_CONFIG_DIR='${NIX_LINK_DIR}' ${DARWIN_CMD}"
