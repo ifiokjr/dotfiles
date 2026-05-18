@@ -28,9 +28,9 @@ This documents the setup of IronClaw across your Mac (primary) and three Mac Min
 | Machine     | Username  | Tailscale IP     | Purpose              |
 | ----------- | --------- | ---------------- | -------------------- |
 | MacBook Pro | `ifiokjr` | `100.123.36.92`  | Primary, development |
-| Mini 01     | `ifiokjr`  | `100.94.21.127`  | IronClaw worker      |
-| Mini 02     | `ifiokjr`  | `100.97.208.114` | IronClaw worker      |
-| Mini 03     | `ifiokjr`  | `100.77.105.14`  | IronClaw worker      |
+| Mini 01     | `ifiokjr` | `100.94.21.127`  | IronClaw worker      |
+| Mini 02     | `ifiokjr` | `100.97.208.114` | IronClaw worker      |
+| Mini 03     | `ifiokjr` | `100.77.105.14`  | IronClaw worker      |
 
 > **Key**: Each machine has a different OS username. The `machine.nix` file (gitignored) maps `username` per host. SSH uses the per-machine username, not `ifiokjr` everywhere.
 
