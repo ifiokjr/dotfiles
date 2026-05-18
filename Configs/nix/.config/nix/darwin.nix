@@ -210,7 +210,7 @@
     in
     pkgs.lib.mkForce ''
       # Set up applications.
-      echo "setting up /Applications..." >&2
+      echo "==> Setting up /Applications..." >&2
       rm -rf /Applications/Nix\ Apps
       mkdir -p /Applications/Nix\ Apps
       find ${env}/Applications -maxdepth 1 -type l -exec readlink '{}' + |
