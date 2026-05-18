@@ -433,14 +433,16 @@
   # • Hard disk sleep  → never
   # • Screensaver      → enabled with password lock after 5 s grace
   #   (uses the default macOS screensaver — Aerial on supported machines)
-  power.sleep = lib.optionalAttrs (alwaysOn && pkgs.stdenv.isDarwin) {
-    computer = "never";
-    display = 10;
-    harddisk = "never";
-  };
-
-  system.defaults.screensaver = lib.optionalAttrs (alwaysOn && pkgs.stdenv.isDarwin) {
-    askForPassword = true;
-    askForPasswordDelay = 5;
-  };
+  #
+  # Uses pmset directly instead of nix-darwin's power.sleep module because
+  # that module uses `systemsetup`, which doesn't persist settings across
+  # reboots on Apple Silicon. Similarly, system.defaults.screensaver has
+  # known reliability issues (nix-darwin #908, #1207).
+  system.activationScripts.alwaysOn = lib.optionalString (alwaysOn && pkgs.stdenv.isDarwin) ''
+    echo "==> Configuring always-on power management (pmset)..."
+    /usr/sbin/pmset -a sleep 0 displaysleep 10 disksleep 0
+    echo "==> Enabling screensaver password lock..."
+    /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
+    /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
+  '';
 }
