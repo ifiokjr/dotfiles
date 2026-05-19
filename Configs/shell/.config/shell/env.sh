@@ -120,9 +120,11 @@ if [ -f "$HOME/.config/agents/agents.env.sh" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Secrets — 1Password-backed via SecretSpec, no plaintext on disk
+# Secrets (optional, not committed)
 # ---------------------------------------------------------------------------
-if [ -f "$HOME/.config/shell/secrets.sh" ]; then
+if [ -f "$HOME/.env.dotfiles" ]; then
+	set -a
 	# shellcheck disable=SC1091
-	. "$HOME/.config/shell/secrets.sh"
+	. "$HOME/.env.dotfiles"
+	set +a
 fi
