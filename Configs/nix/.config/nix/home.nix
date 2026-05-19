@@ -99,6 +99,7 @@ in
       # Language Servers & Tools
       kotlin
       ktlint
+      bash-language-server
       kotlin-language-server
       lua-language-server
       markdown-oxide
@@ -106,6 +107,8 @@ in
       ruby-lsp
       sqls
       tailwindcss-language-server
+      typescript-language-server
+      vscode-langservers-extracted
       yaml-language-server
 
       # Media & Graphics

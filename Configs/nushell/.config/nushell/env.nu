@@ -145,3 +145,8 @@ if $needs_regen {
 if not ("~/.cache/devenv/hook.nu" | path expand | path exists) {
     "" | save --force ~/.cache/devenv/hook.nu
 }
+# pnpm
+$env.PNPM_HOME = "/Users/ifiokjr/Library/pnpm"
+$env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path join "bin"))
+# pnpm end
+

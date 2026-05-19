@@ -1,23 +1,9 @@
 {
 	"name": "ifiokjr-managed-pnpm-global-packages",
 	"private": true,
-	"packageManager": "pnpm@11.0.4",
 	"dependencies": {
-		"@anthropic-ai/claude-code": "^2.1.143",
-		"@devcontainers/cli": "^0.87.0",
-		"@google/gemini-cli": "^0.42.0",
-		"@googleworkspace/cli": "^0.22.5",
 		"@mariozechner/pi-coding-agent": "^0.73.1",
 		"@openai/codex": "^0.130.0",
-		"bash-language-server": "^5.6.0",
-		"eslint": "^10.4.0",
-		"hunkdiff": "^0.12.1",
-		"npm": "^11.14.1",
-		"opencode-ai": "1.15.3",
-		"sql-formatter": "^15.7.4",
-		"svelte-language-server": "^0.18.0",
-		"tailwindcss-language-server": "^0.0.1",
-		"typescript-language-server": "^5.2.0",
-		"vscode-langservers-extracted": "^4.10.0"
+		"opencode-ai": "1.15.3"
 	}
 }
