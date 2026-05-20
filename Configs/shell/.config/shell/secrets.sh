@@ -5,9 +5,11 @@
 # 1Password vault. Never written to disk in plaintext.
 #
 # Usage:
-#   ss <command>    Run a command with secrets injected ephemerally
+#   ssr <command>    Run a command with secrets injected ephemerally
 # ---------------------------------------------------------------------------
 
-ss() {
+ssr() {
 	secretspec run -f "$HOME/secretspec.toml" -- "$@"
 }
+
+alias ss='secretspec -f $HOME/secretspec.toml'
