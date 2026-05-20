@@ -196,7 +196,10 @@ in
     )
     ++ lib.optionals pkgs.stdenv.isLinux (
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
-      lib.optionals (!lite) [
+      [
+        gnome-keyring
+      ]
+      ++ lib.optionals (!lite) [
         blender # broken on macOS in nixpkgs; macOS uses Homebrew casks
         ghostty
         google-chrome
