@@ -5,8 +5,5 @@
 #
 # Usage:
 #   ss <command>   Run a command with secrets injected ephemerally
-
 # Run a command with all secrets injected ephemerally
-export def ss [...args] {
-    ^secretspec run -f $"($env.HOME)/secretspec.toml" -- ...$args
-}
+export def ss [...args] { ^secretspec run -f $"($env.HOME)/secretspec.toml" -- ...$args }
