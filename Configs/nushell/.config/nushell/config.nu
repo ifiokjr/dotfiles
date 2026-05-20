@@ -102,8 +102,7 @@ def --env pnpm_auto_activate [] {
 $env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append { |before, after| pnpm_auto_activate })
 pnpm_auto_activate
 # Secrets
-use modules/secrets.nu
-secrets ssload
+use modules/secrets.nu ss
 # General aliases
 # Reload shell
 alias s = exec nu
