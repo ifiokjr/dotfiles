@@ -1,9 +1,10 @@
 {
 	"name": "ifiokjr-managed-pnpm-global-packages",
+	"type": "module",
 	"private": true,
 	"dependencies": {
-		"@mariozechner/pi-coding-agent": "^0.73.1",
-		"@openai/codex": "^0.130.0",
-		"opencode-ai": "1.15.3"
+		"@earendil-works/pi-coding-agent": "^0.75.3",
+		"@openai/codex": "^0.132.0",
+		"opencode-ai": "1.15.5"
 	}
 }

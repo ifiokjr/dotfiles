@@ -103,7 +103,6 @@ $env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD |
 pnpm_auto_activate
 # Secrets
 use modules/secrets.nu ssr
-
 alias ss = secretspec -f $"($env.HOME)/secretspec.toml"
 # General aliases
 # Reload shell
