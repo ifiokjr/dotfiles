@@ -1,187 +1,73 @@
 #!/usr/bin/env nu
-# Configure API keys and tokens interactively
+# Manage the optional ~/.env.dotfiles fallback used by SecretSpec.
 #
-# This script helps you configure your .env.dotfiles file by
-# interactively prompting for each API key and token with
-# instructions on where to obtain them.
+# SecretSpec + 1Password is the primary secret store. This file should only
+# contain OP_SERVICE_ACCOUNT_TOKEN when keyring is unavailable or being reset.
 
-use nu_modules/print_utils.nu *
-
-# Mask a value for display (show first 4 and last 4 chars, e.g. "sk-1...xYz9")
-# Used to let users confirm existing API keys without exposing the full secret
-def mask_value [value: string]: nothing -> string {
-    if ($value | str length) <= 8 {
-        "****"
-    } else {
-        let first = ($value | str substring 0..4)
-        let last = ($value | str substring (-4)..)
-        $"($first)...($last)"
-    }
-}
-
-# Prompt for a single env variable value
-def prompt_for_value [
-    var_name: string
-    description: string
-    url: string
-    current_value: string = ""
-] {
-    print ""
-    header $var_name
-    print $"(ansi attr_bold)Description:(ansi reset) ($description)"
-    print $"(ansi attr_bold)Get it from:(ansi reset) (ansi cyan)($url)(ansi reset)"
-    print ""
-
-    if ($current_value | is-not-empty) {
-        let masked = (mask_value $current_value)
-        info $"Current value: ($masked)"
-        print ""
-        let keep = (input $"(ansi cyan)?(ansi reset) Keep current value? [Y/n]: ")
-        if ($keep | str downcase) not-in ["n" "no"] {
-            return $current_value
-        }
-    }
-
-    loop {
-        let value = (input $"(ansi cyan)?(ansi reset) Enter ($var_name) \(or press Enter to skip\): ")
-
-        if ($value | is-empty) {
-            warn $"Skipping ($var_name) \(will be empty\)"
-            print ""
-            return ""
-        }
-
-        # Confirm the value
-        print ""
-        let display = if ($value | str length) > 20 {
-            $"($value | str substring 0..20)..."
-        } else {
-            $value
-        }
-        info $"You entered: ($display)"
-        let confirm = (input $"(ansi cyan)?(ansi reset) Is this correct? [Y/n]: ")
-        if ($confirm | str downcase) not-in ["n" "no"] {
-            return $value
-        }
-        print "Let's try again..."
-    }
-}
-
-# Parse existing .env.dotfiles into a nushell record { KEY: "value", ... }
-# Handles KEY=value, KEY="value", and KEY='value' formats.
-# Skips blank lines and comments (lines starting with #).
-def parse_env_file [path: string] {
-    if not ($path | path exists) {
-        return {}
-    }
-    open $path
-    | lines
-    | where { |line|
-        let trimmed = ($line | str trim)
-        ($trimmed | is-not-empty) and (not ($trimmed | str starts-with "#"))
-    }
-    | each { |line|
-        let eq_pos = ($line | str index-of "=")
-        if ($eq_pos == -1) { return null }
-        let key = ($line | str substring 0..$eq_pos | str trim)
-        # Strip surrounding quotes (double or single) from the value
-        let value = ($line
-            | str substring ($eq_pos + 1)..
-            | str trim
-            | str replace -r '^"(.*)"$' '$1'
-            | str replace -r "^'(.*)'$" '$1')
-        { $key: $value }
-    }
-    | where { $in != null }
-    # Fold list of single-key records into one combined record
-    | reduce --fold {} { |it, acc| $acc | merge $it }
-}
-
-def main [] {
-    print ""
-    print $"(ansi cyan_bold)╔════════════════════════════════════════╗(ansi reset)"
-    print $"(ansi cyan_bold)║                                        ║(ansi reset)"
-    print $"(ansi cyan_bold)║    Environment Setup Assistant        ║(ansi reset)"
-    print $"(ansi cyan_bold)║                                        ║(ansi reset)"
-    print $"(ansi cyan_bold)╚════════════════════════════════════════╝(ansi reset)"
-    print ""
-
-    let env_file = $"($env.HOME)/.env.dotfiles"
-    let backup_file = $"($env_file).backup.(date now | format date '%Y%m%d_%H%M%S')"
-
-    info "This script will help you set up your environment variables"
-    info $"File: ($env_file)"
-
-    # Check if .env.dotfiles exists
-    mut existing = {}
+def ensure_env_file [env_file: string] {
     if ($env_file | path exists) {
+        chmod 600 $env_file
+        return
+    }
+
+    let example = "Configs/secretspec/.env.dotfiles.example"
+    if ($example | path exists) {
+        open $example | save -f $env_file
+    } else {
+        [
+            "## Optional SecretSpec fallback for the 1Password service account token"
+            "## Prefer keyring/keychain; uncomment only when you need dotenv fallback."
+            "# OP_SERVICE_ACCOUNT_TOKEN=\"readonly-service-account\""
+            ""
+        ] | str join "\n" | save -f $env_file
+    }
+    chmod 600 $env_file
+}
+
+def without_token_line [env_file: string] {
+    if not ($env_file | path exists) {
+        return []
+    }
+
+    open $env_file
+    | lines
+    | where { |line| not (($line | str trim) | str starts-with "OP_SERVICE_ACCOUNT_TOKEN=") }
+}
+
+def main [
+    --set-token # Prompt for OP_SERVICE_ACCOUNT_TOKEN and write it to ~/.env.dotfiles.
+] {
+    let env_file = $"($env.HOME)/.env.dotfiles"
+    ensure_env_file $env_file
+
+    if not $set_token {
+        print "SecretSpec + 1Password now manages dotfiles secrets."
+        print $"Created/verified optional fallback file: ($env_file)"
         print ""
-        warn "Found existing .env.dotfiles file"
-        info $"Location: ($env_file)"
+        print "Use:"
+        print "  ss check          # verify declared secrets"
+        print "  ssr <command>     # run a command with secrets injected lazily"
         print ""
-
-        let response = (input $"(ansi cyan)?(ansi reset) Do you want to update it? \(This will create a backup\) [y/N]: ")
-        if ($response | str downcase) not-in ["y" "yes"] {
-            info "Exiting without changes"
-            return
-        }
-
-        # Create backup
-        cp $env_file $backup_file
-        success $"Backup created: ($backup_file)"
-
-        # Load existing values
-        $existing = (parse_env_file $env_file)
+        print "If you need dotenv fallback for the 1Password service account token:"
+        print "  setup:env --set-token"
+        return
     }
 
-    print ""
-    header "Let's configure your environment variables"
-    info "You can skip any value by pressing Enter"
-
-    # Define all environment variables to configure
-    let env_vars = [
-        { name: "GITHUB_TOKEN", desc: "Personal access token for GitHub API access \(repos, packages, etc.\)", url: "https://github.com/settings/tokens/new" }
-        { name: "OPENAI_API_KEY", desc: "API key for OpenAI services \(GPT, DALL-E, Whisper, etc.\)", url: "https://platform.openai.com/api-keys" }
-        { name: "ANTHROPIC_API_KEY", desc: "API key for Anthropic Claude AI services", url: "https://console.anthropic.com/settings/keys" }
-        { name: "DISCORD_TOKEN", desc: "Bot token for Discord bot applications", url: "https://discord.com/developers/applications" }
-        { name: "GOOGLE_API_KEY", desc: "API key for Google services \(Maps, Cloud, Gemini, etc.\)", url: "https://console.cloud.google.com/apis/credentials" }
-        { name: "REPLICATE_API_TOKEN", desc: "API token for Replicate AI model hosting and inference", url: "https://replicate.com/account/api-tokens" }
-        { name: "HUGGING_FACE_TOKEN", desc: "Access token for Hugging Face model hub and inference API", url: "https://huggingface.co/settings/tokens" }
-        { name: "FLAKEHUB_TOKEN", desc: "Authentication token for FlakeHub nix binary cache and flake registry", url: "https://flakehub.com/settings/tokens" }
-    ]
-
-    # Prompt for each variable
-    mut values = {}
-    for var in $env_vars {
-        let current = ($existing | get -o $var.name | default "")
-        let new_val = (prompt_for_value $var.name $var.desc $var.url $current)
-        $values = ($values | merge { ($var.name): $new_val })
+    print "Paste OP_SERVICE_ACCOUNT_TOKEN for dotenv fallback. Input is hidden."
+    let token = (input --suppress-output "OP_SERVICE_ACCOUNT_TOKEN: " | str trim)
+    if ($token | is-empty) {
+        print "No token entered; leaving file unchanged."
+        return
     }
 
-    # Write to file
-    print ""
-    header "Saving configuration"
+    let backup_file = $"($env_file).backup.(date now | format date '%Y%m%d_%H%M%S')"
+    cp $env_file $backup_file
 
-    let content = ($values | items { |k, v| $'($k)="($v)"' } | str join "\n")
-    $content | save -f $env_file
+    let lines = (without_token_line $env_file)
+    let updated = ($lines | append $'OP_SERVICE_ACCOUNT_TOKEN="($token)"' | str join "\n")
+    $updated | save -f $env_file
+    chmod 600 $env_file
 
-    # Set secure permissions
-    ^chmod 600 $env_file
-
-    success $"Environment file created: ($env_file)"
-    success "File permissions set to 600 \(read/write for user only\)"
-
-    if ($backup_file | path exists) {
-        info $"Backup available at: ($backup_file)"
-    }
-
-    print ""
-    header "Next Steps"
-    print $"  (ansi cyan)1.(ansi reset) Open a new terminal window to reload environment"
-    print $"  (ansi cyan)2.(ansi reset) Your environment variables are now available"
-    print $"  (ansi cyan)3.(ansi reset) To update values later, run: (ansi attr_bold)setup:env(ansi reset)"
-
-    print ""
-    success "Setup complete!"
-    print ""
+    print $"Updated ($env_file) and created backup: ($backup_file)"
+    print "Prefer keyring/keychain for normal use; dotenv is only a fallback."
 }

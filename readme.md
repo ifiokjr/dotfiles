@@ -160,7 +160,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 - `pnpm:global:sync` - Install the managed pnpm global project packages
 - `pnpm:global:add/remove/update/list` - Manage packages in the pnpm global project
 - `install:helix:custom` - Build Helix with Steel plugin support
-- `setup:env` - Interactive environment variables setup (API keys, tokens)
+- `setup:env` - Manage the optional `.env.dotfiles` fallback for `OP_SERVICE_ACCOUNT_TOKEN`
 - `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
 - `tuckr:reload` - Non-destructive reload of all tuckr groups (shows status, re-applies missing/changed symlinks)
 - `tuckr:redeploy` - Full forced redeploy of all tuckr groups in consistent order (nix first, then alphabetical, then late groups)
@@ -312,46 +312,21 @@ vim ~/.config/nushell/config.nu
 
 <br />
 
-Configure API keys and tokens for various services using the interactive setup script:
+Dotfiles secrets are declared in `~/secretspec.toml` and resolved lazily from SecretSpec + 1Password.
 
 ```bash
-setup:env
+ss check          # verify declared secrets
+ssr <command>     # run a command with secrets injected ephemerally
 ```
 
-**What it does:**
-
-- Guides you through setting up each API key/token interactively
-- Provides descriptions and links for obtaining each key
-- Creates/updates `~/.env.dotfiles` with your values
-- Sets secure file permissions (600 - read/write for user only)
-- Backs up existing file before updating
-- Allows you to skip any keys you don't need
-
-**Supported environment variables:**
-
-- **GITHUB_TOKEN** - GitHub personal access token ([Get it](https://github.com/settings/tokens/new))
-- **OPENAI_API_KEY** - OpenAI API key for GPT, DALL-E, etc. ([Get it](https://platform.openai.com/api-keys))
-- **ANTHROPIC_API_KEY** - Anthropic Claude API key ([Get it](https://console.anthropic.com/settings/keys))
-- **DISCORD_TOKEN** - Discord bot token ([Get it](https://discord.com/developers/applications))
-- **GOOGLE_API_KEY** - Google Cloud API key ([Get it](https://console.cloud.google.com/apis/credentials))
-- **REPLICATE_API_TOKEN** - Replicate AI token ([Get it](https://replicate.com/account/api-tokens))
-- **HUGGING_FACE_TOKEN** - Hugging Face access token ([Get it](https://huggingface.co/settings/tokens))
-
-**Features:**
-
-- Shows masked current values when updating
-- Confirms each value before saving
-- Option to keep existing values
-- Creates automatic backups with timestamp
-
-**Manual setup:** You can also edit `~/.env.dotfiles` directly:
+`~/.env.dotfiles` is no longer the primary secret store. It is only an optional fallback for `OP_SERVICE_ACCOUNT_TOKEN` when keyring/keychain is unavailable or being reset.
 
 ```bash
-vim ~/.env.dotfiles
-# Then open a new terminal to reload
+setup:env             # create/verify the optional fallback file
+setup:env --set-token # store OP_SERVICE_ACCOUNT_TOKEN in that fallback file
 ```
 
-**Note:** The `.env.dotfiles` file is automatically created from a template when you first deploy the `nushell` group via the post-deployment hook.
+**Note:** The `.env.dotfiles` fallback file is created from `Configs/secretspec/.env.dotfiles.example` when you deploy the `secretspec` group.
 
 ### Removing a Configuration
 

@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 # ---------------------------------------------------------------------------
 # SecretSpec + 1Password secret injection
 # ---------------------------------------------------------------------------
@@ -12,4 +13,6 @@ ssr() {
 	secretspec run -f "$HOME/secretspec.toml" -- "$@"
 }
 
-alias ss='secretspec -f $HOME/secretspec.toml'
+ss() {
+	secretspec -f "$HOME/secretspec.toml" "$@"
+}

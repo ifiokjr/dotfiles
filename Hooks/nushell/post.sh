@@ -163,20 +163,4 @@ else
 	echo -e "${YELLOW}!${NC} Nushell not found, skipping chsh"
 fi
 
-# Setup .env.dotfiles from example if it doesn't exist
-ENV_FILE="$HOME/.env.dotfiles"
-EXAMPLE_FILE="Configs/nushell/.env.dotfiles.example"
-
-if [ ! -f "$ENV_FILE" ]; then
-	if [ -f "$EXAMPLE_FILE" ]; then
-		cp "$EXAMPLE_FILE" "$ENV_FILE"
-		echo -e "${GREEN}✓${NC} Created $ENV_FILE from example"
-		echo -e "${YELLOW}!${NC} Please edit $ENV_FILE and add your API keys/tokens"
-	else
-		echo -e "${YELLOW}!${NC} Warning: Could not find $EXAMPLE_FILE"
-	fi
-else
-	echo -e "${BLUE}→${NC} $ENV_FILE already exists (not overwriting)"
-fi
-
 echo -e "${BLUE}→${NC} Open a new terminal window to use nushell"
