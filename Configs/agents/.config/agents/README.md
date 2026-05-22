@@ -36,7 +36,7 @@ OpenCode-specific configuration:
 
 - Only use these settings on trusted, local development machines
 - Review any generated code before committing
-- Keep API keys in `~/.env.dotfiles` (never committed)
+- Keep API keys in SecretSpec + 1Password and run tools through `ssr <command>` when they need secrets
 
 ## Environment Variable Precedence
 

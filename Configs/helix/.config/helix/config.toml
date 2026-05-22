@@ -8,7 +8,7 @@ completion-replace = true
 completion-timeout = 5
 # end-of-line-diagnostics = "hint"
 line-number = "relative"
-mouse = true             # works better with zellij for isolating selections
+mouse = true # works better with zellij for isolating selections
 shell = ["bash", "-c"]
 
 [editor.statusline]

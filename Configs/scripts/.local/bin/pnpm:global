@@ -10,11 +10,4 @@ for _p in "$HOME/.nix-profile/bin" "/run/current-system/sw/bin" "/nix/var/nix/pr
 done
 unset _p
 
-pnpm update -L "$@"
-pnpm:global:sync
-
-cat <<'NEXT'
-
-Updated the managed pnpm global manifests.
-Review and commit the updated files in Configs/pnpm/.config/pnpm-global.
-NEXT
+pnpm "$@"
