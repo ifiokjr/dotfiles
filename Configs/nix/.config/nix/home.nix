@@ -59,6 +59,7 @@ in
       neovim
       nixd
       nixfmt
+      nodejs
       extra.ollama
       opencode
       python3
