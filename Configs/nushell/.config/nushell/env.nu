@@ -69,6 +69,16 @@ $env.NDK_HOME = if ($ndk_base | path exists) {
 # ---------------------------------------------------------------------------
 $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 # ---------------------------------------------------------------------------
+# Docker compatibility via podman (macOS)
+# ---------------------------------------------------------------------------
+# Set DOCKER_HOST from podman machine socket path cached by activation/launchd.
+# This enables Docker SDK clients (docker-py, Testcontainers, etc.) to connect
+# to the podman VM. The `docker` CLI alias (podman) works without this.
+let _podman_docker_host = $"($env.HOME)/.local/share/podman/docker-host"
+if ($"(_podman_docker_host)" | path exists) {
+    $env.DOCKER_HOST = (open $"(_podman_docker_host)" --raw | str trim)
+}
+# ---------------------------------------------------------------------------
 # GPG
 # ---------------------------------------------------------------------------
 $env.GPG_TTY = (try { tty } catch { "" })

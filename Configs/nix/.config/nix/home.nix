@@ -280,12 +280,21 @@ in
 
   # Initialize and start podman VM for Docker compatibility on lite macOS desktops.
   # Idempotent: podman machine init/start are no-ops if machine already exists/running.
+  # --rootful enables root-level container capabilities (ports <1024, etc.).
   home.activation.initPodmanMachine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
     lib.optionalString (isDesktop && lite && pkgs.stdenv.isDarwin) ''
-      echo "==> Initializing podman VM (lite macOS desktop)…"
+      echo "==> Initializing rootful podman VM (lite macOS desktop)…"
       if command -v podman >/dev/null 2>&1; then
-        ${pkgs.podman}/bin/podman machine init 2>/dev/null || true
+        ${pkgs.podman}/bin/podman machine init --rootful 2>/dev/null || true
+        ${pkgs.podman}/bin/podman machine set --rootful 2>/dev/null || true
         ${pkgs.podman}/bin/podman machine start 2>/dev/null || true
+        # Cache the DOCKER_HOST socket path for shell startup
+        mkdir -p "$HOME/.local/share/podman"
+        _podman_sock="$(${pkgs.podman}/bin/podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanPipePath}}' 2>/dev/null | tr -d '\n')"
+        if [ -n "$_podman_sock" ]; then
+          echo "unix://$_podman_sock" > "$HOME/.local/share/podman/docker-host"
+        fi
+        unset _podman_sock
       fi
     ''
   );
