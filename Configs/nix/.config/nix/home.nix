@@ -154,6 +154,7 @@ in
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
       extra.ironclaw
+      extra.monochange
       extra.pnpm-11
       extra.op # 1password
 
