@@ -176,6 +176,30 @@
   # Use Tailscale as exit node / subnet router (optional)
   # services.tailscale.useRoutingFeatures = "both";
 
+  # Auto-start the podman VM on login for lite desktop Macs.
+  # Without this, `docker` (podman wrapper) fails with "daemon not running".
+  # `podman machine start` is idempotent — exits cleanly if already running.
+  # After starting, caches the DOCKER_HOST socket path for shell startup.
+  launchd.agents.podman-machine = lib.mkIf (isDesktop && lite) {
+    path = [ pkgs.podman ];
+    serviceConfig = {
+      ProgramArguments = [
+        "/bin/sh"
+        "-c"
+        (
+          "${pkgs.podman}/bin/podman machine start 2>/dev/null || true; "
+          + "mkdir -p $HOME/.local/share/podman; "
+          + "_sock=$(${pkgs.podman}/bin/podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanPipePath}}' 2>/dev/null | tr -d '\\n'); "
+          + "[ -n \"$_sock\" ] && echo \"unix://$_sock\" > $HOME/.local/share/podman/docker-host || true"
+        )
+      ];
+      RunAtLoad = true;
+      KeepAlive = false;
+      StandardOutPath = "/tmp/podman-machine-start.log";
+      StandardErrorPath = "/tmp/podman-machine-start.log";
+    };
+  };
+
   # Use global sudo timestamp so credentials are shared across all processes.
   # Required because nix-darwin's Homebrew module runs `brew bundle` in a
   # different process tree during activation, and brew's internal `sudo`

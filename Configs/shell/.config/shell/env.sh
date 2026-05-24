@@ -65,6 +65,18 @@ unset _ndk_base
 export PNPM_HOME="$HOME/Library/pnpm"
 
 # ---------------------------------------------------------------------------
+# Docker compatibility via podman (macOS)
+# ---------------------------------------------------------------------------
+# Set DOCKER_HOST from podman machine socket path cached by activation/launchd.
+# This enables Docker SDK clients (docker-py, Testcontainers, etc.) to connect
+# to the podman VM. The `docker` CLI wrapper (exec podman) works without this.
+if [ -f "$HOME/.local/share/podman/docker-host" ]; then
+	_docker_host="$(cat "$HOME/.local/share/podman/docker-host")"
+	[ -n "$_docker_host" ] && export DOCKER_HOST="$_docker_host"
+	unset _docker_host
+fi
+
+# ---------------------------------------------------------------------------
 # GPG
 # ---------------------------------------------------------------------------
 GPG_TTY=$(tty 2>/dev/null || true)
