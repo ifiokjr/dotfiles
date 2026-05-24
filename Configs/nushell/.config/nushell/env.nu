@@ -75,8 +75,8 @@ $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 # This enables Docker SDK clients (docker-py, Testcontainers, etc.) to connect
 # to the podman VM. The `docker` CLI alias (podman) works without this.
 let _podman_docker_host = $"($env.HOME)/.local/share/podman/docker-host"
-if ($"(_podman_docker_host)" | path exists) {
-    $env.DOCKER_HOST = (open $"(_podman_docker_host)" --raw | str trim)
+if ($_podman_docker_host | path exists) {
+    $env.DOCKER_HOST = (open $_podman_docker_host --raw | str trim)
 }
 # ---------------------------------------------------------------------------
 # GPG

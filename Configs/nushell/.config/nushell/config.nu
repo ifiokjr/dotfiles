@@ -54,7 +54,8 @@ $env.config = {
                     # Directory stack — push current directory, deduplicate, cap at 10.
                     # Mirrors zsh auto_pushd behaviour used by oh-my-zsh's `d` command.
                     let dir = ($env.PWD | path expand)
-                    $env.DIRSTACK = ([$dir] | append ($env.DIRSTACK | where { $in != $dir }) | first 10)
+                    let stack = ($env | get -o DIRSTACK | default [])
+                    $env.DIRSTACK = ([$dir] | append ($stack | where { $in != $dir }) | first 10)
                 }
             ]
         }
@@ -446,7 +447,9 @@ def c [...paths: string] {
 # `d` shows recent directories numbered 0-9 (0 is current directory).
 # `d <n>` jumps to directory at that index.
 def --env d [index?: int] {
-    let dirs = $env.DIRSTACK
+    let dirs = ($env | get -o DIRSTACK | default [
+        $env.PWD
+    ])
     if ($index != null) {
         if $index >= 0 and $index < ($dirs | length) { cd ($dirs | get $index) } else { print $"(ansi red)Invalid index:(ansi reset) ($index) \(0-($dirs | length | $in - 1)\)" }
         return
