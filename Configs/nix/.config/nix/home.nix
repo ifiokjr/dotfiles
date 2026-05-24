@@ -278,13 +278,14 @@ in
     fi
   '';
 
-  # Initialize podman VM for Docker compatibility on lite macOS desktops.
-  # Idempotent: podman machine init fails silently if a machine already exists.
+  # Initialize and start podman VM for Docker compatibility on lite macOS desktops.
+  # Idempotent: podman machine init/start are no-ops if machine already exists/running.
   home.activation.initPodmanMachine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
     lib.optionalString (isDesktop && lite && pkgs.stdenv.isDarwin) ''
-      echo "==> Initializing podman VM (lite macOS desktop)..."
+      echo "==> Initializing podman VM (lite macOS desktop)…"
       if command -v podman >/dev/null 2>&1; then
         ${pkgs.podman}/bin/podman machine init 2>/dev/null || true
+        ${pkgs.podman}/bin/podman machine start 2>/dev/null || true
       fi
     ''
   );
