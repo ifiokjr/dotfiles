@@ -32,7 +32,7 @@ This documents the setup of IronClaw across your Mac (primary) and three Mac Min
 | Mini 02     | `ifiokjr` | `100.97.208.114` | IronClaw worker      |
 | Mini 03     | `ifiokjr` | `100.77.105.14`  | IronClaw worker      |
 
-> **Key**: Each machine has a different OS username. The `machine.nix` file (gitignored) maps `username` per host. SSH uses the per-machine username, not `ifiokjr` everywhere.
+> **Key**: All machines use OS username `ifiokjr`. The `machine.nix` file (gitignored) should set `username = "ifiokjr"` on every Mac, with only `hostname` changing per host.
 
 ---
 
@@ -197,7 +197,7 @@ Each Mini has a different `machine.nix` (gitignored, local to that machine):
 ```nix
 # Mini 01: ~/.config/nix/machine.nix
 {
-  username = "mini01";
+  username = "ifiokjr";
   system = "aarch64-darwin";
   hostname = "mini01";
   lite = true;      # CLI-focused, no GUI apps
@@ -208,7 +208,7 @@ Each Mini has a different `machine.nix` (gitignored, local to that machine):
 ```nix
 # Mini 02: ~/.config/nix/machine.nix
 {
-  username = "mini02";
+  username = "ifiokjr";
   system = "aarch64-darwin";
   hostname = "mini02";
   lite = true;
@@ -219,7 +219,7 @@ Each Mini has a different `machine.nix` (gitignored, local to that machine):
 ```nix
 # Mini 03: ~/.config/nix/machine.nix
 {
-  username = "mini03";
+  username = "ifiokjr";
   system = "aarch64-darwin";
   hostname = "mini03";
   lite = true;
@@ -357,21 +357,33 @@ sudo tailscale up --ssh
 
 Host mini01
 	HostName 100.94.21.127
+	HostKeyAlias mini01.tailbfc6bf.ts.net
 	User ifiokjr
+	ProxyCommand tailscale nc %h %p
+	UserKnownHostsFile ~/.ssh/known_hosts.tailscale
+	StrictHostKeyChecking accept-new
 	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 Host mini02
 	HostName 100.97.208.114
+	HostKeyAlias mini02.tailbfc6bf.ts.net
 	User ifiokjr
+	ProxyCommand tailscale nc %h %p
+	UserKnownHostsFile ~/.ssh/known_hosts.tailscale
+	StrictHostKeyChecking accept-new
 	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 Host mini03
 	HostName 100.77.105.14
+	HostKeyAlias mini03.tailbfc6bf.ts.net
 	User ifiokjr
+	ProxyCommand tailscale nc %h %p
+	UserKnownHostsFile ~/.ssh/known_hosts.tailscale
+	StrictHostKeyChecking accept-new
 	IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 ```
 
-> Tailscale IPs are used instead of MagicDNS names because DNS resolution wasn't working. The IPs are stable within the tailnet. Uses the 1Password SSH agent for key auth (same as existing config).
+> This SSH config is managed by Home Manager during `rebuild`. It uses `tailscale nc` as a proxy so SSH works even when the local Tailscale TUN interface is unavailable, and it stores Tailscale SSH host keys separately in `~/.ssh/known_hosts.tailscale`.
 
 **Before SSH works, each Mini needs Remote Login enabled:**
 

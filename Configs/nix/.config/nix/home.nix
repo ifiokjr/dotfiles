@@ -218,16 +218,47 @@ in
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
   home.file = {
-    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
-    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
-    # # symlink to the Nix store copy.
-    # ".screenrc".source = dotfiles/screenrc;
+    ".ssh/config" = {
+      force = true;
+      text = ''
+        # Added by OrbStack: 'orb' SSH host for Linux machines
+        # This must stay before Host blocks so OrbStack's generated host aliases work.
+        Include ~/.orbstack/ssh/config
 
-    # # You can also set the file content immediately.
-    # ".gradle/gradle.properties".text = ''
-    #   org.gradle.console=verbose
-    #   org.gradle.daemon.idletimeout=3600000
-    # '';
+        # IronClaw Mac Minis via Tailscale SSH.
+        # ProxyCommand avoids depending on the local Tailscale TUN interface, which
+        # can be disabled in some macOS/client states while `tailscale nc` still works.
+        Host mini01
+            HostName 100.94.21.127
+            HostKeyAlias mini01.tailbfc6bf.ts.net
+            User ifiokjr
+            ProxyCommand tailscale nc %h %p
+            UserKnownHostsFile ~/.ssh/known_hosts.tailscale
+            StrictHostKeyChecking accept-new
+            IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+        Host mini02
+            HostName 100.97.208.114
+            HostKeyAlias mini02.tailbfc6bf.ts.net
+            User ifiokjr
+            ProxyCommand tailscale nc %h %p
+            UserKnownHostsFile ~/.ssh/known_hosts.tailscale
+            StrictHostKeyChecking accept-new
+            IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+        Host mini03
+            HostName 100.77.105.14
+            HostKeyAlias mini03.tailbfc6bf.ts.net
+            User ifiokjr
+            ProxyCommand tailscale nc %h %p
+            UserKnownHostsFile ~/.ssh/known_hosts.tailscale
+            StrictHostKeyChecking accept-new
+            IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+        Host *
+            IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+      '';
+    };
   };
 
   # Print progress marker before home-manager writes all managed files.
