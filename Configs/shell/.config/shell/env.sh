@@ -67,13 +67,11 @@ export PNPM_HOME="$HOME/Library/pnpm"
 # ---------------------------------------------------------------------------
 # Docker compatibility via podman (macOS)
 # ---------------------------------------------------------------------------
-# Set DOCKER_HOST from podman machine socket path cached by activation/launchd.
-# This enables Docker SDK clients (docker-py, Testcontainers, etc.) to connect
-# to the podman VM. The `docker` CLI wrapper (exec podman) works without this.
-if [ -f "$HOME/.local/share/podman/docker-host" ]; then
-	_docker_host="$(cat "$HOME/.local/share/podman/docker-host")"
-	[ -n "$_docker_host" ] && export DOCKER_HOST="$_docker_host"
-	unset _docker_host
+# Set DOCKER_HOST to the stable podman socket symlink.
+# The symlink is created/updated by home-manager activation and the launchd agent
+# on every login, so DOCKER_HOST can be a fixed path across reboots.
+if [ -S "$HOME/.local/share/podman/docker.sock" ]; then
+	export DOCKER_HOST="unix://$HOME/.local/share/podman/docker.sock"
 fi
 
 # ---------------------------------------------------------------------------
