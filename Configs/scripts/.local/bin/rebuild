@@ -116,6 +116,8 @@ def main [
     --rebuild-os   # Install all available macOS software updates before rebuilding (slow)
     --always-on    # Set machine.nix alwaysOn = true (never sleep, screensaver with lock)
     --no-always-on # Set machine.nix alwaysOn = false
+    --add-preset: string  # Add a preset to machine.nix (e.g. ironclaw)
+    --remove-preset: string  # Remove a preset from machine.nix
 ] {
     if $force and not $latest {
         err "--force requires --latest"
@@ -140,6 +142,18 @@ def main [
     if $brew and not $update {
         err "--brew requires --update"
         exit 1
+    }
+
+    # Handle --add-preset: add a preset to machine.nix
+    if ($add_preset | is-not-empty) {
+        nix_config add-preset $add_preset
+        success $"Added preset '($add_preset)' to machine.nix"
+    }
+
+    # Handle --remove-preset: remove a preset from machine.nix
+    if ($remove_preset | is-not-empty) {
+        nix_config remove-preset $remove_preset
+        success $"Removed preset '($remove_preset)' from machine.nix"
     }
 
     # Register cleanup: restore original branch and stash after --latest.
@@ -338,6 +352,9 @@ def main [
     print $"  System: ($config.system)"
     print $"  Lite: ($config.lite)"
     print $"  Desktop: ($config.isDesktop)"
+    if ($config.presets | is-not-empty) {
+        print $"  Presets: (($config.presets | str join ', '))"
+    }
     print ""
 
     # Rebuild must work even when the user's shell has not loaded Nix yet.

@@ -91,6 +91,82 @@ export def set-always-on-mode [value: bool, --path(-p): string] {
     }
     $updated | save -f $target_path
 }
+# Known presets and their descriptions.
+# These map to machine.nix `presets` list entries and Nix conditional logic.
+#
+# Adding a new preset:
+#   1. Add it here with a description
+#   2. Wire it into home.nix/darwin.nix to conditionally enable features
+#   3. Add tuckr config groups with matching preset membership
+export def known-presets [] { {ironclaw: "Ironclaw agent runtime — enables libSQL database and ironclaw service"} }
+# Add a preset to machine.nix (inserts the presets list if missing, appends if present).
+export def add-preset [preset: string, --path(-p): string] {
+    let preset = ($preset | str downcase)
+    let known = (known-presets)
+    let preset_names = ($known | columns)
+    if $preset not-in $preset_names {
+        error make {
+            msg: $"Unknown preset '($preset)'. Available presets: ($preset_names | str join ', ')"
+        }
+    }
+    let target_path = ($path | default (machine-config-path))
+    if not ($target_path | path exists) {
+        error make {
+            msg: $"machine.nix not found at: ($target_path)"
+        }
+    }
+    let content = (open $target_path --raw)
+    # Parse current presets list (if any)
+    let current_entries = try {
+        let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)
+        if ($raw | is-empty) { [] } else {
+            $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
+        }
+    } catch { [] }
+    # Already present — no-op
+    if $preset in $current_entries {
+        return
+    }
+    let new_entries = ($current_entries | append $preset | each {|x| $'"($x)"'})
+    let preset_line = $"  presets = [($new_entries | str join ' ')];"
+    let updated = if ($content | str contains 'presets =') {
+        $content | str replace --regex '(?m)^\s*presets\s*=\s*\[[^\]]*\];\s*$' $preset_line
+    } else {
+        let with_presets = $"\n  # Machine presets — determines which feature sets to enable\n($preset_line)\n}"
+        $content | str replace --regex '\n\}\s*$' $with_presets
+    }
+    $updated | save -f $target_path
+}
+# Remove a preset from machine.nix (removes from the list, cleans up empty list).
+export def remove-preset [preset: string, --path(-p): string] {
+    let preset = ($preset | str trim | str downcase)
+    let target_path = ($path | default (machine-config-path))
+    if not ($target_path | path exists) {
+        error make {
+            msg: $"machine.nix not found at: ($target_path)"
+        }
+    }
+    let content = (open $target_path --raw)
+    if not ($content | str contains 'presets =') {
+        return
+    }
+    # Parse current entries and remove the target
+    let current_entries = try {
+        let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)
+        if ($raw | is-empty) { [] } else {
+            $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
+        }
+    } catch { [] }
+    let new_entries = ($current_entries | where {|x| $x != $preset} | each {|x| $'"($x)"'})
+    let updated = if ($new_entries | length) > 0 {
+        let preset_line = $"  presets = [($new_entries | str join ' ')];"
+        $content | str replace --regex '(?m)^\s*presets\s*=\s*\[[^\]]*\];\s*$' $preset_line
+    } else {
+        # Remove the presets line entirely (and its comment)
+        $content | str replace --regex '(?m)^[ \t]*#\s*Machine presets.*\n?[ \t]*presets\s*=\s*\[\s*\];\s*\n?' ''
+    }
+    $updated | save -f $target_path
+}
 # Parse machine.nix and return {username, system, hostname} record.
 # machine.nix is a simple Nix attrset (not a module), so we extract
 # values with regex rather than invoking the nix evaluator.
@@ -115,6 +191,13 @@ export def parse-machine-config [] {
     let isDesktop = try { (($content | parse --regex 'isDesktop\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
     # alwaysOn is optional — older machine.nix files may not have it
     let alwaysOn = try { (($content | parse --regex 'alwaysOn\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
+    # presets is optional — a quoted list inside brackets
+    let presets = try {
+        let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)
+        if ($raw | is-empty) { [] } else {
+            $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
+        }
+    } catch { [] }
     {
         username: $username
         system: $system
@@ -122,5 +205,6 @@ export def parse-machine-config [] {
         lite: $lite
         isDesktop: $isDesktop
         alwaysOn: $alwaysOn
+        presets: $presets
     }
 }

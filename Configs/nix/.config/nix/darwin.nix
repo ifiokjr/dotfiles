@@ -7,6 +7,7 @@
   lite ? false,
   isDesktop ? false,
   alwaysOn ? false,
+  presets ? [ ],
   ifiokjr-nixpkgs,
   homebrew-core,
   homebrew-cask,
