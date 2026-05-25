@@ -134,6 +134,12 @@ if [ -f "$HOME/.config/agents/agents.env.sh" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# pnpm global shortcut
+# ---------------------------------------------------------------------------
+# pnpmg runs pnpm in the managed global project directory.
+pnpmg() { pnpm --dir "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global" "$@"; }
+
+# ---------------------------------------------------------------------------
 # Secrets — 1Password-backed via SecretSpec, no plaintext on disk
 # ---------------------------------------------------------------------------
 if [ -f "$HOME/.config/shell/secrets.sh" ]; then

@@ -139,6 +139,7 @@ alias cw = cargo watch -x run
 # pnpm
 alias p = pnpm
 alias pu = pnpm update -g -iL
+alias pnpmg = pnpm --dir ~/.local/share/pnpm-global
 # alias pi = pnpm install
 # alias pd = pnpm dev
 # alias pb = pnpm build
