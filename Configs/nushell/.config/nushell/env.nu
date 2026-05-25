@@ -71,12 +71,14 @@ $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 # ---------------------------------------------------------------------------
 # Docker compatibility via podman (macOS)
 # ---------------------------------------------------------------------------
-# Set DOCKER_HOST to the stable podman socket symlink.
-# The symlink is created/updated by home-manager activation and the launchd agent
-# on every login, so DOCKER_HOST can be a fixed path across reboots.
-let _podman_sock = $"($env.HOME)/.local/share/podman/docker.sock"
-if ($_podman_sock | path exists) {
-    $env.DOCKER_HOST = $"unix://($_podman_sock)"
+# Dynamically set DOCKER_HOST from the podman machine socket path.
+# This enables Docker SDK clients (docker-py, Testcontainers, IronClaw) to
+# connect to the podman VM. The `docker` CLI alias (podman) works without this.
+if ($nu.os-info.name == "macos") and (which podman | is-not-empty) {
+    let _docker_sock = (do -i { podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanSocket.Path}}' } | str trim)
+    if ($_docker_sock | path exists) {
+        $env.DOCKER_HOST = $"unix://(_docker_sock)"
+    }
 }
 # ---------------------------------------------------------------------------
 # GPG

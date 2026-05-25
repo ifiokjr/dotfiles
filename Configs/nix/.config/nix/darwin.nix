@@ -177,21 +177,14 @@
   # services.tailscale.useRoutingFeatures = "both";
 
   # Auto-start the podman VM on login for lite desktop Macs.
-  # Without this, `docker` (podman wrapper) fails with "daemon not running".
   # `podman machine start` is idempotent — exits cleanly if already running.
-  # After starting, creates a stable symlink at ~/.local/share/podman/docker.sock.
   launchd.agents.podman-machine = lib.mkIf (isDesktop && lite) {
     path = [ pkgs.podman ];
     serviceConfig = {
       ProgramArguments = [
-        "/bin/sh"
-        "-c"
-        (
-          "${pkgs.podman}/bin/podman machine start 2>/dev/null || true; "
-          + "mkdir -p $HOME/.local/share/podman; "
-          + "_sock=$(${pkgs.podman}/bin/podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanPipePath}}' 2>/dev/null | tr -d '\\n'); "
-          + "[ -n \"$_sock\" ] && [ -S \"$_sock\" ] && ln -sf \"$_sock\" $HOME/.local/share/podman/docker.sock || true"
-        )
+        "${pkgs.podman}/bin/podman"
+        "machine"
+        "start"
       ];
       RunAtLoad = true;
       KeepAlive = false;
