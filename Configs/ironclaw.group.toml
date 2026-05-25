@@ -1,0 +1,2 @@
+description = "Ironclaw agent runtime configuration and environment."
+presets = ["dev", "workstation"]
