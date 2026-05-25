@@ -4,6 +4,7 @@
   lite ? false,
   isDesktop ? false,
   alwaysOn ? false,
+  presets ? [ ],
   ifiokjr-nixpkgs,
   ...
 }:
