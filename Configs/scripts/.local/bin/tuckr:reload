@@ -29,7 +29,7 @@ def matches_platform [group: string] {
 
 def main [
     --help (-h)     # Show this help message and exit
-    --force         # Pass --force to tuckr (overwrite existing files)
+    --force         # Overwrite existing files and auto-accept all prompts
     --dry-run       # Print what would happen without changing files
 ] {
     let tuckr_location = (detect_tuckr_location)
@@ -93,7 +93,7 @@ def main [
     # Build tuckr args
     let tuckr_args = []
     let tuckr_args = if $dry_run { $tuckr_args | append "--dry-run" } else { $tuckr_args }
-    let tuckr_args = if $force { $tuckr_args | append "--force" } else { $tuckr_args }
+    let tuckr_args = if $force { $tuckr_args | append "--force" | append "--assume-yes" } else { $tuckr_args }
 
     # Determine if a group uses hooks
     def is_hook_group [group: string] {
