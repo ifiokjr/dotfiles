@@ -1,0 +1,33 @@
+# Ironclaw base configuration — non-secret defaults only.
+# Merged into ~/.ironclaw on deploy; secret values are preserved.
+# Edit secrets directly in ~/.ironclaw (not tracked by git).
+
+DATABASE_URL=postgres://ifiokjr@localhost/ironclaw
+DATABASE_BACKEND=postgres
+DATABASE_POOL_SIZE=10
+IRONCLAW_PROFILE=local
+
+LLM_BACKEND=ollama
+OLLAMA_MODEL=gemma4:latest
+OLLAMA_BASE_URL=https://ollama.com
+
+AGENT_NAME=ironclaw-mini02
+AGENT_MAX_PARALLEL_JOBS=3
+AGENT_JOB_TIMEOUT_SECS=3600
+AGENT_USE_PLANNING=true
+
+SAFETY_INJECTION_CHECK_ENABLED=true
+SAFETY_MAX_OUTPUT_LENGTH=100000
+
+SELF_REPAIR_CHECK_INTERVAL_SECS=60
+SELF_REPAIR_MAX_ATTEMPTS=3
+
+SANDBOX_ENABLED=true
+SANDBOX_POLICY=readonly
+
+HTTP_HOST=0.0.0.0
+HTTP_PORT=3000
+
+RUST_LOG=ironclaw=info
+
+EMBEDDING_ENABLED=false

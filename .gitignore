@@ -58,6 +58,9 @@ Configs/git/.gitconfig
 !.env.*.example
 !**/.env.*.example
 
+# Ironclaw config (generated from .ironclaw.base; may contain secrets)
+.ironclaw
+
 # Build artifacts and dependencies
 # Rust
 **/target/
