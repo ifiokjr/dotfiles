@@ -77,7 +77,7 @@ $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 if ($nu.os-info.name == "macos") and (which podman | is-not-empty) {
     let _docker_sock = (do -i { podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanSocket.Path}}' } | str trim)
     if ($_docker_sock | path exists) {
-        $env.DOCKER_HOST = $"unix://(_docker_sock)"
+        $env.DOCKER_HOST = "unix://" + $_docker_sock
     }
 }
 # ---------------------------------------------------------------------------
