@@ -128,7 +128,7 @@ def setup_symlinks [helix_dir: string, helix_bin: string, runtime_src: string, r
     info "You can now run: hx"
 }
 
-# Install forge packages required by init.scm (splash screen, keymaps, etc.)
+# Install forge packages required by init.scm (splash screen, keymaps, scooter, etc.)
 def install_forge_packages [] {
     let forge_bin = $"($env.HOME)/.local/bin/forge"
     if not ($forge_bin | path exists) {
@@ -136,12 +136,21 @@ def install_forge_packages [] {
         return
     }
 
-    info "Installing forge packages..."
-    let result = do -i { ^$forge_bin pkg install --git https://github.com/mattwparas/helix-config.git }
-    if ($env.LAST_EXIT_CODE == 0) {
-        success "Forge packages installed successfully"
-    } else {
-        warn "Failed to install forge packages (you can run 'forge pkg install --git https://github.com/mattwparas/helix-config.git' manually)"
+    # Packages required by the helix config
+    let packages = [
+        [name description url];
+        ["helix-config" "splash screen, keymaps, helix-ext" "https://github.com/mattwparas/helix-config.git"]
+        ["scooter.hx" "interactive find-and-replace" "https://github.com/thomasschafer/scooter.hx.git"]
+    ]
+
+    for pkg in $packages {
+        info $"Installing ($pkg.name) (($pkg.description))..."
+        let result = do -i { ^$forge_bin pkg install --git $pkg.url }
+        if ($env.LAST_EXIT_CODE == 0) {
+            success $"($pkg.name) installed successfully"
+        } else {
+            warn $"Failed to install ($pkg.name) (you can run 'forge pkg install --git ($pkg.url)' manually)"
+        }
     }
 }
 
