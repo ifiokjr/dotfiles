@@ -144,7 +144,8 @@ maybe_install_custom_helix() {
 	print_info "This will:"
 	echo "  • Clone/update the Helix Steel fork (mattwparas/helix)"
 	echo "  • Build Helix with Steel plugin support (requires Rust/cargo)"
-	echo "  • Install Steel language server and package manager"
+	echo "  • Install Steel language server, package manager, and forge plugins"
+	echo "  • Install scooter.hx (interactive find-and-replace plugin)"
 	echo "  • This process takes 5-10 minutes"
 	echo ""
 
