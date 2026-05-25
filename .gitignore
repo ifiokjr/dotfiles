@@ -54,12 +54,14 @@ Configs/git/.gitconfig
 *.env
 **/.env
 **/.env.*
-# But allow .example files to be tracked
+# But allow .example and .base files to be tracked
 !.env.*.example
 !**/.env.*.example
+!.env.base
+!**/.env.base
 
-# Ironclaw config (generated from .ironclaw.base; may contain secrets)
-.ironclaw
+# Ironclaw config (generated from .env.base; may contain secrets)
+**/.ironclaw/.env
 
 # Build artifacts and dependencies
 # Rust
