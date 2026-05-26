@@ -104,7 +104,10 @@ in
       bash-language-server
       kotlin-language-server
       lua-language-server
+      lsp-ai
+      ltex-ls
       markdown-oxide
+      nil
       ruby
       ruby-lsp
       sqls
@@ -155,6 +158,7 @@ in
 
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
+      extra.ccase
       extra.ironclaw
       extra.monochange
       extra.pnpm-11
