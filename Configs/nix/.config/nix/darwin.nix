@@ -174,8 +174,9 @@
 
   # Enable the Tailscale background service automatically via launchd.
   services.tailscale.enable = true;
-  # Enable client-side routing support for tailnet IPs, MagicDNS, and accepted routes.
-  services.tailscale.useRoutingFeatures = "client";
+  # Client-side routing (exit nodes, subnet routers) works out of the box on macOS.
+  # The `useRoutingFeatures` option only exists in the NixOS tailscale module
+  # (it sets IP forwarding and reverse-path filtering, which are Linux-only).
 
   # Auto-start the podman VM on login for lite desktop Macs.
   # `podman machine start` is idempotent — exits cleanly if already running.
