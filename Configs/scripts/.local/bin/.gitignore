@@ -1,0 +1,4 @@
+# Compiled binaries — these are built by 'deno compile' and should not be tracked.
+# The 'df' symlink is also generated at build time.
+dotfiles
+df

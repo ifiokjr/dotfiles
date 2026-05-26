@@ -103,6 +103,40 @@ export const groupsCommand = new Command()
 			}),
 	)
 	.command(
+		"undeploy",
+		new Command()
+			.description("Remove configuration groups and run cleanup hooks")
+			.arguments("<groups...:string>")
+			.option("--no-hooks", "Skip running cleanup hooks (only remove symlinks)")
+			.action(async (opts, ...groups: string[]) => {
+				const dotfilesDir = await resolveDotfilesDir();
+
+				const knownGroups = await discoverGroups(dotfilesDir);
+				for (const group of groups) {
+					if (!knownGroups.includes(group)) {
+						printError(`Unknown configuration group: ${group}`);
+						console.log(`Available groups: ${knownGroups.join(", ")}`);
+						Deno.exit(1);
+					}
+				}
+
+				const subcommand = opts.hooks ? "unset" : "rm";
+				const args = ["tuckr", subcommand, ...groups];
+
+				const { code, success } = await runCommand(args, {
+					cwd: dotfilesDir,
+				});
+
+				if (!success) {
+					printError(`Undeploy failed with exit code ${code}`);
+					Deno.exit(code);
+				}
+
+				const action = opts.hooks ? "Undeployed" : "Removed symlinks for";
+				printSuccess(`${action} groups: ${groups.join(", ")}`);
+			}),
+	)
+	.command(
 		"status",
 		new Command()
 			.description("Show deployment status of all groups")

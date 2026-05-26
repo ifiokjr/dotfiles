@@ -453,5 +453,42 @@ if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
 	fi
 fi
 
+# ---------------------------------------------------------------------------
+# Compile the dotfiles CLI binary after a successful rebuild.
+# This ensures 'dotfiles' and 'df' are always in sync with the source.
+# ---------------------------------------------------------------------------
+if [ "$REBUILD_EXIT" -eq 0 ]; then
+	DOTFILES_REPO_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)}"
+	CLI_DIR="$DOTFILES_REPO_DIR/cli"
+	DOTFILES_BIN="$HOME/.local/bin/dotfiles"
+
+	if [ -d "$CLI_DIR" ] && [ -f "$CLI_DIR/main.ts" ]; then
+		if command -v deno >/dev/null 2>&1; then
+			echo "==> Compiling dotfiles CLI..."
+			if deno compile --allow-all --output "$DOTFILES_BIN" "$CLI_DIR/main.ts" >/dev/null 2>&1; then
+				echo "    dotfiles CLI compiled successfully"
+
+				# Create/update the df symlink
+				DF_BIN="$HOME/.local/bin/df"
+				ln -sf "$DOTFILES_BIN" "$DF_BIN"
+
+				# Verify it works
+				if "$DOTFILES_BIN" version >/dev/null 2>&1; then
+					echo "    dotfiles v$("$DOTFILES_BIN" version 2>/dev/null | head -1) installed at $DOTFILES_BIN"
+				else
+					echo "    WARNING: dotfiles binary compiled but does not run"
+					REBUILD_EXIT=1
+				fi
+			else
+				echo "    WARNING: dotfiles CLI compilation failed (non-fatal)"
+			fi
+		else
+			echo "    Skipping dotfiles CLI compilation (deno not found)"
+		fi
+	else
+		echo "    Skipping dotfiles CLI compilation (no cli/ directory found)"
+	fi
+fi
+
 # Propagate rebuild failure so callers know the rebuild didn't fully succeed.
 exit "$REBUILD_EXIT"
