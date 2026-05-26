@@ -75,6 +75,10 @@ jobs:
         run: |
           cd cli && deno task lint
 
+      - name: 🧪 test CLI (deno test)
+        run: |
+          cd cli && deno task test
+
       - name: 🏗️ compile CLI binary (deno compile)
         run: |
           cd cli && deno task compile:dev

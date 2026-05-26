@@ -80,8 +80,10 @@ cd cli && deno task check:all                        # typecheck + lint
 
 ## Architecture
 
-- **Phase 1 (current):** All commands shell out to existing bash/nushell scripts
-- **Phase 2 (future):** Core commands reimplemented natively in TypeScript
+- **Phase 1:** CLI wrapper around existing bash/nushell scripts
+- **Phase 2 (current):** Port low-risk command logic natively when it improves readability and testability
 - **Phase 3 (future):** Interactive mode, TUI dashboard, completions
+
+`dotfiles setup` intentionally remains a thin wrapper around the existing setup script. Setup is a system-level bootstrapper that installs Nix, creates symlinks, and applies host configuration, so keeping the battle-tested shell script avoids bloating the CLI with risky duplicate orchestration.
 
 See `docs/proposals/dotfiles-cli.md` for the full proposal and migration plan.
