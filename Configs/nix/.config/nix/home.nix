@@ -52,6 +52,7 @@ in
       git
       git-filter-repo
       git-lfs
+      google-cloud-sdk
       graphite-cli
       jdk17
       kubernetes-helm
