@@ -2,6 +2,16 @@
 
 Unified CLI for managing dotfiles — setup, rebuild, reload, doctor, and more.
 
+After a rebuild, the binary is auto-compiled and installed to `~/.local/bin/dotfiles`
+with a `dot` symlink alias for quick access.
+
+```bash
+dotfiles --help          # show all commands
+dot help groups          # detailed help for a subcommand
+dot groups list          # via the shorter alias
+dotfiles reload --force  # force overwrite existing symlinks
+```
+
 ## Quick Start
 
 ```bash
@@ -40,6 +50,15 @@ deno task test
 # Compile the binary (production)
 deno task compile
 ```
+
+## Alias
+
+The `dotfiles` binary also installs a `dot` symlink alias:
+
+- `dotfiles` — full command name
+- `dot` — short alias (~3 chars, doesn't conflict with existing Unix commands like `df`)
+
+Both point to the same compiled binary.
 
 ## Tooling
 

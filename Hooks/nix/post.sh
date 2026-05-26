@@ -468,9 +468,9 @@ if [ "$REBUILD_EXIT" -eq 0 ]; then
 			if deno compile --allow-all --output "$DOTFILES_BIN" "$CLI_DIR/main.ts" >/dev/null 2>&1; then
 				echo "    dotfiles CLI compiled successfully"
 
-				# Create/update the df symlink
-				DF_BIN="$HOME/.local/bin/df"
-				ln -sf "$DOTFILES_BIN" "$DF_BIN"
+				# Create/update the dot symlink
+				DOT_BIN="$HOME/.local/bin/dot"
+				ln -sf "$DOTFILES_BIN" "$DOT_BIN"
 
 				# Verify it works
 				if "$DOTFILES_BIN" version >/dev/null 2>&1; then

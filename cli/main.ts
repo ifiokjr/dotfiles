@@ -5,6 +5,7 @@
  */
 
 import { Command } from "@cliffy/command";
+import { HelpCommand } from "@cliffy/command/help";
 import { doctorCommand } from "./commands/doctor.ts";
 import { envCommand } from "./commands/env.ts";
 import { groupsCommand } from "./commands/groups.ts";
@@ -39,4 +40,5 @@ await new Command()
 	.command("uninstall", uninstallCommand)
 	.command("reset", resetCommand)
 	.command("version", versionCommand)
+	.command("help", new HelpCommand().global())
 	.parse(Deno.args);
