@@ -13,7 +13,7 @@ This documents the setup of IronClaw across your Mac (primary) and three Mac Min
 │  │ ifiokjr     │  │ mini01   │  │ mini02   │  │ mini03   │ │
 │  │ IronClaw    │  │ IronClaw │  │ IronClaw │  │ IronClaw │ │
 │  │ PG :5432    │  │ PG :5432 │  │ PG :5432 │  │ PG :5432 │ │
-│  │ Gateway:3000│  │ :3000    │  │ :3000    │  │ :3000    │ │
+│  │Gateway:43210│  │ :43210   │  │ :43210   │  │ :43210   │ │
 │  │ Ollama      │  │ Ollama   │  │ Ollama   │  │ Ollama   │ │
 │  └─────────────┘  └──────────┘  └──────────┘  └──────────┘ │
 │         │              │             │             │        │
@@ -87,7 +87,6 @@ Created `~/.ironclaw/.env`:
 DATABASE_URL=postgres://ifiokjr@localhost/ironclaw
 DATABASE_BACKEND=postgres
 DATABASE_POOL_SIZE=10
-IRONCLAW_PROFILE=local
 
 # ─── LLM Provider (Ollama - local, private) ───
 LLM_BACKEND=ollama
@@ -113,8 +112,11 @@ SANDBOX_ENABLED=true
 SANDBOX_POLICY=readonly
 
 # ─── Web Gateway (listen on all interfaces for Tailscale) ───
-HTTP_HOST=0.0.0.0
-HTTP_PORT=3000
+GATEWAY_HOST=0.0.0.0
+GATEWAY_PORT=43210
+GATEWAY_ENABLED=true
+CLI_ENABLED=true
+HTTP_ENABLED=false
 
 # ─── Logging ───
 RUST_LOG=ironclaw=info
@@ -170,13 +172,13 @@ ironclaw doctor
 # Expected output:
 #   ✓ LLM configuration   backend=ollama, model=gemma4:latest
 #   ✓ Database backend    PostgreSQL connected
-#   ✓ Gateway config      enabled at 0.0.0.0:3000
+#   ✓ Gateway config      enabled at 0.0.0.0:43210
 #   ✓ Docker daemon       running
 #   ✓ tailscale            1.98.0
 #   ✓ Service             launchd plist installed
 
-curl http://localhost:3000/health
-# Expected: {"status":"healthy","channel":"http"}
+curl http://localhost:43210/api/health
+# Expected: {"status":"healthy","channel":"gateway"}
 ```
 
 ---
@@ -271,7 +273,6 @@ cat > ~/.ironclaw/.env << 'ENVEOF'
 DATABASE_URL=postgres://mini01@localhost/ironclaw
 DATABASE_BACKEND=postgres
 DATABASE_POOL_SIZE=10
-IRONCLAW_PROFILE=local
 
 LLM_BACKEND=ollama
 OLLAMA_MODEL=gemma4:latest
@@ -290,8 +291,11 @@ SELF_REPAIR_MAX_ATTEMPTS=3
 SANDBOX_ENABLED=true
 SANDBOX_POLICY=readonly
 
-HTTP_HOST=0.0.0.0
-HTTP_PORT=3000
+GATEWAY_HOST=0.0.0.0
+GATEWAY_PORT=43210
+GATEWAY_ENABLED=true
+CLI_ENABLED=true
+HTTP_ENABLED=false
 
 RUST_LOG=ironclaw=info
 EMBEDDING_ENABLED=false
@@ -318,7 +322,7 @@ ironclaw service start
 
 # Verify
 ironclaw doctor
-curl http://localhost:3000/health
+curl http://localhost:43210/api/health
 ```
 
 ---
@@ -401,10 +405,10 @@ Or: System Settings → General → Sharing → Remote Login → ON
 2. Log in with the same account
 3. Connect to the tailnet VPN
 4. Access IronClaw web gateways in Safari:
-   - `http://macbookpro:3000` (primary)
-   - `http://mini01:3000`
-   - `http://mini02:3000`
-   - `http://mini03:3000`
+   - `http://macbookpro:43210` (primary)
+   - `http://mini01:43210`
+   - `http://mini02:43210`
+   - `http://mini03:43210`
 
 ---
 
@@ -449,7 +453,7 @@ ironclaw service restart
 ironclaw
 
 # Access Web Gateway
-open http://localhost:3000
+open http://localhost:43210
 
 # Update IronClaw
 brew upgrade ironclaw

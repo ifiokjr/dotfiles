@@ -45,6 +45,10 @@ else
 	# Start with the existing file (preserves secret-only keys and comments)
 	cp "$IRONCLAW_FILE" "$TEMP_FILE"
 
+	# Remove the old local profile default because it disables the web gateway.
+	sed -i.bak '/^IRONCLAW_PROFILE=local$/d' "$TEMP_FILE"
+	rm -f "$TEMP_FILE.bak"
+
 	# For each KEY=VALUE line in the base file, update or append in the temp file
 	while IFS= read -r line; do
 		# Skip comments and blank lines
