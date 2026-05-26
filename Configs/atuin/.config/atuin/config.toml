@@ -88,7 +88,8 @@ filter_mode_shell_up_key_binding = "session-preload"
 
 ## what to do when the escape key is pressed when searching
 ## possible values: return-original, return-query
-# exit_mode = "return-original"
+## return-original: restores the original line content before Atuin opened (prevents buffer loss)
+exit_mode = "return-original"
 
 ## possible values: emacs, subl
 # word_jump_mode = "emacs"
@@ -226,15 +227,18 @@ enter_accept = true
 # ]
 
 [keys]
-# Defaults to true. If disabled, using the up/down key won't exit the TUI when scrolled past the first/last entry.
-# scroll_exits = true
-# Defaults to true. The left arrow key will exit the TUI when scrolling before the first character
-# exit_past_line_start = true
-# Defaults to true. The right arrow key performs the same functionality as Tab and copies the selected line to the command line to be modified.
-# accept_past_line_end = true
-# Defaults to false. The left arrow key performs the same functionality as Tab and copies the selected line to the command line to be modified.
+# Prevent up-arrow from destroying multiline input buffers when Atuin intercepts them.
+# With scroll_exits=false, up/down stay inside the TUI search list and won't
+# accidentally discard pasted content. Use Ctrl+R to invoke Atuin search explicitly.
+# See: https://github.com/atuinsh/atuin/issues/3307
+scroll_exits = false
+# Left arrow exits the TUI, but does NOT accept/replace the line (avoids buffer loss)
+exit_past_line_start = true
+# Right arrow accepts the selected command for editing (same as Tab)
+accept_past_line_end = true
+# Defaults to false. The left arrow key performs the same functionality as Tab.
 # accept_past_line_start = false
-# Defaults to false. The backspace key performs the same functionality as Tab and copies the selected line to the command line to be modified when at the start of the line.
+# Defaults to false. The backspace key performs the same as Tab at start of line.
 # accept_with_backspace = false
 
 [sync]
