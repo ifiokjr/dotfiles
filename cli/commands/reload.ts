@@ -22,6 +22,11 @@ export const reloadCommand = new Command()
 		"--group <group:string>",
 		"Reload a single group instead of all groups",
 	)
+	.option("--force", "Overwrite existing files and auto-accept all prompts")
+	.option(
+		"--adopt",
+		"Adopt conflicting files (overwrite repo with system version)",
+	)
 	.action(async (opts) => {
 		const dotfilesDir = await resolveDotfilesDir();
 
@@ -33,6 +38,8 @@ export const reloadCommand = new Command()
 		const args: string[] = [];
 
 		if (opts.group) args.push("--group", opts.group);
+		if (opts.force) args.push("--force");
+		if (opts.adopt) args.push("--adopt");
 
 		printHeader("Reloading dotfiles configuration");
 		const { code, success } = await runCommand([script, ...args], {
