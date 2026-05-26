@@ -62,6 +62,25 @@ jobs:
             fi
           done
 
+      - name: 🦕 install deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: 🔍 type check CLI (deno check)
+        run: |
+          cd cli && deno task check
+
+      - name: 🔍 lint CLI (oxlint + deno lint)
+        run: |
+          cd cli && deno task lint
+
+      - name: 🏗️ compile CLI binary (deno compile)
+        run: |
+          cd cli && deno task compile:dev
+          ./dotfiles --help
+          rm dotfiles
+
       - name: 🎨 format check (dprint)
         run: |
           dprint check --config Configs/dprint/dprint.json

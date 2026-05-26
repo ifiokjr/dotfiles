@@ -1,0 +1,11 @@
+{
+	// oxlint configuration for the dotfiles CLI
+	// See: https://oxc.rs/docs/guide/usage/linter.html
+	"categories": {
+		"correctness": "warn",
+		"suspicious": "warn"
+	},
+	"ignorePatterns": [
+		"deno.lock"
+	]
+}
