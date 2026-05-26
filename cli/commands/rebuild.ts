@@ -7,16 +7,21 @@
 
 import { Command } from "@cliffy/command";
 import {
+  findExecutable,
+  printError,
+  printHeader,
   resolveDotfilesDir,
   runCommand,
-  findExecutable,
-  printHeader,
-  printError,
 } from "../lib/config.ts";
 
 export const rebuildCommand = new Command()
-  .description("Rebuild system configuration (nix-darwin switch or home-manager switch)")
-  .option("--groups <groups:string>", "Only rebuild specific groups (comma-separated)")
+  .description(
+    "Rebuild system configuration (nix-darwin switch or home-manager switch)",
+  )
+  .option(
+    "--groups <groups:string>",
+    "Only rebuild specific groups (comma-separated)",
+  )
   .option("--lite", "Override lite mode for this rebuild")
   .option("--dry-run", "Show the rebuild plan without executing")
   .action(async (opts) => {

@@ -14,7 +14,9 @@ export const envCommand = new Command()
       .action(async () => {
         const dotfilesDir = await resolveDotfilesDir();
         const script = `${dotfilesDir}/Configs/scripts/.local/bin/setup:env`;
-        const { code, success } = await runCommand([script], { cwd: dotfilesDir });
+        const { code, success } = await runCommand([script], {
+          cwd: dotfilesDir,
+        });
         if (!success) Deno.exit(code);
       }),
   );

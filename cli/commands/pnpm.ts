@@ -3,7 +3,7 @@
  */
 
 import { Command } from "@cliffy/command";
-import { resolveDotfilesDir, runCommand, printError } from "../lib/config.ts";
+import { printError, resolveDotfilesDir, runCommand } from "../lib/config.ts";
 
 function pnpmScript(name: string, dotfilesDir: string): string {
   return `${dotfilesDir}/Configs/scripts/.local/bin/pnpm:global:${name}`;

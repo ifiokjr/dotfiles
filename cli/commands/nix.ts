@@ -3,7 +3,12 @@
  */
 
 import { Command } from "@cliffy/command";
-import { resolveDotfilesDir, runCommand, printHeader, printError } from "../lib/config.ts";
+import {
+  printError,
+  printHeader,
+  resolveDotfilesDir,
+  runCommand,
+} from "../lib/config.ts";
 
 export const nixCommand = new Command()
   .description("Manage nix configuration directly")
@@ -16,7 +21,9 @@ export const nixCommand = new Command()
         // Delegate to the nix post-hook script directly
         const script = `${dotfilesDir}/Configs/nix/.config/nix/apply.sh`;
         printHeader("Running nix switch");
-        const { code, success } = await runCommand([script], { cwd: dotfilesDir });
+        const { code, success } = await runCommand([script], {
+          cwd: dotfilesDir,
+        });
         if (!success) {
           printError(`Nix switch failed (exit code ${code})`);
           Deno.exit(code);
@@ -33,7 +40,12 @@ export const nixCommand = new Command()
           .description("Add a package to the nix profile")
           .arguments("<package:string>")
           .action(async (_opts, pkg: string) => {
-            const { code, success } = await runCommand(["nix", "profile", "add", `nixpkgs#${pkg}`]);
+            const { code, success } = await runCommand([
+              "nix",
+              "profile",
+              "add",
+              `nixpkgs#${pkg}`,
+            ]);
             if (!success) {
               printError(`Failed to add ${pkg} (exit code ${code})`);
               Deno.exit(code);
@@ -46,7 +58,13 @@ export const nixCommand = new Command()
           .description("Remove a package from the nix profile")
           .arguments("<package:string>")
           .action(async (_opts, pkg: string) => {
-            const { code, success } = await runCommand(["nix", "profile", "remove", "--regex", `.*${pkg}.*`]);
+            const { code, success } = await runCommand([
+              "nix",
+              "profile",
+              "remove",
+              "--regex",
+              `.*${pkg}.*`,
+            ]);
             if (!success) {
               printError(`Failed to remove ${pkg} (exit code ${code})`);
               Deno.exit(code);

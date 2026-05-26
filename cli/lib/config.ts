@@ -80,7 +80,9 @@ export async function resolveDotfilesDir(): Promise<string> {
 }
 
 /** Resolve the nix config directory (follows symlinks). */
-export async function resolveNixConfigDir(dotfilesDir: string): Promise<string> {
+export async function resolveNixConfigDir(
+  dotfilesDir: string,
+): Promise<string> {
   const home = Deno.env.get("HOME") ?? "~";
   const linkPath = join(home, ".config/nix");
 
@@ -130,7 +132,8 @@ export interface Preset {
 export const PRESETS: Record<string, Preset> = {
   core: {
     name: "core",
-    description: "Safe default: core shell, editor, and foundational CLI tooling.",
+    description:
+      "Safe default: core shell, editor, and foundational CLI tooling.",
     defaultLite: true,
   },
   dev: {
@@ -140,19 +143,22 @@ export const PRESETS: Record<string, Preset> = {
   },
   workstation: {
     name: "workstation",
-    description: "Full personal-machine setup, including GUI-heavy applications.",
+    description:
+      "Full personal-machine setup, including GUI-heavy applications.",
     defaultLite: false,
   },
   ci: {
     name: "ci",
-    description: "Minimal non-interactive setup intended for CI and containers.",
+    description:
+      "Minimal non-interactive setup intended for CI and containers.",
     defaultLite: true,
   },
 };
 
 /** Known machine presets (stored in machine.nix, not setup presets). */
 export const MACHINE_PRESETS: Record<string, string> = {
-  ironclaw: "Ironclaw agent runtime — enables libSQL database and ironclaw service",
+  ironclaw:
+    "Ironclaw agent runtime — enables libSQL database and ironclaw service",
 };
 
 /** Discover all configuration groups by scanning Configs/ directory. */
@@ -170,7 +176,7 @@ export async function discoverGroups(dotfilesDir: string): Promise<string[]> {
     // Configs/ doesn't exist
   }
 
-  return groups.sort();
+  return groups.toSorted();
 }
 
 /** Load a group's TOML metadata. */
@@ -293,9 +299,7 @@ export async function runCommand(
   const p = new Deno.Command(command, {
     args,
     cwd: options?.cwd,
-    env: options?.env
-      ? { ...Deno.env.toObject(), ...options.env }
-      : undefined,
+    env: options?.env ? { ...Deno.env.toObject(), ...options.env } : undefined,
     stdout: "inherit",
     stderr: "inherit",
   });

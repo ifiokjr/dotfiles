@@ -7,21 +7,27 @@
 
 import { Command } from "@cliffy/command";
 import {
+  findExecutable,
+  printError,
+  printHeader,
   resolveDotfilesDir,
   runCommand,
-  findExecutable,
-  printHeader,
-  printError,
 } from "../lib/config.ts";
 
 export const reloadCommand = new Command()
-  .description("Reload tuckr configuration groups (non-destructive, re-applies symlinks)")
-  .option("--group <group:string>", "Reload a single group instead of all groups")
+  .description(
+    "Reload tuckr configuration groups (non-destructive, re-applies symlinks)",
+  )
+  .option(
+    "--group <group:string>",
+    "Reload a single group instead of all groups",
+  )
   .action(async (opts) => {
     const dotfilesDir = await resolveDotfilesDir();
 
     const reloadScript = await findExecutable("tuckr:reload");
-    const fallbackScript = `${dotfilesDir}/Configs/scripts/.local/bin/tuckr:reload`;
+    const fallbackScript =
+      `${dotfilesDir}/Configs/scripts/.local/bin/tuckr:reload`;
 
     const script = reloadScript ?? fallbackScript;
     const args: string[] = [];

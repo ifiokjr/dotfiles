@@ -3,7 +3,7 @@
  */
 
 import { Command } from "@cliffy/command";
-import { resolveDotfilesDir, runCommand, printError } from "../lib/config.ts";
+import { printError, resolveDotfilesDir, runCommand } from "../lib/config.ts";
 
 export const uninstallCommand = new Command()
   .description("Completely remove dotfiles installation (nix, symlinks, state)")
@@ -11,7 +11,8 @@ export const uninstallCommand = new Command()
   .option("--no-confirm", "Run without interactive prompts")
   .action(async (opts) => {
     const dotfilesDir = await resolveDotfilesDir();
-    const script = `${dotfilesDir}/Configs/scripts/.local/bin/uninstall:dotfiles`;
+    const script =
+      `${dotfilesDir}/Configs/scripts/.local/bin/uninstall:dotfiles`;
 
     const args: string[] = [];
     if (opts.keepNix) args.push("--keep-nix");

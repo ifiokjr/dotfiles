@@ -5,11 +5,7 @@
  */
 
 import { Command } from "@cliffy/command";
-import {
-  resolveDotfilesDir,
-  runCommand,
-  printError,
-} from "../lib/config.ts";
+import { printError, resolveDotfilesDir, runCommand } from "../lib/config.ts";
 
 export const doctorCommand = new Command()
   .description("Run preflight checks without changing the machine")

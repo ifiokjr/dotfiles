@@ -4,7 +4,11 @@
 
 import { Command } from "@cliffy/command";
 import { VERSION } from "../main.ts";
-import { resolveDotfilesDir, detectPlatform, detectArch } from "../lib/config.ts";
+import {
+  detectArch,
+  detectPlatform,
+  resolveDotfilesDir,
+} from "../lib/config.ts";
 
 export const versionCommand = new Command()
   .description("Print CLI version and environment info")
@@ -38,7 +42,8 @@ export const versionCommand = new Command()
             stdout: "piped",
             stderr: "null",
           }).output();
-          const nixVersion = new TextDecoder().decode(stdout).split("\n")[0].trim();
+          const nixVersion = new TextDecoder().decode(stdout).split("\n")[0]
+            .trim();
           console.log(`Nix:      ${nixVersion}`);
         } catch {
           console.log("Nix:      (not installed)");

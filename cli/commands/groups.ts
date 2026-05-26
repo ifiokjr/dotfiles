@@ -7,17 +7,19 @@
 
 import { Command } from "@cliffy/command";
 import {
-  resolveDotfilesDir,
   discoverGroups,
   loadGroupMetadata,
-  runCommand,
+  printError,
   printHeader,
   printSuccess,
-  printError,
+  resolveDotfilesDir,
+  runCommand,
 } from "../lib/config.ts";
 
 export const groupsCommand = new Command()
-  .description("Manage configuration groups — list, inspect, deploy, and undeploy")
+  .description(
+    "Manage configuration groups — list, inspect, deploy, and undeploy",
+  )
   .command(
     "list",
     new Command()
@@ -57,10 +59,22 @@ export const groupsCommand = new Command()
 
         printHeader(`Group: ${group}`);
         console.log(`  Description: ${meta.description}`);
-        console.log(`  Platforms:   ${meta.platforms.length > 0 ? meta.platforms.join(", ") : "all"}`);
+        console.log(
+          `  Platforms:   ${
+            meta.platforms.length > 0 ? meta.platforms.join(", ") : "all"
+          }`,
+        );
         console.log(`  Phase:       ${meta.phase}`);
-        console.log(`  Presets:     ${meta.presets.length > 0 ? meta.presets.join(", ") : "none"}`);
-        console.log(`  Depends on:  ${meta.dependsOn.length > 0 ? meta.dependsOn.join(", ") : "none"}`);
+        console.log(
+          `  Presets:     ${
+            meta.presets.length > 0 ? meta.presets.join(", ") : "none"
+          }`,
+        );
+        console.log(
+          `  Depends on:  ${
+            meta.dependsOn.length > 0 ? meta.dependsOn.join(", ") : "none"
+          }`,
+        );
       }),
   )
   .command(

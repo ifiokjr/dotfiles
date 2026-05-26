@@ -3,7 +3,7 @@
  */
 
 import { Command } from "@cliffy/command";
-import { resolveDotfilesDir, runCommand, printError } from "../lib/config.ts";
+import { printError, resolveDotfilesDir, runCommand } from "../lib/config.ts";
 
 export const resetCommand = new Command()
   .description("Uninstall and re-setup dotfiles from scratch")

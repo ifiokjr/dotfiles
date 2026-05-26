@@ -10,14 +10,14 @@
 
 import { Command } from "@cliffy/command";
 import {
-  resolveNixConfigDir,
+  MACHINE_PRESETS,
   machineConfigPath,
-  resolveDotfilesDir,
-  runCommand,
-  printSuccess,
   printError,
   printInfo,
-  MACHINE_PRESETS,
+  printSuccess,
+  resolveDotfilesDir,
+  resolveNixConfigDir,
+  runCommand,
 } from "../lib/config.ts";
 
 export const machineCommand = new Command()
@@ -36,7 +36,9 @@ export const machineCommand = new Command()
           console.log(content);
         } catch {
           printError(`machine.nix not found at: ${configPath}`);
-          printInfo("Run 'dotfiles setup' or 'dotfiles machine regenerate' to create it.");
+          printInfo(
+            "Run 'dotfiles setup' or 'dotfiles machine regenerate' to create it.",
+          );
           Deno.exit(1);
         }
       }),
@@ -72,7 +74,9 @@ export const machineCommand = new Command()
   .command(
     "set-always-on",
     new Command()
-      .description("Set always-on mode in machine.nix (prevents sleep, enables screensaver lock)")
+      .description(
+        "Set always-on mode in machine.nix (prevents sleep, enables screensaver lock)",
+      )
       .arguments("<value:string>")
       .action(async (_opts, value: string) => {
         const enabled = parseBool(value);
@@ -92,7 +96,9 @@ export const machineCommand = new Command()
         const normalized = preset.toLowerCase();
         if (!(normalized in MACHINE_PRESETS)) {
           printError(`Unknown preset: ${preset}`);
-          printInfo(`Available presets: ${Object.keys(MACHINE_PRESETS).join(", ")}`);
+          printInfo(
+            `Available presets: ${Object.keys(MACHINE_PRESETS).join(", ")}`,
+          );
           Deno.exit(1);
         }
         await addMachinePreset(normalized);
@@ -114,7 +120,8 @@ export const machineCommand = new Command()
       .option("--force", "Overwrite existing machine.nix")
       .action(async (opts) => {
         const dotfilesDir = await resolveDotfilesDir();
-        const genScript = `${dotfilesDir}/Configs/scripts/.local/bin/generate-machine-config`;
+        const genScript =
+          `${dotfilesDir}/Configs/scripts/.local/bin/generate-machine-config`;
         const args: string[] = [];
         if (opts.force) args.push("--force");
 
@@ -148,7 +155,10 @@ function parseBool(value: string): boolean | null {
   }
 }
 
-async function setMachineNixField(field: string, value: boolean): Promise<void> {
+async function setMachineNixField(
+  field: string,
+  value: boolean,
+): Promise<void> {
   const dotfilesDir = await resolveDotfilesDir();
   const nixDir = await resolveNixConfigDir(dotfilesDir);
   const configPath = machineConfigPath(nixDir);
@@ -158,7 +168,9 @@ async function setMachineNixField(field: string, value: boolean): Promise<void> 
     content = await Deno.readTextFile(configPath);
   } catch {
     printError(`machine.nix not found at: ${configPath}`);
-    printInfo("Run 'dotfiles setup' or 'dotfiles machine regenerate' to create it.");
+    printInfo(
+      "Run 'dotfiles setup' or 'dotfiles machine regenerate' to create it.",
+    );
     Deno.exit(1);
   }
 
@@ -201,7 +213,9 @@ async function addMachinePreset(preset: string): Promise<void> {
   }
 
   const newEntries = [...currentEntries, preset];
-  const presetLine = `  presets = [${newEntries.map((p) => `"${p}"`).join(" ")}];`;
+  const presetLine = `  presets = [${
+    newEntries.map((p) => `"${p}"`).join(" ")
+  }];`;
 
   if (content.includes("presets =")) {
     content = content.replace(
@@ -247,11 +261,16 @@ async function removeMachinePreset(preset: string): Promise<void> {
   if (newEntries.length === 0) {
     // Remove the presets line entirely (and its comment)
     content = content.replace(
-      new RegExp(`^[ \t]*#\\s*Machine presets.*\\n?[ \t]*presets\\s*=\\s*\\[\\s*\\];\\s*\\n?`, "m"),
+      new RegExp(
+        `^[ \t]*#\\s*Machine presets.*\\n?[ \t]*presets\\s*=\\s*\\[\\s*\\];\\s*\\n?`,
+        "m",
+      ),
       "",
     );
   } else {
-    const presetLine = `  presets = [${newEntries.map((p) => `"${p}"`).join(" ")}];`;
+    const presetLine = `  presets = [${
+      newEntries.map((p) => `"${p}"`).join(" ")
+    }];`;
     content = content.replace(
       new RegExp("^\\s*presets\\s*=\\s*\\[[^\\]]*\\];\\s*$", "m"),
       presetLine,
