@@ -24,6 +24,9 @@ in
   # want to update the value, then make sure to first check the Home Manager
   # release notes.
   home.stateVersion = "25.11"; # Please read the comment before changing.
+  # Home Manager master tracks nixpkgs-unstable; the version check is
+  # outdated since there's no 26.11 release branch yet.
+  home.enableNixpkgsReleaseCheck = false;
 
   # The home.packages option allows you to install Nix packages into your
   # environment. These packages are available to your user account.
