@@ -172,31 +172,16 @@ s = ["split_selection_on_newline", ":sort", "merge_selections"]
 f = [":scooter"]
 ## A better finder using scooter
 F = [":scooter-new"]
-## Open find and replace within the helix editor
-r = [
-	":write-all",
-	":new",
-	":insert-output serpl >/dev/tty",
-	":set mouse false",
-	":set mouse true",
-	":buffer-close!",
-	":redraw",
-	":reload-all",
-]
+## Open find and replace using scooter plugin
+r = [":scooter"]
 ## Open Git in a zellij floating pane
 g = ":! zellij run --floating --close-on-exit --name \"git\" -- lazygit"
-## Open gemini in a zellij floating pane
-G = ":! zellij run --floating --close-on-exit --name \"gemini\" -- gemini -m gemini-2.5-flash"
-## Open file finder in a zellij floating pane
-R = ":! zellij run --floating --close-on-exit --name \"find-and-replace\" -- serpl"
 ## Open terminal in a zellij floating pane
 t = ":! zellij run --floating --close-on-exit --name \"quick-terminal\""
 ## Reveal current file in Yazi sidebar
 y = ':sh nu ~/.local/bin/yazi-reveal "%{buffer_name}"'
-## Open Codex AI in a zellij floating pane
-C = ':! zellij run --floating --close-on-exit --name "codex" -- codex'
-## Open Claude Code in a zellij floating pane
-c = ':! zellij run --floating --close-on-exit --name "claude" -- claude'
+## Open Pi AI in a zellij floating pane
+C = ':! zellij run --floating --close-on-exit --name "pi" -- pi'
 
 [keys.normal.ret]
 s = ["split_selection_on_newline", ":sort", "merge_selections"]
@@ -204,31 +189,16 @@ s = ["split_selection_on_newline", ":sort", "merge_selections"]
 f = [":scooter"]
 ## A better finder using scooter
 F = [":scooter-new"]
-## Open find and replace within the helix editor
-r = [
-	":write-all",
-	":new",
-	":insert-output serpl >/dev/tty",
-	":set mouse false",
-	":set mouse true",
-	":buffer-close!",
-	":redraw",
-	":reload-all",
-]
+## Open find and replace using scooter plugin
+r = [":scooter"]
 ## Open Git in a zellij floating pane
 g = ":! zellij run --floating --close-on-exit --name \"git\" -- lazygit"
-## Open gemini in a zellij floating pane
-G = ":! zellij run --floating --close-on-exit --name \"gemini\" -- gemini -m gemini-2.5-flash"
-## Open file finder in a zellij floating pane
-R = ":! zellij run --floating --close-on-exit --name \"find-and-replace\" -- serpl"
 ## Open terminal in a zellij floating pane
 t = ":! zellij run --floating --close-on-exit --name \"quick-terminal\""
 ## Reveal current file in Yazi sidebar
 y = ':sh nu ~/.local/bin/yazi-reveal "%{buffer_name}"'
-## Open Codex AI in a zellij floating pane
-C = ':! zellij run --floating --close-on-exit --name "codex" -- codex'
-## Open Claude Code in a zellij floating pane
-c = ':! zellij run --floating --close-on-exit --name "claude" -- claude'
+## Open Pi AI in a zellij floating pane
+C = ':! zellij run --floating --close-on-exit --name "pi" -- pi'
 
 [keys.normal.ret.b]
 ## Close the current buffer only if saved.
