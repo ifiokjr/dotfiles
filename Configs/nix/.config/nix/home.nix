@@ -41,7 +41,6 @@ in
       cargo-sweep
       cargo-update
       cloudflared
-      deno
       devenv
       direnv
       dprint
@@ -159,6 +158,7 @@ in
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
       extra.ccase
+      extra.deno
       extra.ironclaw
       extra.monochange
       extra.pnpm-11
