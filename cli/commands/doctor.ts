@@ -8,17 +8,17 @@ import { Command } from "@cliffy/command";
 import { printError, resolveDotfilesDir, runCommand } from "../lib/config.ts";
 
 export const doctorCommand = new Command()
-  .description("Run preflight checks without changing the machine")
-  .action(async () => {
-    const dotfilesDir = await resolveDotfilesDir();
-    const setupScript = `${dotfilesDir}/setup`;
+	.description("Run preflight checks without changing the machine")
+	.action(async () => {
+		const dotfilesDir = await resolveDotfilesDir();
+		const setupScript = `${dotfilesDir}/setup`;
 
-    const { code, success } = await runCommand([setupScript, "--doctor"], {
-      cwd: dotfilesDir,
-    });
+		const { code, success } = await runCommand([setupScript, "--doctor"], {
+			cwd: dotfilesDir,
+		});
 
-    if (!success) {
-      printError(`Doctor found issues (exit code ${code})`);
-      Deno.exit(code);
-    }
-  });
+		if (!success) {
+			printError(`Doctor found issues (exit code ${code})`);
+			Deno.exit(code);
+		}
+	});

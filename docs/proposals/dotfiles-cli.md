@@ -1,7 +1,7 @@
 # Proposal: `dotfiles` CLI — Unified Management Command
 
-> **Status:** Draft  
-> **Branch:** `feat/dotfiles-cli`  
+> **Status:** Draft\
+> **Branch:** `feat/dotfiles-cli`\
 > **Author:** Uche (with ifiokjr)
 
 ## tl;dr
@@ -31,13 +31,13 @@ dotfiles reset         # uninstall + re-setup (replaces reset:dotfiles)
 
 ### Problems today
 
-| Problem | Detail |
-|---------|--------|
-| **Discovery** | No single `--help` surface. Users must know about `./setup`, `rebuild`, `tuckr:reload`, `generate-machine-config`, `pnpm:global:sync`, etc. |
-| **Language split** | Bootstrap is Bash (`setup`, `lib/setup/*.sh`), runtime commands are Nushell (`rebuild`, `tuckr:reload`, `generate-machine-config`). This means Nushell must be installed *before* you can even see what commands exist. |
-| **Scattered scripts** | 15+ scripts live in `Configs/scripts/.local/bin/` with inconsistent naming (`rebuild`, `tuckr:reload`, `pnpm:global:sync`, `install:helix:custom`). They're discoverable only by `ls`. |
-| **No interactive mode** | Commands are "fire and forget" — no way to explore groups, pick presets interactively, or get step-by-step guidance. |
-| **State management** | Setup state tracking is ad-hoc (`lib/setup/state.sh`). No central state file for what's deployed, what failed, what version was last applied. |
+| Problem                 | Detail                                                                                                                                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Discovery**           | No single `--help` surface. Users must know about `./setup`, `rebuild`, `tuckr:reload`, `generate-machine-config`, `pnpm:global:sync`, etc.                                                                             |
+| **Language split**      | Bootstrap is Bash (`setup`, `lib/setup/*.sh`), runtime commands are Nushell (`rebuild`, `tuckr:reload`, `generate-machine-config`). This means Nushell must be installed _before_ you can even see what commands exist. |
+| **Scattered scripts**   | 15+ scripts live in `Configs/scripts/.local/bin/` with inconsistent naming (`rebuild`, `tuckr:reload`, `pnpm:global:sync`, `install:helix:custom`). They're discoverable only by `ls`.                                  |
+| **No interactive mode** | Commands are "fire and forget" — no way to explore groups, pick presets interactively, or get step-by-step guidance.                                                                                                    |
+| **State management**    | Setup state tracking is ad-hoc (`lib/setup/state.sh`). No central state file for what's deployed, what failed, what version was last applied.                                                                           |
 
 ### Why Deno?
 
@@ -45,7 +45,7 @@ dotfiles reset         # uninstall + re-setup (replaces reset:dotfiles)
 2. **Cross-platform** — macOS, Linux, Windows. Same codebase.
 3. **TypeScript/Type-safe** — The current bash/nushell code is fragile. TypeScript catches errors at compile time.
 4. **Std library** — Built-in YAML/TOML/JSON parsing, HTTP client, file ops, prompts (`@cliffy/cli` for interactive pickers).
-5. **Nix installation** — The `setup` script currently installs tuckr and nushell as temporary bootstrap dependencies. With Deno, the CLI *is* the bootstrap tool — it can compile itself to a binary and drop it in `~/.local/bin/`.
+5. **Nix installation** — The `setup` script currently installs tuckr and nushell as temporary bootstrap dependencies. With Deno, the CLI _is_ the bootstrap tool — it can compile itself to a binary and drop it in `~/.local/bin/`.
 6. **Incremental migration** — The CLI can shell out to existing bash/nushell scripts during Phase 1, then port them in-place during Phase 2. Nothing breaks.
 
 ---
@@ -145,6 +145,7 @@ Port in priority order (by frequency of use + complexity):
 6. `groups list` / `groups info` — port group TOML metadata parsing
 
 Each ported command:
+
 - Gets unit tests in `cli/test/`
 - Gets integration tests that run against the real repo structure
 - Ships alongside the old script; the old script gets a deprecation notice
@@ -205,9 +206,10 @@ cli/
 
 ## 5. Key Design Decisions
 
-### 5a. The CLI is installed *by* the project
+### 5a. The CLI is installed _by_ the project
 
 When `./setup` runs, it:
+
 1. Checks if `dotfiles` CLI is already installed
 2. If not, compiles it from `cli/` using Deno (or downloads a pre-built binary from GitHub Releases)
 3. Places it at `~/.local/bin/dotfiles`
@@ -222,9 +224,9 @@ During Phase 1, each command in `cli/commands/` follows this pattern:
 ```typescript
 // commands/reload.ts (Phase 1)
 export async function reload(opts: { group?: string }) {
-  const script = resolveScript("tuckr:reload");
-  const args = opts.group ? ["--group", opts.group] : [];
-  await runCommand(script, args);
+	const script = resolveScript("tuckr:reload");
+	const args = opts.group ? ["--group", opts.group] : [];
+	await runCommand(script, args);
 }
 ```
 
@@ -233,12 +235,12 @@ During Phase 2, this becomes:
 ```typescript
 // commands/reload.ts (Phase 2)
 export async function reload(opts: { group?: string }) {
-  const groups = opts.group 
-    ? [opts.group] 
-    : await discoverGroups({ platform: detectPlatform() });
-  for (const g of groups) {
-    await tuckrDeploy(g, { force: false });
-  }
+	const groups = opts.group
+		? [opts.group]
+		: await discoverGroups({ platform: detectPlatform() });
+	for (const g of groups) {
+		await tuckrDeploy(g, { force: false });
+	}
 }
 ```
 
@@ -256,16 +258,16 @@ The CLI introduces `~/.local/share/dotfiles/state.json`:
 
 ```json
 {
-  "version": 1,
-  "lastSetup": "2025-05-25T22:00:00Z",
-  "lastRebuild": "2025-05-25T23:00:00Z",
-  "preset": "workstation",
-  "lite": false,
-  "platform": "darwin",
-  "deployedGroups": ["shell", "git", "nix", "..."],
-  "failedGroups": [],
-  "nixProfileVersion": "abc123",
-  "homeManagerGeneration": "def456"
+	"version": 1,
+	"lastSetup": "2025-05-25T22:00:00Z",
+	"lastRebuild": "2025-05-25T23:00:00Z",
+	"preset": "workstation",
+	"lite": false,
+	"platform": "darwin",
+	"deployedGroups": ["shell", "git", "nix", "..."],
+	"failedGroups": [],
+	"nixProfileVersion": "abc123",
+	"homeManagerGeneration": "def456"
 }
 ```
 
@@ -275,31 +277,31 @@ This replaces `lib/setup/state.sh` and the `rebuild-changes.log` in a structured
 
 ## 6. What Stays vs What Gets Replaced
 
-| Current | CLI Command | Phase | Status |
-|---------|-----------|-------|--------|
-| `./setup` | `dotfiles setup` | 2 | Preserved as fallback |
-| `./setup --doctor` | `dotfiles doctor` | 2 | Preserved as fallback |
-| `./setup --list-groups` | `dotfiles groups list` | 2 | Preserved as fallback |
-| `./setup --explain-group X` | `dotfiles groups info X` | 2 | Preserved as fallback |
-| `./setup --dry-run` | `dotfiles setup --dry-run` | 2 | Preserved as fallback |
-| `rebuild` (nushell) | `dotfiles rebuild` | 1 | Shell-out → native |
-| `tuckr:reload` (nushell) | `dotfiles reload` | 1 | Shell-out → native |
-| `generate-machine-config` (nushell) | `dotfiles machine regenerate` | 2 | Native port |
-| `setup:dotfiles` (bash) | `dotfiles setup` | 2 | Preserved as fallback |
-| `uninstall:dotfiles` (bash) | `dotfiles uninstall` | 2 | Native port |
-| `reset:dotfiles` (bash) | `dotfiles reset` | 2 | Native port |
-| `setup:env` (nushell) | `dotfiles env setup` | 2 | Native port |
-| `pnpm:global:*` (nushell) | `dotfiles pnpm *` | 2 | Shell-out → native |
-| `install:helix:custom` (nushell) | `dotfiles helix install` | 3 | Native port |
-| `tuckr:redeploy` (nushell) | `dotfiles groups deploy --force` | 2 | Native port |
-| `update:node` (nushell) | `dotfiles update node` | 3 | Native port |
-| `co` (nushell) | `dotfiles co` or stays as-is | 3 | TBD |
-| **NEW** | `dotfiles groups status` | 3 | New — shows what's deployed |
-| **NEW** | `dotfiles groups undeploy` | 2 | New — selective removal |
-| **NEW** | `dotfiles env secrets` | 2 | New — SecretSpec integration |
-| **NEW** | `dotfiles machine add-preset` | 1 | Native (TOML edit) |
-| **NEW** | `dotfiles machine remove-preset` | 1 | Native (TOML edit) |
-| **NEW** | `dotfiles version` | 1 | New — CLI self-awareness |
+| Current                             | CLI Command                      | Phase | Status                       |
+| ----------------------------------- | -------------------------------- | ----- | ---------------------------- |
+| `./setup`                           | `dotfiles setup`                 | 2     | Preserved as fallback        |
+| `./setup --doctor`                  | `dotfiles doctor`                | 2     | Preserved as fallback        |
+| `./setup --list-groups`             | `dotfiles groups list`           | 2     | Preserved as fallback        |
+| `./setup --explain-group X`         | `dotfiles groups info X`         | 2     | Preserved as fallback        |
+| `./setup --dry-run`                 | `dotfiles setup --dry-run`       | 2     | Preserved as fallback        |
+| `rebuild` (nushell)                 | `dotfiles rebuild`               | 1     | Shell-out → native           |
+| `tuckr:reload` (nushell)            | `dotfiles reload`                | 1     | Shell-out → native           |
+| `generate-machine-config` (nushell) | `dotfiles machine regenerate`    | 2     | Native port                  |
+| `setup:dotfiles` (bash)             | `dotfiles setup`                 | 2     | Preserved as fallback        |
+| `uninstall:dotfiles` (bash)         | `dotfiles uninstall`             | 2     | Native port                  |
+| `reset:dotfiles` (bash)             | `dotfiles reset`                 | 2     | Native port                  |
+| `setup:env` (nushell)               | `dotfiles env setup`             | 2     | Native port                  |
+| `pnpm:global:*` (nushell)           | `dotfiles pnpm *`                | 2     | Shell-out → native           |
+| `install:helix:custom` (nushell)    | `dotfiles helix install`         | 3     | Native port                  |
+| `tuckr:redeploy` (nushell)          | `dotfiles groups deploy --force` | 2     | Native port                  |
+| `update:node` (nushell)             | `dotfiles update node`           | 3     | Native port                  |
+| `co` (nushell)                      | `dotfiles co` or stays as-is     | 3     | TBD                          |
+| **NEW**                             | `dotfiles groups status`         | 3     | New — shows what's deployed  |
+| **NEW**                             | `dotfiles groups undeploy`       | 2     | New — selective removal      |
+| **NEW**                             | `dotfiles env secrets`           | 2     | New — SecretSpec integration |
+| **NEW**                             | `dotfiles machine add-preset`    | 1     | Native (TOML edit)           |
+| **NEW**                             | `dotfiles machine remove-preset` | 1     | Native (TOML edit)           |
+| **NEW**                             | `dotfiles version`               | 1     | New — CLI self-awareness     |
 
 ---
 

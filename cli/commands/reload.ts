@@ -7,40 +7,40 @@
 
 import { Command } from "@cliffy/command";
 import {
-  findExecutable,
-  printError,
-  printHeader,
-  resolveDotfilesDir,
-  runCommand,
+	findExecutable,
+	printError,
+	printHeader,
+	resolveDotfilesDir,
+	runCommand,
 } from "../lib/config.ts";
 
 export const reloadCommand = new Command()
-  .description(
-    "Reload tuckr configuration groups (non-destructive, re-applies symlinks)",
-  )
-  .option(
-    "--group <group:string>",
-    "Reload a single group instead of all groups",
-  )
-  .action(async (opts) => {
-    const dotfilesDir = await resolveDotfilesDir();
+	.description(
+		"Reload tuckr configuration groups (non-destructive, re-applies symlinks)",
+	)
+	.option(
+		"--group <group:string>",
+		"Reload a single group instead of all groups",
+	)
+	.action(async (opts) => {
+		const dotfilesDir = await resolveDotfilesDir();
 
-    const reloadScript = await findExecutable("tuckr:reload");
-    const fallbackScript =
-      `${dotfilesDir}/Configs/scripts/.local/bin/tuckr:reload`;
+		const reloadScript = await findExecutable("tuckr:reload");
+		const fallbackScript =
+			`${dotfilesDir}/Configs/scripts/.local/bin/tuckr:reload`;
 
-    const script = reloadScript ?? fallbackScript;
-    const args: string[] = [];
+		const script = reloadScript ?? fallbackScript;
+		const args: string[] = [];
 
-    if (opts.group) args.push("--group", opts.group);
+		if (opts.group) args.push("--group", opts.group);
 
-    printHeader("Reloading dotfiles configuration");
-    const { code, success } = await runCommand([script, ...args], {
-      cwd: dotfilesDir,
-    });
+		printHeader("Reloading dotfiles configuration");
+		const { code, success } = await runCommand([script, ...args], {
+			cwd: dotfilesDir,
+		});
 
-    if (!success) {
-      printError(`Reload failed with exit code ${code}`);
-      Deno.exit(code);
-    }
-  });
+		if (!success) {
+			printError(`Reload failed with exit code ${code}`);
+			Deno.exit(code);
+		}
+	});
