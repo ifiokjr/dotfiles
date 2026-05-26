@@ -179,14 +179,18 @@
 
   # Auto-start the podman VM on login for lite desktop Macs.
   # `podman machine start` is idempotent — exits cleanly if already running.
+  # Uses `script` instead of `ProgramArguments` so nix-darwin wraps it with
+  # /bin/wait4path, ensuring the Nix store is mounted before podman runs.
+  # The environment PATH includes standard macOS dirs because podman internally
+  # shells out to utilities like mkdir(1) and tr(1) which live in /usr/bin.
   launchd.agents.podman-machine = lib.mkIf (isDesktop && lite) {
-    path = [ pkgs.podman ];
+    script = ''
+      exec ${pkgs.podman}/bin/podman machine start
+    '';
+    environment = {
+      PATH = "${lib.makeBinPath [ pkgs.podman ]}:/usr/bin:/bin:/usr/sbin:/sbin";
+    };
     serviceConfig = {
-      ProgramArguments = [
-        "${pkgs.podman}/bin/podman"
-        "machine"
-        "start"
-      ];
       RunAtLoad = true;
       KeepAlive = false;
       StandardOutPath = "/tmp/podman-machine-start.log";
