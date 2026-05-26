@@ -18,9 +18,15 @@ export const reloadCommand = new Command()
 	.description(
 		"Reload tuckr configuration groups (non-destructive, re-applies symlinks)",
 	)
-	.option("--group <group:string>", "Reload a single group instead of all groups")
+	.option(
+		"--group <group:string>",
+		"Reload a single group instead of all groups",
+	)
 	.option("--force", "Overwrite existing files and auto-accept all prompts")
-	.option("--adopt", "Adopt conflicting files (overwrite repo with system version)")
+	.option(
+		"--adopt",
+		"Adopt conflicting files (overwrite repo with system version)",
+	)
 	.action(async (opts) => {
 		const dotfilesDir = await resolveDotfilesDir();
 

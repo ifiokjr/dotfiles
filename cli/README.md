@@ -2,8 +2,7 @@
 
 Unified CLI for managing dotfiles — setup, rebuild, reload, doctor, and more.
 
-After a rebuild, the binary is auto-compiled and installed to `~/.local/bin/dotfiles`
-with a `dot` symlink alias for quick access.
+After a rebuild, the binary is auto-compiled and installed to `~/.local/bin/dotfiles` with a `dot` symlink alias for quick access.
 
 ```bash
 dotfiles --help          # show all commands
