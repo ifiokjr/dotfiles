@@ -11,9 +11,10 @@ This repository uses Ifiok's forked SecretSpec setup for secrets. Reference impl
 
 Secrets are **not injected by default**. Do not assume `GITHUB_TOKEN`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc. exist in the ambient shell environment.
 
-The dotfiles setup provides two modes:
+The dotfiles setup provides three modes:
 
 - `ssr <command>`: preferred. Runs one command with SecretSpec secrets injected only for that subprocess.
+- `ss get <name>`: get a single secret value by name. Writes to stdout, safe for command substitution. Example: `my_token=$(ss get GITHUB_TOKEN)`.
 - `ssload`: convenience. Loads all declared SecretSpec secrets into the current shell session; use only when repeated commands need secrets.
 
 `ss` is the SecretSpec CLI wrapper using `~/secretspec.toml`.
@@ -24,6 +25,12 @@ Check configured secrets:
 
 ```sh
 ss check
+```
+
+Get a single secret value (safe for command substitution):
+
+```sh
+my_token=$(ss get GITHUB_TOKEN)
 ```
 
 Run a command with secrets lazily injected:
