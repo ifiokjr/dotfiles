@@ -558,3 +558,10 @@ tailscale ping mini01
 # Check SSH connectivity
 ssh mini01 "echo connected"
 ```
+
+If `tailscale ping` works but browser/curl access to tailnet IPs or MagicDNS names times out, check for another VPN intercepting the `100.64.0.0/10` Tailscale range. NordVPN can block Tailscale routes and MagicDNS; pause or disconnect NordVPN, then retry:
+
+```bash
+curl --max-time 8 http://mini02.tailbfc6bf.ts.net:43210/api/health
+curl --max-time 8 http://100.97.208.114:43210/api/health
+```
