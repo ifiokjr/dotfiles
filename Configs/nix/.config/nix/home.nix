@@ -160,7 +160,6 @@ in
 
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
-      extra.ccase
       extra.deno
       extra.ironclaw
       extra.monochange
@@ -199,7 +198,11 @@ in
       extra.godot
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
-      lib.optionals (!lite) [
+      [
+        # macOS-only custom packages from ifiokjr/nixpkgs.
+        extra.ccase
+      ]
+      ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
         powershell
       ]
