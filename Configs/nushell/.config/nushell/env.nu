@@ -74,10 +74,21 @@ $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 # Dynamically set DOCKER_HOST from the podman machine socket path.
 # This enables Docker SDK clients (docker-py, Testcontainers, IronClaw) to
 # connect to the podman VM. The `docker` CLI alias (podman) works without this.
+# Falls back to the standard macOS Podman socket if dynamic detection fails.
 if ($nu.os-info.name == "macos") and (which podman | is-not-empty) {
     let _docker_sock = (do -i { podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanSocket.Path}}' } | str trim)
     if ($_docker_sock | path exists) {
         $env.DOCKER_HOST = "unix://" + $_docker_sock
+    } else if ("/tmp/podman/podman-machine-default-api.sock" | path exists) {
+        $env.DOCKER_HOST = "unix:///tmp/podman/podman-machine-default-api.sock"
+    }
+}
+# Always set a fallback for Linux hosts that may run this same env.nu.
+if ($env | get -o DOCKER_HOST | is-empty) {
+    if ("/run/podman/podman.sock" | path exists) {
+        $env.DOCKER_HOST = "unix:///run/podman/podman.sock"
+    } else if ("/var/run/docker.sock" | path exists) {
+        $env.DOCKER_HOST = "unix:///var/run/docker.sock"
     }
 }
 # ---------------------------------------------------------------------------
@@ -162,3 +173,21 @@ $env.PNPM_HOME = "/Users/ifiokjr/Library/pnpm"
 $env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path join "bin"))
 # pnpm end
 
+
+# ---------------------------------------------------------------------------
+# Codex API Keys
+# ---------------------------------------------------------------------------
+# Load API keys for custom Codex providers (Xiaomi MiMo, Ollama Cloud)
+# Keys are stored in ~/.codex/secrets.env (not tracked in git)
+if ("~/.codex/secrets.env" | path exists) {
+    let secrets = (open ~/.codex/secrets.env --raw | lines | where {|l| not ($l | str starts-with '#') and ($l | str contains '=')} | parse '{key}={value}' | transpose -r)
+    if ($secrets | get -o XIAOMI_MIMO_API_KEY | is-not-empty) {
+        $env.XIAOMI_MIMO_API_KEY = ($secrets | get XIAOMI_MIMO_API_KEY)
+    }
+    if ($secrets | get -o OLLAMA_CLOUD_API_KEY | is-not-empty) {
+        $env.OLLAMA_CLOUD_API_KEY = ($secrets | get OLLAMA_CLOUD_API_KEY)
+    }
+    if ($secrets | get -o OLLAMA_API_KEY | is-not-empty) {
+        $env.OLLAMA_API_KEY = ($secrets | get OLLAMA_API_KEY)
+    }
+}

@@ -146,3 +146,14 @@ if [ -f "$HOME/.config/shell/secrets.sh" ]; then
 	# shellcheck disable=SC1091
 	. "$HOME/.config/shell/secrets.sh"
 fi
+
+# ---------------------------------------------------------------------------
+# Codex API Keys
+# ---------------------------------------------------------------------------
+# Load API keys for custom Codex providers (Xiaomi MiMo, Ollama Cloud)
+# Keys are stored in ~/.codex/secrets.env (not tracked in git)
+if [ -f ~/.codex/secrets.env ]; then
+    export XIAOMI_MIMO_API_KEY=$(grep '^XIAOMI_MIMO_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)
+    export OLLAMA_CLOUD_API_KEY=$(grep '^OLLAMA_CLOUD_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)
+    export OLLAMA_API_KEY=$(grep '^OLLAMA_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2-)
+fi
