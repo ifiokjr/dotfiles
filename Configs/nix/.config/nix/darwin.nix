@@ -150,7 +150,6 @@
         "geekbench"
         "google-drive"
         "gpg-suite"
-        "jordanbaird-ice"
         "ledger-wallet"
         "nordvpn"
         "qbittorrent"
