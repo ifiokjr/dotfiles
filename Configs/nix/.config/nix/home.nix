@@ -220,8 +220,8 @@ in
         ungoogled-chromium
       ]
     )
-    ++ lib.optionals (isDesktop && lite && pkgs.stdenv.isDarwin) [
-      # Docker compatibility layer via podman (for lite macOS desktops like Mac Mini)
+    ++ lib.optionals (isDesktop && pkgs.stdenv.isDarwin) [
+      # Docker compatibility layer via podman (all macOS desktops)
       # Provides `docker` and `docker-compose` commands backed by podman
       (pkgs.writeShellScriptBin "docker" ''exec podman "$@"'')
       (pkgs.writeShellScriptBin "docker-compose" ''exec podman-compose "$@"'')
@@ -234,10 +234,6 @@ in
     ".ssh/config" = {
       force = true;
       text = ''
-        # Added by OrbStack: 'orb' SSH host for Linux machines
-        # This must stay before Host blocks so OrbStack's generated host aliases work.
-        Include ~/.orbstack/ssh/config
-
         # IronClaw Mac Minis via Tailscale SSH.
         # ProxyCommand avoids depending on the local Tailscale TUN interface, which
         # can be disabled in some macOS/client states while `tailscale nc` still works.
@@ -290,12 +286,12 @@ in
     fi
   '';
 
-  # Initialize and start podman VM for Docker compatibility on lite macOS desktops.
+  # Initialize and start podman VM for Docker compatibility on all macOS desktops.
   # Idempotent: podman machine init/start are no-ops if machine already exists/running.
   # --rootful enables root-level container capabilities (ports <1024, etc.).
   home.activation.initPodmanMachine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-    lib.optionalString (isDesktop && lite && pkgs.stdenv.isDarwin) ''
-      echo "==> Initializing rootful podman VM (lite macOS desktop)…"
+    lib.optionalString (isDesktop && pkgs.stdenv.isDarwin) ''
+      echo "==> Initializing rootful podman VM (macOS desktop)…"
       if command -v podman >/dev/null 2>&1; then
         ${pkgs.podman}/bin/podman machine init --rootful 2>/dev/null || true
         ${pkgs.podman}/bin/podman machine set --rootful 2>/dev/null || true

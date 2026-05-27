@@ -132,7 +132,6 @@
         "dbeaver-community"
         "gdevelop"
         "ghostty"
-        "orbstack"
         "podman-desktop"
         "react-native-debugger"
         "reactotron"
@@ -178,13 +177,13 @@
   # The `useRoutingFeatures` option only exists in the NixOS tailscale module
   # (it sets IP forwarding and reverse-path filtering, which are Linux-only).
 
-  # Auto-start the podman VM on login for lite desktop Macs.
+  # Auto-start the podman VM on login for all desktop Macs.
   # `podman machine start` is idempotent — exits cleanly if already running.
   # Uses `script` instead of `ProgramArguments` so nix-darwin wraps it with
   # /bin/wait4path, ensuring the Nix store is mounted before podman runs.
   # The environment PATH includes standard macOS dirs because podman internally
   # shells out to utilities like mkdir(1) and tr(1) which live in /usr/bin.
-  launchd.agents.podman-machine = lib.mkIf (isDesktop && lite) {
+  launchd.agents.podman-machine = lib.mkIf isDesktop {
     script = ''
       exec ${pkgs.podman}/bin/podman machine start
     '';

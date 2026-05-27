@@ -16,7 +16,7 @@
   # Set to true when using `./setup --lite`
   lite = false;
 
-  # Optional: Desktop machine — enables Docker via podman on macOS (lite desktops)
+  # Optional: Desktop machine — enables podman VM and auto-start on macOS
   # Set to true on always-plugged-in desktops (e.g. Mac Mini)
   isDesktop = false;
 
