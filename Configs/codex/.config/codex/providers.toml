@@ -1,11 +1,15 @@
 # Codex Custom Providers Configuration
-# This file defines additional model providers for Codex
-# See: https://openai-codex.mintlify.app/configuration/custom-providers
+# Appended to ~/.codex/config.toml by setup-codex.sh
+#
+# Ollama is built-in to Codex (--local-provider ollama or --oss).
+# Only Xiaomi MiMo and Ollama Cloud need custom provider definitions.
 #
 # Usage:
-#   codex --profile xiaomi     # Xiaomi MiMo-V2.5-Pro
-#   codex --profile ollama     # Local Ollama models
-#   codex --profile cloud      # Ollama Cloud models
+#   codex --profile mimo            # Xiaomi MiMo-V2.5-Pro
+#   codex --profile mimo-flash      # Xiaomi MiMo-V2-Flash
+#   codex --profile ollama-gemma4   # Local Gemma4 26B
+#   codex --profile ollama-deepseek # Local DeepSeek R1
+#   codex --profile cloud-kimi      # Kimi K2.5 via Ollama Cloud
 #
 # API keys are loaded from ~/.codex/secrets.env (not tracked in git)
 
@@ -13,48 +17,51 @@
 # Custom Providers
 # ============================================================================
 
-# Xiaomi MiMo - Chinese AI models with strong reasoning capabilities
 [model_providers.xiaomi]
 name = "Xiaomi MiMo"
 base_url = "https://api.xiaomimimo.com/v1"
 env_key = "XIAOMI_MIMO_API_KEY"
 
-# Ollama Local - Run models locally on your machine
-[model_providers.ollama]
-name = "Ollama (Local)"
-base_url = "http://localhost:11434/v1"
-env_key = "OLLAMA_API_KEY"
-
-# Ollama Cloud - Access to cloud-hosted open models
 [model_providers.ollama-cloud]
 name = "Ollama Cloud"
 base_url = "https://api.ollama.com/v1"
 env_key = "OLLAMA_CLOUD_API_KEY"
 
 # ============================================================================
-# Profiles for easy model switching
+# Profiles
 # ============================================================================
 
-[profiles.xiaomi]
+# Xiaomi MiMo models
+[profiles.mimo]
 model_provider = "xiaomi"
 model = "mimo-v2.5-pro"
 
-[profiles.ollama]
+[profiles.mimo-flash]
+model_provider = "xiaomi"
+model = "mimo-v2-flash"
+
+[profiles.mimo-omni]
+model_provider = "xiaomi"
+model = "mimo-v2.5"
+
+# Local Ollama models
+[profiles.ollama-gemma4]
 model_provider = "ollama"
 model = "gemma4:26b"
 
-[profiles.cloud]
-model_provider = "ollama-cloud"
-model = "kimi-k2.5"
-
-[profiles.gemma4]
-model_provider = "ollama"
-model = "gemma4:latest"
-
-[profiles.deepseek]
+[profiles.ollama-deepseek]
 model_provider = "ollama"
 model = "deepseek-r1:latest"
 
-[profiles.gemma3]
+[profiles.ollama-gemma3]
 model_provider = "ollama"
 model = "gemma3:27b"
+
+# Ollama Cloud models
+[profiles.cloud-kimi]
+model_provider = "ollama-cloud"
+model = "kimi-k2.5"
+
+[profiles.cloud-glm]
+model_provider = "ollama-cloud"
+model = "glm-5.1"
