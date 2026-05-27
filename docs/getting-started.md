@@ -56,7 +56,7 @@ The setup flow can:
 - install temporary bootstrap tools such as `git`, `tuckr`, and `nushell`
 - create the Tuckr symlink expected by the repo layout
 - deploy selected config groups into your home directory via symlinks
-- run post-hooks for groups such as `nix`, `nushell`, `pnpm`, and `claude`
+- run post-hooks for groups such as `nix`, `nushell`, `pnpm`, and `agents`
 - rebuild system or Home Manager configuration via `nh` when the `nix` group is deployed
 
 The setup script is intentionally metadata-driven, but Tuckr remains the deployment engine.

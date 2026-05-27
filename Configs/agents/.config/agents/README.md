@@ -8,7 +8,6 @@ This directory centralizes configuration for all AI coding agents and tools.
 | ------------ | --------------------- | ------------------------------------------- |
 | **OpenCode** | `~/.config/opencode/` | Universal AI agent with multi-model support |
 | **Pi**       | `~/.pi/agent/`        | AI-powered development environment          |
-| **Claude**   | `~/.config/claude/`   | Claude Desktop app configuration            |
 | **Codex**    | `~/.codex/`           | OpenAI's Codex CLI tool                     |
 
 ## Configuration Files

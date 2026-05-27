@@ -120,7 +120,6 @@ alias zj = zellij
 alias lg = lazygit
 alias cl = clear
 alias pinentry = pinentry-mac
-alias cc = claude --dangerously-skip-permissions
 alias co = codex --dangerously-bypass-approvals-and-sandbox
 alias oc = opencode
 alias g = git

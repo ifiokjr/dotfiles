@@ -22,12 +22,6 @@ export OPENCODE_TRUSTED_DIRECTORIES="/Users/ifiokjr/Developer:/Users/ifiokjr/Dev
 # Located at: ~/.pi/agent/settings.json
 
 # ---------------------------------------------------------------------------
-# Claude CLI Configuration (if applicable)
-# ---------------------------------------------------------------------------
-# Claude stores config in ~/.config/claude/
-# Currently managed through Claude Desktop app
-
-# ---------------------------------------------------------------------------
 # OpenAI/Codex Configuration
 # ---------------------------------------------------------------------------
 # API keys are managed by SecretSpec + 1Password; use ssr <command> for lazy injection.

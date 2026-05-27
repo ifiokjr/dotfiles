@@ -33,4 +33,4 @@ Use Conventional Commits:
 
 Common scopes in this repo:
 
-- `nix`, `nushell`, `scripts`, `helix`, `claude`, `ci`, `tuckr`, `docs`, `setup`
+- `nix`, `nushell`, `scripts`, `helix`, `ci`, `tuckr`, `docs`, `setup`
