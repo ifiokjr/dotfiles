@@ -31,16 +31,21 @@ codex --profile cloud-kimi        # Kimi K2.5 via cloud
 
 ## Secrets
 
-Create `~/.codex/secrets.env` with your API keys:
+API keys are managed via **SecretSpec + 1Password** (not plaintext on disk).
 
 ```bash
-XIAOMI_MIMO_API_KEY=tp-your-key-here
-OLLAMA_CLOUD_API_KEY=your-ollama-cloud-key
+# Run Codex with secrets injected from 1Password:
+ssr codex --profile mimo
+
+# Or load all secrets into shell first:
+ssload
 ```
 
-Set `chmod 600 ~/.codex/secrets.env` — this file is NOT tracked in git.
+Keys are in `secretspec.toml` → `op://Development/dotfiles` vault (`ai` path):
+- `XIAOMI_MIMO_API_KEY`
+- `OLLAMA_CLOUD_API_KEY`
 
-Keys are sourced from the Pi installation's `~/.pi/agent/auth.json`.
+A fallback `~/.codex/secrets.env` (mode 600, not in git) can be used when 1Password is unavailable.
 
 ## Getting API Keys
 

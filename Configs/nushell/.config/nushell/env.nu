@@ -178,7 +178,8 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path 
 # Codex API Keys
 # ---------------------------------------------------------------------------
 # Load API keys for custom Codex providers (Xiaomi MiMo, Ollama Cloud)
-# Keys are stored in ~/.codex/secrets.env (not tracked in git)
+# Primary source: 1Password via secretspec (use `ssr codex ...`)
+# Fallback: ~/.codex/secrets.env for offline use
 if ("~/.codex/secrets.env" | path exists) {
     let secrets = (open ~/.codex/secrets.env --raw | lines | where {|l| not ($l | str starts-with '#') and ($l | str contains '=')} | parse '{key}={value}' | transpose -r)
     if ($secrets | get -o XIAOMI_MIMO_API_KEY | is-not-empty) {
