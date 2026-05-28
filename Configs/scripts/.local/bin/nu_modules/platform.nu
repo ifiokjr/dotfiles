@@ -12,10 +12,10 @@ export def arch [] {
     let machine = (uname).machine
     match $machine {
         "arm64" | "aarch64" => "aarch64"
-        "x86_64" => "x86_64"
-        _ => { error make {
-            msg: $"Unsupported architecture: ($machine)"
-        } }
+        x86_64 => "x86_64"
+        _ => {
+            error make {msg: $"Unsupported architecture: ($machine)"}
+        }
     }
 }
 # Get nix system triple (e.g., "aarch64-darwin")

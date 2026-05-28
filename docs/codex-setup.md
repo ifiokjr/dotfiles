@@ -10,16 +10,16 @@ Codex supports Xiaomi MiMo, local Ollama, and Ollama Cloud models via custom pro
 
 ## Available Profiles
 
-| Profile | Provider | Model | Description |
-|---------|----------|-------|-------------|
-| `mimo` | Xiaomi MiMo | mimo-v2.5-pro | Flagship reasoning model (1M context) |
-| `mimo-flash` | Xiaomi MiMo | mimo-v2-flash | Fast, low-cost model |
-| `mimo-omni` | Xiaomi MiMo | mimo-v2.5 | Multimodal (text, image, audio, video) |
-| `ollama-gemma4` | Ollama (local) | gemma4:26b | Local Gemma4 26B |
-| `ollama-deepseek` | Ollama (local) | deepseek-r1:latest | Local DeepSeek R1 |
-| `ollama-gemma3` | Ollama (local) | gemma3:27b | Local Gemma3 27B |
-| `cloud-kimi` | Ollama Cloud | kimi-k2.5 | Kimi K2.5 via Ollama Cloud |
-| `cloud-glm` | Ollama Cloud | glm-5.1 | GLM 5.1 via Ollama Cloud |
+| Profile           | Provider       | Model              | Description                            |
+| ----------------- | -------------- | ------------------ | -------------------------------------- |
+| `mimo`            | Xiaomi MiMo    | mimo-v2.5-pro      | Flagship reasoning model (1M context)  |
+| `mimo-flash`      | Xiaomi MiMo    | mimo-v2-flash      | Fast, low-cost model                   |
+| `mimo-omni`       | Xiaomi MiMo    | mimo-v2.5          | Multimodal (text, image, audio, video) |
+| `ollama-gemma4`   | Ollama (local) | gemma4:26b         | Local Gemma4 26B                       |
+| `ollama-deepseek` | Ollama (local) | deepseek-r1:latest | Local DeepSeek R1                      |
+| `ollama-gemma3`   | Ollama (local) | gemma3:27b         | Local Gemma3 27B                       |
+| `cloud-kimi`      | Ollama Cloud   | kimi-k2.5          | Kimi K2.5 via Ollama Cloud             |
+| `cloud-glm`       | Ollama Cloud   | glm-5.1            | GLM 5.1 via Ollama Cloud               |
 
 ## Usage
 
@@ -42,6 +42,7 @@ ssload
 ```
 
 Keys are in `secretspec.toml` → `op://Development/dotfiles` vault (`ai` path):
+
 - `XIAOMI_MIMO_API_KEY`
 - `OLLAMA_CLOUD_API_KEY`
 

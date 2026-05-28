@@ -8,7 +8,7 @@ $env._SHELL_START = (date now)
 # nix-darwin's set-environment has not run), detect and set them manually.
 if not ($env | get -o NIX_PROFILES | is-not-empty) {
     # Replicate nix-darwin's set-environment script
-    let user = ($env | get -o USER | default (whoami))
+    let user = $env | get -o USER | default (whoami)
     # Nix profiles (matches nix-darwin set-environment)
     $env.NIX_PROFILES = $"/nix/var/nix/profiles/default /run/current-system/sw /etc/profiles/per-user/($user) ($env.HOME)/.nix-profile"
     $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($user)"
@@ -59,7 +59,7 @@ $env.DENO_INSTALL = $"($env.HOME)/.deno"
 $env.ANDROID_HOME = $"($env.HOME)/Library/Android/sdk"
 let ndk_base = $"($env.ANDROID_HOME)/ndk"
 $env.NDK_HOME = if ($ndk_base | path exists) {
-    let ndks = (ls $ndk_base | where type == dir | sort-by name)
+    let ndks = ls $ndk_base | where type == dir | sort-by name
     if ($ndks | is-not-empty) {
         $ndks | last | get name
     } else { $"($ndk_base)/29.0.13599879" }
@@ -76,7 +76,10 @@ $env.PNPM_HOME = $"($env.HOME)/Library/pnpm"
 # connect to the podman VM. The `docker` CLI alias (podman) works without this.
 # Falls back to the standard macOS Podman socket if dynamic detection fails.
 if ($nu.os-info.name == "macos") and (which podman | is-not-empty) {
-    let _docker_sock = (do -i { podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanSocket.Path}}' } | str trim)
+    let _docker_sock = (
+        do -i { podman machine inspect podman-machine-default --format '{{.ConnectionInfo.PodmanSocket.Path}}' }
+        | str trim
+    )
     if ($_docker_sock | path exists) {
         $env.DOCKER_HOST = "unix://" + $_docker_sock
     } else if ("/tmp/podman/podman-machine-default-api.sock" | path exists) {
@@ -123,6 +126,7 @@ let path_prepend = [
     $"($env.HOME)/fvm/default/bin"
     $"($env.DENO_INSTALL)/bin"
 ]
+
 let path_append = [
     $"($env.ANDROID_HOME)/cmdline-tools/latest/bin"
     $"($env.ANDROID_HOME)/platform-tools"
@@ -142,9 +146,7 @@ $env.OPENCODE_TRUSTED_DIRECTORIES = "/Users/ifiokjr/Developer,/tmp"
 # ---------------------------------------------------------------------------
 # Directory stack (like zsh auto_pushd)
 # ---------------------------------------------------------------------------
-$env.DIRSTACK = [
-    $env.PWD
-]
+$env.DIRSTACK = [$env.PWD]
 # ---------------------------------------------------------------------------
 # Devenv hook cache (runs in env.nu so the file exists before config.nu parses)
 # ---------------------------------------------------------------------------
@@ -152,12 +154,13 @@ $env.DIRSTACK = [
 # Any runtime code in config.nu would execute too late. Since env.nu is
 # fully parsed and executed before config.nu, we create/refresh the cache here.
 mkdir ~/.cache/devenv
-let devenv_bin = (which devenv | get path.0 | default '')
+let devenv_bin = which devenv | get path.0 | default ''
+
 let needs_regen = if ($devenv_bin | is-empty) { false } else {
-    let cache_exists = ($"($env.HOME)/.cache/devenv/hook.nu" | path exists)
+    let cache_exists = $"($env.HOME)/.cache/devenv/hook.nu" | path exists
     if not $cache_exists { true } else {
-        let cache_mtime = (ls -l $"($env.HOME)/.cache/devenv/hook.nu" | get modified.0)
-        let bin_mtime = (ls -l $devenv_bin | get modified.0)
+        let cache_mtime = ls -l $"($env.HOME)/.cache/devenv/hook.nu" | get modified.0
+        let bin_mtime = ls -l $devenv_bin | get modified.0
         ($cache_mtime < $bin_mtime)
     }
 }
@@ -171,8 +174,8 @@ if not ("~/.cache/devenv/hook.nu" | path expand | path exists) {
 # pnpm
 $env.PNPM_HOME = "/Users/ifiokjr/Library/pnpm"
 $env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path join "bin"))
-# pnpm end
 
+# pnpm end
 
 # ---------------------------------------------------------------------------
 # Codex API Keys
@@ -181,7 +184,13 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path 
 # Primary source: 1Password via secretspec (use `ssr codex ...`)
 # Fallback: ~/.codex/secrets.env for offline use
 if ("~/.codex/secrets.env" | path exists) {
-    let secrets = (open ~/.codex/secrets.env --raw | lines | where {|l| not ($l | str starts-with '#') and ($l | str contains '=')} | parse '{key}={value}' | transpose -r)
+    let secrets = (
+        open ~/.codex/secrets.env --raw
+        | lines
+        | where {|l| not ($l | str starts-with '#') and ($l | str contains '=')}
+        | parse '{key}={value}'
+        | transpose -r
+    )
     if ($secrets | get -o XIAOMI_MIMO_API_KEY | is-not-empty) {
         $env.XIAOMI_MIMO_API_KEY = ($secrets | get XIAOMI_MIMO_API_KEY)
     }

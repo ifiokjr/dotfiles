@@ -13,36 +13,36 @@ mkdir -p "$CODEX_DIR"
 
 # Check if secrets.env exists
 if [ ! -f "$CODEX_DIR/secrets.env" ]; then
-    echo ""
-    echo "⚠  secrets.env not found in $CODEX_DIR"
-    echo "   Create it with your API keys:"
-    echo ""
-    echo "   cat > $CODEX_DIR/secrets.env << 'EOF'"
-    echo "   XIAOMI_MIMO_API_KEY=tp-your-key-here"
-    echo "   OLLAMA_CLOUD_API_KEY=your-ollama-cloud-key"
-    echo "   EOF"
-    echo "   chmod 600 $CODEX_DIR/secrets.env"
-    echo ""
+	echo ""
+	echo "⚠  secrets.env not found in $CODEX_DIR"
+	echo "   Create it with your API keys:"
+	echo ""
+	echo "   cat > $CODEX_DIR/secrets.env << 'EOF'"
+	echo "   XIAOMI_MIMO_API_KEY=tp-your-key-here"
+	echo "   OLLAMA_CLOUD_API_KEY=your-ollama-cloud-key"
+	echo "   EOF"
+	echo "   chmod 600 $CODEX_DIR/secrets.env"
+	echo ""
 else
-    echo "✓ secrets.env exists"
+	echo "✓ secrets.env exists"
 fi
 
 # Add providers to config.toml if not already present
 if [ -f "$CONFIG" ]; then
-    if ! grep -q "\[model_providers.xiaomi\]" "$CONFIG"; then
-        echo "Adding custom providers to config.toml..."
-        if [ -f "$DOTFILES_CODEX_DIR/providers.toml" ]; then
-            echo "" >> "$CONFIG"
-            cat "$DOTFILES_CODEX_DIR/providers.toml" >> "$CONFIG"
-            echo "✓ Added custom providers"
-        else
-            echo "⚠ providers.toml not found in dotfiles"
-        fi
-    else
-        echo "✓ Custom providers already configured"
-    fi
+	if ! grep -q "\[model_providers.xiaomi\]" "$CONFIG"; then
+		echo "Adding custom providers to config.toml..."
+		if [ -f "$DOTFILES_CODEX_DIR/providers.toml" ]; then
+			echo "" >>"$CONFIG"
+			cat "$DOTFILES_CODEX_DIR/providers.toml" >>"$CONFIG"
+			echo "✓ Added custom providers"
+		else
+			echo "⚠ providers.toml not found in dotfiles"
+		fi
+	else
+		echo "✓ Custom providers already configured"
+	fi
 else
-    echo "⚠ config.toml not found — run 'codex' once to create it, then re-run this script"
+	echo "⚠ config.toml not found — run 'codex' once to create it, then re-run this script"
 fi
 
 echo ""
