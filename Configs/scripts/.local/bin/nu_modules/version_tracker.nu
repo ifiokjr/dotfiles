@@ -115,7 +115,10 @@ export def diff-package-lists [old: list<any>, new: list<any>] {
 # ─────────────────────────────────────────────────────────────────────────────
 # Print a package diff returned by diff-package-lists.
 export def print-package-diff [diff: record, title: string] {
-    let total = $diff.added | length) + ($diff.removed | length) + ($diff.changed | length
+    let added_count = $diff.added | length
+    let removed_count = $diff.removed | length
+    let changed_count = $diff.changed | length
+    let total = $added_count + $removed_count + $changed_count
     if $total == 0 { return }
     header $title
     for pkg in $diff.added { success $"  + ($pkg.name) ($pkg.new)" }
