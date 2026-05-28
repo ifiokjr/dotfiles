@@ -119,6 +119,12 @@ def main [
     --add-preset: string  # Add a preset to machine.nix (e.g. ironclaw)
     --remove-preset: string  # Remove a preset from machine.nix
 ] {
+    let invoked_by_dotfiles_cli = ("DOTFILES_CLI" in $env) and $env.DOTFILES_CLI == "1"
+
+    if not $invoked_by_dotfiles_cli {
+        warn "Direct use of `rebuild` is deprecated. Use `dotfiles rebuild` instead."
+    }
+
     if $force and not $latest {
         err "--force requires --latest"
         exit 1

@@ -455,7 +455,7 @@ fi
 
 # ---------------------------------------------------------------------------
 # Compile the dotfiles CLI binary after a successful rebuild.
-# This ensures 'dotfiles' and 'df' are always in sync with the source.
+# This ensures 'dotfiles' and 'dot' are always in sync with the source.
 # ---------------------------------------------------------------------------
 if [ "$REBUILD_EXIT" -eq 0 ]; then
 	DOTFILES_REPO_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)}"
