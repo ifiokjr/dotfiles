@@ -24,7 +24,7 @@ export def diff-nix-closures [old_path: string, new_path: string] {
         return null
     }
     let result = (^nix store diff-closures $old_path $new_path | complete)
-    if ($result.exit_code != 0) {
+    if $result.exit_code != 0 {
         return null
     }
     $result.stdout | lines | where $it != ""
@@ -38,7 +38,7 @@ export def capture-pnpm-globals [] {
     let runtime_dir = ($env.XDG_DATA_HOME? | default ($env.HOME | path join ".local/share") | path join "pnpm-global")
     if not ($runtime_dir | path join "package.json" | path exists) { return null }
     let result = (^bash -lc 'cd "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global" && pnpm list --json' | complete)
-    if ($result.exit_code != 0) { return null }
+    if $result.exit_code != 0 { return null }
     let parsed = try {
         $result.stdout | from json
     } catch { return null }
@@ -57,7 +57,7 @@ export def capture-pnpm-globals [] {
     if ($deps_type | str contains "nothing") or (not ($deps_type | str starts-with "record")) {
         return null
     }
-    $deps | items { |name, info| { name: $name, version: ($info | get --optional version | default "") } }
+    $deps | items {|name, info| { name: $name, version: ($info | get --optional version | default "") } }
 }
 # ─────────────────────────────────────────────────────────────────────────────
 # Homebrew
@@ -66,7 +66,7 @@ export def capture-pnpm-globals [] {
 export def capture-brew-packages [] {
     if (which brew | is-empty) { return null }
     let result = (^brew list --versions | complete)
-    if ($result.exit_code != 0) { return null }
+    if $result.exit_code != 0 { return null }
     $result.stdout | lines | where $it != "" | parse "{name} {version}" | default "" version
 }
 # ─────────────────────────────────────────────────────────────────────────────
@@ -78,9 +78,9 @@ export def capture-brew-packages [] {
 export def diff-package-lists [old: list<any>, new: list<any>] {
     let old_map = ($old | default [] | reduce -f {} {|it, acc| $acc | insert $it.name $it.version })
     let new_map = ($new | default [] | reduce -f {} {|it, acc| $acc | insert $it.name $it.version })
-    let added = ($new_map | items { |name, ver| { name: $name, old: "", new: $ver } } | where { |it| not ($it.name in ($old_map | columns)) })
-    let removed = ($old_map | items { |name, ver| { name: $name, old: $ver, new: "" } } | where { |it| not ($it.name in ($new_map | columns)) })
-    let changed = ($new_map | items { |name, ver| { name: $name, old: ($old_map | get --optional $name | default ""), new: $ver } } | where { |it| ($it.old != "") and ($it.old != $it.new) })
+    let added = ($new_map | items {|name, ver| { name: $name, old: "", new: $ver } } | where {|it| not ($it.name in ($old_map | columns)) })
+    let removed = ($old_map | items {|name, ver| { name: $name, old: $ver, new: "" } } | where {|it| not ($it.name in ($new_map | columns)) })
+    let changed = ($new_map | items {|name, ver| { name: $name, old: ($old_map | get --optional $name | default ""), new: $ver } } | where {|it| ($it.old != "") and ($it.old != $it.new) })
     {
         added: $added
         removed: $removed
@@ -92,7 +92,10 @@ export def diff-package-lists [old: list<any>, new: list<any>] {
 # ─────────────────────────────────────────────────────────────────────────────
 # Print a package diff returned by diff-package-lists.
 export def print-package-diff [diff: record, title: string] {
-    let total = ($diff.added | length) + ($diff.removed | length) + ($diff.changed | length)
+    let added_count = $diff.added | length
+    let removed_count = $diff.removed | length
+    let changed_count = $diff.changed | length
+    let total = $added_count + $removed_count + $changed_count
     if $total == 0 { return }
     header $title
     for pkg in $diff.added { success $"  + ($pkg.name) ($pkg.new)" }
@@ -103,7 +106,7 @@ export def print-package-diff [diff: record, title: string] {
 export def print-nix-diff [lines: list<string>, title: string] {
     if ($lines | is-empty) { return }
     # Filter out empty lines and lines with no actual change indicator
-    let meaningful = ($lines | where { |it| ($it | str contains "→") or ($it | str contains "+") or ($it | str contains "-") })
+    let meaningful = ($lines | where {|it| ($it | str contains "→") or ($it | str contains "+") or ($it | str contains "-") })
     if ($meaningful | is-empty) { return }
     header $title
     for line in $meaningful {
@@ -130,7 +133,7 @@ export def log-rebuild-summary [sections: list<string>, --log-file: string] {
         $log_file
     }
     mkdir ($file | path dirname)
-    let timestamp = (date now | format date "%Y-%m-%d %H:%M:%S")
+    let timestamp = date now | format date "%Y-%m-%d %H:%M:%S"
     let sep = "═══════════════════════════════════════════════════════════════════════════════"
     let lines = [
         $sep

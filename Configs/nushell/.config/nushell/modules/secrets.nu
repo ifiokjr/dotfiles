@@ -21,7 +21,7 @@ export def --env ssload [] {
         }
     }
     let keys = (
-        open $secretspec_file | get profiles.default | columns | where { |key| $key != "defaults" }
+        open $secretspec_file | get profiles.default | columns | where {|key| $key != "defaults" }
     )
     if ($keys | is-empty) {
         error make {
@@ -30,15 +30,15 @@ export def --env ssload [] {
     }
     let env_vars = (
         ^secretspec run -f $secretspec_file -- env | lines | each { |line|
-            let idx = ($line | str index-of "=")
+            let idx = $line | str index-of "="
             if $idx == -1 { return null }
 
-            let key = ($line | str substring 0..<$idx)
+            let key = $line | str substring 0..<$idx
             if $key not-in $keys { return null }
 
-            let value = ($line | str substring ($idx + 1)..)
+            let value = $line | str substring ($idx + 1)..
             { $key: $value }
-        } | where { |item| $item != null } | reduce --fold {} { |item, acc| $acc | merge $item }
+        } | where {|item| $item != null } | reduce --fold {} {|item, acc| $acc | merge $item }
     )
     if ($env_vars | is-not-empty) {
         $env_vars | load-env

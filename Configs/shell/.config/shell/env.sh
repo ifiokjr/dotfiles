@@ -154,7 +154,8 @@ fi
 # Primary source: 1Password via secretspec (use `ssr codex ...`)
 # Fallback: ~/.codex/secrets.env for offline use
 if [ -f ~/.codex/secrets.env ]; then
-    export XIAOMI_MIMO_API_KEY=$(grep '^XIAOMI_MIMO_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)
-    export OLLAMA_CLOUD_API_KEY=$(grep '^OLLAMA_CLOUD_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)
-    export OLLAMA_API_KEY=$(grep '^OLLAMA_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2-)
+	XIAOMI_MIMO_API_KEY=$(grep '^XIAOMI_MIMO_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)
+	OLLAMA_CLOUD_API_KEY=$(grep '^OLLAMA_CLOUD_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)
+	OLLAMA_API_KEY=$(grep '^OLLAMA_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2-)
+	export XIAOMI_MIMO_API_KEY OLLAMA_CLOUD_API_KEY OLLAMA_API_KEY
 fi

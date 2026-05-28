@@ -8,7 +8,7 @@ $env._SHELL_START = (date now)
 # nix-darwin's set-environment has not run), detect and set them manually.
 if not ($env | get -o NIX_PROFILES | is-not-empty) {
     # Replicate nix-darwin's set-environment script
-    let user = ($env | get -o USER | default (whoami))
+    let user = $env | get -o USER | default (whoami)
     # Nix profiles (matches nix-darwin set-environment)
     $env.NIX_PROFILES = $"/nix/var/nix/profiles/default /run/current-system/sw /etc/profiles/per-user/($user) ($env.HOME)/.nix-profile"
     $env.NIX_USER_PROFILE_DIR = $"/nix/var/nix/profiles/per-user/($user)"
@@ -59,7 +59,7 @@ $env.DENO_INSTALL = $"($env.HOME)/.deno"
 $env.ANDROID_HOME = $"($env.HOME)/Library/Android/sdk"
 let ndk_base = $"($env.ANDROID_HOME)/ndk"
 $env.NDK_HOME = if ($ndk_base | path exists) {
-    let ndks = (ls $ndk_base | where type == dir | sort-by name)
+    let ndks = ls $ndk_base | where type == dir | sort-by name
     if ($ndks | is-not-empty) {
         $ndks | last | get name
     } else { $"($ndk_base)/29.0.13599879" }
@@ -152,12 +152,12 @@ $env.DIRSTACK = [
 # Any runtime code in config.nu would execute too late. Since env.nu is
 # fully parsed and executed before config.nu, we create/refresh the cache here.
 mkdir ~/.cache/devenv
-let devenv_bin = (which devenv | get path.0 | default '')
+let devenv_bin = which devenv | get path.0 | default ''
 let needs_regen = if ($devenv_bin | is-empty) { false } else {
-    let cache_exists = ($"($env.HOME)/.cache/devenv/hook.nu" | path exists)
+    let cache_exists = $"($env.HOME)/.cache/devenv/hook.nu" | path exists
     if not $cache_exists { true } else {
-        let cache_mtime = (ls -l $"($env.HOME)/.cache/devenv/hook.nu" | get modified.0)
-        let bin_mtime = (ls -l $devenv_bin | get modified.0)
+        let cache_mtime = ls -l $"($env.HOME)/.cache/devenv/hook.nu" | get modified.0
+        let bin_mtime = ls -l $devenv_bin | get modified.0
         ($cache_mtime < $bin_mtime)
     }
 }
@@ -172,8 +172,6 @@ if not ("~/.cache/devenv/hook.nu" | path expand | path exists) {
 $env.PNPM_HOME = "/Users/ifiokjr/Library/pnpm"
 $env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path join "bin"))
 # pnpm end
-
-
 # ---------------------------------------------------------------------------
 # Codex API Keys
 # ---------------------------------------------------------------------------

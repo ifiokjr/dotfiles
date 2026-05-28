@@ -33,7 +33,7 @@ export def machine-config-path [] { $"(config-dir)/machine.nix" }
 # Set the machine.nix desktop mode flag (inserts the field if missing).
 # When isDesktop=true AND lite=true on macOS, enables Docker via podman.
 export def set-desktop-mode [value: bool, --path(-p): string] {
-    let target_path = ($path | default (machine-config-path))
+    let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
         error make {
             msg: $"machine.nix not found at: ($target_path)"
@@ -52,7 +52,7 @@ export def set-desktop-mode [value: bool, --path(-p): string] {
 }
 # Set the machine.nix lite mode flag (inserts the field if missing).
 export def set-lite-mode [value: bool, --path(-p): string] {
-    let target_path = ($path | default (machine-config-path))
+    let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
         error make {
             msg: $"machine.nix not found at: ($target_path)"
@@ -74,7 +74,7 @@ export def set-lite-mode [value: bool, --path(-p): string] {
 # activates with password lock after display sleep. Intended for always-plugged-in
 # desktops (e.g. Mac Mini) that must stay reachable at all times.
 export def set-always-on-mode [value: bool, --path(-p): string] {
-    let target_path = ($path | default (machine-config-path))
+    let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
         error make {
             msg: $"machine.nix not found at: ($target_path)"
@@ -101,15 +101,15 @@ export def set-always-on-mode [value: bool, --path(-p): string] {
 export def known-presets [] { {ironclaw: "Ironclaw agent runtime — enables libSQL database and ironclaw service"} }
 # Add a preset to machine.nix (inserts the presets list if missing, appends if present).
 export def add-preset [preset: string, --path(-p): string] {
-    let preset = ($preset | str downcase)
+    let preset = $preset | str downcase
     let known = (known-presets)
-    let preset_names = ($known | columns)
+    let preset_names = $known | columns
     if $preset not-in $preset_names {
         error make {
             msg: $"Unknown preset '($preset)'. Available presets: ($preset_names | str join ', ')"
         }
     }
-    let target_path = ($path | default (machine-config-path))
+    let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
         error make {
             msg: $"machine.nix not found at: ($target_path)"
@@ -127,7 +127,7 @@ export def add-preset [preset: string, --path(-p): string] {
     if $preset in $current_entries {
         return
     }
-    let new_entries = ($current_entries | append $preset | each {|x| $'"($x)"'})
+    let new_entries = $current_entries | append $preset | each {|x| $'"($x)"'}
     let preset_line = $"  presets = [($new_entries | str join ' ')];"
     let updated = if ($content | str contains 'presets =') {
         $content | str replace --regex '(?m)^\s*presets\s*=\s*\[[^\]]*\];\s*$' $preset_line
@@ -139,8 +139,8 @@ export def add-preset [preset: string, --path(-p): string] {
 }
 # Remove a preset from machine.nix (removes from the list, cleans up empty list).
 export def remove-preset [preset: string, --path(-p): string] {
-    let preset = ($preset | str trim | str downcase)
-    let target_path = ($path | default (machine-config-path))
+    let preset = $preset | str trim | str downcase
+    let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
         error make {
             msg: $"machine.nix not found at: ($target_path)"
@@ -157,7 +157,7 @@ export def remove-preset [preset: string, --path(-p): string] {
             $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
         }
     } catch { [] }
-    let new_entries = ($current_entries | where {|x| $x != $preset} | each {|x| $'"($x)"'})
+    let new_entries = $current_entries | where {|x| $x != $preset} | each {|x| $'"($x)"'}
     let updated = if ($new_entries | length) > 0 {
         let preset_line = $"  presets = [($new_entries | str join ' ')];"
         $content | str replace --regex '(?m)^\s*presets\s*=\s*\[[^\]]*\];\s*$' $preset_line
@@ -179,18 +179,24 @@ export def parse-machine-config [] {
     }
     let content = (open $path --raw)
     # `parse --regex` returns a table; `.get capture0.0` grabs the first match
-    let username = ($content | parse --regex 'username = "([^"]+)"' | get capture0.0)
-    let system = ($content | parse --regex 'system = "([^"]+)"' | get capture0.0)
+    let username = $content | parse --regex 'username = "([^"]+)"' | get capture0.0
+    let system = $content | parse --regex 'system = "([^"]+)"' | get capture0.0
     # hostname is optional — older machine.nix files may not have it
     let hostname = try {
         $content | parse --regex 'hostname = "([^"]+)"' | get capture0.0
     } catch { "" }
     # lite is optional — older machine.nix files may not have it
-    let lite = try { (($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
+    let lite = try {
+        (($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true")
+    } catch { false }
     # isDesktop is optional — older machine.nix files may not have it
-    let isDesktop = try { (($content | parse --regex 'isDesktop\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
+    let isDesktop = try {
+        (($content | parse --regex 'isDesktop\s*=\s*(true|false);' | get capture0.0) == "true")
+    } catch { false }
     # alwaysOn is optional — older machine.nix files may not have it
-    let alwaysOn = try { (($content | parse --regex 'alwaysOn\s*=\s*(true|false);' | get capture0.0) == "true") } catch { false }
+    let alwaysOn = try {
+        (($content | parse --regex 'alwaysOn\s*=\s*(true|false);' | get capture0.0) == "true")
+    } catch { false }
     # presets is optional — a quoted list inside brackets
     let presets = try {
         let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)

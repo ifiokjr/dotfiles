@@ -41,6 +41,9 @@ export const rebuildCommand = new Command()
 		printHeader("Rebuilding system configuration");
 		const { code, success } = await runCommand([script, ...args], {
 			cwd: dotfilesDir,
+			env: {
+				DOTFILES_CLI: "1",
+			},
 		});
 
 		if (!success) {

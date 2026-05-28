@@ -28,21 +28,21 @@ $env.config = {
                 # Capture stdout/stderr so direnv/devenv build errors don't corrupt prompt rendering.
                 # (e.g. "↑↓ navigatedirenv: failed to build the devenv environment")
                 let result = (^direnv export json | complete)
-                if ($result.exit_code != 0) {
+                if $result.exit_code != 0 {
                     if ($env | get -o DOTFILES_DEBUG | is-not-empty) {
-                        let err = ($result.stderr | str trim)
+                        let err = $result.stderr | str trim
                         if ($err | is-not-empty) { print $"(ansi yellow)direnv skipped:(ansi reset) ($err)" }
                     }
                     return
                 }
-                let stdout = ($result.stdout | str trim)
+                let stdout = $result.stdout | str trim
                 if ($stdout | is-empty) { return }
                 let direnv_out = (try {
                     $stdout | from json
                 } catch { {} })
                 if ($direnv_out | is-empty) { return }
                 let env_to_load = if ($direnv_out | get -o PATH | is-not-empty) {
-                    let path_as_list = ($direnv_out | get PATH | split row (char esep))
+                    let path_as_list = $direnv_out | get PATH | split row (char esep)
                     $direnv_out | merge { PATH: $path_as_list }
                 } else { $direnv_out }
                 $env_to_load | load-env
@@ -53,8 +53,8 @@ $env.config = {
                 {||
                     # Directory stack — push current directory, deduplicate, cap at 10.
                     # Mirrors zsh auto_pushd behaviour used by oh-my-zsh's `d` command.
-                    let dir = ($env.PWD | path expand)
-                    let stack = ($env | get -o DIRSTACK | default [])
+                    let dir = $env.PWD | path expand
+                    let stack = $env | get -o DIRSTACK | default []
                     $env.DIRSTACK = ([$dir] | append ($stack | where { $in != $dir }) | first 10)
                 }
             ]
@@ -66,7 +66,7 @@ $env.config = {
 source ~/.cache/devenv/hook.nu
 # Auto-activate Node.js from pnpm-workspace.yaml useNodeVersion (pnpm-standalone)
 def --env pnpm_auto_activate [] {
-    let debug = ($env | get -o DOTFILES_DEBUG | is-not-empty)
+    let debug = $env | get -o DOTFILES_DEBUG | is-not-empty
     if (which pnpm-activate-env | is-empty) {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env not found(ansi reset)" }
         return
@@ -76,12 +76,12 @@ def --env pnpm_auto_activate [] {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env failed(ansi reset)" }
         return
     }
-    let output_lines = ($res.stdout | str trim | lines)
+    let output_lines = $res.stdout | str trim | lines
     if ($output_lines | is-empty) {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
         return
     }
-    let first = ($output_lines | first)
+    let first = $output_lines | first
     if $first == "" {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env returned no output lines(ansi reset)" }
         return
@@ -93,14 +93,14 @@ def --env pnpm_auto_activate [] {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: pnpm-activate-env output did not include node bin(ansi reset)" }
         return
     }
-    let node_bin = ($parsed | get -o 0.bin)
+    let node_bin = $parsed | get -o 0.bin
     if $node_bin == "" {
         if $debug { print "(ansi yellow)pnpm_auto_activate skipped: parsed node bin was empty(ansi reset)" }
         return
     }
-    if ($env.PATH | any { |p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
+    if ($env.PATH | any {|p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
 }
-$env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append { |before, after| pnpm_auto_activate })
+$env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append {|before, after| pnpm_auto_activate })
 pnpm_auto_activate
 # Secrets
 use modules/secrets.nu [ssr, ssload]
@@ -172,13 +172,13 @@ def git_main_branch [] {
     let branches = (
         ^git branch --list main master | lines | each { str trim } | where { $in != "" }
     )
-    if ("main" in $branches) { "main" } else if ("master" in $branches) { "master" } else { "main" }
+    if "main" in $branches { "main" } else if "master" in $branches { "master" } else { "main" }
 }
 def git_develop_branch [] {
     let branches = (
         ^git branch --list dev develop development | lines | each { str trim } | where { $in != "" }
     )
-    if ("develop" in $branches) { "develop" } else if ("dev" in $branches) { "dev" } else if ("development" in $branches) { "development" } else { "develop" }
+    if "develop" in $branches { "develop" } else if "dev" in $branches { "dev" } else if "development" in $branches { "development" } else { "develop" }
 }
 def git_current_branch [] {
     ^git branch --show-current | str trim
@@ -439,7 +439,7 @@ def gsqa [message: string] {
 # Open in Cursor
 def c [...paths: string] {
     if ($paths | is-empty) { ^open -a "Cursor" . } else {
-        $paths | each { |p| ^open -a "Cursor" $p }
+        $paths | each {|p| ^open -a "Cursor" $p }
     }
 }
 # Directory history (like oh-my-zsh 'd' command)
@@ -450,12 +450,12 @@ def --env d [index?: int] {
     let dirs = ($env | get -o DIRSTACK | default [
         $env.PWD
     ])
-    if ($index != null) {
+    if $index != null {
         if $index >= 0 and $index < ($dirs | length) { cd ($dirs | get $index) } else { print $"(ansi red)Invalid index:(ansi reset) ($index) \(0-($dirs | length | $in - 1)\)" }
         return
     }
     $dirs | enumerate | each { |r|
-        let display = ($r.item | str replace $env.HOME "~")
+        let display = $r.item | str replace $env.HOME "~"
         print $"(ansi cyan)($r.index)(ansi reset)\t($display)"
     }
     null

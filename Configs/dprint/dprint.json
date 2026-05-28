@@ -62,6 +62,7 @@
 	"yaml": {},
 	"excludes": [
 		"**/pnpm-lock.yaml",
+		"**/.serena/**",
 		"**/dist",
 		"**/.devenv/**",
 		"**/fixtures",
