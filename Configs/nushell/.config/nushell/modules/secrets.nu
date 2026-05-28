@@ -18,7 +18,7 @@ export def --env ssload [] {
         }
     }
     let keys = (
-        open $secretspec_file | from toml | get profiles.default | columns | where { |key| $key != "defaults" }
+        open $secretspec_file | get profiles.default | columns | where { |key| $key != "defaults" }
     )
     if ($keys | is-empty) {
         error make {
