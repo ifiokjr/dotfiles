@@ -7,7 +7,14 @@
 #   ssr <command>   Run a command with secrets injected ephemerally
 #   ssload          Load all declared secrets into the current shell session
 # Run a command with all secrets injected ephemerally.
-export def ssr [...args] { ^secretspec run -f $"($env.HOME)/secretspec.toml" -- ...$args }
+# Use `--` before flags starting with `-` to prevent Nushell from parsing them:
+#   ssr mc step:publish-release --from-ref=HEAD
+#   ssr -- codex --profile mimo
+export def ssr [
+    ...args  # Command and arguments to run (use `--` before flags with dashes)
+] {
+    ^secretspec run -f $"($env.HOME)/secretspec.toml" -- ...$args
+}
 # Load all declared secrets into the current Nushell session.
 # Prefer `ssr <command>` unless you intentionally want secrets resident in the shell.
 export def --env ssload [] {
