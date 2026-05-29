@@ -48,6 +48,7 @@ in
       direnv
       dprint
       fluxcd
+      fvm
       gh
       git
       git-filter-repo
