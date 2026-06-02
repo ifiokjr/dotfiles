@@ -35,9 +35,7 @@ export def machine-config-path [] { $"(config-dir)/machine.nix" }
 export def set-desktop-mode [value: bool, --path(-p): string] {
     let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
-        error make {
-            msg: $"machine.nix not found at: ($target_path)"
-        }
+        error make {msg: $"machine.nix not found at: ($target_path)"}
     }
     let content = (open $target_path --raw)
     let desktop_value = (if $value { "true" } else { "false" })
@@ -54,9 +52,7 @@ export def set-desktop-mode [value: bool, --path(-p): string] {
 export def set-lite-mode [value: bool, --path(-p): string] {
     let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
-        error make {
-            msg: $"machine.nix not found at: ($target_path)"
-        }
+        error make {msg: $"machine.nix not found at: ($target_path)"}
     }
     let content = (open $target_path --raw)
     let lite_value = (if $value { "true" } else { "false" })
@@ -76,9 +72,7 @@ export def set-lite-mode [value: bool, --path(-p): string] {
 export def set-always-on-mode [value: bool, --path(-p): string] {
     let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
-        error make {
-            msg: $"machine.nix not found at: ($target_path)"
-        }
+        error make {msg: $"machine.nix not found at: ($target_path)"}
     }
     let content = (open $target_path --raw)
     let always_on_value = (if $value { "true" } else { "false" })
@@ -105,20 +99,21 @@ export def add-preset [preset: string, --path(-p): string] {
     let known = (known-presets)
     let preset_names = $known | columns
     if $preset not-in $preset_names {
-        error make {
-            msg: $"Unknown preset '($preset)'. Available presets: ($preset_names | str join ', ')"
-        }
+        error make {msg: $"Unknown preset '($preset)'. Available presets: ($preset_names | str join ', ')"}
     }
     let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
-        error make {
-            msg: $"machine.nix not found at: ($target_path)"
-        }
+        error make {msg: $"machine.nix not found at: ($target_path)"}
     }
     let content = (open $target_path --raw)
     # Parse current presets list (if any)
     let current_entries = try {
-        let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)
+        let raw = (
+            $content
+            | parse --regex 'presets\s*=\s*\[([^\]]*)\]'
+            | get capture0.0
+            | str trim
+        )
         if ($raw | is-empty) { [] } else {
             $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
         }
@@ -142,9 +137,7 @@ export def remove-preset [preset: string, --path(-p): string] {
     let preset = $preset | str trim | str downcase
     let target_path = $path | default (machine-config-path)
     if not ($target_path | path exists) {
-        error make {
-            msg: $"machine.nix not found at: ($target_path)"
-        }
+        error make {msg: $"machine.nix not found at: ($target_path)"}
     }
     let content = (open $target_path --raw)
     if not ($content | str contains 'presets =') {
@@ -152,7 +145,12 @@ export def remove-preset [preset: string, --path(-p): string] {
     }
     # Parse current entries and remove the target
     let current_entries = try {
-        let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)
+        let raw = (
+            $content
+            | parse --regex 'presets\s*=\s*\[([^\]]*)\]'
+            | get capture0.0
+            | str trim
+        )
         if ($raw | is-empty) { [] } else {
             $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
         }
@@ -173,9 +171,7 @@ export def remove-preset [preset: string, --path(-p): string] {
 export def parse-machine-config [] {
     let path = (machine-config-path)
     if not ($path | path exists) {
-        error make {
-            msg: $"machine.nix not found at: ($path)"
-        }
+        error make {msg: $"machine.nix not found at: ($path)"}
     }
     let content = (open $path --raw)
     # `parse --regex` returns a table; `.get capture0.0` grabs the first match
@@ -187,19 +183,38 @@ export def parse-machine-config [] {
     } catch { "" }
     # lite is optional — older machine.nix files may not have it
     let lite = try {
-        (($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true")
+        (
+            ($content | parse --regex 'lite\s*=\s*(true|false);' | get capture0.0) == "true"
+        )
     } catch { false }
     # isDesktop is optional — older machine.nix files may not have it
     let isDesktop = try {
-        (($content | parse --regex 'isDesktop\s*=\s*(true|false);' | get capture0.0) == "true")
+        (
+            (
+                $content
+                | parse --regex 'isDesktop\s*=\s*(true|false);'
+                | get capture0.0
+            ) == "true"
+        )
     } catch { false }
     # alwaysOn is optional — older machine.nix files may not have it
     let alwaysOn = try {
-        (($content | parse --regex 'alwaysOn\s*=\s*(true|false);' | get capture0.0) == "true")
+        (
+            (
+                $content
+                | parse --regex 'alwaysOn\s*=\s*(true|false);'
+                | get capture0.0
+            ) == "true"
+        )
     } catch { false }
     # presets is optional — a quoted list inside brackets
     let presets = try {
-        let raw = ($content | parse --regex 'presets\s*=\s*\[([^\]]*)\]' | get capture0.0 | str trim)
+        let raw = (
+            $content
+            | parse --regex 'presets\s*=\s*\[([^\]]*)\]'
+            | get capture0.0
+            | str trim
+        )
         if ($raw | is-empty) { [] } else {
             $raw | split row ' ' | where {|x| $x | is-not-empty} | each {|x| $x | str replace --all '"' '' | str trim }
         }

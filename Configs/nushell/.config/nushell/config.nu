@@ -100,7 +100,10 @@ def --env pnpm_auto_activate [] {
     }
     if ($env.PATH | any {|p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
 }
-$env.config.hooks.env_change.PWD = (($env.config.hooks.env_change | get -o PWD | default []) | append {|before, after| pnpm_auto_activate })
+$env.config.hooks.env_change.PWD = (
+    ($env.config.hooks.env_change | get -o PWD | default [])
+    | append {|before, after| pnpm_auto_activate }
+)
 pnpm_auto_activate
 # Secrets
 use modules/secrets.nu [ssr, ssload]

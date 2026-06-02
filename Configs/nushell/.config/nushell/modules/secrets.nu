@@ -16,17 +16,13 @@ export alias ssr = secretspec run -f $"($env.HOME)/secretspec.toml" --
 export def --env ssload [] {
     let secretspec_file = $"($env.HOME)/secretspec.toml"
     if not ($secretspec_file | path exists) {
-        error make {
-            msg: $"ssload: missing ($secretspec_file)"
-        }
+        error make {msg: $"ssload: missing ($secretspec_file)"}
     }
     let keys = (
         open $secretspec_file | get profiles.default | columns | where {|key| $key != "defaults" }
     )
     if ($keys | is-empty) {
-        error make {
-            msg: $"ssload: no secrets found in ($secretspec_file)"
-        }
+        error make {msg: $"ssload: no secrets found in ($secretspec_file)"}
     }
     let env_vars = (
         ^secretspec run -f $secretspec_file -- env | lines | each { |line|
