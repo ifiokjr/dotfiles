@@ -135,6 +135,7 @@
         "podman-desktop"
         "react-native-debugger"
         "reactotron"
+        "t3-code"
         "visual-studio-code"
         "zed"
 
