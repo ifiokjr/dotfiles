@@ -100,11 +100,15 @@ def --env pnpm_auto_activate [] {
     }
     if ($env.PATH | any {|p| $p == $node_bin }) == false { $env.PATH = ($env.PATH | prepend $node_bin) }
 }
+use modules/fvm.nu [fvm-allow, fvm-deny, fvm-allowed, fvm-auto-activate]
+
 $env.config.hooks.env_change.PWD = (
     ($env.config.hooks.env_change | get -o PWD | default [])
     | append {|before, after| pnpm_auto_activate }
+    | append {|before, after| fvm-auto-activate }
 )
 pnpm_auto_activate
+fvm-auto-activate
 # Secrets
 use modules/secrets.nu [ssr, ssload]
 alias ss = secretspec -f $"($env.HOME)/secretspec.toml"

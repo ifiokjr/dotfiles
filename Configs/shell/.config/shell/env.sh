@@ -139,6 +139,12 @@ fi
 # pnpmg runs pnpm in the managed global project directory.
 pnpmg() { pnpm --dir "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global" "$@"; }
 
+# FVM auto-switching (allow-gated)
+if [ -f "$HOME/.config/shell/fvm.sh" ]; then
+	# shellcheck disable=SC1091
+	. "$HOME/.config/shell/fvm.sh"
+fi
+
 # ---------------------------------------------------------------------------
 # Secrets — 1Password-backed via SecretSpec, no plaintext on disk
 # ---------------------------------------------------------------------------
