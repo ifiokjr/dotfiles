@@ -293,19 +293,26 @@ export async function commandExists(name: string): Promise<boolean> {
 /** Run a shell command and stream output to stdout/stderr. */
 export async function runCommand(
 	cmd: string[],
-	options?: { cwd?: string; env?: Record<string, string> },
-): Promise<{ code: number; success: boolean }> {
+	options?: {
+		cwd?: string;
+		env?: Record<string, string>;
+		stdout?: "inherit" | "piped" | "null";
+	},
+): Promise<{ code: number; stdout?: string; success: boolean }> {
 	const [command, ...args] = cmd;
 	const p = new Deno.Command(command, {
 		args,
 		cwd: options?.cwd,
 		env: options?.env ? { ...Deno.env.toObject(), ...options.env } : undefined,
-		stdout: "inherit",
+		stdout: options?.stdout ?? "inherit",
 		stderr: "inherit",
 	});
 
 	const status = await p.output();
-	return { code: status.code, success: status.success };
+	const stdout = options?.stdout === "piped"
+		? new TextDecoder().decode(status.stdout)
+		: undefined;
+	return { code: status.code, stdout, success: status.success };
 }
 
 /** Format a command for display (for dry-run output). */

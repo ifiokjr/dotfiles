@@ -5,10 +5,10 @@ Unified CLI for managing dotfiles — setup, rebuild, reload, doctor, and more.
 After a rebuild, the binary is auto-compiled and installed to `~/.local/bin/dotfiles` with a `dot` symlink alias for quick access.
 
 ```bash
-dotfiles --help          # show all commands
+dot --help          # show all commands
 dot help groups          # detailed help for a subcommand
 dot groups list          # via the shorter alias
-dotfiles reload --force  # force overwrite existing symlinks
+dot reload --force  # force overwrite existing symlinks
 ```
 
 ## Quick Start
@@ -19,7 +19,7 @@ cd cli && deno task run -- --help
 
 # Or compile to a standalone binary (~76MB)
 cd cli && deno task compile:dev
-./dotfiles --help
+./dot --help
 ```
 
 ## Development
@@ -84,6 +84,6 @@ cd cli && deno task check:all                        # typecheck + lint
 - **Phase 2 (current):** Port low-risk command logic natively when it improves readability and testability
 - **Phase 3 (future):** Interactive mode, TUI dashboard, completions
 
-`dotfiles setup` intentionally remains a thin wrapper around the existing setup script. Setup is a system-level bootstrapper that installs Nix, creates symlinks, and applies host configuration, so keeping the battle-tested shell script avoids bloating the CLI with risky duplicate orchestration.
+`dot setup` intentionally remains a thin wrapper around the existing setup script. Setup is a system-level bootstrapper that installs Nix, creates symlinks, and applies host configuration, so keeping the battle-tested shell script avoids bloating the CLI with risky duplicate orchestration.
 
 See `docs/proposals/dotfiles-cli.md` for the full proposal and migration plan.

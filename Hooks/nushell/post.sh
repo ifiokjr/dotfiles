@@ -54,6 +54,20 @@ if [ -x "$NU_PATH" ]; then
 	VENDOR_AUTOLOAD_DIR=$("$NU_PATH" -c '$nu.data-dir | path join "vendor/autoload"')
 	mkdir -p "$VENDOR_AUTOLOAD_DIR"
 
+	# Generate dotfiles CLI completions into Nushell's vendor autoload directory.
+	# Nushell automatically loads files in this directory, so users do not need to
+	# manually edit config.nu after the nushell group is deployed.
+	if command -v dot &>/dev/null; then
+		if dot completion nushell >"$VENDOR_AUTOLOAD_DIR/dot-completions.nu"; then
+			echo -e "${GREEN}✓${NC} Generated dot-completions.nu"
+		else
+			rm -f "$VENDOR_AUTOLOAD_DIR/dot-completions.nu"
+			echo -e "${YELLOW}!${NC} dot completion nushell failed, skipping dot-completions.nu"
+		fi
+	else
+		echo -e "${YELLOW}!${NC} dot not found, skipping dot-completions.nu"
+	fi
+
 	# Generate devenv auto-activation hook so config.nu can source it on startup.
 	if command -v devenv &>/dev/null; then
 		DEVENV_HOOK_FILE="$HOME/.cache/devenv/hook.nu"

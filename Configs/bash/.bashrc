@@ -48,6 +48,12 @@ if command -v atuin &>/dev/null; then
 	eval "$(atuin init bash)"
 fi
 
+DOTFILES_BASH_COMPLETION="$HOME/.local/share/bash-completion/completions/dot"
+if [ -f "$DOTFILES_BASH_COMPLETION" ]; then
+	# shellcheck source=/dev/null
+	. "$DOTFILES_BASH_COMPLETION"
+fi
+
 # ---------------------------------------------------------------------------
 # Aliases
 # ---------------------------------------------------------------------------

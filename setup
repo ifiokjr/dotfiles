@@ -229,6 +229,53 @@ parse_args() {
     fi
 }
 
+install_dot_cli() {
+    if ! command_exists deno; then
+        print_warning "deno not found; skipping dot CLI compile"
+        return 0
+    fi
+
+    local cli_dir="$DOTFILES_DIR/cli"
+    local repo_binary="$DOTFILES_DIR/Configs/scripts/.local/bin/dotfiles"
+    local bin_dir="$HOME/.local/bin"
+    local installed_binary="$bin_dir/dotfiles"
+    local installed_alias="$bin_dir/dot"
+    local bash_completion_dir="$HOME/.local/share/bash-completion/completions"
+
+    if [ ! -f "$cli_dir/main.ts" ]; then
+        print_warning "dotfiles CLI source not found; skipping dot CLI compile"
+        return 0
+    fi
+
+    print_header "Installing dot CLI"
+    mkdir -p "$bin_dir"
+    (cd "$cli_dir" && deno compile --allow-all --output "$repo_binary" main.ts)
+    ln -sf "$repo_binary" "$installed_binary"
+    ln -sf "$installed_binary" "$installed_alias"
+    print_success "Installed dot CLI: $installed_alias"
+
+    mkdir -p "$bash_completion_dir"
+    if "$installed_alias" completion bash > "$bash_completion_dir/dot"; then
+        ln -sf "$bash_completion_dir/dot" "$bash_completion_dir/dotfiles"
+        print_success "Updated bash completions"
+    else
+        print_warning "Could not generate bash completions"
+    fi
+
+    if command_exists nu; then
+        local vendor_autoload_dir
+        # shellcheck disable=SC2016
+        # Keep Nushell's $nu variable literal; Nushell expands it inside `nu -c`.
+        vendor_autoload_dir=$(nu -c '$nu.data-dir | path join "vendor/autoload"')
+        mkdir -p "$vendor_autoload_dir"
+        if "$installed_alias" completion nushell > "$vendor_autoload_dir/dot-completions.nu"; then
+            print_success "Updated Nushell completions"
+        else
+            print_warning "Could not generate Nushell completions"
+        fi
+    fi
+}
+
 # Detect platform
 detect_platform() {
     case "$(uname -s)" in
@@ -1055,6 +1102,8 @@ main() {
         print_error "Setup completed with errors"
         exit "$deploy_exit"
     fi
+
+    install_dot_cli
 
     echo ""
     echo -e "${GREEN}${BOLD}╔════════════════════════════════════════╗${NC}"

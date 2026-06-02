@@ -7,6 +7,7 @@
 
 import { Command } from "@cliffy/command";
 import { resolveDotfilesDir, runCommand } from "../lib/config.ts";
+import { installDotfilesCli } from "./self.ts";
 
 export const setupCommand = new Command()
 	.description(
@@ -62,5 +63,9 @@ export const setupCommand = new Command()
 
 		if (!success) {
 			Deno.exit(code);
+		}
+
+		if (!opts.dryRun && !opts.doctor) {
+			await installDotfilesCli({ dotfilesDir });
 		}
 	});

@@ -6,6 +6,7 @@
 
 import { Command } from "@cliffy/command";
 import { HelpCommand } from "@cliffy/command/help";
+import { completionCommand } from "./commands/completion.ts";
 import { doctorCommand } from "./commands/doctor.ts";
 import { envCommand } from "./commands/env.ts";
 import { groupsCommand } from "./commands/groups.ts";
@@ -15,6 +16,7 @@ import { pnpmCommand } from "./commands/pnpm.ts";
 import { rebuildCommand } from "./commands/rebuild.ts";
 import { reloadCommand } from "./commands/reload.ts";
 import { resetCommand } from "./commands/reset.ts";
+import { selfCommand } from "./commands/self.ts";
 import { setupCommand } from "./commands/setup.ts";
 import { uninstallCommand } from "./commands/uninstall.ts";
 import { versionCommand } from "./commands/version.ts";
@@ -39,6 +41,8 @@ await new Command()
 	.command("pnpm", pnpmCommand)
 	.command("uninstall", uninstallCommand)
 	.command("reset", resetCommand)
+	.command("self", selfCommand)
+	.command("completion", completionCommand)
 	.command("version", versionCommand)
 	.command("help", new HelpCommand().global())
 	.parse(Deno.args);
