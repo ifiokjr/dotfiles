@@ -164,9 +164,11 @@ in
       extra.cargo-interactive-update
       extra.deno
       extra.ironclaw
+      extra.melos
       extra.monochange
       extra.pnpm-11
       extra.op # 1password
+      extra.serverpod_cli
 
       # Fonts
       fontforge
