@@ -9,6 +9,7 @@
 		"compile": "deno compile --allow-all --output ../Configs/scripts/.local/bin/dotfiles main.ts",
 		"compile:dev": "deno compile --allow-all --output dotfiles main.ts",
 		"test": "deno test --allow-all",
+		"coverage": "rm -rf coverage && DOTFILES_CLI_COVERAGE_DIR=coverage deno test --allow-all --coverage=coverage && deno coverage --ignore=commands --lcov --output=coverage/lcov.info coverage && deno run --allow-read --allow-env test/coverage_threshold.ts coverage/lcov.info 90",
 		"lint": "deno run -A npm:oxlint@1.67.0 . && deno lint",
 		"lint:oxlint": "deno run -A npm:oxlint@1.67.0 .",
 		"lint:deno": "deno lint",
@@ -26,7 +27,8 @@
 		"@std/fs": "jsr:@std/fs@^1.0.0",
 		"@std/path": "jsr:@std/path@^1.0.0",
 		"@std/toml": "jsr:@std/toml@^1.0.0",
-		"@std/fmt": "jsr:@std/fmt@^1.0.0"
+		"@std/fmt": "jsr:@std/fmt@^1.0.0",
+		"@std/testing": "jsr:@std/testing@^1.0.0"
 	},
 	"lint": {
 		"rules": {

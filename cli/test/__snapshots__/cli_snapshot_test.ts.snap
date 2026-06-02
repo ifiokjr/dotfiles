@@ -1,0 +1,261 @@
+export const snapshot = {};
+
+snapshot[`top-level help output is stable 1`] = `
+"
+Usage:   dotfiles
+Version: 0.1.0   
+
+Description:
+
+  Manage your dotfiles — setup, rebuild, reload, and more.           
+                                                                     
+  Run 'dotfiles help <command>' for detailed usage of any subcommand.
+
+Options:
+
+  -h, --help     - Show this help.                            
+  -V, --version  - Show the version number for this program.  
+
+Commands:
+
+  setup                  - Initial dotfiles setup — install Nix, clone repo, deploy groups         
+  rebuild                - Rebuild system configuration (nix-darwin switch or home-manager switch) 
+  reload                 - Reload tuckr configuration groups (non-destructive, re-applies symlinks)
+  doctor                 - Run preflight checks without changing the machine                       
+  groups                 - Manage configuration groups — list, inspect, deploy, and undeploy       
+  machine                - Manage machine.nix — inspect and modify system configuration            
+  nix                    - Manage nix configuration directly                                       
+  env                    - Manage environment configuration and secrets                            
+  pnpm                   - Manage pnpm global packages managed by dotfiles                         
+  uninstall              - Completely remove dotfiles installation (nix, symlinks, state)          
+  reset                  - Uninstall and re-setup dotfiles from scratch                            
+  self                   - Manage the dotfiles CLI binary                                          
+  completion  <shell>    - Generate shell completion providers                                     
+  version                - Print CLI version and environment info                                  
+  help        [command]  - Show this help or the help of a sub-command.                            
+
+"
+`;
+
+snapshot[`completion output is stable > bash 1`] = `
+'# bash completion for dotfiles / dot
+# Install with:
+#   mkdir -p ~/.local/share/bash-completion/completions
+#   dot completion bash > ~/.local/share/bash-completion/completions/dot
+#   dot completion bash > ~/.local/share/bash-completion/completions/dotfiles
+
+_dotfiles_completion() {
+  local cur command
+  COMPREPLY=()
+  cur="\${COMP_WORDS[COMP_CWORD]}"
+  command="\${COMP_WORDS[1]}"
+
+  if [[ COMP_CWORD -eq 1 ]]; then
+    COMPREPLY=( \$(compgen -W "setup rebuild reload doctor groups machine nix env pnpm uninstall reset self version help completion --help --version" -- "\$cur") )
+    return 0
+  fi
+
+  case "\$command" in
+    completion)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "bash nushell --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+    env)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "doctor secrets template --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+    groups)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "list info deploy undeploy --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+    machine)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "config set-lite set-desktop set-always-on add-preset remove-preset regenerate --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+    nix)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "doctor flake machine --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+    pnpm)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "sync update list status --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+    self)
+      if [[ COMP_CWORD -eq 2 && "\$cur" != --* ]]; then
+        COMPREPLY=( \$(compgen -W "install --help" -- "\$cur") )
+        return 0
+      fi
+      ;;
+  esac
+
+  case "\$command" in
+    completion) COMPREPLY=( \$(compgen -W "--help" -- "\$cur") ) ; return 0 ;;
+    doctor) COMPREPLY=( \$(compgen -W "--help --verify" -- "\$cur") ) ; return 0 ;;
+    rebuild) COMPREPLY=( \$(compgen -W "--help --groups --skip-check --update --brew --lite --no-lite --desktop --no-desktop --latest --force --rebuild-os --always-on --no-always-on --add-preset --remove-preset --dry-run" -- "\$cur") ) ; return 0 ;;
+    reload) COMPREPLY=( \$(compgen -W "--help --force --no-hooks --dry-run" -- "\$cur") ) ; return 0 ;;
+    self) COMPREPLY=( \$(compgen -W "--help" -- "\$cur") ) ; return 0 ;;
+    setup) COMPREPLY=( \$(compgen -W "--help" -- "\$cur") ) ; return 0 ;;
+  esac
+}
+
+complete -F _dotfiles_completion dot
+complete -F _dotfiles_completion dotfiles
+
+'
+`;
+
+snapshot[`completion output is stable > nushell 1`] = `
+'# Nushell completions for dotfiles / dot
+# Install with:
+#   mkdir ~/.config/nushell/completions
+#   dot completion nushell | save -f ~/.config/nushell/completions/dot-completions.nu
+#   use ~/.config/nushell/completions/dot-completions.nu *
+
+export def "nu-complete dot commands" [] {
+  [setup rebuild reload doctor groups machine nix env pnpm uninstall reset self version help completion]
+}
+
+export def "nu-complete dot completion shells" [] {
+  [bash nushell]
+}
+
+export extern "dot" [
+  command?: string@"nu-complete dot commands"
+  ...args: string
+]
+
+export extern "dotfiles" [
+  command?: string@"nu-complete dot commands"
+  ...args: string
+]
+
+export extern "dot completion" [
+  shell?: string@"nu-complete dot completion shells"
+]
+
+export extern "dot rebuild" [
+  --groups: string
+  --skip-check
+  --update
+  --brew
+  --lite
+  --no-lite
+  --desktop
+  --no-desktop
+  --latest
+  --force
+  --rebuild-os
+  --always-on
+  --no-always-on
+  --add-preset: string
+  --remove-preset: string
+  --dry-run
+]
+
+export extern "dot reload" [
+  --force
+  --no-hooks
+  --dry-run
+]
+
+export extern "dot doctor" [
+  --verify
+]
+
+export extern "dot self install" [
+  --bin-dir: string
+]
+
+'
+`;
+
+snapshot[`version output is stable 1`] = `
+"dotfiles v0.1.0
+Platform: <platform>
+Repo:     <repo>
+Git:      <git>
+Nix:      <nix>
+"
+`;
+
+snapshot[`safe command outputs are stable > groups list 1`] = `
+"
+==> Available configuration groups
+  agents         AI agent configurations and shared skills/extensions. Manages ~/.config/agents/, ~/.config/opencode/, and ~/.agents/ (skills, extensions).
+  atuin          Atuin shell history manager — session-first up-arrow, global Ctrl-R.
+  bash           Bash shell configuration and interactive shell defaults.
+  codex          codex
+  direnv         direnv configuration for per-directory environment management.
+  dprint         Shared dprint formatter configuration for repository tooling.
+  ghostty        Ghostty terminal emulator configuration.
+  git            Portable Git includes and shared config files managed under ~/.config/git/.
+  helix          Helix editor configuration, including optional custom Steel tooling.
+  ironclaw       Ironclaw agent runtime configuration and environment.
+  kdl            KDL formatter configuration used by editor and tooling workflows.
+  lazygit        Lazygit terminal UI configuration for Git workflows.
+  nix            Nix flake, nix-darwin, and home-manager configuration.
+  nushell        Nushell configuration and generated vendor autoload integrations.
+  pnpm           Managed global pnpm manifest and lockfile sync.
+  scripts        Bootstrap and maintenance scripts used throughout setup and CI.
+  secretspec     Declarative secrets via SecretSpec + 1Password. Replaces ~/.env.dotfiles.
+  shell          Shared shell environment configuration and common aliases.
+  yazi           Yazi terminal file manager configuration.
+  zellij         Zellij terminal multiplexer configuration and layouts.
+  zsh            Zsh compatibility configuration for POSIX shells and external tools.
+"
+`;
+
+snapshot[`safe command outputs are stable > groups info 1`] = `
+"
+==> Group: bash
+  Description: Bash shell configuration and interactive shell defaults.
+  Platforms:   all
+  Phase:       normal
+  Presets:     core, dev, workstation, ci
+  Depends on:  none
+"
+`;
+
+snapshot[`safe command outputs are stable > setup dry run 1`] = `
+"Running: <repo>/setup --preset ci --skip-nix --dry-run --no-confirm
+
+╔════════════════════════════════════════╗
+║                                        ║
+║      Dotfiles Setup Script             ║
+║                                        ║
+╚════════════════════════════════════════╝
+
+→ Platform detected: <platform>
+→ Running from within dotfiles repository: <repo>
+→ Using preset 'ci': Minimal non-interactive setup intended for CI and containers.
+→ Lite mode enabled: GUI-heavy applications will be skipped
+==> Setup plan
+  • Platform: <platform>
+  • Preset: ci
+  • Reuse repository: <repo>
+  • Nix: Skip Nix installation (--skip-nix)
+  • Temporary bootstrap tools: <tools>
+  • GUI applications: CLI-focused / GUI-heavy applications skipped
+  • Expected duration: 5–10 minutes
+  • Deploy groups: scripts, nix, bash, direnv, dprint, git, kdl, shell, zellij, zsh, nushell
+  • Hooks that will run: nix, bash, git, nushell
+
+"
+`;
+
+snapshot[`invalid rebuild flag combinations fail 1`] = `
+"✗ --force requires --latest
+"
+`;
