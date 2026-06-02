@@ -75,9 +75,9 @@ jobs:
         run: |
           cd cli && deno task lint
 
-      - name: 🧪 test CLI (deno test)
+      - name: 🧪 test CLI with coverage threshold
         run: |
-          cd cli && deno task test
+          cd cli && deno task coverage
 
       - name: 🏗️ compile CLI binary (deno compile)
         run: |
