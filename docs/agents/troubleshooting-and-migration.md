@@ -10,7 +10,7 @@ tuckr add --force <group>
 chmod +x Hooks/*/post.sh
 
 # Rebuild Nix config
-rebuild
+dot rebuild
 # or
 tuckr set nix
 ```

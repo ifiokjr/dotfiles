@@ -42,12 +42,12 @@ If you're new to nix-darwin, here's what you need to know:
    nix run nix-darwin -- switch --flake ~/.config/nix#default
    ```
 
-5. **After first installation**, use the `rebuild` command:
+5. **After first installation**, use the `dot rebuild` command:
    ```bash
-   rebuild
+   dot rebuild
    ```
 
-   The `rebuild` command will auto-generate machine.nix if it doesn't exist.
+   The `dot rebuild` command will auto-generate machine.nix if it doesn't exist.
 
    This will apply both your system configuration (darwin) and user configuration (home-manager) in one command!
 
@@ -55,7 +55,7 @@ If you're new to nix-darwin, here's what you need to know:
 
 ```bash
 # Apply configuration changes (recommended)
-rebuild
+dot rebuild
 
 # Or use darwin-rebuild directly
 sudo darwin-rebuild switch --flake ~/.config/nix#default
@@ -75,7 +75,7 @@ sudo darwin-rebuild --rollback
 
 ### Rebuild Script
 
-The `rebuild` command is a convenient wrapper that:
+The `dot rebuild` command is a convenient wrapper that:
 
 - Auto-generates `machine.nix` if it doesn't exist (using `generate-machine-config`)
 - Supports `--lite` / `--no-lite` to persist GUI-lite/full defaults in `machine.nix`
@@ -95,7 +95,7 @@ The `generate-machine-config` command auto-detects and creates `machine.nix`:
 - Use `--force` to overwrite existing configuration
 - Use `--output FILE` to write to a different location
 
-**Note**: With the integrated home-manager setup, you only need to run `rebuild` - it will automatically apply both system and home-manager configurations together.
+**Note**: With the integrated home-manager setup, you only need to run `dot rebuild` - it will automatically apply both system and home-manager configurations together.
 
 ## Features
 
@@ -107,7 +107,7 @@ The `generate-machine-config` command auto-detects and creates `machine.nix`:
 - **Lite Mode**: Set `lite = true` in `machine.nix` (or run `./setup --lite`) to skip GUI-heavy applications
 - **GUI Apps via nix-casks** (macOS only): Installs Homebrew casks as pure Nix derivations (no Homebrew process needed)
 - **System Architecture Support**: Works with aarch64-darwin (Apple Silicon), x86_64-darwin (Intel), x86_64-linux, and aarch64-linux
-- **Convenient Rebuild Script**: Simple `rebuild` command handles all the complexity
+- **Convenient Rebuild Script**: Simple `dot rebuild` command handles all the complexity
 
 ## Quick Start on a New System
 
@@ -144,7 +144,7 @@ nix run nix-darwin -- switch --flake ~/.config/nix
 5. Use the rebuild command:
 
 ```bash
-rebuild
+dot rebuild
 ```
 
 ### Linux Setup
@@ -205,7 +205,7 @@ nix flake update
 
 ```bash
 # Recommended: use the rebuild command
-rebuild
+dot rebuild
 
 # Or use darwin-rebuild directly
 sudo darwin-rebuild switch --flake ~/.config/nix#default
@@ -281,7 +281,7 @@ To add a new GUI app:
 
 3. **If in nixpkgs** — check `nix search nixpkgs <name>`. If available as a nixpkgs package, add it to `home.nix` instead (works cross-platform).
 
-Run `rebuild --update` to refresh flake inputs (including `ifiokjr-nixpkgs`) and update `flake.lock` before rebuilding.
+Run `dot rebuild --update` to refresh flake inputs (including `ifiokjr-nixpkgs`) and update `flake.lock` before rebuilding.
 
 ### Environment Variables
 
@@ -311,7 +311,7 @@ nix flake check ~/.config/nix
 nix flake show ~/.config/nix
 
 # Rebuild system configuration (includes home-manager)
-rebuild
+dot rebuild
 
 # Or use darwin-rebuild directly
 sudo darwin-rebuild switch --flake ~/.config/nix#default
@@ -382,7 +382,7 @@ If you're migrating from a setup that used `--impure` or hardcoded usernames:
 1. Pull the latest changes to this configuration
 2. Create `machine.nix` from the example template
 3. Edit `machine.nix` with your username and system
-4. Run `rebuild` to apply the configuration
+4. Run `dot rebuild` to apply the configuration
 5. Your existing packages and settings will be preserved
 
 ## References

@@ -7,14 +7,14 @@
 - ❌ `--impure` flag requirement (pure flake evaluation now)
 - ❌ yazelix home-manager integration (removed due to issues)
 - ❌ Username-specific flake outputs (e.g., `darwinConfigurations.ifiokjr`)
-- ❌ `rebuild` alias (now a proper script in ~/.local/bin)
+- ❌ `dot rebuild` alias (now a proper script in ~/.local/bin)
 
 ### Added
 
 - ✅ `machine.nix` - Machine-specific configuration file (gitignored)
 - ✅ `machine.nix.example` - Template for new machines
 - ✅ `generate-machine-config` - Auto-generates machine.nix
-- ✅ `rebuild` - Smart rebuild script with auto-configuration
+- ✅ `dot rebuild` - Smart rebuild script with auto-configuration
 - ✅ Pure flake evaluation (no --impure needed)
 
 ## New Workflow
@@ -35,24 +35,24 @@
 
 3. **Rebuild**:
    ```bash
-   rebuild
+   dot rebuild
    ```
 
-   Note: `rebuild` will auto-generate machine.nix if it doesn't exist!
+   Note: `dot rebuild` will auto-generate machine.nix if it doesn't exist!
 
 ### Regular Updates
 
 Just run:
 
 ```bash
-rebuild
+dot rebuild
 ```
 
 No flags, no username, no --impure. It just works!
 
 ## Commands Available
 
-### `rebuild`
+### `dot rebuild`
 
 - Auto-generates `machine.nix` if missing
 - Shows current configuration before rebuilding
@@ -60,9 +60,9 @@ No flags, no username, no --impure. It just works!
 - Increases file descriptor limits automatically
 
 ```bash
-rebuild                # Rebuild system
-rebuild --skip-check   # Skip flake check
-rebuild --help         # Show help
+dot rebuild            # Rebuild system
+dot rebuild --skip-check   # Skip flake check
+dot rebuild --help         # Show help
 ```
 
 ### `generate-machine-config`
@@ -130,7 +130,7 @@ The flake reads `machine.nix` from `~/.config/nix/machine.nix` (the deployed loc
 
 4. **Apply changes**:
    ```bash
-   rebuild
+   dot rebuild
    ```
 
 ## Troubleshooting
@@ -150,11 +150,11 @@ cd ~/.config/nix && nix flake lock
 
 ### "Configuration 'bring-the-heat-yo' not found"
 
-This is your old system configuration. The new flake uses `default` instead. Just run `rebuild` - it will switch to the new configuration.
+This is your old system configuration. The new flake uses `default` instead. Just run `dot rebuild` - it will switch to the new configuration.
 
 ### "darwinConfigurations.USERNAME.system not found"
 
-Darwin-rebuild auto-appends your username when no config is specified. The `rebuild` script now explicitly uses `#default`:
+Darwin-rebuild auto-appends your username when no config is specified. The `dot rebuild` script now explicitly uses `#default`:
 
 ```bash
 sudo darwin-rebuild switch --flake ~/.config/nix#default
@@ -165,5 +165,5 @@ sudo darwin-rebuild switch --flake ~/.config/nix#default
 1. **No --impure flag** - Pure evaluation is faster and more reliable
 2. **No hardcoded usernames** - Works on any machine after running generate-machine-config
 3. **Gitignored machine.nix** - Each machine has its own config without conflicts
-4. **Simpler workflow** - Just run `rebuild`
+4. **Simpler workflow** - Just run `dot rebuild`
 5. **Better error messages** - Clear instructions when something goes wrong

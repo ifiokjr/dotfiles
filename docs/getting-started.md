@@ -176,7 +176,7 @@ Also:
 
 - open a new terminal window
 - confirm your expected shell/editor configuration is active
-- run `rebuild` later if you want to re-apply Nix-managed changes after editing config
+- run `dot rebuild` later if you want to re-apply Nix-managed changes after editing config
 
 ## 5. Common Failure Cases And Recovery
 
@@ -215,7 +215,7 @@ Symptoms:
 Try:
 
 - inspect the failing group hook in `Hooks/<group>/post.sh`
-- rerun `tuckr set <group>` or `rebuild` after correcting the underlying issue
+- rerun `tuckr set <group>` or `dot rebuild` after correcting the underlying issue
 - use `./setup --validate-metadata` if you suspect metadata drift
 
 ### Existing files conflict with Tuckr symlinks

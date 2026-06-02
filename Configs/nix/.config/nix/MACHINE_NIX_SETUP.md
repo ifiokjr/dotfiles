@@ -38,7 +38,7 @@ The flake always reads from `$HOME/.config/nix/machine.nix`, regardless of where
 
 ### 2. File Creation
 
-When you run `rebuild` or `generate-machine-config` for the first time:
+When you run `dot rebuild` or `generate-machine-config` for the first time:
 
 1. Script checks if `~/.config/nix/machine.nix` exists
 2. If not, auto-generates with detected values:
@@ -82,7 +82,7 @@ cp ~/.config/nix/machine.nix.example ~/.config/nix/machine.nix
 
 2. **Rebuild**:
    ```bash
-   rebuild
+   dot rebuild
    ```
 
 Changes take effect immediately - no need to sync files.
@@ -103,7 +103,7 @@ Changes take effect immediately - no need to sync files.
 
 4. Rebuild:
    ```bash
-   rebuild
+   dot rebuild
    ```
 
 ## Format
@@ -156,7 +156,7 @@ Edit manually: `nano ~/.config/nix/machine.nix`
 
 1. Verify file exists: `cat ~/.config/nix/machine.nix`
 2. Check flake reads it: `nix eval ~/.config/nix#darwinConfigurations --apply 'x: builtins.attrNames x'`
-3. Rebuild: `rebuild`
+3. Rebuild: `dot rebuild`
 
 ### File is a symlink vs real file
 
@@ -171,7 +171,7 @@ Both work! Tuckr may create a symlink if the file exists in the repo, or it may 
 - Use `--force` to overwrite
 - Use `--output FILE` for custom location
 
-### `rebuild`
+### `dot rebuild`
 
 - Checks for machine.nix, creates if missing
 - Shows current configuration
@@ -187,6 +187,6 @@ Both work! Tuckr may create a symlink if the file exists in the repo, or it may 
 ## Lite Setup
 
 - Run `./setup --lite` to automatically set `lite = true` in `machine.nix`
-- Run `rebuild --lite` to set `lite = true` as the persisted default
-- Run `rebuild --no-lite` to set `lite = false` as the persisted default
+- Run `dot rebuild --lite` to set `lite = true` as the persisted default
+- Run `dot rebuild --no-lite` to set `lite = false` as the persisted default
 - Lite mode keeps CLI tooling and skips GUI-heavy applications in nix configs

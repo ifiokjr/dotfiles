@@ -63,9 +63,9 @@ tuckr rm <group>
 tuckr set <group>
 tuckr status
 
-rebuild
-rebuild --lite
-rebuild --no-lite
+dot rebuild
+dot rebuild --lite
+dot rebuild --no-lite
 ./setup --validate-metadata
 tuckr set nix
 ```

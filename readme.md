@@ -154,7 +154,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
-- `rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `rebuild --update` refreshes `flake.lock` before rebuilding
+- `dot rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `dot rebuild --update` refreshes `flake.lock` before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
 - `pnpm:global:sync` - Install the managed pnpm global project packages
@@ -430,19 +430,19 @@ error: ... could not open '.../.cache/nix/tarball-cache/...': Too many open file
 update
 
 # Rebuild system (automatically increases ulimit before building on macOS)
-rebuild
+dot rebuild
 
 # Persist CLI-focused lite mode (skip GUI-heavy apps)
-rebuild --lite
+dot rebuild --lite
 
 # Persist full mode (include GUI-heavy apps)
-rebuild --no-lite
+dot rebuild --no-lite
 
 # Validate setup metadata files
 ./setup --validate-metadata
 ```
 
-The `rebuild` script increases the file descriptor limit to 10,240 before running on macOS, and successful runs explicitly sync managed global pnpm packages.
+The `dot rebuild` script increases the file descriptor limit to 10,240 before running on macOS, and successful runs explicitly sync managed global pnpm packages.
 
 **Solution (Manual rebuild on macOS):**
 
@@ -498,7 +498,7 @@ Custom package definitions are maintained in the external `ifiokjr/nixpkgs` inpu
 Use:
 
 ```bash
-rebuild --update
+dot rebuild --update
 ```
 
 to update flake inputs (including `ifiokjr-nixpkgs`) and refresh `flake.lock` before rebuilding.
@@ -529,7 +529,7 @@ to install the Tuckr-managed manifests from `~/.config/pnpm-global` into the run
 
 Use `pnpm:global:add <pkg>`, `pnpm:global:remove <pkg>`, `pnpm:global:update [pkg]`, and `pnpm:global:list` to manage this project intentionally, then commit the resulting `Configs/pnpm/.config/pnpm-global/package.json` and `pnpm-lock.yaml` changes.
 
-Successful `rebuild` runs invoke the same managed sync explicitly, so global CLI packages like Pi stay installed after Nix/home-manager updates.
+Successful `dot rebuild` runs invoke the same managed sync explicitly, so global CLI packages like Pi stay installed after Nix/home-manager updates.
 
 ## Testing
 
@@ -545,7 +545,7 @@ A Docker-based integration test validates the full setup + rebuild flow on Linux
 docker build -t dotfiles-test . && docker run --rm dotfiles-test
 ```
 
-This builds an Ubuntu 24.04 container, runs the setup script, triggers `nh home switch` via `rebuild`, and verifies the result.
+This builds an Ubuntu 24.04 container, runs the setup script, triggers `nh home switch` via `dot rebuild`, and verifies the result.
 
 ### Script Tests
 

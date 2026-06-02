@@ -18,7 +18,7 @@ tests/check-docs-consistency.sh
 nix flake check ./Configs/nix/.config/nix --impure --no-build
 
 # If nix packages/config changed
-rebuild
+dot rebuild
 docker build -t dotfiles-test .
 
 # Optional local workflow runs
