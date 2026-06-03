@@ -182,21 +182,40 @@ MACHINE_NIX="$NIX_LINK_DIR/machine.nix"
 SETUP_LITE_MODE="${SETUP_LITE:-false}"
 
 # ---------------------------------------------------------------------------
-# Configure GitHub access token (avoid API rate limits in CI)
+# Configure GitHub access token for nix (avoids API rate limits)
 # ---------------------------------------------------------------------------
-USER_NIX_CONF="$NIX_LINK_DIR/nix.conf"
-if [ -n "${GITHUB_TOKEN:-}" ]; then
+# Primary: NIX_GITHUB_TOKEN from SecretSpec (1Password-backed).
+# Fallback: GITHUB_TOKEN from the environment (e.g. CI, manual export).
+NIX_GH_TOKEN=""
+SECRETSPEC_FILE="$HOME/secretspec.toml"
+if command -v secretspec >/dev/null 2>&1 && [ -f "$SECRETSPEC_FILE" ]; then
+	NIX_GH_TOKEN=$(secretspec get -f "$SECRETSPEC_FILE" NIX_GITHUB_TOKEN 2>/dev/null) || NIX_GH_TOKEN=""
+	if [ -z "$NIX_GH_TOKEN" ]; then
+		echo "Warning: Failed to resolve NIX_GITHUB_TOKEN from SecretSpec"
+		echo "  Reason: secretspec get returned empty (1Password may be unreachable or token not configured)"
+	fi
+fi
+if [ -z "$NIX_GH_TOKEN" ] && [ -n "${GITHUB_TOKEN:-}" ]; then
+	NIX_GH_TOKEN="$GITHUB_TOKEN"
+	echo "Using GITHUB_TOKEN from environment as fallback for nix access-tokens"
+fi
+if [ -n "$NIX_GH_TOKEN" ]; then
+	USER_NIX_CONF="$NIX_LINK_DIR/nix.conf"
 	mkdir -p "$NIX_LINK_DIR"
 	if [ ! -f "$USER_NIX_CONF" ] || ! grep -q "access-tokens" "$USER_NIX_CONF"; then
-		echo "access-tokens = github.com=$GITHUB_TOKEN" >>"$USER_NIX_CONF"
+		echo "access-tokens = github.com=$NIX_GH_TOKEN" >>"$USER_NIX_CONF"
 		echo "Configured GitHub access token in user nix.conf"
 	fi
 	# Also configure in system nix.conf so sudo operations (nh darwin switch) can
 	# access the token. sudo changes the user context, so the user nix.conf isn't read.
 	if [ -d /etc/nix ] && ! sudo grep -q "access-tokens" /etc/nix/nix.conf 2>/dev/null; then
-		echo "access-tokens = github.com=$GITHUB_TOKEN" | sudo tee -a /etc/nix/nix.conf >/dev/null
+		echo "access-tokens = github.com=$NIX_GH_TOKEN" | sudo tee -a /etc/nix/nix.conf >/dev/null
 		echo "Configured GitHub access token in system nix.conf"
 	fi
+else
+	echo "Warning: No GitHub token available for nix access-tokens"
+	echo "  Set NIX_GITHUB_TOKEN in secretspec.toml or export GITHUB_TOKEN to avoid API rate limits."
+	echo "  See: https://devenv.sh/getting-started/#2-install-devenv"
 fi
 
 # ---------------------------------------------------------------------------
