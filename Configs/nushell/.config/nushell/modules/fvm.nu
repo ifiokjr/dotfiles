@@ -26,24 +26,26 @@ def fvm-allow-file [] {
 export def --env fvm-allow [
     dir?: path  # Directory to allow (default: current directory)
 ] {
-    let target = ($dir | default $env.PWD | path expand)
+    let target = $dir | default $env.PWD | path expand
     if not (($target | path join '.fvmrc') | path exists) {
         print $"(ansi yellow)No .fvmrc found in ($target)(ansi reset)"
         return
     }
     let file = (fvm-allow-file)
-    let existing = if ($file | path exists) { open $file | lines } else { [] }
+    let existing = if ($file | path exists) {
+        open $file | lines
+    } else { [] }
     if ($existing | any {|d| $d == $target }) {
         print $"(ansi green)Already allowed:(ansi reset) ($target)"
     } else {
-        let updated = ($existing | append $target)
+        let updated = $existing | append $target
         mkdir ($file | path dirname)
         $updated | str join "\n" | save --force $file
         print $"(ansi green)Allowed FVM auto-load for:(ansi reset) ($target)"
     }
     # Activate immediately — no need to cd out and back in
     # Per-project fvm uses `.fvm/flutter_sdk/bin`; global uses `~/fvm/default/bin`
-    let fvm_bin = ($target | path join '.fvm/flutter_sdk/bin')
+    let fvm_bin = $target | path join '.fvm/flutter_sdk/bin'
     $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/flutter_sdk/bin') })
     if ($fvm_bin | path exists) {
         $env.PATH = ($env.PATH | prepend $fvm_bin)
@@ -58,14 +60,16 @@ export def --env fvm-allow [
 export def --env fvm-deny [
     dir?: path  # Directory to deny (default: current directory)
 ] {
-    let target = ($dir | default $env.PWD | path expand)
+    let target = $dir | default $env.PWD | path expand
     let file = (fvm-allow-file)
-    let existing = if ($file | path exists) { open $file | lines } else { [] }
+    let existing = if ($file | path exists) {
+        open $file | lines
+    } else { [] }
     if not ($existing | any {|d| $d == $target }) {
         print $"(ansi yellow)Not in allow list:(ansi reset) ($target)"
         return
     }
-    let updated = ($existing | where {|d| $d != $target })
+    let updated = $existing | where {|d| $d != $target }
     $updated | str join "\n" | save --force $file
     # Remove matching fvm bin from PATH
     $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/flutter_sdk/bin') })
@@ -76,11 +80,11 @@ export def --env fvm-deny [
 export def fvm-allowed [] {
     let file = (fvm-allow-file)
     if not ($file | path exists) { return }
-    let dirs = (open $file | lines | where {|d| $d | is-not-empty })
+    let dirs = open $file | lines | where {|d| $d | is-not-empty }
     if ($dirs | is-empty) { return }
     print $"(ansi cyan)FVM allowed directories:(ansi reset)"
     $dirs | each {|d|
-        let has_rc = (($d | path join '.fvmrc') | path exists)
+        let has_rc = ($d | path join '.fvmrc') | path exists
         let marker = if $has_rc { "(ansi green)✓(ansi reset)" } else { "(ansi yellow)✗ no .fvmrc(ansi reset)" }
         print $"  ($marker) ($d)"
     }
@@ -90,7 +94,7 @@ export def fvm-allowed [] {
 def fvm-is-allowed [dir: path] {
     let file = (fvm-allow-file)
     if not ($file | path exists) { return false }
-    let dirs = (open $file | lines | where {|d| $d | is-not-empty })
+    let dirs = open $file | lines | where {|d| $d | is-not-empty }
     $dirs | any {|d| $d == $dir }
 }
 
@@ -122,7 +126,7 @@ export def --env fvm-auto-activate [] {
         return
     }
 
-    let fvm_bin = ($dir | path join '.fvm/flutter_sdk/bin')
+    let fvm_bin = $dir | path join '.fvm/flutter_sdk/bin'
     if not ($fvm_bin | path exists) {
         let debug = $env | get -o DOTFILES_DEBUG | is-not-empty
         if $debug {
@@ -132,7 +136,7 @@ export def --env fvm-auto-activate [] {
     }
 
     # Per-project fvm uses `.fvm/flutter_sdk/bin`; global uses `~/fvm/default/bin`
-    let fvm_bin = ($dir | path join '.fvm/flutter_sdk/bin')
+    let fvm_bin = $dir | path join '.fvm/flutter_sdk/bin'
     if not ($fvm_bin | path exists) {
         let debug = $env | get -o DOTFILES_DEBUG | is-not-empty
         if $debug {
