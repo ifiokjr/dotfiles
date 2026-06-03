@@ -11,10 +11,10 @@
 #
 # The PWD hook runs on every directory change:
 #   1. If fvm is not installed → skip
-#   2. If `.fvmrc` is absent    → skip
-#   3. If directory is not allowed → skip (with hint)
-#   4. Remove any previous `.fvm/default/bin` from PATH
-#   5. Prepend the current project's `.fvm/default/bin` to PATH
+#   2. If `.fvmrc` is absent    → clean up any stale entries, skip
+#   3. If directory is not allowed → skip (with hint to run `fvm-allow`)
+#   4. Remove any previous `.fvm/flutter_sdk/bin` from PATH
+#   5. Prepend the current project's `.fvm/flutter_sdk/bin` to PATH
 
 # Path to the allow-list file. One absolute directory path per line.
 def fvm-allow-file [] {
@@ -22,28 +22,35 @@ def fvm-allow-file [] {
 }
 
 # Add the current directory (or a given path) to the FVM allow list.
+# Immediately activates the project's fvm bin on PATH.
 export def --env fvm-allow [
     dir?: path  # Directory to allow (default: current directory)
 ] {
-    let target = $dir | default $env.PWD | path expand
+    let target = ($dir | default $env.PWD | path expand)
     if not (($target | path join '.fvmrc') | path exists) {
         print $"(ansi yellow)No .fvmrc found in ($target)(ansi reset)"
         return
     }
     let file = (fvm-allow-file)
-    let existing = if ($file | path exists) {
-        open $file | lines
-    } else { [] }
+    let existing = if ($file | path exists) { open $file | lines } else { [] }
     if ($existing | any {|d| $d == $target }) {
         print $"(ansi green)Already allowed:(ansi reset) ($target)"
-        return
+    } else {
+        let updated = ($existing | append $target)
+        mkdir ($file | path dirname)
+        $updated | str join "\n" | save --force $file
+        print $"(ansi green)Allowed FVM auto-load for:(ansi reset) ($target)"
     }
-    let updated = $existing | append $target
-    mkdir ($file | path dirname)
-    $updated | str join "\n" | save --force $file
-    print $"(ansi green)Allowed FVM auto-load for:(ansi reset) ($target)"
-    # Activate immediately
-    fvm-auto-activate
+    # Activate immediately — no need to cd out and back in
+    # Per-project fvm uses `.fvm/flutter_sdk/bin`; global uses `~/fvm/default/bin`
+    let fvm_bin = ($target | path join '.fvm/flutter_sdk/bin')
+    $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/flutter_sdk/bin') })
+    if ($fvm_bin | path exists) {
+        $env.PATH = ($env.PATH | prepend $fvm_bin)
+        print $"(ansi green)Activated:(ansi reset) ($fvm_bin) is on PATH"
+    } else {
+        print $"(ansi yellow)fvm bin not found at ($fvm_bin) — run `fvm use` first(ansi reset)"
+    }
 }
 
 # Remove the current directory (or a given path) from the FVM allow list
@@ -51,20 +58,17 @@ export def --env fvm-allow [
 export def --env fvm-deny [
     dir?: path  # Directory to deny (default: current directory)
 ] {
-    let target = $dir | default $env.PWD | path expand
+    let target = ($dir | default $env.PWD | path expand)
     let file = (fvm-allow-file)
-    let existing = if ($file | path exists) {
-        open $file | lines
-    } else { [] }
+    let existing = if ($file | path exists) { open $file | lines } else { [] }
     if not ($existing | any {|d| $d == $target }) {
         print $"(ansi yellow)Not in allow list:(ansi reset) ($target)"
         return
     }
-    let updated = $existing | where {|d| $d != $target }
+    let updated = ($existing | where {|d| $d != $target })
     $updated | str join "\n" | save --force $file
-    # Remove any matching fvm bin from PATH
-    let prefix = $target | path join '.fvm/default/bin'
-    $env.PATH = ($env.PATH | where {|p| $p != $prefix })
+    # Remove matching fvm bin from PATH
+    $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/flutter_sdk/bin') })
     print $"(ansi red)Denied FVM auto-load for:(ansi reset) ($target)"
 }
 
@@ -72,11 +76,11 @@ export def --env fvm-deny [
 export def fvm-allowed [] {
     let file = (fvm-allow-file)
     if not ($file | path exists) { return }
-    let dirs = open $file | lines | where {|d| $d | is-not-empty }
+    let dirs = (open $file | lines | where {|d| $d | is-not-empty })
     if ($dirs | is-empty) { return }
     print $"(ansi cyan)FVM allowed directories:(ansi reset)"
     $dirs | each {|d|
-        let has_rc = ($d | path join '.fvmrc') | path exists
+        let has_rc = (($d | path join '.fvmrc') | path exists)
         let marker = if $has_rc { "(ansi green)✓(ansi reset)" } else { "(ansi yellow)✗ no .fvmrc(ansi reset)" }
         print $"  ($marker) ($d)"
     }
@@ -86,46 +90,58 @@ export def fvm-allowed [] {
 def fvm-is-allowed [dir: path] {
     let file = (fvm-allow-file)
     if not ($file | path exists) { return false }
-    let dirs = open $file | lines | where {|d| $d | is-not-empty }
+    let dirs = (open $file | lines | where {|d| $d | is-not-empty })
     $dirs | any {|d| $d == $dir }
 }
 
 # Internal: the auto-activate function called from the PWD hook.
-# Removes any existing `.fvm/default/bin` from PATH, then prepends
+# Removes any existing `.fvm/flutter_sdk/bin` from PATH, then prepends
 # the current project's if `.fvmrc` exists and the directory is allowed.
+# Prints a hint when `.fvmrc` is found but the directory isn't allowed yet.
 export def --env fvm-auto-activate [] {
     # Skip entirely if fvm is not installed
     if (which fvm | is-empty) { return }
-    # Skip if no .fvmrc in current directory
+
     if not ('.fvmrc' | path exists) {
-        # Still clean up stale entries from a previous project
-        let stale = (
-            $env.PATH
-            | where {|p| ($p | str contains '.fvm/default/bin') and ($p | str starts-with ($env.PWD | path expand)) }
-        )
-        # Actually just remove any .fvm/default/bin entries since we're leaving a project
-        $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/default/bin') })
+        # Leaving a project directory — clean up any stale fvm bin entries
+        $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/flutter_sdk/bin') })
         return
     }
+
     let dir = $env.PWD | path expand
+
     # Security gate: must be explicitly allowed
     if not (fvm-is-allowed $dir) {
-        let debug = $env | get -o DOTFILES_DEBUG | is-not-empty
-        if $debug {
-            print $"(ansi yellow)fvm: .fvmrc found but directory not allowed. Run `fvm-allow` to trust it.(ansi reset)"
+        # Only show the hint once per directory per session by tracking in an env var
+        let hint_var = "FVM_ALLOW_HINT_SHOWN"
+        let shown_dirs = $env | get -o $hint_var | default []
+        if not ($shown_dirs | any {|d| $d == $dir }) {
+            print $"(ansi yellow)fvm: .fvmrc found — run (ansi yellow_bold)fvm-allow(ansi yellow) to trust this project(ansi reset)"
+            $env.FVM_ALLOW_HINT_SHOWN = ($shown_dirs | append $dir)
         }
         return
     }
-    let fvm_bin = $dir | path join '.fvm/default/bin'
+
+    let fvm_bin = ($dir | path join '.fvm/flutter_sdk/bin')
     if not ($fvm_bin | path exists) {
         let debug = $env | get -o DOTFILES_DEBUG | is-not-empty
         if $debug {
-            print $"(ansi yellow)fvm: .fvm/bin not found — run `fvm use` in the project first(ansi reset)"
+            print $"(ansi yellow)fvm: .fvm/flutter_sdk/bin not found — run `fvm use` in the project first(ansi reset)"
         }
         return
     }
-    # Remove any previous .fvm/default/bin entries to avoid PATH pollution
-    $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/default/bin') })
+
+    # Per-project fvm uses `.fvm/flutter_sdk/bin`; global uses `~/fvm/default/bin`
+    let fvm_bin = ($dir | path join '.fvm/flutter_sdk/bin')
+    if not ($fvm_bin | path exists) {
+        let debug = $env | get -o DOTFILES_DEBUG | is-not-empty
+        if $debug {
+            print $"(ansi yellow)fvm: .fvm/flutter_sdk/bin not found — run `fvm use` in the project first(ansi reset)"
+        }
+        return
+    }
+    # Remove any previous .fvm/flutter_sdk/bin entries to avoid PATH pollution
+    $env.PATH = ($env.PATH | where {|p| not ($p | str contains '/.fvm/flutter_sdk/bin') })
     # Prepend the project's fvm bin
     $env.PATH = ($env.PATH | prepend $fvm_bin)
 }
