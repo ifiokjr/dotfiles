@@ -198,6 +198,19 @@
     };
   };
 
+  # Raise system-wide file descriptor limits from the macOS default of 256.
+  # Without this, nix builds and tools like devenv frequently hit "Too many open files".
+  # This sets kern.maxfiles (soft) and kern.maxfilesperproc (hard) via launchd,
+  # and the setrlimit values for child processes.
+  launchd.daemons.limit-maxfiles = {
+    command = ""; # No-op daemon — exists only to set resource limits at boot
+    serviceConfig = {
+      SoftResourceLimits.NumberOfFiles = 65536;
+      HardResourceLimits.NumberOfFiles = 524288;
+      RunAtLoad = true;
+    };
+  };
+
   # Use global sudo timestamp so credentials are shared across all processes.
   # Required because nix-darwin's Homebrew module runs `brew bundle` in a
   # different process tree during activation, and brew's internal `sudo`
@@ -225,6 +238,14 @@
   # Set XDG_CONFIG_HOME so nushell uses ~/.config/nushell/ on macOS
   # (without this, nushell defaults to ~/Library/Application Support/nushell/)
   environment.variables.XDG_CONFIG_HOME = "$HOME/.config";
+
+  # Raise file descriptor limit for all login shells.
+  # macOS default is 256 which causes "Too many open files" errors during
+  # nix builds, devenv, and other heavy workloads.
+  # The system-wide limit is set separately via launchd.daemons.limit-maxfiles.
+  environment.shellInit = ''
+    ulimit -n 65536 2>/dev/null || true
+  '';
 
   system.activationScripts.applications.text =
     let

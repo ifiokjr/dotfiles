@@ -4,7 +4,7 @@
 	"private": true,
 	"dependencies": {
 		"@earendil-works/pi-coding-agent": "^0.78.0",
-		"@openai/codex": "^0.135.0",
+		"@openai/codex": "^0.136.0",
 		"opencode-ai": "1.15.13"
 	}
 }

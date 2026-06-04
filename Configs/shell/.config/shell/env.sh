@@ -40,6 +40,17 @@ ARCHFLAGS="-arch arm64"
 export ARCHFLAGS
 
 # ---------------------------------------------------------------------------
+# File descriptor limit
+# ---------------------------------------------------------------------------
+# macOS default is 256 which causes "Too many open files" during nix builds,
+# devenv, and heavy tool usage. Bump to a comfortable default.
+# This is per-shell; the system-wide limit is set via launchd.daemons.limit-maxfiles
+# in darwin.nix (soft: 65536, hard: 524288).
+if [ "$(ulimit -n)" -lt 65536 ] 2>/dev/null; then
+	ulimit -n 65536 2>/dev/null || true
+fi
+
+# ---------------------------------------------------------------------------
 # Deno
 # ---------------------------------------------------------------------------
 export DENO_INSTALL="$HOME/.deno"
