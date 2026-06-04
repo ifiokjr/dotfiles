@@ -156,8 +156,7 @@ export const PRESETS: Record<string, Preset> = {
 };
 
 /** Known machine presets (stored in machine.nix, not setup presets). */
-export const MACHINE_PRESETS: Record<string, string> = {
-};
+export const MACHINE_PRESETS: Record<string, string> = {};
 
 /** Discover all configuration groups by scanning Configs/ directory. */
 export async function discoverGroups(dotfilesDir: string): Promise<string[]> {

@@ -202,7 +202,6 @@ snapshot[`safe command outputs are stable > groups list 1`] = `
   ghostty        Ghostty terminal emulator configuration.
   git            Portable Git includes and shared config files managed under ~/.config/git/.
   helix          Helix editor configuration, including optional custom Steel tooling.
-  ironclaw       Ironclaw agent runtime configuration and environment.
   kdl            KDL formatter configuration used by editor and tooling workflows.
   lazygit        Lazygit terminal UI configuration for Git workflows.
   nix            Nix flake, nix-darwin, and home-manager configuration.
