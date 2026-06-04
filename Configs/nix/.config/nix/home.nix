@@ -163,7 +163,6 @@ in
       # Custom packages from ifiokjr/nixpkgs
       extra.cargo-interactive-update
       extra.deno
-      extra.ironclaw
       extra.melos
       extra.monochange
       extra.pnpm-11

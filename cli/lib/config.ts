@@ -157,8 +157,6 @@ export const PRESETS: Record<string, Preset> = {
 
 /** Known machine presets (stored in machine.nix, not setup presets). */
 export const MACHINE_PRESETS: Record<string, string> = {
-	ironclaw:
-		"Ironclaw agent runtime — enables libSQL database and ironclaw service",
 };
 
 /** Discover all configuration groups by scanning Configs/ directory. */

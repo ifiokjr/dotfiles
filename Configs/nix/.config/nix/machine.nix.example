@@ -28,6 +28,5 @@
 
   # Optional: Machine presets — enables feature sets for specific use cases.
   # Use `rebuild --add-preset <name>` or `rebuild --remove-preset <name>` to manage.
-  # Available presets: ironclaw
   # presets = [];
 }

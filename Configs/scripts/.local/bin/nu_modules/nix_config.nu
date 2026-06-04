@@ -92,7 +92,7 @@ export def set-always-on-mode [value: bool, --path(-p): string] {
 #   1. Add it here with a description
 #   2. Wire it into home.nix/darwin.nix to conditionally enable features
 #   3. Add tuckr config groups with matching preset membership
-export def known-presets [] { {ironclaw: "Ironclaw agent runtime — enables libSQL database and ironclaw service"} }
+export def known-presets [] { {} }
 # Add a preset to machine.nix (inserts the presets list if missing, appends if present).
 export def add-preset [preset: string, --path(-p): string] {
     let preset = $preset | str downcase

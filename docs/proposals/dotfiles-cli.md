@@ -19,8 +19,6 @@ dot groups info nix  # explain a group (replaces ./setup --explain-group)
 dot machine config # inspect/edit machine.nix
 dot machine set-lite on   # toggle lite mode
 dot machine set-desktop on # toggle desktop mode
-dot machine add-preset ironclaw  # add a machine preset
-dot machine remove-preset ironclaw  # remove a machine preset
 dot uninstall     # full uninstall (replaces uninstall:dotfiles)
 dot reset         # uninstall + re-setup (replaces reset:dotfiles)
 ```
@@ -88,7 +86,7 @@ dotfiles
 │   ├── set-lite <on|off>     # toggle lite mode
 │   ├── set-desktop <on|off>  # toggle desktop mode
 │   ├── set-always-on <on|off># toggle always-on mode
-│   ├── add-preset <PRESET>   # add a machine preset (ironclaw, etc.)
+│   ├── add-preset <PRESET>   # add a machine preset
 │   ├── remove-preset <PRESET># remove a machine preset
 │   └── regenerate             # re-run generate-machine-config
 │

@@ -116,7 +116,7 @@ def main [
     --rebuild-os   # Install all available macOS software updates before rebuilding (slow)
     --always-on    # Set machine.nix alwaysOn = true (never sleep, screensaver with lock)
     --no-always-on # Set machine.nix alwaysOn = false
-    --add-preset: string  # Add a preset to machine.nix (e.g. ironclaw)
+    --add-preset: string  # Add a preset to machine.nix
     --remove-preset: string  # Remove a preset from machine.nix
 ] {
     let invoked_by_dotfiles_cli = ("DOTFILES_CLI" in $env) and $env.DOTFILES_CLI == "1"

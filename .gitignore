@@ -61,7 +61,7 @@ Configs/git/.gitconfig
 !**/.env.base
 
 # Ironclaw config (generated from .env.base; may contain secrets)
-**/.ironclaw/.env
+
 
 # Build artifacts and dependencies
 # Rust
