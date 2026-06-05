@@ -43,6 +43,15 @@ ssload
 - Never print full secret values in logs or chat.
 - `ssload` is acceptable for interactive sessions but not recommended for automation.
 
+**When a command fails due to missing secrets:**
+If a command fails with auth errors, "permission denied", rate limiting, or missing token errors, it likely needs a secret that isn't in the ambient environment. Fix it by retrying with SecretSpec:
+
+1. **Try `ssr <command>`** — rerun the failing command with all secrets injected ephemerally. This is the preferred fix.
+2. **Try `ss get <NAME>`** — if you know which secret is missing, fetch it and set it manually.
+3. **Try `ssload`** — load all secrets into the current session, then retry the command.
+
+Example: if `gh pr list` fails with "authentication required", run `ssr gh pr list` instead.
+
 ## Devenv (Development Environment)
 
 Projects using [devenv](https://devenv.sh) get a managed shell with all dependencies. Always enter the devenv shell before running project commands.
