@@ -168,6 +168,7 @@ alias nfc = nix flake check --flake ~/.config/nix
 alias nfu = nix flake update --flake ~/.config/nix
 alias ns = nix search nixpkgs
 alias de = devenv up
+alias ds = devenv shell
 # File listing (lsd)
 alias l = lsd -lah
 alias la = lsd -lAh
