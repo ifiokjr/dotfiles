@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 

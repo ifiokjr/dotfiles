@@ -117,12 +117,12 @@ jobs:
           persist-credentials: false
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@f9c8d8aaf92e6dbde896d6f84350f33d62392bd5 # main
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -146,12 +146,12 @@ jobs:
           persist-credentials: false
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@f9c8d8aaf92e6dbde896d6f84350f33d62392bd5 # main
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -194,12 +194,12 @@ jobs:
           df -h /
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@main
+        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@f9c8d8aaf92e6dbde896d6f84350f33d62392bd5 # main
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
