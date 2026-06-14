@@ -7,16 +7,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   update:
     name: update flake lock
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -25,6 +29,11 @@ jobs:
 
       - name: 🔄 update flake lock
         run: nix flake update --flake ./Configs/nix/.config/nix
+        env:
+          NIX_CONFIG: access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ validate flake
+        run: nix flake check --flake ./Configs/nix/.config/nix --impure --no-build
         env:
           NIX_CONFIG: access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
@@ -53,7 +62,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: 🤖 create pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           add-paths: Configs/nix/.config/nix/flake.lock

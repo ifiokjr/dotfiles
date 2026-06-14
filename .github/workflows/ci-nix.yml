@@ -30,6 +30,9 @@ on:
       - "tests/**"
       - ".github/workflows/ci-nix.yml"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ci-nix-${{ github.ref }}
   cancel-in-progress: true
@@ -38,6 +41,8 @@ jobs:
   changes:
     name: detect changed areas
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       run_setup: ${{ steps.filter.outputs.setup }}
       run_macos: ${{ steps.filter.outputs.macos }}
@@ -45,11 +50,13 @@ jobs:
       run_remote_installer: ${{ steps.filter.outputs.remote_installer }}
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: 🔍 detect file changes
         id: filter
-        uses: dorny/paths-filter@v4
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
           filters: |
             setup:
@@ -101,9 +108,13 @@ jobs:
     if: needs.changes.outputs.run_remote_installer == 'true'
     name: remote installer smoke test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -111,7 +122,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@main
+        with:
+          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 🧪 run remote installer smoke test
@@ -124,9 +137,13 @@ jobs:
     if: needs.changes.outputs.run_setup == 'true'
     name: setup script (ubuntu-latest)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: 🔧 install nix
         uses: DeterminateSystems/nix-installer-action@main
@@ -134,7 +151,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@main
+        with:
+          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 🧪 run setup script
@@ -157,9 +176,13 @@ jobs:
     name: setup script (macos-latest)
     runs-on: macos-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: 🧹 free disk space (macos)
         run: |
@@ -176,7 +199,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@main
+        uses: DeterminateSystems/flakehub-cache-action@main
+        with:
+          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 🧪 run setup script (minimal, no nix rebuild)
@@ -198,9 +223,13 @@ jobs:
     if: needs.changes.outputs.run_docker == 'true'
     name: docker integration test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
 
       - name: 🏗️ build and run docker integration test
         env:
