@@ -107,6 +107,9 @@ in
       taplo
       yamllint
 
+      # GitHub Actions security audit
+      zizmor
+
       # Language Servers & Tools
       kotlin
       ktlint

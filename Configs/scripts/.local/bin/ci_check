@@ -113,6 +113,22 @@ def main [
         do -i { ^git -C $dotfiles_root reset HEAD $machine_nix }
     }
 
+    # 5. GitHub Actions security audit with zizmor
+    info "Auditing GitHub Actions with zizmor..."
+    let workflow_dir = ($dotfiles_root | path join ".github/workflows")
+    let workflow_files = (glob ($workflow_dir | path join "*.yml"))
+    if ($workflow_files | is-empty) {
+        info "  No workflow files found, skipping zizmor"
+    } else {
+        let result = do -i { ^zizmor ...$workflow_files }
+        if ($env.LAST_EXIT_CODE != 0) {
+            err "zizmor audit failed"
+            $failed = true
+        } else {
+            success "zizmor audit OK"
+        }
+    }
+
     # Summary
     print ""
     if $failed {
