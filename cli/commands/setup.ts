@@ -37,6 +37,16 @@ export const setupCommand = new Command()
 		"--from <target:string>",
 		"Resume from a specific phase or deployment group",
 	)
+	.option("--validate-metadata", "Validate Configs/*.group.toml files and exit")
+	.option("--list-groups", "List available configuration groups")
+	.option(
+		"--explain-group <group:string>",
+		"Show details for one configuration group",
+	)
+	.option(
+		"--only <groups:string>",
+		"Retry only the specified comma-separated groups",
+	)
 	.option(
 		"--cwd <path:string>",
 		"Clone dotfiles to PATH (default: ~/Developer/.dotfiles)",
@@ -52,10 +62,14 @@ export const setupCommand = new Command()
 		if (opts.lite) args.push("--lite");
 		if (opts.skipNix) args.push("--skip-nix");
 		if (opts.doctor) args.push("--doctor");
+		if (opts.validateMetadata) args.push("--validate-metadata");
 		if (opts.dryRun) args.push("--dry-run");
 		if (!opts.confirm) args.push("--no-confirm");
 		if (opts.resume) args.push("--resume");
 		if (opts.from) args.push("--from", opts.from);
+		if (opts.only) args.push("--only", opts.only);
+		if (opts.listGroups) args.push("--list-groups");
+		if (opts.explainGroup) args.push("--explain-group", opts.explainGroup);
 		if (opts.cwd) args.push("--cwd", opts.cwd);
 
 		console.log(`Running: ${setupScript} ${args.join(" ")}`);
