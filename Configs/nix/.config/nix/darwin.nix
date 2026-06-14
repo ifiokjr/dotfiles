@@ -2,13 +2,10 @@
   config,
   lib,
   pkgs,
-  self,
   username,
   lite ? false,
   isDesktop ? false,
   alwaysOn ? false,
-  presets ? [ ],
-  ifiokjr-nixpkgs,
   homebrew-core,
   homebrew-cask,
   homebrew-bundle,
@@ -137,7 +134,7 @@
         "reactotron"
         "t3-code"
         "visual-studio-code"
-        "zed"
+        "zed@preview"
 
         # Media & Graphics
         "blackhole-16ch"

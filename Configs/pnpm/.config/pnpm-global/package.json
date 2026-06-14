@@ -3,8 +3,8 @@
 	"type": "module",
 	"private": true,
 	"dependencies": {
-		"@earendil-works/pi-coding-agent": "^0.78.0",
-		"@openai/codex": "^0.136.0",
-		"opencode-ai": "1.15.13"
+		"@earendil-works/pi-coding-agent": "^0.79.1",
+		"@openai/codex": "^0.139.0",
+		"opencode-ai": "1.17.4"
 	}
 }

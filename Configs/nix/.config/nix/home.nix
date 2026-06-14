@@ -56,7 +56,12 @@ in
       google-cloud-sdk
       graphite-cli
       jdk17
-      kubernetes-helm
+      # TODO: remove the override once nixpkgs fixes Helm 4.2.0's checkPhase.
+      # The current derivation patches cmd/helm/dependency_build_test.go, but that
+      # file no longer exists in the unpacked source on darwin.
+      (kubernetes-helm.overrideAttrs (_: {
+        doCheck = false;
+      }))
       lazygit
       lld
       llvm
@@ -65,7 +70,10 @@ in
       nixd
       nixfmt
       nodejs
-      extra.ollama
+      # Ollama requires Vulkan/CUDA runtime libraries that are not available in
+      # the Linux CI sandbox. Keep it Darwin-only until nixpkgs provides a
+      # headless/CPU-only variant or the dependency issue is resolved.
+      # extra.ollama
       opencode
       python3
       extra.knope
@@ -101,6 +109,9 @@ in
       shfmt
       taplo
       yamllint
+
+      # GitHub Actions security audit
+      zizmor
 
       # Language Servers & Tools
       kotlin
@@ -202,8 +213,11 @@ in
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
       [
-        # macOS-only custom packages from ifiokjr/nixpkgs.
+        # macOS-only custom packages from ifiokjr-nixpkgs.
         extra.ccase
+        # Ollama builds on Darwin (Metal) but currently fails in the Linux CI
+        # sandbox due to missing Vulkan/CUDA runtime libraries.
+        extra.ollama
       ]
       ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
@@ -232,7 +246,7 @@ in
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
-  home.file = {
+  home.file = lib.mkIf pkgs.stdenv.isDarwin {
     ".ssh/config" = {
       force = true;
       text = ''

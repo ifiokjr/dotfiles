@@ -91,7 +91,7 @@ Changes take effect immediately - no need to sync files.
 
 1. Clone dotfiles and deploy with Tuckr:
    ```bash
-   tuckr add nix
+   tuckr set nix
    ```
 
 2. The `post_up_nix` hook will create machine.nix automatically
