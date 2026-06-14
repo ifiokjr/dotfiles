@@ -295,5 +295,18 @@
           ci-nushell = pkgs.nushell;
         }
       );
+
+      # Formatter for `nix fmt`
+      formatter = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+            overlays = [ darwinWorkaroundsOverlay ];
+          };
+        in
+        pkgs.nixfmt
+      );
     };
 }
