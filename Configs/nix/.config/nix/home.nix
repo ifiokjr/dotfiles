@@ -56,7 +56,12 @@ in
       google-cloud-sdk
       graphite-cli
       jdk17
-      kubernetes-helm
+      # TODO: remove the override once nixpkgs fixes Helm 4.2.0's checkPhase.
+      # The current derivation patches cmd/helm/dependency_build_test.go, but that
+      # file no longer exists in the unpacked source on darwin.
+      (kubernetes-helm.overrideAttrs (_: {
+        doCheck = false;
+      }))
       lazygit
       lld
       llvm
