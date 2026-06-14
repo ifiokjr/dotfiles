@@ -70,7 +70,10 @@ in
       nixd
       nixfmt
       nodejs
-      extra.ollama
+      # Ollama requires Vulkan/CUDA runtime libraries that are not available in
+      # the Linux CI sandbox. Keep it Darwin-only until nixpkgs provides a
+      # headless/CPU-only variant or the dependency issue is resolved.
+      # extra.ollama
       opencode
       python3
       extra.knope
@@ -210,8 +213,11 @@ in
     ]
     ++ lib.optionals pkgs.stdenv.isDarwin (
       [
-        # macOS-only custom packages from ifiokjr/nixpkgs.
+        # macOS-only custom packages from ifiokjr-nixpkgs.
         extra.ccase
+        # Ollama builds on Darwin (Metal) but currently fails in the Linux CI
+        # sandbox due to missing Vulkan/CUDA runtime libraries.
+        extra.ollama
       ]
       ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
