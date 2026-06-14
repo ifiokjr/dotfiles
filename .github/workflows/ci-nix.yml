@@ -117,12 +117,12 @@ jobs:
           persist-credentials: false
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
+        uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@f9c8d8aaf92e6dbde896d6f84350f33d62392bd5 # main
+        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -146,12 +146,12 @@ jobs:
           persist-credentials: false
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
+        uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@f9c8d8aaf92e6dbde896d6f84350f33d62392bd5 # main
+        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -194,12 +194,12 @@ jobs:
           df -h /
 
       - name: 🔧 install nix
-        uses: DeterminateSystems/nix-installer-action@1d87d45818068401a10cf16bdc5f00b24994a83f # main
+        uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@f9c8d8aaf92e6dbde896d6f84350f33d62392bd5 # main
+        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
