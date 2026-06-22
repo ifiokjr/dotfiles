@@ -39,6 +39,18 @@ if not ($env | get -o NIX_PROFILES | is-not-empty) {
 # ---------------------------------------------------------------------------
 # Ensure PATH is a list (may be inherited as a colon-separated string)
 if ($env.PATH | describe) == "string" { $env.PATH = ($env.PATH | split row (char esep)) }
+
+# ---------------------------------------------------------------------------
+# File descriptor limits
+# ---------------------------------------------------------------------------
+# macOS defaults to a 256-file-descriptor soft limit, which is too low for
+# Nix evaluation, devenv, and other heavy workloads. Raise it for this
+# Nushell process (and any child processes it spawns) as early as possible.
+# Fall back to 65536 if the higher value is rejected by the kernel.
+try { ulimit -n 524288 } catch {
+    try { ulimit -n 65536 } catch { }
+}
+
 # ---------------------------------------------------------------------------
 # Editor
 # ---------------------------------------------------------------------------
