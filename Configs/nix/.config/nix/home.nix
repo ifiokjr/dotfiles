@@ -53,6 +53,7 @@ in
       git
       git-filter-repo
       git-lfs
+      gitleaks
       google-cloud-sdk
       graphite-cli
       jdk17
