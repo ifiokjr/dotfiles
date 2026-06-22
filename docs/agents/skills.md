@@ -2,6 +2,17 @@
 
 Use skills when the user explicitly names one or when the task clearly matches a listed skill.
 
+## Dotfiles-Managed Skills
+
+Reusable global skills are tracked in `Configs/agents/.agents/skills/<skill-name>` and deployed to `~/.agents/skills/<skill-name>` by the `agents` Tuckr group. When installing a reusable skill, copy it into this directory and replace the local install with a symlink to the dotfiles-managed path so it can be reused across machines.
+
+Current dotfiles-managed skills:
+
+- `devenv`: Path: `Configs/agents/.agents/skills/devenv/SKILL.md`
+- `dotfiles`: Path: `Configs/agents/.agents/skills/dotfiles/SKILL.md`
+- `git-workflow`: Path: `Configs/agents/.agents/skills/git-workflow/SKILL.md`
+- `playwright-cli`: Path: `Configs/agents/.agents/skills/playwright-cli/SKILL.md`
+
 ## Available Skills
 
 - `dotfiles-secretspec`: dotfiles-specific SecretSpec + 1Password workflow. Path: `~/.agents/skills/dotfiles-secretspec/SKILL.md`
