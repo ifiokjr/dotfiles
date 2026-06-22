@@ -5,6 +5,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
 ## Essentials
 
 - Package manager/runtime: `nix` (use `nix profile add`; avoid `nix profile install`).
+- Shared/global agent skills that should survive across machines belong in `Configs/agents/.agents/skills/<skill-name>` and are deployed to `~/.agents/skills/<skill-name>` by the `agents` Tuckr group. Do not leave reusable skills only in the local `~/.agents/skills` directory.
 - Non-standard verification commands:
   - `dprint check --config Configs/dprint/dprint.json`
   - `shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh`
