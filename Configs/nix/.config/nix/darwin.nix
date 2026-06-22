@@ -196,15 +196,21 @@
   };
 
   # Raise system-wide file descriptor limits from the macOS default of 256.
-  # Without this, nix builds and tools like devenv frequently hit "Too many open files".
-  # This sets kern.maxfiles (soft) and kern.maxfilesperproc (hard) via launchd,
-  # and the setrlimit values for child processes.
+  # Without this, nix builds and tools like devenv frequently hit "Too many open
+  # files". The daemon runs as root at boot so it can raise kernel ceilings and
+  # the system-wide launchd default; per-shell soft limits are set separately in
+  # shellInit (POSIX shells) and the Nushell env.nu.
   launchd.daemons.limit-maxfiles = {
-    command = ""; # No-op daemon — exists only to set resource limits at boot
+    script = ''
+      /sbin/sysctl -w kern.maxfiles=524288 2>/dev/null || true
+      /sbin/sysctl -w kern.maxfilesperproc=524288 2>/dev/null || true
+      /bin/launchctl limit maxfiles 524288 1048576 2>/dev/null || true
+    '';
     serviceConfig = {
-      SoftResourceLimits.NumberOfFiles = 65536;
-      HardResourceLimits.NumberOfFiles = 524288;
       RunAtLoad = true;
+      KeepAlive = false;
+      SoftResourceLimits.NumberOfFiles = 524288;
+      HardResourceLimits.NumberOfFiles = 1048576;
     };
   };
 
@@ -241,7 +247,7 @@
   # nix builds, devenv, and other heavy workloads.
   # The system-wide limit is set separately via launchd.daemons.limit-maxfiles.
   environment.shellInit = ''
-    ulimit -n 65536 2>/dev/null || true
+    ulimit -n 524288 2>/dev/null || ulimit -n 65536 2>/dev/null || true
   '';
 
   system.activationScripts.applications.text =
