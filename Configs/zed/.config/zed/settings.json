@@ -1,0 +1,90 @@
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+	"language_models": {
+		"ollama": {
+			"api_url": "http://localhost:11434"
+		}
+	},
+	"context_servers": {
+		"flutter": {
+			"enabled": true,
+			"remote": false,
+			"command": "fvm",
+			"args": [
+				"dart",
+				"mcp-server"
+			],
+			"env": {}
+		}
+	},
+	"helix_mode": true,
+	"agent": {
+		"default_profile": "write",
+		"default_model": {
+			"effort": "xhigh",
+			"speed": "fast",
+			"provider": "openai-subscribed",
+			"model": "gpt-5.5",
+			"enable_thinking": true
+		},
+		"favorite_models": [
+			{
+				"provider": "ollama",
+				"model": "kimi-k2.7-code:cloud",
+				"enable_thinking": true
+			},
+			{
+				"provider": "openai-subscribed",
+				"model": "gpt-5.5",
+				"enable_thinking": true,
+				"effort": "xhigh",
+				"speed": "fast"
+			},
+			{
+				"provider": "opencode",
+				"model": "zen/claude-opus-4-8",
+				"enable_thinking": true,
+				"effort": "xhigh"
+			},
+			{
+				"provider": "ollama",
+				"model": "deepseek-v4-pro:cloud",
+				"enable_thinking": true
+			},
+			{
+				"provider": "ollama",
+				"model": "glm-5.2:cloud",
+				"enable_thinking": true
+			}
+		],
+		"model_parameters": [],
+		"tool_permissions": {
+			"default": "allow",
+			"tools": {
+				"terminal": {
+					"default": "allow",
+					"always_allow": [
+						{
+							"pattern": ".*"
+						}
+					]
+				}
+			}
+		}
+	},
+	"cli_default_open_behavior": "existing_window",
+	"ui_font_size": 16,
+	"buffer_font_size": 15,
+	"theme": {
+		"mode": "system",
+		"light": "One Light",
+		"dark": "One Dark"
+	}
+}
