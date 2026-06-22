@@ -211,6 +211,7 @@ snapshot[`safe command outputs are stable > groups list 1`] = `
   secretspec     Declarative secrets via SecretSpec + 1Password. Replaces ~/.env.dotfiles.
   shell          Shared shell environment configuration and common aliases.
   yazi           Yazi terminal file manager configuration.
+  zed            Zed editor configuration.
   zellij         Zellij terminal multiplexer configuration and layouts.
   zsh            Zsh compatibility configuration for POSIX shells and external tools.
 "
