@@ -110,7 +110,8 @@ in
       taplo
       yamllint
 
-      # GitHub Actions security audit
+      # GitHub Actions tooling
+      actionlint
       zizmor
 
       # Language Servers & Tools
