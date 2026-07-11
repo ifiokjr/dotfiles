@@ -7,6 +7,7 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+	"diff_view_style": "unified",
 	"language_models": {
 		"ollama": {
 			"api_url": "http://localhost:11434"
@@ -26,12 +27,17 @@
 	},
 	"helix_mode": true,
 	"agent": {
+		"sandbox_permissions": {
+			"allow_all_hosts": true,
+			"allow_fs_write_all": true,
+			"allow_unsandboxed": true
+		},
 		"default_profile": "write",
 		"default_model": {
-			"effort": "xhigh",
+			"effort": "max",
 			"speed": "fast",
 			"provider": "openai-subscribed",
-			"model": "gpt-5.5",
+			"model": "gpt-5.6-sol",
 			"enable_thinking": true
 		},
 		"favorite_models": [
@@ -48,12 +54,6 @@
 				"speed": "fast"
 			},
 			{
-				"provider": "opencode",
-				"model": "zen/claude-opus-4-8",
-				"enable_thinking": true,
-				"effort": "xhigh"
-			},
-			{
 				"provider": "ollama",
 				"model": "deepseek-v4-pro:cloud",
 				"enable_thinking": true
@@ -68,6 +68,14 @@
 		"tool_permissions": {
 			"default": "allow",
 			"tools": {
+				"search_web": {
+					"default": "allow",
+					"always_allow": [
+						{
+							"pattern": ".*"
+						}
+					]
+				},
 				"terminal": {
 					"default": "allow",
 					"always_allow": [
@@ -78,6 +86,16 @@
 				}
 			}
 		}
+	},
+	"lsp": {
+		"cargo-tom": {
+			"initialization_options": {
+				"hide_docs_info_message": true
+			}
+		}
+	},
+	"session": {
+		"trust_all_worktrees": true
 	},
 	"cli_default_open_behavior": "existing_window",
 	"ui_font_size": 16,
