@@ -68,6 +68,27 @@
             doCheck = false;
           });
 
+          # Graphite CLI 1.8.6's Darwin binary currently emits an empty bash
+          # completion script, causing nixpkgs' installShellCompletion hook to
+          # fail. Keep the CLI available and skip completion generation until
+          # upstream/nixpkgs fixes the packaged binary output.
+          graphite-cli = prev.graphite-cli.overrideAttrs (_: {
+            postInstall = "";
+          });
+
+          # vfkit 0.6.3 currently crashes Darwin cctools `ld` while linking on
+          # macOS 26 / clang-wrapper 21.1.8. Podman also supports krunkit on
+          # Darwin, so mark vfkit unavailable and rebuild podman with krunkit
+          # only until vfkit or cctools is fixed upstream.
+          vfkit = prev.vfkit.overrideAttrs (old: {
+            meta = old.meta // {
+              platforms = [ ];
+            };
+          });
+          podman = prev.podman.override {
+            vfkit = final.vfkit;
+          };
+
           # direnv's GNUmakefile unconditionally enables `-linkmode=external`
           # on Darwin, but nixpkgs builds direnv with `CGO_ENABLED=0`.
           # Remove that linker flag so static non-CGO builds succeed again.
@@ -97,7 +118,56 @@
               })
             else
               prev.nushell;
+
+          # mise's `oci::layer::tests::preserve_metadata_dir_layer_keeps_special_permission_bits`
+          # asserts that `bin/helper` retains mode 0o4755 (setuid) after OCI layer
+          # extraction. The Nix Darwin sandbox builds as a non-root `nixbld` user,
+          # which cannot preserve setuid bits, so the extracted file ends up 0o755
+          # and the test panics (`left: 493, right: 2541`). This is fundamentally
+          # unsatisfiable in a sandboxed non-root build, so skip just that test and
+          # keep the rest of mise's suite (1349 passing tests). Append to upstream's
+          # existing `checkFlags` (which already skips other sandbox-incompatible
+          # tests) without clobbering it, and handle both string and list forms.
+          mise = prev.mise.overrideAttrs (
+            old:
+            let
+              skipFlag = "--skip=oci::layer::tests::preserve_metadata_dir_layer_keeps_special_permission_bits";
+              existing = old.checkFlags or [ ];
+            in
+            {
+              checkFlags =
+                if prev.lib.isString existing then "${existing} ${skipFlag}" else existing ++ [ skipFlag ];
+            }
+          );
         };
+
+      # Overlay consulted by `dot rebuild`'s auto-recovery: when an upstream
+      # package's test suite fails in the sandboxed Nix build (e.g. setuid /
+      # permission tests that can't pass as non-root `nixbld`), the rebuild
+      # wrapper re-runs the switch with `DOT_DISABLE_CHECKS_PKGS` set to the
+      # failing package names. This overlay then sets `doCheck = false` for those
+      # packages so the build completes and activation proceeds, after which the
+      # wrapper prints a clear warning telling you to add a permanent workaround
+      # in `darwinWorkaroundsOverlay`. Requires `--impure` (already used by the
+      # rebuild command) because `builtins.getEnv` is impure.
+      disableChecksOverlay =
+        final: prev:
+        let
+          raw = builtins.getEnv "DOT_DISABLE_CHECKS_PKGS";
+          names = prev.lib.filter (s: s != "") (prev.lib.splitString " " raw);
+          disable =
+            acc: name:
+            if prev ? ${name} then
+              acc
+              // {
+                ${name} = prev.${name}.overrideAttrs (_: {
+                  doCheck = false;
+                });
+              }
+            else
+              acc;
+        in
+        prev.lib.foldl' disable prev names;
 
       mkDarwinConfig =
         {
@@ -132,7 +202,10 @@
             # Integrate home-manager directly with nix-darwin
             home-manager.darwinModules.home-manager
             {
-              nixpkgs.overlays = [ darwinWorkaroundsOverlay ];
+              nixpkgs.overlays = [
+                darwinWorkaroundsOverlay
+                disableChecksOverlay
+              ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.extraSpecialArgs = {
@@ -166,7 +239,10 @@
           pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
-            overlays = [ darwinWorkaroundsOverlay ];
+            overlays = [
+              darwinWorkaroundsOverlay
+              disableChecksOverlay
+            ];
           };
           # Automatically determine home directory based on system
           finalHomeDirectory =
@@ -288,7 +364,10 @@
           pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
-            overlays = [ darwinWorkaroundsOverlay ];
+            overlays = [
+              darwinWorkaroundsOverlay
+              disableChecksOverlay
+            ];
           };
         in
         {
@@ -303,7 +382,10 @@
           pkgs = import nixpkgs {
             inherit system;
             config.allowUnfree = true;
-            overlays = [ darwinWorkaroundsOverlay ];
+            overlays = [
+              darwinWorkaroundsOverlay
+              disableChecksOverlay
+            ];
           };
         in
         pkgs.nixfmt

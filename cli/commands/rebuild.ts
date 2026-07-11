@@ -502,10 +502,11 @@ async function runRebuild(context: RebuildContext, config: MachineConfig) {
 			"--impure",
 		]);
 
-		await runRequired({
-			args: ["bash", "-lc", `ulimit -n 10240 && ${shellCommand(nhArgs)}`],
-			cwd: context.dotfilesDir,
-			env: nixEnv(context),
+		await runRebuildWithRetry({
+			context,
+			args: nhArgs,
+			ulimit: true,
+			extraEnv: nixEnv(context),
 		});
 		printSuccess("Configuration rebuilt successfully");
 		printInfo(
@@ -526,10 +527,11 @@ async function runRebuild(context: RebuildContext, config: MachineConfig) {
 	]);
 	const rebuildArgs = withSudoIfNeeded(context, nhArgs).args;
 
-	await runRequired({
+	await runRebuildWithRetry({
+		context,
 		args: rebuildArgs,
-		cwd: context.dotfilesDir,
-		env: {
+		ulimit: false,
+		extraEnv: {
 			...nixEnv(context),
 			HOME: Deno.env.get("HOME") ?? "",
 			USER: config.username,
@@ -537,6 +539,160 @@ async function runRebuild(context: RebuildContext, config: MachineConfig) {
 	});
 	printSuccess("Configuration rebuilt successfully");
 	printInfo("Home-manager configuration has been updated.");
+}
+
+interface RebuildAttemptSpec {
+	args: string[];
+	context: RebuildContext;
+	extraEnv: Record<string, string>;
+	ulimit: boolean;
+}
+
+// Upper bound on how many times we re-try the rebuild while progressively
+// disabling upstream check phases.
+const MAX_REBUILD_ATTEMPTS = 3;
+
+// Markers that indicate a derivation failed inside its check phase (test
+// suite) rather than the build/compile phase. Only check-phase failures are
+// auto-recoverable by disabling checks.
+const CHECK_FAILURE_MARKERS = [
+	"test result: FAILED",
+	"error: test failed",
+	"panicked at",
+	"--- FAIL",
+	"FAIL:",
+	"make: *** [check",
+	"checkPhase failed",
+];
+
+// Drv-name fragments that belong to nix-darwin / home-manager activation
+// plumbing rather than real nixpkgs packages. Disabling checks on these is
+// pointless, so they are excluded from the DOT_DISABLE_CHECKS_PKGS set.
+const NON_PACKAGE_HINTS = [
+	"home-manager",
+	"activation",
+	"darwin-system",
+	"user-environment",
+	"hm_",
+];
+
+/**
+ * Runs the rebuild command, streaming output live to the terminal while also
+ * capturing it to a temp log. If it fails in a check phase, re-runs with
+ * `DOT_DISABLE_CHECKS_PKGS` set so the `disableChecksOverlay` in flake.nix
+ * skips the test suite for the offending package(s). This stops a single
+ * flaky upstream test from blocking the entire upgrade.
+ */
+async function runRebuildWithRetry(spec: RebuildAttemptSpec): Promise<void> {
+	const disabled = new Set<string>();
+	let lastLogPath = "";
+
+	for (let attempt = 1; attempt <= MAX_REBUILD_ATTEMPTS; attempt++) {
+		const { success, code, logPath } = await runRebuildAttempt(spec, disabled);
+		lastLogPath = logPath;
+
+		if (success) {
+			if (disabled.size > 0) {
+				printWarning(
+					`Rebuild succeeded after disabling the check phase for: ${
+						[...disabled].join(", ")
+					}`,
+				);
+				printWarning(
+					"These upstream tests fail in the Nix sandbox. Add a permanent workaround in darwinWorkaroundsOverlay (Configs/nix/.config/nix/flake.nix) so future rebuilds succeed on the first try. See the existing mise entry as a template.",
+				);
+				printWarning(`Full build log retained at: ${logPath}`);
+			} else {
+				await Deno.remove(logPath).catch(() => {});
+			}
+			return;
+		}
+
+		const log = await Deno.readTextFile(logPath).catch(() => "");
+		const failedPackages = extractFailedPackageNames(log);
+		const isCheckFailure = CHECK_FAILURE_MARKERS.some((marker) =>
+			log.includes(marker)
+		);
+
+		if (!isCheckFailure || failedPackages.length === 0) {
+			printError(
+				`Rebuild failed (not a recoverable check-phase failure). Build log: ${logPath}`,
+			);
+			Deno.exit(code);
+		}
+
+		const newlyDiscovered = failedPackages.filter((name) =>
+			!disabled.has(name)
+		);
+		if (newlyDiscovered.length === 0) {
+			printError(
+				`Rebuild still failing after disabling checks for ${
+					[...disabled].join(", ")
+				}. Build log: ${logPath}`,
+			);
+			Deno.exit(code);
+		}
+
+		for (const name of newlyDiscovered) disabled.add(name);
+		printWarning(
+			`Attempt ${attempt} hit upstream check-phase failures. Retrying with checks disabled for: ${
+				[...disabled].join(", ")
+			}`,
+		);
+	}
+
+	printError(
+		`Rebuild failed after ${MAX_REBUILD_ATTEMPTS} attempts. Build log: ${lastLogPath}`,
+	);
+	Deno.exit(1);
+}
+
+async function runRebuildAttempt(
+	spec: RebuildAttemptSpec,
+	disabled: Set<string>,
+): Promise<{ success: boolean; code: number; logPath: string }> {
+	const logPath = await Deno.makeTempFile({
+		prefix: "dot-rebuild-",
+		suffix: ".log",
+	});
+	// When the rebuild runs under `sudo` (rootOnlyNix linux), sudo's env_reset
+	// would strip DOT_DISABLE_CHECKS_PKGS; preserve just that one var so the
+	// overlay sees it during evaluation.
+	const finalArgs = spec.args[0] === "sudo"
+		? ["sudo", "--preserve-env=DOT_DISABLE_CHECKS_PKGS", ...spec.args.slice(1)]
+		: spec.args;
+	const inner = shellCommand(finalArgs);
+	const prelude = spec.ulimit ? "ulimit -n 10240; " : "";
+	const wrapped = `${prelude}set -o pipefail; ${inner} 2>&1 | tee ${
+		shellQuote(logPath)
+	}`;
+	const result = await runCommand(["bash", "-lc", wrapped], {
+		cwd: spec.context.dotfilesDir,
+		env: {
+			...spec.extraEnv,
+			DOT_DISABLE_CHECKS_PKGS: [...disabled].join(" "),
+		},
+	});
+	return { success: result.success, code: result.code, logPath };
+}
+
+function extractFailedPackageNames(log: string): string[] {
+	const names = new Set<string>();
+	// Match `/nix/store/<hash>-<name>-<version>.drv` on lines reporting a
+	// build failure. `<name>` is greedy so multi-hyphen package names (e.g.
+	// `kubernetes-helm`) are captured whole; the version is the trailing
+	// hyphen-separated segment that starts with a digit.
+	const drvNamePattern = /\/nix\/store\/[0-9a-z]+-(.+)-v?\d[^"'\s]*?\.drv/i;
+
+	for (const line of log.split(/\r?\n/)) {
+		if (!/cannot build/i.test(line)) continue;
+		const match = line.match(drvNamePattern);
+		if (match && match[1]) names.add(match[1]);
+	}
+
+	return [...names].filter((name) =>
+		!NON_PACKAGE_HINTS.some((hint) => name.includes(hint))
+	);
 }
 
 async function nhCommand(args: string[]): Promise<string[]> {
