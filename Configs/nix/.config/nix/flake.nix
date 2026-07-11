@@ -68,13 +68,43 @@
             doCheck = false;
           });
 
-          # Graphite CLI 1.8.6's Darwin binary currently emits an empty bash
-          # completion script, causing nixpkgs' installShellCompletion hook to
-          # fail. Keep the CLI available and skip completion generation until
-          # upstream/nixpkgs fixes the packaged binary output.
-          graphite-cli = prev.graphite-cli.overrideAttrs (_: {
-            postInstall = "";
-          });
+          # cctools ld 1010.6 crashes while linking Starship 1.26.0 from source
+          # on macOS 26, even without cargo-auditable metadata. Use Starship's
+          # hash-pinned official Darwin binary until cctools is fixed upstream.
+          starship =
+            let
+              release =
+                if prev.stdenv.hostPlatform.isAarch64 then
+                  {
+                    target = "aarch64-apple-darwin";
+                    hash = "sha256-xAsnsR9YBBHgaPL6bBvngwo4fAvEepTR038ysFTFNh0=";
+                  }
+                else
+                  {
+                    target = "x86_64-apple-darwin";
+                    hash = "sha256-VUj0BqS29WlZA73qg/d85H7BLIwOYtq9MxItjxM+Qgc=";
+                  };
+            in
+            prev.stdenvNoCC.mkDerivation {
+              inherit (prev.starship) pname version;
+              src = prev.fetchurl {
+                url = "https://github.com/starship/starship/releases/download/v${prev.starship.version}/starship-${release.target}.tar.gz";
+                inherit (release) hash;
+              };
+              dontUnpack = true;
+              nativeBuildInputs = [ prev.installShellFiles ];
+              installPhase = ''
+                runHook preInstall
+                tar -xzf $src
+                install -Dm755 starship $out/bin/starship
+                installShellCompletion --cmd starship \
+                  --bash <($out/bin/starship completions bash) \
+                  --fish <($out/bin/starship completions fish) \
+                  --zsh <($out/bin/starship completions zsh)
+                runHook postInstall
+              '';
+              meta = prev.starship.meta;
+            };
 
           # vfkit 0.6.3 currently crashes Darwin cctools `ld` while linking on
           # macOS 26 / clang-wrapper 21.1.8. Podman also supports krunkit on

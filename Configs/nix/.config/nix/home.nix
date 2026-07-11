@@ -55,7 +55,6 @@ in
       git-lfs
       gitleaks
       google-cloud-sdk
-      graphite-cli
       jdk17
       # TODO: remove the override once nixpkgs fixes Helm 4.2.0's checkPhase.
       # The current derivation patches cmd/helm/dependency_build_test.go, but that
