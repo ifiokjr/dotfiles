@@ -13,7 +13,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
   - `rebuild` (when Nix config or packages change)
   - `docker build -t dotfiles-test .` (when Nix config or packages change for Linux confidence)
 - Formatting/style rule: if any line(s) are commented out, include an explanation comment explaining why they are disabled.
-- Secret handling: this repo uses the dotfiles-specific SecretSpec + 1Password workflow. Secrets are not ambient; use `ssr <command>` for lazy injection or `ssload` only when a shell session intentionally needs all secrets. See `Configs/agents/.agents/skills/dotfiles-secretspec/SKILL.md` (deployed to `~/.agents/skills/dotfiles-secretspec/SKILL.md`).
+- Secret handling: this repo uses the dotfiles-specific Monosecret + 1Password workflow. Secrets are not ambient; use `ssr <command>` for lazy injection or `ssload` only when a shell session intentionally needs all secrets. See `Configs/agents/.agents/skills/dotfiles/SKILL.md` (deployed to `~/.agents/skills/dotfiles/SKILL.md`).
 - Git workflow requirements:
   - Use feature branches like `feat/*`, `fix/*`, `ci/*`, `chore/*` (no `codex/` prefix).
   - Use Conventional Commits.

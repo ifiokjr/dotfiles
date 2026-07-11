@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
-# Manage the optional ~/.env.dotfiles fallback used by SecretSpec.
+# Manage the optional ~/.env.dotfiles fallback used by Monosecret.
 #
-# SecretSpec + 1Password is the primary secret store. This file should only
+# Monosecret + 1Password is the primary secret store. This file should only
 # contain OP_SERVICE_ACCOUNT_TOKEN when keyring is unavailable or being reset.
 
 def ensure_env_file [env_file: string] {
@@ -10,12 +10,12 @@ def ensure_env_file [env_file: string] {
         return
     }
 
-    let example = "Configs/secretspec/.env.dotfiles.example"
+    let example = "Configs/monosecret/.env.dotfiles.example"
     if ($example | path exists) {
         open $example | save -f $env_file
     } else {
         [
-            "## Optional SecretSpec fallback for the 1Password service account token"
+            "## Optional Monosecret fallback for the 1Password service account token"
             "## Prefer keyring/keychain; uncomment only when you need dotenv fallback."
             "# OP_SERVICE_ACCOUNT_TOKEN=\"readonly-service-account\""
             ""
@@ -41,7 +41,7 @@ def main [
     ensure_env_file $env_file
 
     if not $set_token {
-        print "SecretSpec + 1Password now manages dotfiles secrets."
+        print "Monosecret + 1Password now manages dotfiles secrets."
         print $"Created/verified optional fallback file: ($env_file)"
         print ""
         print "Use:"

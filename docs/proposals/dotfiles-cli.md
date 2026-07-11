@@ -96,7 +96,7 @@ dotfiles
 │
 ├── env                       # Environment management
 │   ├── setup                  # setup:env — manage .env.dotfiles fallback
-│   └── secrets [load]        # load secrets via SecretSpec + 1Password
+│   └── secrets [load]        # load secrets via Monosecret + 1Password
 │
 ├── pnpm                      # pnpm global package management
 │   ├── list                   # pnpm:global:list
@@ -296,7 +296,7 @@ This replaces `lib/setup/state.sh` and the `rebuild-changes.log` in a structured
 | `co` (nushell)                      | `dot co` or stays as-is     | 3     | TBD                          |
 | **NEW**                             | `dot groups status`         | 3     | New — shows what's deployed  |
 | **NEW**                             | `dot groups undeploy`       | 2     | New — selective removal      |
-| **NEW**                             | `dot env secrets`           | 2     | New — SecretSpec integration |
+| **NEW**                             | `dot env secrets`           | 2     | New — Monosecret integration |
 | **NEW**                             | `dot machine add-preset`    | 1     | Native (TOML edit)           |
 | **NEW**                             | `dot machine remove-preset` | 1     | Native (TOML edit)           |
 | **NEW**                             | `dot version`               | 1     | New — CLI self-awareness     |

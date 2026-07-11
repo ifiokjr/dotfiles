@@ -80,7 +80,7 @@ in
       extra.knope
       extra.mdt
       rustup
-      extra.secretspec
+      extra.monosecret
 
       # Shell & Terminal
       bashInteractive

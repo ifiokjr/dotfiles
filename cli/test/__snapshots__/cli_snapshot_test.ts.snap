@@ -204,11 +204,11 @@ snapshot[`safe command outputs are stable > groups list 1`] = `
   helix          Helix editor configuration, including optional custom Steel tooling.
   kdl            KDL formatter configuration used by editor and tooling workflows.
   lazygit        Lazygit terminal UI configuration for Git workflows.
+  monosecret     Declarative secrets via Monosecret + 1Password. Replaces ~/.env.dotfiles.
   nix            Nix flake, nix-darwin, and home-manager configuration.
   nushell        Nushell configuration and generated vendor autoload integrations.
   pnpm           Managed global pnpm manifest and lockfile sync.
   scripts        Bootstrap and maintenance scripts used throughout setup and CI.
-  secretspec     Declarative secrets via SecretSpec + 1Password. Replaces ~/.env.dotfiles.
   shell          Shared shell environment configuration and common aliases.
   yazi           Yazi terminal file manager configuration.
   zed            Zed editor configuration.

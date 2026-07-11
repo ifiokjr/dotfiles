@@ -111,7 +111,7 @@ pnpm_auto_activate
 fvm-auto-activate
 # Secrets
 use modules/secrets.nu [ssr, ssload]
-alias ss = secretspec -f $"($env.HOME)/secretspec.toml"
+alias ss = monosecret -f $"($env.HOME)/monosecret.toml" --reason "dotfiles secret management"
 # General aliases
 # Reload shell
 alias s = exec nu

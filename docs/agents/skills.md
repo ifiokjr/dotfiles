@@ -15,7 +15,7 @@ Current dotfiles-managed skills:
 
 ## Available Skills
 
-- `dotfiles-secretspec`: dotfiles-specific SecretSpec + 1Password workflow. Path: `~/.agents/skills/dotfiles-secretspec/SKILL.md`
+- `dotfiles`: dotfiles-specific Monosecret + 1Password workflow. Path: `~/.agents/skills/dotfiles/SKILL.md`
 - `backblaze-upload`: upload files to Backblaze B2 and generate links. Path: `/Users/ifiokjr/.codex/skills/backblaze-upload/SKILL.md`
 - `figma`: use Figma MCP for node context/screenshots/variables/design-to-code. Path: `/Users/ifiokjr/.codex/skills/figma/SKILL.md`
 - `gh-address-comments`: address PR comments via `gh`. Path: `/Users/ifiokjr/.codex/skills/gh-address-comments/SKILL.md`

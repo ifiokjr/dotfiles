@@ -27,7 +27,7 @@ All dependencies are resolved via JSR (Deno's package registry) with integrity h
 
 2. **Integrity pins.** `deno.lock` pins every JSR module to a SHA-256 integrity hash. Tampering with any dependency would cause a lockfile mismatch.
 
-3. **Small attack surface.** The CLI shells out to existing scripts (tuckr, nushell, secretspec) using `Deno.Command`. It does not accept arbitrary input over the network.
+3. **Small attack surface.** The CLI shells out to existing scripts (tuckr, nushell, monosecret) using `Deno.Command`. It does not accept arbitrary input over the network.
 
 4. **No known CVEs** for any dependency. The Deno runtime CVE-2025-61787 (Windows batch file command injection) is fixed in Deno >= 2.2.15; our runtime is 2.8.0.
 

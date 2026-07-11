@@ -1,6 +1,6 @@
-# secrets.nu — SecretSpec + 1Password secret injection
+# secrets.nu — Monosecret + 1Password secret injection
 #
-# Secrets are declared in ~/secretspec.toml and resolved at runtime from a
+# Secrets are declared in ~/monosecret.toml and resolved at runtime from a
 # 1Password vault. Never written to disk in plaintext.
 #
 # Usage:
@@ -10,22 +10,23 @@
 # Alias expands before Nushell's parser, so flags pass through correctly.
 #   ssr mc step:publish-release --from-ref=HEAD
 #   ssr codex --profile mimo
-export alias ssr = secretspec run -f $"($env.HOME)/secretspec.toml" --
+export alias ssr = monosecret -f $"($env.HOME)/monosecret.toml" --reason "dotfiles secret injection" run --
+
 # Load all declared secrets into the current Nushell session.
 # Prefer `ssr <command>` unless you intentionally want secrets resident in the shell.
 export def --env ssload [] {
-    let secretspec_file = $"($env.HOME)/secretspec.toml"
-    if not ($secretspec_file | path exists) {
-        error make {msg: $"ssload: missing ($secretspec_file)"}
+    let monosecret_file = $"($env.HOME)/monosecret.toml"
+    if not ($monosecret_file | path exists) {
+        error make {msg: $"ssload: missing ($monosecret_file)"}
     }
     let keys = (
-        open $secretspec_file | get profiles.default | columns | where {|key| $key != "defaults" }
+        open $monosecret_file | get profiles.default | columns | where {|key| $key != "defaults" }
     )
     if ($keys | is-empty) {
-        error make {msg: $"ssload: no secrets found in ($secretspec_file)"}
+        error make {msg: $"ssload: no secrets found in ($monosecret_file)"}
     }
     let env_vars = (
-        ^secretspec run -f $secretspec_file -- env | lines | each { |line|
+        ^monosecret -f $monosecret_file --reason "dotfiles shell secret load" run -- env | lines | each { |line|
             let idx = $line | str index-of "="
             if $idx == -1 { return null }
 

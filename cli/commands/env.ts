@@ -3,7 +3,7 @@
  *
  * Provides subcommands for managing environment setup and secrets.
  * `env setup` runs the setup:env script.
- * `env secrets` delegates to SecretSpec CLI for checking, running,
+ * `env secrets` delegates to Monosecret CLI for checking, running,
  * and managing secrets.
  */
 
@@ -20,7 +20,7 @@ export const envCommand = new Command()
 	.command(
 		"setup",
 		new Command()
-			.description("Manage the ~/.env.dotfiles fallback (SecretSpec)")
+			.description("Manage the ~/.env.dotfiles fallback (Monosecret)")
 			.action(async () => {
 				const dotfilesDir = await resolveDotfilesDir();
 				const script = `${dotfilesDir}/Configs/scripts/.local/bin/setup:env`;
@@ -33,7 +33,7 @@ export const envCommand = new Command()
 	.command(
 		"secrets",
 		new Command()
-			.description("Manage secrets via SecretSpec")
+			.description("Manage secrets via Monosecret")
 			.command(
 				"check",
 				new Command()
@@ -41,9 +41,16 @@ export const envCommand = new Command()
 					.action(async () => {
 						const dotfilesDir = await resolveDotfilesDir();
 						const specFile =
-							`${dotfilesDir}/Configs/secretspec/secretspec.toml`;
+							`${dotfilesDir}/Configs/monosecret/monosecret.toml`;
 						const { code, success } = await runCommand(
-							["secretspec", "check", "-f", specFile],
+							[
+								"monosecret",
+								"-f",
+								specFile,
+								"--reason",
+								"dotfiles env secrets check",
+								"check",
+							],
 							{ cwd: dotfilesDir },
 						);
 						if (!success) {
@@ -67,8 +74,15 @@ export const envCommand = new Command()
 					.action(async (opts, ...command: string[]) => {
 						const dotfilesDir = await resolveDotfilesDir();
 						const specFile =
-							`${dotfilesDir}/Configs/secretspec/secretspec.toml`;
-						const args = ["secretspec", "run", "-f", specFile];
+							`${dotfilesDir}/Configs/monosecret/monosecret.toml`;
+						const args = [
+							"monosecret",
+							"-f",
+							specFile,
+							"--reason",
+							"dotfiles env secrets run",
+							"run",
+						];
 						if (opts.include?.length) {
 							for (const inc of opts.include) {
 								args.push("--include", inc);
@@ -90,9 +104,17 @@ export const envCommand = new Command()
 					.action(async (_opts, name: string) => {
 						const dotfilesDir = await resolveDotfilesDir();
 						const specFile =
-							`${dotfilesDir}/Configs/secretspec/secretspec.toml`;
+							`${dotfilesDir}/Configs/monosecret/monosecret.toml`;
 						const { code, success } = await runCommand(
-							["secretspec", "get", "-f", specFile, name],
+							[
+								"monosecret",
+								"-f",
+								specFile,
+								"--reason",
+								"dotfiles env secrets get",
+								"get",
+								name,
+							],
 							{ cwd: dotfilesDir },
 						);
 						if (!success) Deno.exit(code);
@@ -106,9 +128,17 @@ export const envCommand = new Command()
 					.action(async (_opts, name: string) => {
 						const dotfilesDir = await resolveDotfilesDir();
 						const specFile =
-							`${dotfilesDir}/Configs/secretspec/secretspec.toml`;
+							`${dotfilesDir}/Configs/monosecret/monosecret.toml`;
 						const { code, success } = await runCommand(
-							["secretspec", "set", "-f", specFile, name],
+							[
+								"monosecret",
+								"-f",
+								specFile,
+								"--reason",
+								"dotfiles env secrets set",
+								"set",
+								name,
+							],
 							{ cwd: dotfilesDir },
 						);
 						if (!success) Deno.exit(code);

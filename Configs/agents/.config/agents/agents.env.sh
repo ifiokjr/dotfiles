@@ -24,7 +24,7 @@ export OPENCODE_TRUSTED_DIRECTORIES="/Users/ifiokjr/Developer:/Users/ifiokjr/Dev
 # ---------------------------------------------------------------------------
 # OpenAI/Codex Configuration
 # ---------------------------------------------------------------------------
-# API keys are managed by SecretSpec + 1Password; use ssr <command> for lazy injection.
+# API keys are managed by Monosecret + 1Password; use ssr <command> for lazy injection.
 # Codex config typically at ~/.codex/config.json
 
 # ---------------------------------------------------------------------------

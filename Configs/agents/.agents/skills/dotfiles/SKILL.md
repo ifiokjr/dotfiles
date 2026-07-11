@@ -10,12 +10,12 @@ These dotfiles manage a cross-platform (macOS/Linux) Nix-based development envir
 ## Core Rules
 
 1. **Shell is Nushell** — all interactive terminals use Nushell. Write commands in Nushell syntax, not Bash.
-2. **Secrets are NOT ambient** — never assume `GITHUB_TOKEN`, `OPENAI_API_KEY`, etc. exist in the environment. Use the SecretSpec workflow below.
+2. **Secrets are NOT ambient** — never assume `GITHUB_TOKEN`, `OPENAI_API_KEY`, etc. exist in the environment. Use the Monosecret workflow below.
 3. **Prefer aliases** — use the short aliases instead of full commands. They exist for speed and correctness.
 
-## Secrets (SecretSpec + 1Password)
+## Secrets (Monosecret + 1Password)
 
-Secrets live in 1Password, resolved at runtime via [SecretSpec](https://github.com/ifiokjr/secretspec). They are **never** written to disk in plaintext.
+Secrets live in 1Password, resolved at runtime via [Monosecret](https://github.com/ifiokjr/monosecret). They are **never** written to disk in plaintext.
 
 | Mode | Command | When to use |
 |------|---------|-------------|
@@ -23,7 +23,7 @@ Secrets live in 1Password, resolved at runtime via [SecretSpec](https://github.c
 | **Single** | `ss get <NAME>` | Get one secret value (safe for command substitution) |
 | **Session** | `ssload` | Load all secrets into current shell (only for repeated use) |
 
-`ss` is an alias for the `secretspec` CLI using `~/secretspec.toml`.
+`ss` is an alias for the `monosecret` CLI using `~/monosecret.toml`.
 
 **Examples:**
 
@@ -44,7 +44,7 @@ ssload
 - `ssload` is acceptable for interactive sessions but not recommended for automation.
 
 **When a command fails due to missing secrets:**
-If a command fails with auth errors, "permission denied", rate limiting, or missing token errors, it likely needs a secret that isn't in the ambient environment. Fix it by retrying with SecretSpec:
+If a command fails with auth errors, "permission denied", rate limiting, or missing token errors, it likely needs a secret that isn't in the ambient environment. Fix it by retrying with Monosecret:
 
 1. **Try `ssr <command>`** — rerun the failing command with all secrets injected ephemerally. This is the preferred fix.
 2. **Try `ss get <NAME>`** — if you know which secret is missing, fetch it and set it manually.
@@ -84,12 +84,12 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 
 ## Essential Aliases
 
-### SecretSpec
+### Monosecret
 
 | Alias | Command |
 |-------|---------|
-| `ss` | `secretspec -f ~/secretspec.toml` |
-| `ssr` | `secretspec run -f ~/secretspec.toml --` (alias, flags pass through) |
+| `ss` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret management"` |
+| `ssr` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret injection" run --` (alias, flags pass through) |
 | `ssload` | Load all secrets into current Nushell session |
 
 ### Shell / Editor
@@ -189,7 +189,7 @@ See `Configs/nushell/.config/nushell/config.nu` for the full list. Most follow t
 
 - **`Configs/`** — Tuckr config groups, each maps to `~/.config/<group>/` via symlinks
 - **`Configs/nix/`** — Nix flake, `darwin.nix` (macOS), `home.nix` (packages), `machine.nix` (per-machine)
-- **`Configs/secretspec/`** — `secretspec.toml` declaring all secrets and their 1Password paths
+- **`Configs/monosecret/`** — `monosecret.toml` declaring all secrets and their 1Password paths
 - **`Configs/nushell/`** — Nushell config, aliases, env, modules (including `secrets.nu`)
 - **`Configs/shell/`** — POSIX shell env (bash/zsh), aliases
 - **`Hooks/`** — Post-deploy scripts per config group (e.g. `Hooks/nix/post.sh` rebuilds)

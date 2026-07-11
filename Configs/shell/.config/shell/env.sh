@@ -163,7 +163,7 @@ alias ds='devenv shell'
 alias de='devenv up'
 
 # ---------------------------------------------------------------------------
-# Secrets — 1Password-backed via SecretSpec, no plaintext on disk
+# Secrets — 1Password-backed via Monosecret, no plaintext on disk
 # ---------------------------------------------------------------------------
 if [ -f "$HOME/.config/shell/secrets.sh" ]; then
 	# shellcheck disable=SC1091
@@ -174,7 +174,7 @@ fi
 # Codex API Keys
 # ---------------------------------------------------------------------------
 # Load API keys for custom Codex providers (Xiaomi MiMo, Ollama Cloud)
-# Primary source: 1Password via secretspec (use `ssr codex ...`)
+# Primary source: 1Password via Monosecret (use `ssr codex ...`)
 # Fallback: ~/.codex/secrets.env for offline use
 if [ -f ~/.codex/secrets.env ]; then
 	XIAOMI_MIMO_API_KEY=$(grep '^XIAOMI_MIMO_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)

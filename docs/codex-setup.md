@@ -31,7 +31,7 @@ codex --profile cloud-kimi        # Kimi K2.5 via cloud
 
 ## Secrets
 
-API keys are managed via **SecretSpec + 1Password** (not plaintext on disk).
+API keys are managed via **Monosecret + 1Password** (not plaintext on disk).
 
 ```bash
 # Run Codex with secrets injected from 1Password:
@@ -41,7 +41,7 @@ ssr codex --profile mimo
 ssload
 ```
 
-Keys are in `secretspec.toml` → `op://Development/dotfiles` vault (`ai` path):
+Keys are in `monosecret.toml` → `op://Development/dotfiles` vault (`ai` path):
 
 - `XIAOMI_MIMO_API_KEY`
 - `OLLAMA_CLOUD_API_KEY`

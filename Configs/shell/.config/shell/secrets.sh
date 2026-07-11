@@ -1,54 +1,32 @@
 # shellcheck shell=sh
 # ---------------------------------------------------------------------------
-# SecretSpec + 1Password secret injection
+# Monosecret + 1Password secret injection
 # ---------------------------------------------------------------------------
-# Secrets are declared in ~/secretspec.toml and resolved at runtime from a
+# Secrets are declared in ~/monosecret.toml and resolved at runtime from a
 # 1Password vault. Never written to disk in plaintext.
 #
 # Usage:
-#   ss <args>        Run the SecretSpec CLI with ~/secretspec.toml
+#   ss <args>        Run the Monosecret CLI with ~/monosecret.toml
 #   ssr <command>    Run a command with secrets injected ephemerally
 #   ssload           Load all declared secrets into the current shell session
 # ---------------------------------------------------------------------------
 
 ssr() {
-	secretspec run -f "$HOME/secretspec.toml" -- "$@"
+	monosecret -f "$HOME/monosecret.toml" --reason "dotfiles secret injection" run -- "$@"
 }
 
 ss() {
-	secretspec -f "$HOME/secretspec.toml" "$@"
+	monosecret -f "$HOME/monosecret.toml" --reason "dotfiles secret management" "$@"
 }
 
 ssload() {
-	_ss_file="$HOME/secretspec.toml"
+	_ss_file="$HOME/monosecret.toml"
 	if [ ! -f "$_ss_file" ]; then
 		echo "ssload: missing $_ss_file" >&2
 		return 1
 	fi
-	if ! command -v python3 >/dev/null 2>&1; then
-		echo "ssload: python3 is required to quote secret values safely" >&2
-		return 1
-	fi
 
-	_ss_keys=$(sed -n 's/^\[profiles\.default\.\([A-Za-z_][A-Za-z0-9_]*\)\]$/\1/p' "$_ss_file")
-	if [ -z "$_ss_keys" ]; then
-		echo "ssload: no secrets found in $_ss_file" >&2
-		unset _ss_file _ss_keys
-		return 1
-	fi
-
-	# `secretspec run` resolves every declared secret once. Python runs inside
-	# that environment and emits shell-quoted exports for declared secret keys only.
-	eval "$(
-		SECRETSPEC_DOTFILES_KEYS="$_ss_keys" secretspec run -f "$_ss_file" -- python3 - <<'PY'
-import os
-import shlex
-
-for key in os.environ.get("SECRETSPEC_DOTFILES_KEYS", "").splitlines():
-    value = os.environ.get(key)
-    if value is not None:
-        print(f"export {key}={shlex.quote(value)}")
-PY
-	)"
-	unset _ss_file _ss_keys
+	# `monosecret env` emits shell-quoted exports for declared secret keys only.
+	eval "$(monosecret -f "$_ss_file" --reason "dotfiles shell secret load" env --shell bash)"
+	unset _ss_file
 }

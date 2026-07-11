@@ -312,7 +312,7 @@ vim ~/.config/nushell/config.nu
 
 <br />
 
-Dotfiles secrets are declared in `~/secretspec.toml` and resolved lazily from SecretSpec + 1Password.
+Dotfiles secrets are declared in `~/monosecret.toml` and resolved lazily from Monosecret + 1Password.
 
 ```bash
 ss check          # verify declared secrets
@@ -327,7 +327,7 @@ setup:env             # create/verify the optional fallback file
 setup:env --set-token # store OP_SERVICE_ACCOUNT_TOKEN in that fallback file
 ```
 
-**Note:** The `.env.dotfiles` fallback file is created from `Configs/secretspec/.env.dotfiles.example` when you deploy the `secretspec` group.
+**Note:** The `.env.dotfiles` fallback file is created from `Configs/monosecret/.env.dotfiles.example` when you deploy the `monosecret` group.
 
 ### Removing a Configuration
 
