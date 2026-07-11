@@ -6,7 +6,7 @@ usage() {
 Usage: tuckr:redeploy [--dry-run] [--no-force] [--profile <name>]
 
 Redeploy all Tuckr groups in a consistent order.
-Order: nix first, then all other groups (alphabetical), then late groups (nushell, helix, claude).
+Order: nix first, then all other groups (alphabetical), then late groups (nushell, helix).
 
 Options:
   --dry-run        Print what would happen without changing files
@@ -121,8 +121,8 @@ for group in "${GROUPS[@]}"; do
 done
 
 PRIMARY_GROUPS=("nix")
-LATE_GROUPS=("nushell" "helix" "claude")
-HOOK_GROUPS=("nix" "nushell" "claude")
+LATE_GROUPS=("nushell" "helix")
+HOOK_GROUPS=("nix" "nushell")
 
 # Build ordered list: nix first, then others (alphabetical), then late groups
 ORDERED=()

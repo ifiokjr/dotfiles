@@ -70,8 +70,8 @@ def main [
 
     # Define ordering: nix first, then alphabetical, then late groups
     let primary_groups = ["nix"]
-    let late_groups = ["nushell" "helix" "claude"]
-    let hook_groups = ["nix" "nushell" "claude"]
+    let late_groups = ["nushell" "helix"]
+    let hook_groups = ["nix" "nushell"]
 
     let ordered = (
         ($groups | where { |g| $g in $primary_groups })

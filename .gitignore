@@ -119,7 +119,6 @@ build.gradle.kts
 *.iml
 
 # Deno lock files (skills workspace)
-Configs/claude/.claude/skills/deno.lock
 
 # Temporary files
 *.tmp

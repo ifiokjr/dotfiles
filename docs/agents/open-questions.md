@@ -16,4 +16,4 @@ The `nix` group has a `post_up` hook (`Hooks/nix/post.sh`) that rebuilds the Nix
 
 **Decision:** Version B — allow explicit exceptions for tool-required filenames.
 
-The repository already uses `AGENTS.md` and other tooling-required names. The lowercase-only rule applies to project-authored documentation files; filenames mandated by external tools (e.g., `AGENTS.md`, `CLAUDE.md`, `AGENT.md`) are exempt and should be listed explicitly.
+The repository already uses `AGENTS.md` and other tooling-required names. The lowercase-only rule applies to project-authored documentation files; filenames mandated by external tools (e.g., `AGENTS.md`, `AGENT.md`) are exempt and should be listed explicitly.

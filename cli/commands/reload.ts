@@ -8,7 +8,7 @@
  * type safety, discoverability, and proper flag handling.
  *
  * Groups are deployed in order: nix first, then regular groups alphabetically,
- * then late groups (nushell, helix, claude).
+ * then late groups (nushell, helix).
  */
 
 import { Command } from "@cliffy/command";
@@ -26,13 +26,13 @@ import {
 } from "../lib/config.ts";
 
 /** Groups that have setup/cleanup hooks (tuckr set instead of tuckr add). */
-const HOOK_GROUPS = ["nix", "nushell", "claude"];
+const HOOK_GROUPS = ["nix", "nushell"];
 
 /** Groups processed first regardless of alphabetical order. */
 const PRIMARY_GROUPS = ["nix"];
 
 /** Groups processed last regardless of alphabetical order. */
-const LATE_GROUPS = ["nushell", "helix", "claude"];
+const LATE_GROUPS = ["nushell", "helix"];
 
 /** Platform suffixes used by tuckr for platform-specific groups. */
 const PLATFORM_SUFFIXES = ["_macos", "_linux", "_bsd", "_windows"] as const;

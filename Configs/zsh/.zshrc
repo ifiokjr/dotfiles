@@ -193,7 +193,6 @@ fi
 # Editors
 alias vim='nvim'
 alias n='nvim'
-alias cc='claude --dangerously-skip-permissions'
 alias co='codex --dangerously-bypass-approvals-and-sandbox'
 
 # General
