@@ -110,8 +110,8 @@ $env.config.hooks.env_change.PWD = (
 pnpm_auto_activate
 fvm-auto-activate
 # Secrets
-use modules/secrets.nu [ssr, ssload]
-alias ss = monosecret -f $"($env.HOME)/monosecret.toml" --reason "dotfiles secret management"
+use modules/secrets.nu [msr, msload]
+alias ms = monosecret -f $"($env.HOME)/monosecret.toml" --reason "dotfiles secret management"
 # General aliases
 # Reload shell
 alias s = exec nu

@@ -315,9 +315,9 @@ vim ~/.config/nushell/config.nu
 Dotfiles secrets are declared in `~/monosecret.toml` and resolved lazily from Monosecret + 1Password.
 
 ```bash
-ss check          # verify declared secrets
-ssr <command>     # run a command with secrets injected ephemerally
-ssload            # load all declared secrets into the current shell session
+ms check          # verify declared secrets
+msr <command>     # run a command with secrets injected ephemerally
+msload            # load all declared secrets into the current shell session
 ```
 
 `~/.env.dotfiles` is no longer the primary secret store. It is only an optional fallback for `OP_SERVICE_ACCOUNT_TOKEN` when keyring/keychain is unavailable or being reset.

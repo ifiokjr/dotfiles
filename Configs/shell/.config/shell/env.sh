@@ -174,7 +174,7 @@ fi
 # Codex API Keys
 # ---------------------------------------------------------------------------
 # Load API keys for custom Codex providers (Xiaomi MiMo, Ollama Cloud)
-# Primary source: 1Password via Monosecret (use `ssr codex ...`)
+# Primary source: 1Password via Monosecret (use `msr codex ...`)
 # Fallback: ~/.codex/secrets.env for offline use
 if [ -f ~/.codex/secrets.env ]; then
 	XIAOMI_MIMO_API_KEY=$(grep '^XIAOMI_MIMO_API_KEY=' ~/.codex/secrets.env | cut -d'=' -f2)

@@ -191,7 +191,7 @@ $env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path 
 # Codex API Keys
 # ---------------------------------------------------------------------------
 # Load API keys for custom Codex providers (Xiaomi MiMo, Ollama Cloud)
-# Primary source: 1Password via Monosecret (use `ssr codex ...`)
+# Primary source: 1Password via Monosecret (use `msr codex ...`)
 # Fallback: ~/.codex/secrets.env for offline use
 if ("~/.codex/secrets.env" | path exists) {
     let secrets = (

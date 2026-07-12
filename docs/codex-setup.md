@@ -35,10 +35,10 @@ API keys are managed via **Monosecret + 1Password** (not plaintext on disk).
 
 ```bash
 # Run Codex with secrets injected from 1Password:
-ssr codex --profile mimo
+msr codex --profile mimo
 
 # Or load all secrets into shell first:
-ssload
+msload
 ```
 
 Keys are in `monosecret.toml` → `op://Development/dotfiles` vault (`ai` path):

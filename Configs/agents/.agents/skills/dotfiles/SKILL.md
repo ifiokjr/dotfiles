@@ -15,42 +15,63 @@ These dotfiles manage a cross-platform (macOS/Linux) Nix-based development envir
 
 ## Secrets (Monosecret + 1Password)
 
-Secrets live in 1Password, resolved at runtime via [Monosecret](https://github.com/ifiokjr/monosecret). They are **never** written to disk in plaintext.
+Secrets are declared in `~/monosecret.toml` and resolved at runtime via [Monosecret](https://github.com/ifiokjr/monosecret). The default profile uses 1Password providers; secret values must never be committed or written to ordinary plaintext files.
+
+The dotfiles provide three Monosecret shortcuts. Each pins the managed `~/monosecret.toml` file and supplies an audit reason:
 
 | Mode | Command | When to use |
 |------|---------|-------------|
-| **Preferred** | `ssr <command>` | Run one command with all secrets injected ephemerally |
-| **Single** | `ss get <NAME>` | Get one secret value (safe for command substitution) |
-| **Session** | `ssload` | Load all secrets into current shell (only for repeated use) |
+| **Manage** | `ms <command>` | Run Monosecret commands such as `check`, `get`, `set`, and `audit` |
+| **Preferred** | `msr <command>` | Inject all resolved secrets into one child command, then discard them |
+| **Session** | `msload` | Load all declared secrets into the current shell for repeated interactive use |
 
-`ss` is an alias for the `monosecret` CLI using `~/monosecret.toml`.
+### Common workflows
 
-**Examples:**
+```nu
+# Verify required secrets can be resolved. Missing values may prompt for input.
+ms check
 
-```sh
-# Run gh with secrets
-ssr gh pr list
+# Run one command with secrets scoped to that child process.
+msr gh pr list
+msr cargo publish
 
-# Get a single token for scripts
-my_token=$(ss get GITHUB_TOKEN)
+# Resolve one value only when an API requires the raw value.
+let github_token = (ms get GITHUB_TOKEN)
 
-# Load all secrets for an interactive session
-ssload
+# Set a value interactively so it does not appear in shell history.
+ms set GITHUB_TOKEN
+
+# Review local secret-access records without resolving values.
+ms audit
+
+# Intentionally load every declared secret into this interactive shell.
+msload
 ```
 
-**Security:**
-- Prefer `ssr` — secrets stay scoped to a child process.
-- Never print full secret values in logs or chat.
-- `ssload` is acceptable for interactive sessions but not recommended for automation.
+`msr` should receive a real executable, not a shell-only alias. For example, use `msr devenv shell cargo test` rather than `msr ds cargo test`.
 
-**When a command fails due to missing secrets:**
-If a command fails with auth errors, "permission denied", rate limiting, or missing token errors, it likely needs a secret that isn't in the ambient environment. Fix it by retrying with Monosecret:
+### Provider bootstrap
 
-1. **Try `ssr <command>`** — rerun the failing command with all secrets injected ephemerally. This is the preferred fix.
-2. **Try `ss get <NAME>`** — if you know which secret is missing, fetch it and set it manually.
-3. **Try `ssload`** — load all secrets into the current session, then retry the command.
+`OP_SERVICE_ACCOUNT_TOKEN` bootstraps automated 1Password access. Monosecret can resolve it from the system keyring, interactive 1Password access, or the mode-600 `~/.env.dotfiles` fallback. Prefer the keyring. Use `setup:env --set-token` only when the keyring is unavailable or being reset; no other secrets belong in that fallback file.
 
-Example: if `gh pr list` fails with "authentication required", run `ssr gh pr list` instead.
+### Security rules
+
+- Prefer `msr` because secrets exist only in the child process.
+- Use `msload` only for an intentional interactive session; it leaves secrets resident in that shell.
+- `ms get <NAME>` writes the raw value to stdout. Never print, log, or paste its output into chat.
+- Run `ms set <NAME>` without a value so Monosecret prompts securely instead of recording the value in shell history.
+- Never assume secrets are ambient, and never copy resolved values into repository files.
+
+### Troubleshooting
+
+If a command fails with authentication, permission, or rate-limit errors:
+
+1. Retry it with `msr <command>`.
+2. Run `ms check` to identify unresolved required secrets.
+3. If 1Password bootstrap fails, restore keyring access or use `setup:env --set-token` for the service-account-token fallback.
+4. Use `msload` only when several interactive commands genuinely need the same environment.
+
+Example: if `gh pr list` reports an authentication error, retry with `msr gh pr list`.
 
 ## Devenv (Development Environment)
 
@@ -62,7 +83,7 @@ Projects using [devenv](https://devenv.sh) get a managed shell with all dependen
 | `de` | `devenv up` | Start the project's development services |
 
 **Always prefix with `ds` when you need devenv:** `ds cargo test`, `ds pnpm build`, etc.
-When commands need secrets AND devenv, combine: `ssr ds cargo test` or `ssload` then `ds cargo test`.
+When commands need secrets and devenv, use the executable form `msr devenv shell cargo test`, or run `msload` before an interactive `ds cargo test` session.
 
 ## Dotfiles CLI (`dot` / `dotfiles`)
 
@@ -88,9 +109,9 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 
 | Alias | Command |
 |-------|---------|
-| `ss` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret management"` |
-| `ssr` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret injection" run --` (alias, flags pass through) |
-| `ssload` | Load all secrets into current Nushell session |
+| `ms` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret management"` |
+| `msr` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret injection" run --` (alias, flags pass through) |
+| `msload` | Load all secrets into the current shell session |
 
 ### Shell / Editor
 
