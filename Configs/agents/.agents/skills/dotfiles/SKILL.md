@@ -93,7 +93,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 |---------|---------|
 | `dot setup` | Initial setup — install Nix, clone repo, deploy groups |
 | `dot rebuild` | Rebuild system config (nix-darwin switch or home-manager switch) |
-| `dot reload` | Re-deploy tuckr symlinks without rebuilding |
+| `dot reload` | Re-deploy Tuckr symlinks without rebuilding Nix or changing the tracked `flake.lock` |
 | `dot doctor` | Run preflight checks without changing the machine |
 | `dot groups` | Manage config groups — list, deploy, undeploy |
 | `dot machine` | Inspect/modify `machine.nix` (hostname, lite mode, presets) |

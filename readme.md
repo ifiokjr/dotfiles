@@ -162,7 +162,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Manage the optional `.env.dotfiles` fallback for `OP_SERVICE_ACCOUNT_TOKEN`
 - `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
-- `tuckr:reload` - Non-destructive reload of all tuckr groups (shows status, re-applies missing/changed symlinks)
+- `tuckr:reload` - Non-destructive reload of all tuckr groups; the Nix group is symlinks-only, so packages and the tracked `flake.lock` remain unchanged
 - `tuckr:redeploy` - Full forced redeploy of all tuckr groups in consistent order (nix first, then alphabetical, then late groups)
 - `commands` - List all custom scripts with descriptions
 - `test_scripts` - Run the test suite for nushell scripts

@@ -1,7 +1,8 @@
 #!/usr/bin/env nu
 # Reload tuckr configuration groups (non-destructive)
 # Shows current status and re-applies any missing or changed symlinks.
-# Uses `tuckr add` for regular groups and `tuckr set` for hook groups.
+# The nix group always uses `tuckr add` so reload cannot run its rebuild hook,
+# update packages, or modify the tracked flake.lock.
 
 use nu_modules/print_utils.nu *
 use nu_modules/platform.nu
@@ -71,7 +72,9 @@ def main [
     # Define ordering: nix first, then alphabetical, then late groups
     let primary_groups = ["nix"]
     let late_groups = ["nushell" "helix"]
-    let hook_groups = ["nix" "nushell"]
+    # Only hooks that are safe during a symlink reload belong here. The nix
+    # post-hook rebuilds the package closure and must remain an explicit action.
+    let hook_groups = ["nushell"]
 
     let ordered = (
         ($groups | where { |g| $g in $primary_groups })

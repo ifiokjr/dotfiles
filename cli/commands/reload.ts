@@ -1,8 +1,9 @@
 /**
  * `dotfiles reload` — Reload tuckr configuration groups
  *
- * Discovers all config groups, filters by platform, and re-applies symlinks
- * using `tuckr add` (regular groups) or `tuckr set` (hook groups).
+ * Discovers all config groups, filters by platform, and re-applies symlinks.
+ * The nix group always uses `tuckr add`, preventing its post-hook from
+ * rebuilding packages or modifying the tracked flake.lock.
  *
  * Reimplements the nushell tuckr:reload script natively in TypeScript for
  * type safety, discoverability, and proper flag handling.
@@ -25,8 +26,8 @@ import {
 	runCommand,
 } from "../lib/config.ts";
 
-/** Groups that have setup/cleanup hooks (tuckr set instead of tuckr add). */
-const HOOK_GROUPS = ["nix", "nushell"];
+/** Groups whose hooks are safe to run during a symlink-only reload. */
+const RELOAD_HOOK_GROUPS = ["nushell"];
 
 /** Groups processed first regardless of alphabetical order. */
 const PRIMARY_GROUPS = ["nix"];
@@ -61,9 +62,9 @@ function matchesPlatform(group: string): boolean {
 	return group.endsWith(suffix);
 }
 
-/** Check if a group has setup/cleanup hooks. */
-function isHookGroup(group: string): boolean {
-	return HOOK_GROUPS.includes(group);
+/** Select a reload-safe Tuckr operation for a group. */
+export function reloadSubcommand(group: string): "add" | "set" {
+	return RELOAD_HOOK_GROUPS.includes(group) ? "set" : "add";
 }
 
 /**
@@ -176,7 +177,7 @@ export const reloadCommand = new Command()
 
 		// Deploy each group with the appropriate tuckr subcommand
 		for (const group of ordered) {
-			const subcommand = isHookGroup(group) ? "set" : "add";
+			const subcommand = reloadSubcommand(group);
 			const fullArgs = ["tuckr", subcommand, ...tuckrArgs, group];
 
 			if (opts.dryRun) {
@@ -184,7 +185,9 @@ export const reloadCommand = new Command()
 					`[dry-run] ${subcommand} ${tuckrArgs.join(" ")} ${group}`,
 				);
 			} else {
-				const label = isHookGroup(group) ? "with hooks" : "symlinks only";
+				const label = subcommand === "set"
+					? "with reload-safe hooks"
+					: "symlinks only";
 				printInfo(`Reloading group: ${group} — ${label}...`);
 
 				const { code, success } = await runCommand(fullArgs, {
