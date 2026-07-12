@@ -1,0 +1,2 @@
+description = "Codex profiles and idempotent global multi-agent limits."
+presets = ["dev", "workstation"]

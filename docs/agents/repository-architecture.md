@@ -28,6 +28,7 @@
 
 ## Active Hooks
 
+- `Hooks/codex/post.sh`: merge managed multi-agent limits and provider profiles into the app-managed Codex config.
 - `Hooks/nix/post.sh`: rebuild system config after Nix deployment.
 - `Hooks/nushell/post.sh`: generate vendor autoload and configure shell behavior.
 - `Hooks/pnpm/post.sh`: sync managed pnpm global manifests and install global packages.

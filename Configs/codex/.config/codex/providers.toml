@@ -11,7 +11,8 @@
 #   codex --profile ollama-deepseek # Local DeepSeek R1
 #   codex --profile cloud-kimi      # Kimi K2.5 via Ollama Cloud
 #
-# API keys are loaded from ~/.codex/secrets.env (not tracked in git)
+# API keys are normally injected from 1Password with `ssr codex`.
+# ~/.codex/secrets.env remains an optional untracked fallback.
 
 # ============================================================================
 # Custom Providers
