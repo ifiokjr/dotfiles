@@ -17,13 +17,13 @@ These dotfiles manage a cross-platform (macOS/Linux) Nix-based development envir
 
 Secrets are declared in `~/monosecret.toml` and resolved at runtime via [Monosecret](https://github.com/ifiokjr/monosecret). The default profile uses 1Password providers; secret values must never be committed or written to ordinary plaintext files.
 
-The dotfiles provide three Monosecret shortcuts. Each pins the managed `~/monosecret.toml` file and supplies an audit reason:
+The dotfiles provide three Monosecret shortcuts. Each pins the managed `~/monosecret.toml` file. `ms` uses a general management reason, while `msr` and `msload` require a caller-supplied `--reason` that is recorded in Monosecret's audit log:
 
 | Mode | Command | When to use |
 |------|---------|-------------|
 | **Manage** | `ms <command>` | Run Monosecret commands such as `check`, `get`, `set`, and `audit` |
-| **Preferred** | `msr <command>` | Inject all resolved secrets into one child command, then discard them |
-| **Session** | `msload` | Load all declared secrets into the current shell for repeated interactive use |
+| **Preferred** | `msr --reason "<why>" <command>` | Inject all resolved secrets into one child command, then discard them |
+| **Session** | `msload --reason "<why>"` | Load all declared secrets into the current shell for repeated interactive use |
 
 ### Common workflows
 
@@ -32,8 +32,8 @@ The dotfiles provide three Monosecret shortcuts. Each pins the managed `~/monose
 ms check
 
 # Run one command with secrets scoped to that child process.
-msr gh pr list
-msr cargo publish
+msr --reason "list GitHub pull requests" gh pr list
+msr --reason "publish the current crate" cargo publish
 
 # Resolve one value only when an API requires the raw value.
 let github_token = (ms get GITHUB_TOKEN)
@@ -45,10 +45,10 @@ ms set GITHUB_TOKEN
 ms audit
 
 # Intentionally load every declared secret into this interactive shell.
-msload
+msload --reason "interactive release session"
 ```
 
-`msr` should receive a real executable, not a shell-only alias. For example, use `msr devenv shell cargo test` rather than `msr ds cargo test`.
+Both secret-loading commands reject missing or blank reasons. Use a concise, specific explanation of the operation; never put a secret value in the reason. `msr` should receive a real executable, not a shell-only alias. For example, use `msr --reason "test with project secrets" devenv shell cargo test` rather than passing the `ds` alias.
 
 ### Provider bootstrap
 
@@ -56,8 +56,9 @@ msload
 
 ### Security rules
 
-- Prefer `msr` because secrets exist only in the child process.
-- Use `msload` only for an intentional interactive session; it leaves secrets resident in that shell.
+- Prefer `msr --reason "<why>"` because secrets exist only in the child process.
+- Every reason must describe why access is needed without containing credentials or other secret values.
+- Use `msload --reason "<why>"` only for an intentional interactive session; it leaves secrets resident in that shell.
 - `ms get <NAME>` writes the raw value to stdout. Never print, log, or paste its output into chat.
 - Run `ms set <NAME>` without a value so Monosecret prompts securely instead of recording the value in shell history.
 - Never assume secrets are ambient, and never copy resolved values into repository files.
@@ -66,12 +67,12 @@ msload
 
 If a command fails with authentication, permission, or rate-limit errors:
 
-1. Retry it with `msr <command>`.
+1. Retry it with `msr --reason "<why>" <command>`.
 2. Run `ms check` to identify unresolved required secrets.
 3. If 1Password bootstrap fails, restore keyring access or use `setup:env --set-token` for the service-account-token fallback.
-4. Use `msload` only when several interactive commands genuinely need the same environment.
+4. Use `msload --reason "<why>"` only when several interactive commands genuinely need the same environment.
 
-Example: if `gh pr list` reports an authentication error, retry with `msr gh pr list`.
+Example: if `gh pr list` reports an authentication error, retry with `msr --reason "list GitHub pull requests" gh pr list`.
 
 ## Devenv (Development Environment)
 
@@ -83,7 +84,7 @@ Projects using [devenv](https://devenv.sh) get a managed shell with all dependen
 | `de` | `devenv up` | Start the project's development services |
 
 **Always prefix with `ds` when you need devenv:** `ds cargo test`, `ds pnpm build`, etc.
-When commands need secrets and devenv, use the executable form `msr devenv shell cargo test`, or run `msload` before an interactive `ds cargo test` session.
+When commands need secrets and devenv, use `msr --reason "test with project secrets" devenv shell cargo test`, or run `msload --reason "interactive project test session"` before an interactive `ds cargo test` session.
 
 ## Dotfiles CLI (`dot` / `dotfiles`)
 
@@ -110,8 +111,8 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | Alias | Command |
 |-------|---------|
 | `ms` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret management"` |
-| `msr` | `monosecret -f ~/monosecret.toml --reason "dotfiles secret injection" run --` (alias, flags pass through) |
-| `msload` | Load all secrets into the current shell session |
+| `msr` | Require `--reason "<why>"`, then run one child command through `monosecret run --` |
+| `msload` | Require `--reason "<why>"`, then load all declared secrets into the current shell session |
 
 ### Shell / Editor
 

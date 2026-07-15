@@ -25,6 +25,7 @@ def run_test [name: string, test: closure] {
 
 def main [] {
     let bin_dir = ($env.FILE_PWD)
+    let repo_dir = ($bin_dir | path dirname | path dirname | path dirname | path dirname)
     mut passed = 0
     mut failed = 0
 
@@ -95,6 +96,28 @@ def main [] {
         }
 
         rm -rf $temp_home
+    }) { $passed += 1 } else { $failed += 1 }
+
+    if (run_test "monosecret: msr and msload require --reason" { ||
+        let module_path = ($repo_dir | path join "Configs/nushell/.config/nushell/modules/secrets.nu")
+        let shell_path = ($repo_dir | path join "Configs/shell/.config/shell/secrets.sh")
+        let nushell_commands = [
+            $"use ($module_path) [msr]; msr echo"
+            $"use ($module_path) [msload]; msload"
+        ]
+        for command in $nushell_commands {
+            let result = (^nu --no-config-file -c $command | complete)
+            if $result.exit_code == 0 or not ($result.stderr | str contains "--reason <text> is required") {
+                error make { msg: $"Nushell wrapper did not require --reason: ($result.stderr)" }
+            }
+        }
+
+        for command in ["msr echo" "msload" "msr --reason '   ' echo" "msload --reason '   '"] {
+            let result = (^sh -c $". ($shell_path); ($command)" | complete)
+            if $result.exit_code != 2 or not ($result.stderr | str contains "--reason <text>") {
+                error make { msg: $"POSIX wrapper did not require --reason: ($result.stderr)" }
+            }
+        }
     }) { $passed += 1 } else { $failed += 1 }
 
     print ""

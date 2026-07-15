@@ -46,7 +46,7 @@ def main [
         print ""
         print "Use:"
         print "  ms check          # verify declared secrets"
-        print "  msr <command>     # run a command with secrets injected lazily"
+        print "  msr --reason \"<why>\" <command>  # inject secrets into one command"
         print ""
         print "If you need dotenv fallback for the 1Password service account token:"
         print "  setup:env --set-token"
