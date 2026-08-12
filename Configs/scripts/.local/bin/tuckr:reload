@@ -1,8 +1,8 @@
 #!/usr/bin/env nu
 # Reload tuckr configuration groups (non-destructive)
 # Shows current status and re-applies any missing or changed symlinks.
-# The nix group always uses `tuckr add` so reload cannot run its rebuild hook,
-# update packages, or modify the tracked flake.lock.
+# The nix group always uses `tuckr add --only-files` so reload cannot run its
+# rebuild hook, update packages, or modify the tracked flake.lock.
 
 use nu_modules/print_utils.nu *
 use nu_modules/platform.nu
@@ -107,6 +107,8 @@ def main [
         if $dry_run {
             if (is_hook_group $group) {
                 info $"[dry-run] tuckr set ($tuckr_args | str join ' ') ($group)"
+            } else if $group == "nix" {
+                info $"[dry-run] tuckr add ($tuckr_args | str join ' ') --only-files ($group)"
             } else {
                 info $"[dry-run] tuckr add ($tuckr_args | str join ' ') ($group)"
             }
@@ -114,6 +116,9 @@ def main [
             if (is_hook_group $group) {
                 info $"Reloading group: ($group) — with hooks..."
                 do -i { ^tuckr set ...$tuckr_args $group }
+            } else if $group == "nix" {
+                info $"Reloading group: ($group) — symlinks only..."
+                do -i { ^tuckr add ...$tuckr_args --only-files $group }
             } else {
                 info $"Reloading group: ($group)..."
                 do -i { ^tuckr add ...$tuckr_args $group }

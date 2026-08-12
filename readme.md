@@ -162,7 +162,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 - `install:helix:custom` - Build Helix with Steel plugin support
 - `setup:env` - Manage the optional `.env.dotfiles` fallback for `OP_SERVICE_ACCOUNT_TOKEN`
 - `ci_check` - Run local CI checks before pushing (formatting, shellcheck, nushell, nix)
-- `tuckr:reload` - Non-destructive reload of all tuckr groups; the Nix group is symlinks-only, so packages and the tracked `flake.lock` remain unchanged
+- `tuckr:reload` - Non-destructive reload of all tuckr groups; the Nix group uses `tuckr add --only-files`, so it only reconciles symlinks and leaves packages and the tracked `flake.lock` unchanged
 - `tuckr:redeploy` - Full forced redeploy of all tuckr groups in consistent order (nix first, then alphabetical, then late groups)
 - `commands` - List all custom scripts with descriptions
 - `test_scripts` - Run the test suite for nushell scripts
@@ -261,7 +261,7 @@ curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/refs/heads/main/se
 
 # Deploy core groups
 tuckr set nushell
-tuckr add nix
+tuckr add --only-files nix
 
 # Deploy development tools
 tuckr add dprint direnv git kdl lazygit
@@ -525,7 +525,9 @@ Use:
 tuckr set pnpm
 ```
 
-to install the Tuckr-managed manifests from `~/.config/pnpm-global` into the runtime project at `~/.local/share/pnpm-global` from the committed lockfile. Shell startup adds `~/.local/share/pnpm-global/node_modules/.bin` to PATH, so installed CLI binaries are available globally without using pnpm's special global install mode or putting generated `node_modules` inside the Tuckr group.
+pnpm v11's special global mode is intentionally not used here: every `pnpm add -g` argument gets a generated isolated project and `pnpm install -g` cannot restore packages from a declarative manifest. Instead, this group installs the Tuckr-managed `package.json` and `pnpm-lock.yaml` as a normal pnpm project at `~/.local/share/pnpm-global`. Shell startup adds that project's `node_modules/.bin` to PATH, making its CLIs globally available while retaining one reviewable source of truth.
+
+Sync always uses `pnpm install --frozen-lockfile --prod`; it never falls back to unlocked resolution. Direct dependencies are exact-pinned, transitive dependencies and integrity hashes come from the committed lockfile, approved lifecycle scripts are declared in `pnpm-workspace.yaml#allowBuilds`, and pnpm itself is pinned by the Nix flake.
 
 Use `pnpm:global:add <pkg>`, `pnpm:global:remove <pkg>`, `pnpm:global:update [pkg]`, and `pnpm:global:list` to manage this project intentionally, then commit the resulting `Configs/pnpm/.config/pnpm-global/package.json` and `pnpm-lock.yaml` changes.
 

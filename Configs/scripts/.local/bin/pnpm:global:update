@@ -10,37 +10,8 @@ for _p in "$HOME/.nix-profile/bin" "/run/current-system/sw/bin" "/nix/var/nix/pr
 done
 unset _p
 
-if [ "$#" -gt 0 ]; then
-  pnpm update -L "$@"
-else
-  # Keep automatic rebuild updates from failing on known-bad latest releases.
-  # @earendil-works/pi-coding-agent 0.80.6 currently depends on unpublished
-  # AWS/Smithy package versions, so update it manually once upstream republishes.
-  skip_auto_update=("@earendil-works/pi-coding-agent")
-  update_packages=()
-
-  while IFS= read -r package_name; do
-    skip=false
-    for skipped in "${skip_auto_update[@]}"; do
-      if [ "$package_name" = "$skipped" ]; then
-        skip=true
-        echo "Skipping $package_name during automatic update; latest release has unresolved registry dependencies" >&2
-        break
-      fi
-    done
-
-    if [ "$skip" = false ]; then
-      update_packages+=("$package_name")
-    fi
-  done < <(pnpm pkg get dependencies --json | jq -r 'keys[]')
-
-  if [ "${#update_packages[@]}" -gt 0 ]; then
-    pnpm update -L "${update_packages[@]}"
-  else
-    echo "No pnpm global packages selected for automatic update"
-  fi
-fi
-
+# Keep direct versions exact and only update the committed manifest/lockfile.
+pnpm update --latest --lockfile-only "$@"
 pnpm:global:sync
 
 cat <<'NEXT'

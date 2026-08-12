@@ -20,7 +20,7 @@ for _p in "$HOME/.nix-profile/bin" "/run/current-system/sw/bin" "/nix/var/nix/pr
 done
 unset _p
 
-pnpm add --lockfile-only "$@"
+pnpm add --lockfile-only --save-exact "$@"
 pnpm:global:sync
 
 cat <<'NEXT'
