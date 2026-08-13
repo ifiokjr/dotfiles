@@ -122,18 +122,28 @@ done
 
 cd "$RUNTIME_DIR"
 
-if [ -f pnpm-lock.yaml ]; then
-  if pnpm install --frozen-lockfile --ignore-scripts; then
-    info "Managed pnpm global packages synced"
-    exit 0
-  fi
-
-  warn "pnpm install with frozen lockfile failed; retrying without --frozen-lockfile..."
-fi
-
-if ! pnpm install --ignore-scripts; then
-  fail "Managed pnpm global package install failed"
+if [ ! -f pnpm-lock.yaml ]; then
+  fail "Managed pnpm lockfile is missing; refusing a non-deterministic install"
   exit $?
 fi
 
-info "Managed pnpm global packages synced"
+if ! pnpm install --frozen-lockfile --prod; then
+  fail "Managed pnpm global package install failed with the frozen lockfile"
+  exit $?
+fi
+
+# Repair packages previously installed with scripts disabled. pnpm only runs
+# lifecycle scripts explicitly approved by pnpm-workspace.yaml#allowBuilds.
+if ! pnpm rebuild --pending; then
+  fail "Managed pnpm global package rebuild failed"
+  exit $?
+fi
+
+for command in codex ocx opencode pi playwright-cli; do
+  if [ ! -x "$RUNTIME_BIN/$command" ] || ! "$RUNTIME_BIN/$command" --version >/dev/null; then
+    fail "Managed pnpm CLI failed its smoke test: $command"
+    exit $?
+  fi
+done
+
+info "Managed pnpm global packages synced and verified"

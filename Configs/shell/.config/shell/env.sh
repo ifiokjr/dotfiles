@@ -109,7 +109,7 @@ for _p in "$HOME/.local/bin" \
 	"$HOME/.cargo/bin" \
 	"$HOME/.shorebird/bin" \
 	"${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global/node_modules/.bin" \
-	"$PNPM_HOME" \
+	"$PNPM_HOME/bin" \
 	"$HOME/.local/share/solana/install/active_release/bin" \
 	"$HOME/fvm/default/bin" \
 	"$DENO_INSTALL/bin"; do

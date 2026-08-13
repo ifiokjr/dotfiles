@@ -6,21 +6,18 @@ set -euo pipefail
 
 echo "Setting up AI agents configuration..."
 
+MANAGED_PNPM_BIN="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global/node_modules/.bin"
+if [ -d "$MANAGED_PNPM_BIN" ]; then
+	export PATH="$MANAGED_PNPM_BIN:$PATH"
+fi
+
 # ---------------------------------------------------------------------------
-# Install OCX (OpenCode eXtensions manager) if not present
+# Verify the declaratively managed OCX installation
 # ---------------------------------------------------------------------------
-if ! command -v ocx &>/dev/null; then
-	echo "Installing OCX (OpenCode eXtensions manager)..."
-	# OCX is distributed via npm - prefer pnpm for global installs
-	if command -v pnpm &>/dev/null; then
-		pnpm add -g @kdcokenny/ocx || echo "Warning: Failed to install OCX via pnpm"
-	elif command -v npm &>/dev/null; then
-		npm install -g @kdcokenny/ocx || echo "Warning: Failed to install OCX via npm"
-	else
-		echo "Warning: No Node.js package manager found, skipping OCX installation"
-	fi
+if command -v ocx &>/dev/null; then
+	echo "OCX is installed through the managed pnpm project: $(which ocx)"
 else
-	echo "OCX already installed: $(which ocx)"
+	echo "Warning: OCX is unavailable; run 'pnpm:global:sync' to install it"
 fi
 
 # ---------------------------------------------------------------------------
@@ -39,8 +36,7 @@ if command -v ocx &>/dev/null; then
 	fi
 else
 	echo "Warning: OCX not available, skipping OpenCode plugin installation"
-	echo "To install manually later, run:"
-	echo "  pnpm add -g @kdcokenny/ocx"
+	echo "After running 'pnpm:global:sync', install the plugin with:"
 	echo "  ocx add kdco/worktree --from https://registry.kdco.dev"
 fi
 

@@ -2,8 +2,9 @@
  * `dotfiles reload` — Reload tuckr configuration groups
  *
  * Discovers all config groups, filters by platform, and re-applies symlinks.
- * The nix group always uses `tuckr add`, preventing its post-hook from
- * rebuilding packages or modifying the tracked flake.lock.
+ * The nix group always uses `tuckr add --only-files`, preventing its post-hook
+ * from rebuilding packages or modifying the tracked flake.lock while ensuring
+ * every Nix file is linked by Tuckr.
  *
  * Reimplements the nushell tuckr:reload script natively in TypeScript for
  * type safety, discoverability, and proper flag handling.
@@ -65,6 +66,11 @@ function matchesPlatform(group: string): boolean {
 /** Select a reload-safe Tuckr operation for a group. */
 export function reloadSubcommand(group: string): "add" | "set" {
 	return RELOAD_HOOK_GROUPS.includes(group) ? "set" : "add";
+}
+
+/** Return group-specific flags needed for a symlink-only reload. */
+export function reloadGroupArgs(group: string): string[] {
+	return group === "nix" ? ["--only-files"] : [];
 }
 
 /**
@@ -178,11 +184,13 @@ export const reloadCommand = new Command()
 		// Deploy each group with the appropriate tuckr subcommand
 		for (const group of ordered) {
 			const subcommand = reloadSubcommand(group);
-			const fullArgs = ["tuckr", subcommand, ...tuckrArgs, group];
+			const groupArgs = reloadGroupArgs(group);
+			const allArgs = [...tuckrArgs, ...groupArgs];
+			const fullArgs = ["tuckr", subcommand, ...allArgs, group];
 
 			if (opts.dryRun) {
 				printInfo(
-					`[dry-run] ${subcommand} ${tuckrArgs.join(" ")} ${group}`,
+					`[dry-run] ${subcommand} ${allArgs.join(" ")} ${group}`,
 				);
 			} else {
 				const label = subcommand === "set"

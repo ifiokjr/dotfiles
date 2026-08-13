@@ -133,7 +133,7 @@ let path_prepend = [
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.shorebird/bin"
     $"($env.XDG_DATA_HOME? | default ($env.HOME | path join '.local/share'))/pnpm-global/node_modules/.bin"
-    $env.PNPM_HOME
+    ($env.PNPM_HOME | path join "bin")
     $"($env.HOME)/.local/share/solana/install/active_release/bin"
     $"($env.HOME)/fvm/default/bin"
     $"($env.DENO_INSTALL)/bin"
@@ -183,10 +183,6 @@ if $needs_regen {
 if not ("~/.cache/devenv/hook.nu" | path expand | path exists) {
     "" | save --force ~/.cache/devenv/hook.nu
 }
-# pnpm
-$env.PNPM_HOME = "/Users/ifiokjr/Library/pnpm"
-$env.PATH = ($env.PATH | split row (char esep) | prepend ($env.PNPM_HOME | path join "bin"))
-# pnpm end
 # ---------------------------------------------------------------------------
 # Codex API Keys
 # ---------------------------------------------------------------------------

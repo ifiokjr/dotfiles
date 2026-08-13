@@ -65,7 +65,6 @@ in
       lazygit
       lld
       llvm
-      mise
       neovim
       nixd
       nixfmt
@@ -74,7 +73,6 @@ in
       # the Linux CI sandbox. Keep it Darwin-only until nixpkgs provides a
       # headless/CPU-only variant or the dependency issue is resolved.
       # extra.ollama
-      opencode
       python3
       extra.knope
       extra.mdt
