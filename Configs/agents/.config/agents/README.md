@@ -9,6 +9,7 @@ This directory centralizes configuration for all AI coding agents and tools.
 | **OpenCode** | `~/.config/opencode/` | Universal AI agent with multi-model support |
 | **Pi**       | `~/.pi/agent/`        | AI-powered development environment          |
 | **Codex**    | `~/.codex/`           | OpenAI's Codex CLI tool                     |
+| **Zed**      | `~/.config/zed/`      | AI-powered code editor with agent panel     |
 
 ## Configuration Files
 
@@ -28,6 +29,19 @@ OpenCode-specific configuration:
 - Trusted directory list
 - Default model/provider settings
 - UI confirmation preferences
+
+### `AGENTS.md`
+
+The canonical global agent instructions file. Every harness's global instruction file is a symlink to this file, so one edit updates all of them:
+
+| Harness      | Global Instructions Location   |
+| ------------ | ------------------------------ |
+| **Pi**       | `~/.pi/agent/AGENTS.md`        |
+| **Codex**    | `~/.codex/AGENTS.md`           |
+| **Zed**      | `~/.config/zed/AGENTS.md`      |
+| **OpenCode** | `~/.config/opencode/AGENTS.md` |
+
+Edit the canonical file only — the harness locations are symlinks to it.
 
 ## Security Considerations
 
@@ -76,8 +90,9 @@ When adding a new AI tool:
 1. Create its config directory under `.config/<tool>/`
 2. Add any environment variables to `agents.env.sh`
 3. For OpenCode plugins, add installation to `Hooks/agents/post.sh`
-4. Document the tool in this README
-5. Update the table above
+4. To give it the global agent instructions, add a symlink at `Configs/agents/<harness-path>/<file>` pointing to `../.config/agents/AGENTS.md` (relative), using the harness's global file name and location
+5. Document the tool in this README
+6. Update the table above
 
 ## Related
 

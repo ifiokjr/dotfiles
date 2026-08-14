@@ -6,6 +6,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
 
 - Package manager/runtime: `nix` (use `nix profile add`; avoid `nix profile install`).
 - Shared/global agent skills that should survive across machines belong in `Configs/agents/.agents/skills/<skill-name>` and are deployed to `~/.agents/skills/<skill-name>` by the `agents` Tuckr group. Do not leave reusable skills only in the local `~/.agents/skills` directory.
+- The global agent instructions file lives at `Configs/agents/.config/agents/AGENTS.md` and is symlinked to every harness's global location (`~/.pi/agent/AGENTS.md`, `~/.codex/AGENTS.md`, `~/.config/zed/AGENTS.md`, `~/.config/opencode/AGENTS.md`). Edit the canonical file only, never the symlinks.
 - Non-standard verification commands:
   - `dprint check --config Configs/dprint/dprint.json`
   - `shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh`
