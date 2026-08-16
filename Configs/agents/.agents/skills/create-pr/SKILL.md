@@ -49,12 +49,9 @@ Briefly describe how the PR solves it:
 - Key areas or files changed
 - Notable trade-offs or follow-ups
 
-### 3. Validation — only what's specific to this PR
+### 3. No Testing or Validation section
 
-Standard checks are assumed — if the PR passes CI, that's good enough. Don't pad the description with generic validation:
-
-- Don't list routine checks like linting, formatting, or the build — every PR runs those
-- Only mention validation specific to this PR: e.g. "the full test suite was run and passes" when tests were updated, or profiling, benchmarks, or manual verification you performed
+Never include `## Testing` or `## Validation` sections — for projects with CI and workflows set up, it's redundant. The validation happens in CI; it doesn't need to be repeated in the description. Unless the user explicitly asks you to specify what was tested and how you validated the code, don't include it — just explain what you did in Implementation.
 
 ## Attribution footer
 
@@ -73,6 +70,6 @@ Fill in your real details — the harness (e.g. pi, codex), the model you are ru
 - [ ] Title is a concise, human-readable conventional commit message (with `!` for breaking changes)
 - [ ] Description opens with the reason the PR was created — a problem, not an inventory of changes
 - [ ] Implementation details come after the why
-- [ ] Validation mentions only PR-specific checks; CI passing covers the rest
+- [ ] No Testing/Validation section (CI covers it) unless the user explicitly asked
 - [ ] Attribution footer: on behalf of Ifiok Jr. (@ifiokjr), harness, model, thinking level
 - [ ] No generic filler like "This PR fixes stuff"
