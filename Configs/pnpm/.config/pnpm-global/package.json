@@ -3,10 +3,10 @@
 	"type": "module",
 	"private": true,
 	"dependencies": {
-		"@earendil-works/pi-coding-agent": "0.84.1",
+		"@earendil-works/pi-coding-agent": "0.84.2",
 		"@openai/codex": "0.147.0",
 		"@playwright/cli": "0.1.18",
 		"ocx": "2.0.14",
-		"opencode-ai": "1.18.16"
+		"opencode-ai": "1.18.18"
 	}
 }
