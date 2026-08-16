@@ -3,6 +3,14 @@
 # Shell configuration
 $env.config = {
     show_banner: false
+    # Don't print an error when an external command is killed by a signal
+    # (e.g. Ctrl+C to interrupt `ollama run`). The command still gets the
+    # signal and is terminated; this only silences the redundant
+    # "terminated by SIGINT (2)" noise at the REPL prompt.
+    display_errors: { termination_signal: false }
+    # Render all errors as single-line messages instead of the fancy
+    # multi-line snippet view. See `$env.config.error_style`.
+    error_style: "short"
     completions: {
         case_sensitive: false
         quick: true
@@ -58,6 +66,11 @@ $env.config = {
                     $env.DIRSTACK = ([$dir] | append ($stack | where { $in != $dir }) | first 10)
                 }
             ]
+        }
+        # Replace the default "command not found" parser error with a short,
+        # human-readable message (interactive REPL only).
+        command_not_found: { |cmd_name|
+            $"`($cmd_name)` wasn't found — check the spelling or install it"
         }
     }
 }
