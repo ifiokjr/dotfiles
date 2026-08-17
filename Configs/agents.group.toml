@@ -1,3 +1,3 @@
-description = "AI agent configurations and shared skills/extensions. Manages ~/.config/agents/, ~/.config/opencode/, and ~/.agents/ (skills, extensions)."
+description = "AI agent configurations and shared skills/extensions. Manages ~/.config/agents/, ~/.config/opencode/, ~/.agents/ (skills, extensions), and the global AGENTS.md symlinked across pi, codex, zed, and opencode."
 depends_on = ["pnpm"]
 presets = ["dev", "workstation"]
