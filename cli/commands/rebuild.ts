@@ -21,7 +21,14 @@ import {
 	resolveNixConfigDir,
 	runCommand,
 } from "../lib/config.ts";
+import { findManagedSkillConflicts } from "../lib/managed_skills.ts";
 import {
+	MATT_POCOCK_SOURCE,
+	syncMattPocockSkills,
+	verifyMattPocockSkillDeployment,
+} from "../lib/matt_pocock.ts";
+import {
+	PSTACK_SOURCE,
 	syncPstackSkills,
 	verifyPstackSkillDeployment,
 } from "../lib/pstack.ts";
@@ -428,23 +435,40 @@ async function maybeUpdateFlake(context: RebuildContext, opts: RebuildOptions) {
 	}
 
 	await maybeUpdatePnpmGlobals();
-	await updateManagedPstackSkills(context);
+	await updateManagedAgentSkills(context);
 	await maybeUpdateBrew(opts);
 }
 
-async function updateManagedPstackSkills(context: RebuildContext) {
-	printInfo("Updating managed P-Stack agent skills");
+async function updateManagedAgentSkills(context: RebuildContext) {
+	const sources = [PSTACK_SOURCE, MATT_POCOCK_SOURCE];
+	const conflicts = findManagedSkillConflicts(sources);
+
+	if (conflicts.length > 0) {
+		for (const conflict of conflicts) {
+			printError(`Managed agent skill name conflict: ${conflict}`);
+		}
+		Deno.exit(1);
+	}
+
+	printInfo("Updating managed external agent skills");
 
 	try {
-		const result = await syncPstackSkills(context.dotfilesDir);
+		const pstack = await syncPstackSkills(context.dotfilesDir);
 		printSuccess(
-			`Updated ${result.skillCount} P-Stack skills at ${
-				result.resolvedSha.slice(0, 12)
+			`Updated ${pstack.skillCount} P-Stack skills at ${
+				pstack.resolvedSha.slice(0, 12)
+			}`,
+		);
+
+		const mattPocock = await syncMattPocockSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${mattPocock.skillCount} Matt Pocock skills at ${
+				mattPocock.resolvedSha.slice(0, 12)
 			}`,
 		);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		printError(`P-Stack skill update failed: ${message}`);
+		printError(`Managed agent skill update failed: ${message}`);
 		Deno.exit(1);
 	}
 
@@ -455,23 +479,28 @@ async function updateManagedPstackSkills(context: RebuildContext) {
 	const homeDir = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE");
 	if (!homeDir) {
 		printError(
-			"P-Stack deployment verification failed: home directory is unknown",
+			"Managed skill deployment verification failed: home directory is unknown",
 		);
 		Deno.exit(1);
 	}
-	const deploymentIssues = await verifyPstackSkillDeployment(
-		context.dotfilesDir,
-		homeDir,
-	);
+	const deploymentIssues = [
+		...(await verifyPstackSkillDeployment(context.dotfilesDir, homeDir)).map(
+			(issue) => `P-Stack: ${issue}`,
+		),
+		...(await verifyMattPocockSkillDeployment(
+			context.dotfilesDir,
+			homeDir,
+		)).map((issue) => `Matt Pocock: ${issue}`),
+	];
 	if (deploymentIssues.length > 0) {
 		for (const issue of deploymentIssues) {
-			printError(`P-Stack deployment verification failed: ${issue}`);
+			printError(`Managed skill deployment verification failed: ${issue}`);
 		}
 		Deno.exit(1);
 	}
 	if (!deployment.success) {
 		printWarning(
-			`Tuckr reported exit ${deployment.code}, but every managed P-Stack file was deployed and verified`,
+			`Tuckr reported exit ${deployment.code}, but every managed agent skill file was deployed and verified`,
 		);
 	}
 	printSuccess("Updated agent skill symlinks deployed");
@@ -824,7 +853,9 @@ function printPlan(
 
 	printHeader("Rebuild plan");
 	if (opts.update) {
-		console.log("sync P-Stack skills from cursor/plugins and redeploy agents");
+		console.log(
+			"sync managed skills from cursor/plugins and mattpocock/skills, then redeploy agents",
+		);
 	}
 	for (const command of commands) {
 		console.log(formatCommand(command.args));

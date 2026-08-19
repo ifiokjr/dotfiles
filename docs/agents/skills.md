@@ -38,7 +38,27 @@ Managed P-Stack selection, in priority order:
 
 The P-Stack selection comes from [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills). Its resolved source commit and exact directory list live in `Configs/agents/.agents/skills/.pstack-source.json`.
 
-`dot rebuild --update` refreshes all selected directories from the latest P-Stack `main` commit, updates the source manifest, and runs `tuckr add agents` so new or removed skill files are reflected under `~/.agents/skills`. The update is atomic: an incomplete download or missing `SKILL.md` leaves the installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills.
+Managed Matt Pocock selection, in priority order:
+
+1. `diagnosing-bugs`: Path: `Configs/agents/.agents/skills/diagnosing-bugs/SKILL.md`
+2. `writing-for-agents`: Path: `Configs/agents/.agents/skills/writing-for-agents/SKILL.md`
+3. `handoff`: Path: `Configs/agents/.agents/skills/handoff/SKILL.md`
+4. `research`: Path: `Configs/agents/.agents/skills/research/SKILL.md`
+
+This selection comes from [`mattpocock/skills`](https://github.com/mattpocock/skills). Its resolved source commit and exact directory list live in `Configs/agents/.agents/skills/.matt-pocock-source.json`.
+
+`dot rebuild --update` refreshes both managed selections from their latest `main` commits, updates both source manifests, and runs `tuckr add agents` once so new or removed skill files are reflected under `~/.agents/skills`. The Matt Pocock selection also has tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Codex, Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly.
+
+Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before either source is updated, and deployment verification checks every source file through both the shared and Pi paths.
+
+### Coexistence Boundaries
+
+The selected collections have no skill-name collisions. Related skills are intentionally separated by workflow:
+
+- `diagnosing-bugs` owns the end-to-end debugging workflow; P-Stack's `principle-fix-root-causes` and `principle-prove-it-works` are manually invoked guardrails.
+- `writing-for-agents` is for agent-consumed instructions such as `AGENTS.md` and skills; `technical-writing` is for general technical prose.
+- `handoff` writes forward-looking continuation state; `recall` reconstructs historical work from repository evidence.
+- `research` investigates external topics and primary sources; `why` traces design rationale inside a repository and its connected history.
 
 ## Available Skills
 
