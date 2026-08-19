@@ -15,6 +15,16 @@ export const PSTACK_SKILLS = [
 	"principle-boundary-discipline",
 	"technical-writing",
 	"unslop",
+	"architect",
+	"principle-model-the-domain",
+	"principle-minimize-reader-load",
+	"principle-sequence-verifiable-units",
+	"principle-subtract-before-you-add",
+	"interrogate",
+	"why",
+	"create-verification-skill",
+	"show-me-your-work",
+	"principle-make-operations-idempotent",
 ] as const;
 
 interface PstackManifest {

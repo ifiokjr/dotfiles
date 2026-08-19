@@ -25,6 +25,16 @@ Managed P-Stack selection, in priority order:
 8. `principle-boundary-discipline`: Path: `Configs/agents/.agents/skills/principle-boundary-discipline/SKILL.md`
 9. `technical-writing`: Path: `Configs/agents/.agents/skills/technical-writing/SKILL.md`
 10. `unslop`: Path: `Configs/agents/.agents/skills/unslop/SKILL.md`
+11. `architect`: Path: `Configs/agents/.agents/skills/architect/SKILL.md`
+12. `principle-model-the-domain`: Path: `Configs/agents/.agents/skills/principle-model-the-domain/SKILL.md`
+13. `principle-minimize-reader-load`: Path: `Configs/agents/.agents/skills/principle-minimize-reader-load/SKILL.md`
+14. `principle-sequence-verifiable-units`: Path: `Configs/agents/.agents/skills/principle-sequence-verifiable-units/SKILL.md`
+15. `principle-subtract-before-you-add`: Path: `Configs/agents/.agents/skills/principle-subtract-before-you-add/SKILL.md`
+16. `interrogate`: Path: `Configs/agents/.agents/skills/interrogate/SKILL.md`
+17. `why`: Path: `Configs/agents/.agents/skills/why/SKILL.md`
+18. `create-verification-skill`: Path: `Configs/agents/.agents/skills/create-verification-skill/SKILL.md`
+19. `show-me-your-work`: Path: `Configs/agents/.agents/skills/show-me-your-work/SKILL.md`
+20. `principle-make-operations-idempotent`: Path: `Configs/agents/.agents/skills/principle-make-operations-idempotent/SKILL.md`
 
 The P-Stack selection comes from [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills). Its resolved source commit and exact directory list live in `Configs/agents/.agents/skills/.pstack-source.json`.
 
