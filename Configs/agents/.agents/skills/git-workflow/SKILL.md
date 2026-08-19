@@ -1,7 +1,6 @@
 ---
 name: git-workflow
-description: Git workflow assistant for branching, commits, PRs, and conflict resolution. Use when user asks
-  about git strategy, branch management, or PR workflow.
+description: Use whenever work requires Git branches, worktrees, commits, rebases, merges, conflict resolution, or history cleanup.
 ---
 
 # Git Workflow

@@ -1,6 +1,6 @@
 ---
 name: ui-integration-testing
-description: Design, write, review, or debug resilient UI tests for Flutter, Patrol, Playwright, and other app frameworks. Use for testing strategy, integration-test setup, user-flow coverage, selector choices, test boundaries, or reducing brittle UI tests.
+description: Use whenever a project needs UI tests or integration-test setup for Flutter, Patrol, Playwright, React, or another app framework.
 ---
 
 # UI Integration Testing

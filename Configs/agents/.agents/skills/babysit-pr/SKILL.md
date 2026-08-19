@@ -1,8 +1,6 @@
 ---
 name: babysit-pr
-description: Monitor and maintain an open pull request until it merges. Use whenever the user asks to monitor,
-  watch, or babysit a PR, or wants a PR kept up to date, review feedback handled, CI failures fixed, or scope
-  creep stopped.
+description: Use whenever the user asks to watch or maintain an open pull request until it merges or they say stop.
 ---
 
 # Babysit Pull Request

@@ -1,10 +1,6 @@
 ---
 name: devenv
-description: Use devenv as the task runner and development environment when devenv.nix is present in the
-  project. Run scripts via `devenv test` to enter the shell, or `devenv shell <command>` when
-  commands aren't available outside the shell. Prefer devenv scripts over ad-hoc commands. Use when
-  devenv.nix exists, or when the user asks about devenv setup, scripts, processes, or Nix-based
-  dev environments.
+description: Use for every task in a project with devenv.nix, or whenever the user asks about devenv setup, scripts, shells, or processes.
 ---
 
 # devenv Skill

@@ -1,8 +1,6 @@
 ---
 name: create-pr
-description: Create full pull requests with concise, human-readable conventional-commit titles and problem-first
-  descriptions. Use whenever the user asks to file, open, or create a pull request, wants a pull request made
-  for their work, or when completed work is ready for a pull request.
+description: Use whenever the user asks to create, open, or file a pull request.
 ---
 
 # Create Pull Request

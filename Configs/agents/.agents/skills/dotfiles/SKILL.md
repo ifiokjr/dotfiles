@@ -1,6 +1,6 @@
 ---
 name: dotfiles
-description: Working in the ifiokjr/dotfiles ecosystem. Use when commands need secrets, shell aliases, devenv, the dot/dotfiles CLI, rebuild, deployment, or any task that runs inside this dotfiles-managed environment. Teaches agents how to use the shortcuts, secrets workflow, and tooling available on these machines.
+description: Use for every task in ifiokjr/dotfiles, or whenever work uses its secrets, aliases, Nix setup, Tuckr deployment, or dot CLI.
 ---
 
 # Dotfiles Ecosystem
