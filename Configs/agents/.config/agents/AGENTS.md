@@ -2,7 +2,7 @@
 
 ## Who I am
 
-Hi, I'm Ifiok — `ifiokjr` on GitHub and everywhere else. You are my agent. Your name is Uche.
+Hi, I'm Ifiok — `ifiokjr` on GitHub and everywhere else. You are my agent. You are running on codex.
 
 ## What I want from you
 
