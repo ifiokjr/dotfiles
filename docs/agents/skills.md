@@ -47,9 +47,18 @@ Managed Matt Pocock selection, in priority order:
 
 This selection comes from [`mattpocock/skills`](https://github.com/mattpocock/skills). Its resolved source commit and exact directory list live in `Configs/agents/.agents/skills/.matt-pocock-source.json`.
 
-`dot rebuild --update` refreshes both managed selections from their latest `main` commits, updates both source manifests, and runs `tuckr add agents` once so new or removed skill files are reflected under `~/.agents/skills`. The Matt Pocock selection also has tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Codex, Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly.
+Managed Patrol selection:
 
-Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before either source is updated, and deployment verification checks every source file through both the shared and Pi paths.
+1. `patrol-setup`: Path: `Configs/agents/.agents/skills/patrol-setup/SKILL.md`
+2. `patrol-write-test`: Path: `Configs/agents/.agents/skills/patrol-write-test/SKILL.md`
+
+This selection comes from [`leancodepl/patrol`](https://github.com/leancodepl/patrol/tree/master/skills). Its resolved source commit and exact directory list live in `Configs/agents/.agents/skills/.patrol-source.json`.
+
+The local `ui-integration-testing` skill translates behavior-first testing principles into shared strategy for Flutter, Patrol, Playwright, and other UI frameworks. Path: `Configs/agents/.agents/skills/ui-integration-testing/SKILL.md`.
+
+`dot rebuild --update` refreshes all externally managed selections from their configured branches, updates their source manifests, and runs `tuckr add agents` once so new or removed skill files are reflected under `~/.agents/skills`. The Matt Pocock and Patrol selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Codex, Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly.
+
+Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before any source is updated, and deployment verification checks every external source file through its configured shared and compatibility paths.
 
 ### Coexistence Boundaries
 
@@ -59,6 +68,7 @@ The selected collections have no skill-name collisions. Related skills are inten
 - `writing-for-agents` is for agent-consumed instructions such as `AGENTS.md` and skills; `technical-writing` is for general technical prose.
 - `handoff` writes forward-looking continuation state; `recall` reconstructs historical work from repository evidence.
 - `research` investigates external topics and primary sources; `why` traces design rationale inside a repository and its connected history.
+- `ui-integration-testing` chooses the valuable use case, test level, and integration boundary; `patrol-setup` and `patrol-write-test` own Patrol-specific setup and API mechanics.
 
 ## Available Skills
 

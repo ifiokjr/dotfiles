@@ -1,11 +1,16 @@
 import { assertEquals } from "@std/assert";
 import { findManagedSkillConflicts } from "../lib/managed_skills.ts";
 import { MATT_POCOCK_SOURCE } from "../lib/matt_pocock.ts";
+import { PATROL_SOURCE } from "../lib/patrol.ts";
 import { PSTACK_SOURCE } from "../lib/pstack.ts";
 
 Deno.test("managed external selections have no target-name conflicts", () => {
 	assertEquals(
-		findManagedSkillConflicts([PSTACK_SOURCE, MATT_POCOCK_SOURCE]),
+		findManagedSkillConflicts([
+			PSTACK_SOURCE,
+			MATT_POCOCK_SOURCE,
+			PATROL_SOURCE,
+		]),
 		[],
 	);
 });

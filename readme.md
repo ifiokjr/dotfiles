@@ -501,7 +501,7 @@ Use:
 dot rebuild --update
 ```
 
-to update flake inputs (including `ifiokjr-nixpkgs`), refresh `flake.lock`, and sync the selected agent skills from [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills) and [`mattpocock/skills`](https://github.com/mattpocock/skills) before rebuilding. Resolved source commits are recorded in `Configs/agents/.agents/skills/.pstack-source.json` and `Configs/agents/.agents/skills/.matt-pocock-source.json`; selections and coexistence boundaries are documented in [`docs/agents/skills.md`](docs/agents/skills.md).
+to update flake inputs (including `ifiokjr-nixpkgs`), refresh `flake.lock`, and sync the selected agent skills from [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills), [`mattpocock/skills`](https://github.com/mattpocock/skills), and [`leancodepl/patrol`](https://github.com/leancodepl/patrol/tree/master/skills) before rebuilding. Resolved source commits are recorded beside the managed skills in source-specific JSON manifests; selections and coexistence boundaries are documented in [`docs/agents/skills.md`](docs/agents/skills.md).
 
 ### Node.js Version Management
 

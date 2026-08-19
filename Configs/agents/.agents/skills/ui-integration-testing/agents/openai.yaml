@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Integration Testing"
+  short_description: "Design resilient user-flow and integration tests"
+  default_prompt: "Use $ui-integration-testing to design or implement a behavior-first UI test at the right testing level."

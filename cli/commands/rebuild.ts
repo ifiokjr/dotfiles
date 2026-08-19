@@ -28,6 +28,11 @@ import {
 	verifyMattPocockSkillDeployment,
 } from "../lib/matt_pocock.ts";
 import {
+	PATROL_SOURCE,
+	syncPatrolSkills,
+	verifyPatrolSkillDeployment,
+} from "../lib/patrol.ts";
+import {
 	PSTACK_SOURCE,
 	syncPstackSkills,
 	verifyPstackSkillDeployment,
@@ -440,7 +445,7 @@ async function maybeUpdateFlake(context: RebuildContext, opts: RebuildOptions) {
 }
 
 async function updateManagedAgentSkills(context: RebuildContext) {
-	const sources = [PSTACK_SOURCE, MATT_POCOCK_SOURCE];
+	const sources = [PSTACK_SOURCE, MATT_POCOCK_SOURCE, PATROL_SOURCE];
 	const conflicts = findManagedSkillConflicts(sources);
 
 	if (conflicts.length > 0) {
@@ -464,6 +469,13 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		printSuccess(
 			`Updated ${mattPocock.skillCount} Matt Pocock skills at ${
 				mattPocock.resolvedSha.slice(0, 12)
+			}`,
+		);
+
+		const patrol = await syncPatrolSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${patrol.skillCount} Patrol skills at ${
+				patrol.resolvedSha.slice(0, 12)
 			}`,
 		);
 	} catch (error) {
@@ -491,6 +503,10 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 			context.dotfilesDir,
 			homeDir,
 		)).map((issue) => `Matt Pocock: ${issue}`),
+		...(await verifyPatrolSkillDeployment(
+			context.dotfilesDir,
+			homeDir,
+		)).map((issue) => `Patrol: ${issue}`),
 	];
 	if (deploymentIssues.length > 0) {
 		for (const issue of deploymentIssues) {
@@ -854,7 +870,7 @@ function printPlan(
 	printHeader("Rebuild plan");
 	if (opts.update) {
 		console.log(
-			"sync managed skills from cursor/plugins and mattpocock/skills, then redeploy agents",
+			"sync managed external agent skills, then redeploy agents",
 		);
 	}
 	for (const command of commands) {
