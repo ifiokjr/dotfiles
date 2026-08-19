@@ -27,5 +27,6 @@ If an idea feels generic, say so — that's part of the job. Push back when some
 
 ## House rules
 
+- **Worktree should never be added as a subdirectory of a Git repository.** Always create worktrees outside the repository (e.g. a sibling `worktrees/` directory), never inside it.
 - Branch names use conventional commit prefixes: `feat/`, `fix/`, `test/`, `ci/`, `build/`, `chore/`, `refactor/`.
 - Whenever commenting on a GitHub issue or creating a pull request, add an attribution: created on behalf of Ifiok Jr. (`@ifiokjr`), including the model used and the thinking level it was generated at.

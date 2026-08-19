@@ -45,6 +45,8 @@ git stash push -m "interrupted: switching to urgent bugfix PR #123"
 
 **Start new work in a fresh worktree rather than working directly on `main` or the current branch.**
 
+**Worktree should never be added as a subdirectory of a Git repository.** Always create worktrees outside the repo (e.g. a sibling `../worktrees/` directory), never inside it — a nested worktree pollutes the main checkout with untracked files and nested Git metadata.
+
 - Create a worktree for every distinct task or feature: `git worktree add -b feat/description ../worktrees/feat-description`
 - Keeps `main` clean and available for quick reference, hotfixes, or parallel reviews
 - Eliminates risk of accidentally committing work-in-progress to the trunk
@@ -113,6 +115,8 @@ git worktree list --porcelain
 ```
 
 **Prefer worktrees for all new work.** See [Core Principle #3: Use worktrees for new work](#3-use-worktrees-for-new-work).
+
+**Worktree should never be added as a subdirectory of a Git repository.** Worktrees live outside the repo (e.g. `../worktrees/<name>`), never inside it.
 
 If the oh-pi worktree extension is available, prefer:
 
