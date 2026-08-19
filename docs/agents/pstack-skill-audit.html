@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta
+			name="description"
+			content="A usage-based audit of the P-Stack agent skills for Ifiok Jr."
+		>
+		<title>P-Stack field notes | Ifiok's agent skill audit</title>
+		<style>
+		@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&display=swap");
+
+		:root {
+			color-scheme: light;
+			--paper: #f4efe3;
+			--paper-deep: #e8deca;
+			--ink: #14201e;
+			--muted: #59635e;
+			--line: #b8ad98;
+			--accent: #e94f2d;
+			--accent-soft: #f7cdbf;
+			--green: #1f684e;
+			--green-soft: #cde4d5;
+			--blue: #315c79;
+			--blue-soft: #d4e1e8;
+			--shadow: 0 24px 70px rgba(45, 37, 22, 0.12);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			scroll-behavior: smooth;
+		}
+
+		body {
+			margin: 0;
+			background:
+				linear-gradient(rgba(20, 32, 30, 0.035) 1px, transparent 1px),
+				linear-gradient(90deg, rgba(20, 32, 30, 0.035) 1px, transparent 1px),
+				var(--paper);
+			background-size: 24px 24px;
+			color: var(--ink);
+			font-family: "Newsreader", Georgia, serif;
+			font-size: 18px;
+			line-height: 1.55;
+		}
+
+		a {
+			color: inherit;
+			text-decoration-color: var(--accent);
+			text-decoration-thickness: 2px;
+			text-underline-offset: 3px;
+		}
+
+		a:hover {
+			color: var(--accent);
+		}
+
+		.page {
+			width: min(1240px, calc(100% - 36px));
+			margin: 18px auto 72px;
+			overflow: hidden;
+			border: 1px solid var(--line);
+			background: rgba(244, 239, 227, 0.94);
+			box-shadow: var(--shadow);
+		}
+
+		.masthead {
+			display: grid;
+			grid-template-columns: 1.35fr 0.65fr;
+			min-height: 620px;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.hero {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			padding: clamp(34px, 6vw, 84px);
+			border-right: 1px solid var(--line);
+		}
+
+		.eyebrow,
+		.mono,
+		.rank,
+		.score,
+		.tag,
+		.source-note,
+		th,
+		.metric-label {
+			font-family: "DM Mono", ui-monospace, monospace;
+		}
+
+		.eyebrow {
+			margin: 0;
+			color: var(--accent);
+			font-size: 0.73rem;
+			font-weight: 500;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			max-width: 780px;
+			margin: 32px 0;
+			font-size: clamp(4rem, 9vw, 8.8rem);
+			font-weight: 600;
+			letter-spacing: -0.075em;
+			line-height: 0.78;
+		}
+
+		h1 span {
+			display: block;
+			color: var(--accent);
+			font-style: italic;
+			font-weight: 400;
+		}
+
+		.dek {
+			max-width: 650px;
+			margin: 0;
+			font-size: clamp(1.25rem, 2vw, 1.75rem);
+			line-height: 1.28;
+		}
+
+		.sidecar {
+			display: grid;
+			grid-template-rows: auto 1fr auto;
+			background: var(--ink);
+			color: var(--paper);
+		}
+
+		.sidecar > * {
+			padding: clamp(24px, 4vw, 48px);
+		}
+
+		.verdict {
+			border-bottom: 1px solid rgba(244, 239, 227, 0.25);
+		}
+
+		.verdict strong {
+			display: block;
+			margin-top: 16px;
+			color: #ff7555;
+			font-size: clamp(2.4rem, 4vw, 4.4rem);
+			font-weight: 600;
+			letter-spacing: -0.04em;
+			line-height: 0.92;
+		}
+
+		.side-copy {
+			align-self: center;
+			font-size: 1.2rem;
+		}
+
+		.side-copy p {
+			margin: 0 0 18px;
+		}
+
+		.install-stamp {
+			border-top: 1px solid rgba(244, 239, 227, 0.25);
+			background: var(--accent);
+		}
+
+		.install-stamp .mono {
+			display: block;
+			margin-bottom: 8px;
+			font-size: 0.68rem;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+		}
+
+		.install-stamp b {
+			font-size: 1.5rem;
+		}
+
+		.section {
+			padding: clamp(44px, 7vw, 92px);
+			border-bottom: 1px solid var(--line);
+		}
+
+		.section-heading {
+			display: grid;
+			grid-template-columns: minmax(200px, 0.5fr) minmax(300px, 1.5fr);
+			gap: 36px;
+			align-items: end;
+			margin-bottom: 52px;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: clamp(2.8rem, 6vw, 6rem);
+			font-weight: 600;
+			letter-spacing: -0.055em;
+			line-height: 0.9;
+		}
+
+		.section-heading p {
+			max-width: 680px;
+			margin: 0;
+			color: var(--muted);
+			font-size: 1.2rem;
+		}
+
+		.metrics {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			border: 1px solid var(--line);
+			background: var(--paper-deep);
+		}
+
+		.metric {
+			min-height: 150px;
+			padding: 24px;
+			border-right: 1px solid var(--line);
+		}
+
+		.metric:last-child {
+			border-right: 0;
+		}
+
+		.metric-number {
+			display: block;
+			font-size: clamp(2.6rem, 5vw, 5.2rem);
+			font-weight: 600;
+			letter-spacing: -0.055em;
+			line-height: 1;
+		}
+
+		.metric-label {
+			display: block;
+			margin-top: 14px;
+			color: var(--muted);
+			font-size: 0.72rem;
+			line-height: 1.4;
+			text-transform: uppercase;
+		}
+
+		.signals {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 24px;
+			margin-top: 24px;
+		}
+
+		.signal-card {
+			padding: 28px;
+			border: 1px solid var(--line);
+			background: rgba(255, 255, 255, 0.22);
+		}
+
+		.signal-card h3 {
+			margin: 0 0 18px;
+			font-size: 1.7rem;
+		}
+
+		.bar-row {
+			display: grid;
+			grid-template-columns: minmax(130px, 1fr) 2fr 56px;
+			gap: 14px;
+			align-items: center;
+			margin: 12px 0;
+			font-family: "DM Mono", ui-monospace, monospace;
+			font-size: 0.72rem;
+		}
+
+		.bar-track {
+			height: 9px;
+			overflow: hidden;
+			border: 1px solid var(--line);
+			background: var(--paper);
+		}
+
+		.bar-fill {
+			height: 100%;
+			background: var(--accent);
+		}
+
+		.w-51 {
+			width: 51%;
+		}
+
+		.w-66 {
+			width: 66%;
+		}
+
+		.w-80 {
+			width: 80%;
+		}
+
+		.w-85 {
+			width: 85%;
+		}
+
+		.w-97 {
+			width: 97%;
+		}
+
+		.w-100 {
+			width: 100%;
+		}
+
+		.ranking {
+			padding: 0;
+		}
+
+		.ranking .section-heading {
+			padding: clamp(44px, 7vw, 92px);
+			margin: 0;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.skill {
+			display: grid;
+			grid-template-columns:
+				92px minmax(220px, 0.65fr) minmax(360px, 1.35fr) 132px;
+			min-height: 240px;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.skill:last-child {
+			border-bottom: 0;
+		}
+
+		.skill > * {
+			padding: clamp(24px, 3vw, 40px);
+		}
+
+		.rank {
+			color: var(--accent);
+			font-size: 1.1rem;
+			border-right: 1px solid var(--line);
+		}
+
+		.skill-name {
+			border-right: 1px solid var(--line);
+		}
+
+		.skill h3 {
+			margin: 0 0 14px;
+			font-size: clamp(1.65rem, 2.6vw, 2.7rem);
+			font-weight: 600;
+			letter-spacing: -0.035em;
+			line-height: 1;
+		}
+
+		.tag {
+			display: inline-block;
+			padding: 5px 8px;
+			border: 1px solid currentColor;
+			color: var(--green);
+			font-size: 0.63rem;
+			text-transform: uppercase;
+		}
+
+		.skill-copy {
+			border-right: 1px solid var(--line);
+		}
+
+		.skill-copy p {
+			margin: 0 0 16px;
+		}
+
+		.evidence {
+			color: var(--muted);
+			font-size: 0.94rem;
+		}
+
+		.score {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			background: var(--ink);
+			color: var(--paper);
+		}
+
+		.score b {
+			color: #ff7555;
+			font-family: "Newsreader", Georgia, serif;
+			font-size: 3.4rem;
+			font-weight: 600;
+			letter-spacing: -0.06em;
+			line-height: 1;
+		}
+
+		.score span {
+			font-size: 0.66rem;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+		}
+
+		.matrix-wrap {
+			overflow-x: auto;
+			border: 1px solid var(--line);
+		}
+
+		.candidate-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			border-top: 1px solid var(--line);
+			border-left: 1px solid var(--line);
+		}
+
+		.candidate {
+			display: grid;
+			grid-template-columns: 68px 1fr;
+			min-height: 250px;
+			border-right: 1px solid var(--line);
+			border-bottom: 1px solid var(--line);
+			background: rgba(255, 255, 255, 0.18);
+		}
+
+		.candidate-number {
+			padding: 24px 18px;
+			border-right: 1px solid var(--line);
+			color: var(--accent);
+			font-family: "DM Mono", ui-monospace, monospace;
+			font-size: 0.76rem;
+		}
+
+		.candidate-copy {
+			padding: 26px;
+		}
+
+		.candidate h3 {
+			margin: 0 0 14px;
+			font-size: clamp(1.55rem, 2.4vw, 2.35rem);
+			letter-spacing: -0.03em;
+			line-height: 1;
+		}
+
+		.candidate p {
+			margin: 0 0 16px;
+		}
+
+		.candidate-trigger {
+			color: var(--green);
+			font-family: "DM Mono", ui-monospace, monospace;
+			font-size: 0.66rem;
+			line-height: 1.5;
+			text-transform: uppercase;
+		}
+
+		table {
+			width: 100%;
+			min-width: 820px;
+			border-collapse: collapse;
+			background: rgba(255, 255, 255, 0.2);
+		}
+
+		th,
+		td {
+			padding: 16px 18px;
+			border-right: 1px solid var(--line);
+			border-bottom: 1px solid var(--line);
+			text-align: left;
+			vertical-align: top;
+		}
+
+		th:last-child,
+		td:last-child {
+			border-right: 0;
+		}
+
+		tr:last-child td {
+			border-bottom: 0;
+		}
+
+		th {
+			background: var(--ink);
+			color: var(--paper);
+			font-size: 0.68rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+
+		td:first-child {
+			width: 18%;
+			color: var(--accent);
+			font-weight: 600;
+		}
+
+		.method {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 36px;
+		}
+
+		.method-card {
+			padding: 30px;
+			border: 1px solid var(--line);
+		}
+
+		.method-card h3 {
+			margin: 0 0 14px;
+			font-size: 1.8rem;
+		}
+
+		.method-card ol,
+		.method-card ul {
+			margin-bottom: 0;
+			padding-left: 1.2em;
+		}
+
+		.source-note {
+			margin-top: 34px;
+			padding: 20px;
+			border-left: 5px solid var(--accent);
+			background: var(--accent-soft);
+			font-size: 0.72rem;
+			line-height: 1.6;
+		}
+
+		.footer {
+			display: flex;
+			justify-content: space-between;
+			gap: 20px;
+			padding: 28px clamp(28px, 6vw, 84px);
+			background: var(--ink);
+			color: var(--paper);
+			font-family: "DM Mono", ui-monospace, monospace;
+			font-size: 0.68rem;
+		}
+
+		@media (max-width: 900px) {
+			.masthead,
+			.section-heading,
+			.method {
+				grid-template-columns: 1fr;
+			}
+
+			.hero {
+				min-height: 620px;
+				border-right: 0;
+				border-bottom: 1px solid var(--line);
+			}
+
+			.metrics {
+				grid-template-columns: 1fr 1fr;
+			}
+
+			.metric:nth-child(2) {
+				border-right: 0;
+			}
+
+			.metric:nth-child(-n+2) {
+				border-bottom: 1px solid var(--line);
+			}
+
+			.signals {
+				grid-template-columns: 1fr;
+			}
+
+			.candidate-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.skill {
+				grid-template-columns: 64px 1fr 104px;
+			}
+
+			.skill-copy {
+				grid-column: 1 / -1;
+				grid-row: 2;
+				border-top: 1px solid var(--line);
+				border-right: 0;
+			}
+
+			.score {
+				grid-column: 3;
+				grid-row: 1;
+			}
+		}
+
+		@media (max-width: 560px) {
+			body {
+				font-size: 16px;
+			}
+
+			.page {
+				width: 100%;
+				margin: 0;
+				border-right: 0;
+				border-left: 0;
+			}
+
+			.metrics {
+				grid-template-columns: 1fr;
+			}
+
+			.metric {
+				border-right: 0;
+				border-bottom: 1px solid var(--line);
+			}
+
+			.metric:last-child {
+				border-bottom: 0;
+			}
+
+			.bar-row {
+				grid-template-columns: 1fr 1.2fr 46px;
+			}
+
+			.skill {
+				grid-template-columns: 48px 1fr 84px;
+			}
+
+			.skill > * {
+				padding: 18px;
+			}
+
+			.skill h3 {
+				overflow-wrap: anywhere;
+			}
+
+			.score {
+				padding: 14px 9px;
+			}
+
+			.score b {
+				font-size: 2rem;
+			}
+
+			.score span {
+				font-size: 0.54rem;
+				letter-spacing: 0.04em;
+			}
+
+			.candidate {
+				grid-template-columns: 48px 1fr;
+			}
+
+			.candidate-number,
+			.candidate-copy {
+				padding: 18px;
+			}
+
+			.footer {
+				flex-direction: column;
+			}
+		}
+
+		@media print {
+			body {
+				background: white;
+			}
+
+			.page {
+				width: 100%;
+				margin: 0;
+				border: 0;
+				box-shadow: none;
+			}
+
+			.skill {
+				break-inside: avoid;
+			}
+		}
+		</style>
+	</head>
+	<body>
+		<main class="page">
+			<header class="masthead">
+				<div class="hero">
+					<p class="eyebrow">Field notes 01 / agent practice / 19 Aug 2026</p>
+					<h1>P-Stack <span>for Ifiok.</span></h1>
+					<p class="dek">
+						Forty-four skills went in. Ten came out with a real job to do. The
+						ranking follows six months of Pi, Codex, and OpenCode work, plus the
+						preferences already encoded in the dotfiles repo.
+					</p>
+				</div>
+				<aside class="sidecar">
+					<div class="verdict">
+						<span class="eyebrow">The short version</span>
+						<strong>Install the guardrails.</strong>
+					</div>
+					<div class="side-copy">
+						<p>
+							Your agents already move fast. The useful P-Stack skills are the
+							ones that make the work easier to trust, resume, and maintain.
+						</p>
+						<p>
+							The large orchestration skills look exciting, but they duplicate
+							workflows you already have and hard-code Cursor-specific model
+							assumptions.
+						</p>
+					</div>
+					<div class="install-stamp">
+						<span class="mono">Installed and managed</span>
+						<b>top ten ✓</b>
+					</div>
+				</aside>
+			</header>
+
+			<section class="section" id="evidence">
+				<div class="section-heading">
+					<h2>The trail</h2>
+					<p>
+						This is a behavioral audit, not a personality quiz. Session-level
+						keyword matches establish frequency. Project rules, stack fit, skill
+						overlap, and portability decide whether frequency should turn into
+						an install recommendation.
+					</p>
+				</div>
+
+				<div class="metrics" role="group" aria-label="Usage corpus summary">
+					<div class="metric">
+						<span class="metric-number">2,083</span>
+						<span class="metric-label">usable agent sessions</span>
+					</div>
+					<div class="metric">
+						<span class="metric-number">1,391</span>
+						<span class="metric-label">Pi sessions</span>
+					</div>
+					<div class="metric">
+						<span class="metric-number">610</span>
+						<span class="metric-label">Codex sessions</span>
+					</div>
+					<div class="metric">
+						<span class="metric-number">82</span>
+						<span class="metric-label">OpenCode sessions</span>
+					</div>
+				</div>
+
+				<div class="signals">
+					<article class="signal-card">
+						<h3>What dominates the work</h3>
+						<div class="bar-row">
+							<span>verification</span>
+							<div class="bar-track"><div class="bar-fill w-100"></div></div>
+							<span>1,408</span>
+						</div>
+						<div class="bar-row">
+							<span>git / PR / CI</span>
+							<div class="bar-track"><div class="bar-fill w-97"></div></div>
+							<span>1,368</span>
+						</div>
+						<div class="bar-row">
+							<span>debug / fix</span>
+							<div class="bar-track"><div class="bar-fill w-80"></div></div>
+							<span>1,127</span>
+						</div>
+						<div class="bar-row">
+							<span>docs / explain</span>
+							<div class="bar-track"><div class="bar-fill w-80"></div></div>
+							<span>1,125</span>
+						</div>
+						<div class="bar-row">
+							<span>agent systems</span>
+							<div class="bar-track"><div class="bar-fill w-51"></div></div>
+							<span>724</span>
+						</div>
+					</article>
+
+					<article class="signal-card">
+						<h3>The stack is emphatically typed</h3>
+						<div class="bar-row">
+							<span>Flutter / Dart</span>
+							<div class="bar-track"><div class="bar-fill w-100"></div></div>
+							<span>470</span>
+						</div>
+						<div class="bar-row">
+							<span>Rust</span>
+							<div class="bar-track"><div class="bar-fill w-85"></div></div>
+							<span>398</span>
+						</div>
+						<div class="bar-row">
+							<span>TypeScript / web</span>
+							<div class="bar-track"><div class="bar-fill w-66"></div></div>
+							<span>311</span>
+						</div>
+						<div class="bar-row">
+							<span>Nix / dotfiles</span>
+							<div class="bar-track"><div class="bar-fill w-100"></div></div>
+							<span>637</span>
+						</div>
+						<div class="bar-row">
+							<span>CLI / tooling</span>
+							<div class="bar-track"><div class="bar-fill w-100"></div></div>
+							<span>674</span>
+						</div>
+					</article>
+				</div>
+
+				<div class="source-note">
+					Categories overlap, so they should not be summed. The corpus covers 17
+					February through 19 August 2026. Historical Claude settings survive,
+					but no Claude Code transcript archive was available. Claude usage is
+					therefore acknowledged but excluded from the counts.
+				</div>
+			</section>
+
+			<section class="ranking" id="ranking">
+				<div class="section-heading">
+					<h2>The ten</h2>
+					<p>
+						Importance is a fit score, not a quality score. It combines observed
+						repetition, likely error reduction, alignment with your stack, and
+						the cost of collision with skills you already use.
+					</p>
+				</div>
+
+				<article class="skill">
+					<div class="rank">01</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-prove-it-works"
+							>prove-it-works</a>
+						</h3>
+						<span class="tag">essential</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							This should be the default finishing gate. It demands evidence
+							from the real artifact instead of accepting a build, a proxy
+							check, or an agent's claim.
+						</p>
+						<p class="evidence">
+							Evidence: tests and verification appeared in 1,408 sessions. The
+							repo also defines explicit verification commands for Nix, shell,
+							formatting, and Docker.
+						</p>
+					</div>
+					<div class="score"><b>10.0</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">02</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-type-system-discipline"
+							>type-system-discipline</a>
+						</h3>
+						<span class="tag">essential</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							One portable rule set covers Rust enums, Dart sealed models,
+							TypeScript unions, and parsed Nix or CLI boundaries. It also
+							reinforces your explicit ban on TypeScript
+							<code>any</code>.
+						</p>
+						<p class="evidence">
+							Evidence: 470 Flutter/Dart, 398 Rust, and 311 TypeScript/web
+							session matches. The categories overlap, but typed code is present
+							across every major project family.
+						</p>
+					</div>
+					<div class="score"><b>9.8</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">03</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-fix-root-causes"
+							>fix-root-causes</a>
+						</h3>
+						<span class="tag">essential</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							Your history is full of fixes, migrations, state bugs, and
+							post-merge audits. This skill is short, concrete, and good at
+							stopping agents from adding guards that hide the actual failure.
+						</p>
+						<p class="evidence">
+							Evidence: debugging and fixes appeared in 1,127 sessions. Nix,
+							caches, generated files, and agent state make its restart-state
+							guidance unusually relevant.
+						</p>
+					</div>
+					<div class="score"><b>9.7</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">04</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/blast-radius"
+							>blast-radius</a>
+						</h3>
+						<span class="tag">essential</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							This is the best match for your release rhythm. It looks past the
+							diff, identifies the fact a change depends on, then proves that
+							fact by running real code.
+						</p>
+						<p class="evidence">
+							Evidence: git, PR, and CI work appeared in 1,368 sessions. Your
+							main projects are libraries, CLIs, plugins, and shared
+							infrastructure where a local diff can have a wide downstream
+							effect.
+						</p>
+					</div>
+					<div class="score"><b>9.5</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">05</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/how"
+							>how</a>
+						</h3>
+						<span class="tag">high</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							Use this before non-trivial edits in unfamiliar or long-lived
+							subsystems. Its value is the runtime trace and ownership map, not
+							another file summary.
+						</p>
+						<p class="evidence">
+							Evidence: architecture and refactor language appeared in 413
+							sessions. The corpus also spans large repositories such as
+							monochange, solana_kit, openbudget, oh-pi, and pina.
+						</p>
+					</div>
+					<div class="score"><b>9.2</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">06</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-laziness-protocol"
+							>laziness-protocol</a>
+						</h3>
+						<span class="tag">high</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							This is your "simple wins" preference translated into code review
+							behavior. It pushes deletion, flat call paths, one source of
+							truth, and the smallest useful diff.
+						</p>
+						<p class="evidence">
+							Evidence: the repository's global instructions explicitly ask
+							agents to challenge over-engineering. Refactor and architecture
+							work is common enough for this to pay off without becoming
+							ceremony.
+						</p>
+					</div>
+					<div class="score"><b>9.0</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">07</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/recall"
+							>recall</a>
+						</h3>
+						<span class="tag">high</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							This addresses a real tax in your workflow. It reconstructs
+							current state from chat history, the working tree, and the shared
+							record before another agent starts changing code.
+						</p>
+						<p class="evidence">
+							Evidence: resume and context-recovery language appeared in 335
+							sessions. The same projects recur across multiple harnesses and
+							worktrees, which raises the cost of a bad handoff.
+						</p>
+					</div>
+					<div class="score"><b>8.8</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">08</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-boundary-discipline"
+							>boundary-discipline</a>
+						</h3>
+						<span class="tag">high</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							Validate external input once, keep transport types out of the
+							domain, and put logic in pure functions. That is a strong common
+							rule for CLIs, config loaders, Solana RPC, Flutter services, and
+							plugin adapters.
+						</p>
+						<p class="evidence">
+							Evidence: CLI and tooling appeared in 674 sessions, Nix and
+							dotfiles in 637, and Solana or blockchain work in 318.
+						</p>
+					</div>
+					<div class="score"><b>8.6</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">09</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/technical-writing"
+							>technical-writing</a>
+						</h3>
+						<span class="tag">high</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							Use it for public documentation, RFCs, and longer release notes.
+							Do not trigger the full standard for every chat reply or tiny
+							commit message. It is useful because it is specific, and annoying
+							when applied indiscriminately.
+						</p>
+						<p class="evidence">
+							Evidence: documentation and explanation language appeared in 1,125
+							sessions. PR-heavy delivery also means prose regularly becomes
+							part of the artifact.
+						</p>
+					</div>
+					<div class="score"><b>8.3</b><span>importance</span></div>
+				</article>
+
+				<article class="skill">
+					<div class="rank">10</div>
+					<div class="skill-name">
+						<h3>
+							<a
+								href="https://github.com/cursor/plugins/tree/main/pstack/skills/unslop"
+							>unslop</a>
+						</h3>
+						<span class="tag">installed</span>
+					</div>
+					<div class="skill-copy">
+						<p>
+							The useful part is not its blacklist of AI words. It is the demand
+							for concrete claims, shorter sentences, active voice, and a
+							self-audit before prose ships.
+						</p>
+						<p class="evidence">
+							Evidence: your global instructions care about voice and concise
+							communication. This skill also improves the output of
+							technical-writing, blast-radius, and PR workflows.
+						</p>
+					</div>
+					<div class="score"><b>8.1</b><span>importance</span></div>
+				</article>
+			</section>
+
+			<section class="section" id="next-ten">
+				<div class="section-heading">
+					<h2>The next ten</h2>
+					<p>
+						These are good additions, but they should stay opt-in. Each one has
+						a narrow trigger and a higher process cost than the installed ten.
+					</p>
+				</div>
+
+				<div class="candidate-grid">
+					<article class="candidate">
+						<div class="candidate-number">11 / 7.9</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/architect"
+								>architect</a>
+							</h3>
+							<p>
+								Sketching types and module boundaries before implementation
+								would help on large Rust, Dart, and TypeScript changes where the
+								wrong shape is expensive to unwind.
+							</p>
+							<div class="candidate-trigger">
+								Use for new subsystems and structural rewrites.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">12 / 7.8</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-model-the-domain"
+								>model-the-domain</a>
+							</h3>
+							<p>
+								This complements type-system-discipline when state machines,
+								registries, or command models can replace scattered booleans and
+								repeated branches.
+							</p>
+							<div class="candidate-trigger">
+								Use when a second boolean or repeated branch appears.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">13 / 7.7</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-minimize-reader-load"
+								>minimize-reader-load</a>
+							</h3>
+							<p>
+								It gives your simplicity preference a measurable review test:
+								fewer layers to trace and less mutable state to remember.
+							</p>
+							<div class="candidate-trigger">
+								Use during refactors and maintainability reviews.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">14 / 7.6</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-sequence-verifiable-units"
+								>sequence-verifiable-units</a>
+							</h3>
+							<p>
+								Your migrations and multi-package releases benefit when every
+								step ends in a state that can be checked before the next change
+								starts.
+							</p>
+							<div class="candidate-trigger">
+								Use for migrations, release stacks, and broad sweeps.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">15 / 7.5</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-subtract-before-you-add"
+								>subtract-before-you-add</a>
+							</h3>
+							<p>
+								This is a useful pre-flight for redesigns. Removing stale
+								adapters and duplicate checks first keeps new work from growing
+								around dead structure.
+							</p>
+							<div class="candidate-trigger">
+								Use before additions that touch old architecture.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">16 / 7.4</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/interrogate"
+								>interrogate</a>
+							</h3>
+							<p>
+								Independent model reviews can expose blind spots in risky
+								changes. It is too costly for ordinary diffs, but useful before
+								a consequential merge.
+							</p>
+							<div class="candidate-trigger">
+								Use for security, persistence, and public API changes.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">17 / 7.2</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/why"
+								>why</a>
+							</h3>
+							<p>
+								It traces rationale through commits, issues, docs, and
+								operational data. That is valuable when changing old
+								constraints, but excessive for routine code reading.
+							</p>
+							<div class="candidate-trigger">
+								Use before reversing an established design decision.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">18 / 7.1</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/create-verification-skill"
+								>create-verification-skill</a>
+							</h3>
+							<p>
+								A project-specific control skill can prove Flutter screens,
+								CLIs, and services through their real user path instead of
+								relying on generic test commands.
+							</p>
+							<div class="candidate-trigger">
+								Use once per important app that lacks a live control path.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">19 / 6.9</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/show-me-your-work"
+								>show-me-your-work</a>
+							</h3>
+							<p>
+								A compact decision log helps when an agent works unattended for
+								hours. It would be noise during the short, interactive tasks
+								that make up most of the corpus.
+							</p>
+							<div class="candidate-trigger">
+								Use for overnight and multi-phase autonomous work.
+							</div>
+						</div>
+					</article>
+
+					<article class="candidate">
+						<div class="candidate-number">20 / 6.8</div>
+						<div class="candidate-copy">
+							<h3>
+								<a
+									href="https://github.com/cursor/plugins/tree/main/pstack/skills/principle-make-operations-idempotent"
+								>make-operations-idempotent</a>
+							</h3>
+							<p>
+								Rebuilds, migrations, release commands, and agent automations
+								all face partial failure. Convergent reruns reduce cleanup and
+								recovery work.
+							</p>
+							<div class="candidate-trigger">
+								Use for commands that may restart or retry.
+							</div>
+						</div>
+					</article>
+				</div>
+			</section>
+
+			<section class="section" id="rest">
+				<div class="section-heading">
+					<h2>The rest</h2>
+					<p>
+						Every primary P-Stack skill was reviewed. Some are good but
+						occasional. Others duplicate your existing skills or assume Cursor
+						tools and model names that will age badly in a harness-neutral
+						dotfiles repo.
+					</p>
+				</div>
+
+				<div class="matrix-wrap">
+					<table>
+						<thead>
+							<tr>
+								<th>Disposition</th>
+								<th>Skills</th>
+								<th>Reason</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Specialized</td>
+								<td>
+									tdd, figure-it-out, arena, swarm, reflect, teach, automate-me,
+									maintain-verification-skill
+								</td>
+								<td>
+									Useful for a specific class of task. Too expensive,
+									opinionated, or rare to load as general defaults.
+								</td>
+							</tr>
+							<tr>
+								<td>Fold into other rules</td>
+								<td>
+									foundational-thinking, experience-first,
+									redesign-from-first-principles, exhaust-the-design-space,
+									migrate-callers-then-delete-legacy-apis,
+									outcome-oriented-execution,
+									separate-before-serializing-shared-state,
+									encode-lessons-in-structure, build-the-lever,
+									never-block-on-the-human, guard-the-context-window
+								</td>
+								<td>
+									These are good principles. Many are too narrow to justify one
+									skill directory each. Consolidate the best lines into an Ifiok
+									mode or engineering-principles skill.
+								</td>
+							</tr>
+							<tr>
+								<td>Skip for now</td>
+								<td>
+									Poteto Mode, setup-pstack, bro, no-comments,
+									typescript-best-practices
+								</td>
+								<td>
+									Poteto Mode encodes someone else's preferences. setup-pstack
+									writes Cursor rules. bro is trivial. no-comments can collide
+									with this repo's explanation-comment rule. The TypeScript
+									skill overlaps existing strict rules and broader type
+									discipline.
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="section" id="method">
+				<div class="section-heading">
+					<h2>Method</h2>
+					<p>
+						The ranking is reproducible enough to challenge. It is not
+						pretending that keyword counts can explain intent on their own.
+					</p>
+				</div>
+
+				<div class="method">
+					<article class="method-card">
+						<h3>Scoring weights</h3>
+						<ol>
+							<li>Observed repetition, 40 percent.</li>
+							<li>Likely defect or rework reduction, 25 percent.</li>
+							<li>Stack and project fit, 20 percent.</li>
+							<li>Cross-harness portability, 10 percent.</li>
+							<li>Low overlap with existing skills, 5 percent.</li>
+						</ol>
+					</article>
+					<article class="method-card">
+						<h3>Limits</h3>
+						<ul>
+							<li>
+								Session categories come from keyword heuristics, not manual
+								labeling.
+							</li>
+							<li>Generated or injected context may raise some counts.</li>
+							<li>Categories overlap.</li>
+							<li>Claude Code transcripts were not present on disk.</li>
+							<li>Scores express personal fit, not objective skill quality.</li>
+						</ul>
+					</article>
+				</div>
+
+				<div class="source-note">
+					Catalog source: cursor/plugins at commit
+					60c641e4fad674784b30abcf9f8915dea39df38d. Primary catalog reviewed: 44
+					skills under pstack/skills. The three Benny automation skills were
+					inspected separately and excluded because they require an issue-triage
+					automation system that does not match the current workflow.
+				</div>
+			</section>
+
+			<footer class="footer">
+				<span>Prepared locally from private usage metadata. No transcripts are
+					embedded.</span>
+				<span>Source skill: github.com/cursor/plugins</span>
+			</footer>
+		</main>
+	</body>
+</html>

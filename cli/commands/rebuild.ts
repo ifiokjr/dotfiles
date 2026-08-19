@@ -21,6 +21,10 @@ import {
 	resolveNixConfigDir,
 	runCommand,
 } from "../lib/config.ts";
+import {
+	syncPstackSkills,
+	verifyPstackSkillDeployment,
+} from "../lib/pstack.ts";
 import { installDotfilesCli } from "./self.ts";
 
 interface RebuildOptions {
@@ -424,7 +428,53 @@ async function maybeUpdateFlake(context: RebuildContext, opts: RebuildOptions) {
 	}
 
 	await maybeUpdatePnpmGlobals();
+	await updateManagedPstackSkills(context);
 	await maybeUpdateBrew(opts);
+}
+
+async function updateManagedPstackSkills(context: RebuildContext) {
+	printInfo("Updating managed P-Stack agent skills");
+
+	try {
+		const result = await syncPstackSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${result.skillCount} P-Stack skills at ${
+				result.resolvedSha.slice(0, 12)
+			}`,
+		);
+	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		printError(`P-Stack skill update failed: ${message}`);
+		Deno.exit(1);
+	}
+
+	printInfo("Deploying updated agent skill symlinks");
+	const deployment = await runCommand(["tuckr", "add", "agents"], {
+		cwd: context.dotfilesDir,
+	});
+	const homeDir = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE");
+	if (!homeDir) {
+		printError(
+			"P-Stack deployment verification failed: home directory is unknown",
+		);
+		Deno.exit(1);
+	}
+	const deploymentIssues = await verifyPstackSkillDeployment(
+		context.dotfilesDir,
+		homeDir,
+	);
+	if (deploymentIssues.length > 0) {
+		for (const issue of deploymentIssues) {
+			printError(`P-Stack deployment verification failed: ${issue}`);
+		}
+		Deno.exit(1);
+	}
+	if (!deployment.success) {
+		printWarning(
+			`Tuckr reported exit ${deployment.code}, but every managed P-Stack file was deployed and verified`,
+		);
+	}
+	printSuccess("Updated agent skill symlinks deployed");
 }
 
 async function maybeUpdatePnpmGlobals() {
@@ -773,6 +823,9 @@ function printPlan(
 	}
 
 	printHeader("Rebuild plan");
+	if (opts.update) {
+		console.log("sync P-Stack skills from cursor/plugins and redeploy agents");
+	}
 	for (const command of commands) {
 		console.log(formatCommand(command.args));
 	}

@@ -154,7 +154,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
-- `dot rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `dot rebuild --update` refreshes `flake.lock` before rebuilding
+- `dot rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `dot rebuild --update` refreshes `flake.lock` plus the managed P-Stack agent skills before rebuilding
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
 - `pnpm:global:sync` - Install the managed pnpm global project packages
@@ -501,7 +501,7 @@ Use:
 dot rebuild --update
 ```
 
-to update flake inputs (including `ifiokjr-nixpkgs`) and refresh `flake.lock` before rebuilding.
+to update flake inputs (including `ifiokjr-nixpkgs`), refresh `flake.lock`, and sync the selected P-Stack agent skills from [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills) before rebuilding. The skill source commit is recorded in `Configs/agents/.agents/skills/.pstack-source.json`, and the selected skill list is documented in [`docs/agents/skills.md`](docs/agents/skills.md).
 
 ### Node.js Version Management
 
