@@ -118,7 +118,9 @@ alias s = exec nu
 # Job control
 alias fg = job unfreeze
 # Nix
-alias update = nix flake update --flake $"($env.HOME)/.config/nix"
+# `update` intentionally NOT aliased: it shadows the built-in `update` command
+# and breaks third-party nu scripts (e.g. vite-plus env.nu) that call it.
+# Use `nfu` instead (see below).
 # Editors
 alias vim = nvim
 alias n = nvim
