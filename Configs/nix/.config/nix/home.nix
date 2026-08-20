@@ -178,6 +178,7 @@ in
       extra.pnpm-11
       extra.op # 1password
       extra.serverpod_cli
+      extra.surfpool
 
       # Fonts
       fontforge
