@@ -1,4 +1,5 @@
 {
+	"$schema": "https://opencode.ai/config.json",
 	"permissions": {
 		"files": "allow",
 		"commands": "allow",
@@ -10,10 +11,7 @@
 		"/Users/ifiokjr/Developer",
 		"/tmp"
 	],
-	"model": {
-		"default_provider": "ollama-cloud",
-		"default_model": "kimi-k2.5"
-	},
+	"model": "ollama-cloud/kimi-k2.5",
 	"ui": {
 		"confirm_destructive": false,
 		"confirm_tool_usage": false
