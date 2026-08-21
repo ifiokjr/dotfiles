@@ -34,10 +34,9 @@
 		},
 		"default_profile": "write",
 		"default_model": {
-			"effort": "max",
 			"speed": "fast",
-			"provider": "openai-subscribed",
-			"model": "gpt-5.6-sol",
+			"provider": "ollama",
+			"model": "deepseek-v4-flash:cloud",
 			"enable_thinking": true
 		},
 		"favorite_models": [
