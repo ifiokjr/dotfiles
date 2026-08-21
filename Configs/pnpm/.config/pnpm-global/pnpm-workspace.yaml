@@ -8,3 +8,7 @@ allowBuilds:
   protobufjs: true
   re2: true
   tree-sitter-bash: true
+minimumReleaseAgeExclude:
+  - opencode-linux-x64-baseline-musl@1.18.19
+  - opencode-linux-x64-musl@1.18.19
+  - opencode-linux-x64@1.18.19
