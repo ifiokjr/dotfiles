@@ -210,6 +210,7 @@ snapshot[`safe command outputs are stable > groups list 1`] = `
   pnpm           Managed global pnpm manifest and lockfile sync.
   scripts        Bootstrap and maintenance scripts used throughout setup and CI.
   shell          Shared shell environment configuration and common aliases.
+  starship       Starship cross-shell prompt configuration.
   yazi           Yazi terminal file manager configuration.
   zed            Zed editor configuration.
   zellij         Zellij terminal multiplexer configuration and layouts.
@@ -249,7 +250,7 @@ snapshot[`safe command outputs are stable > setup dry run 1`] = `
   • Temporary bootstrap tools: <tools>
   • GUI applications: CLI-focused / GUI-heavy applications skipped
   • Expected duration: 5–10 minutes
-  • Deploy groups: scripts, nix, bash, direnv, dprint, git, kdl, shell, zellij, zsh, nushell
+  • Deploy groups: scripts, nix, bash, direnv, dprint, git, kdl, shell, starship, zellij, zsh, nushell
   • Hooks that will run: nix, bash, git, nushell
 
 "
