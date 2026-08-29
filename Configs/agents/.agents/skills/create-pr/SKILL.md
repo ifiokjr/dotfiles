@@ -61,6 +61,16 @@ _Created on behalf of Ifiok Jr. ([@ifiokjr](https://github.com/ifiokjr)) by <har
 
 Fill in your real details — the harness (e.g. pi, codex), the model you are running (e.g. GPT-5.5, Claude, DeepSeek), and your thinking level. Do not guess; use what you know about your own configuration.
 
+## Merging (including "auto-merge" requests)
+
+When the user asks you to auto-merge a PR, or to "merge it once all checks are passing":
+
+- **Never use `gh pr merge --auto`** on repos without branch protection. With no required checks, GitHub processes the auto-merge request immediately, merging the PR long before CI finishes (this shipped broken code to `main` once — GitHub attributes it to the authenticated account, so there is no audit trail of agent involvement).
+- Instead, **poll until every check is complete and passing** (`gh pr checks <number>` — loop until no `pending` remains), then explicitly merge only when green. If checks fail, fix the failure and push; do not merge on red.
+- When submitting the merge, let the repo's capabilities decide the method, since history shape follows repo convention:
+  - If squash merging is supported (check `gh api repos/<owner>/<repo> --jq .allow_squash_merge` or the repo's `(#N)`-suffixed history), use `gh pr merge <pr> --squash`.
+  - Otherwise fall back to `gh pr merge <pr>` (or `--merge`) — the equivalent normal merge.
+
 ## Checklist
 
 - [ ] Created as a **full PR, not a draft** (unless explicitly asked)
