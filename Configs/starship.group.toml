@@ -1,0 +1,2 @@
+description = "Starship cross-shell prompt configuration."
+presets = ["core", "dev", "workstation", "ci"]

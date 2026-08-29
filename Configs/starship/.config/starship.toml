@@ -1,0 +1,18 @@
+# Starship prompt configuration.
+
+# Nix-installed toolchains (e.g. dart) can take longer than starship's 500ms
+# default to start on a cold cache, which turns into a timeout warning at
+# every prompt. Allow slower first runs instead of disabling the module.
+command_timeout = 2000
+
+[direnv]
+disabled = false
+
+[battery]
+full_symbol = '🔋 '
+charging_symbol = '⚡️ '
+discharging_symbol = '🪫 '
+empty_symbol = '💀 '
+
+[[battery.display]]
+threshold = 50
