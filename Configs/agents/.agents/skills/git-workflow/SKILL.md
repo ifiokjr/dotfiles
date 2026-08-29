@@ -46,6 +46,7 @@ git stash push -m "interrupted: switching to urgent bugfix PR #123"
 **Start new work in a fresh worktree rather than working directly on `main` or the current branch.**
 
 - Create a worktree for every distinct task or feature: `git worktree add -b feat/description ../worktrees/feat-description`
+- **Create worktrees outside the repository checkout**, as a sibling directory (e.g. `../worktrees/`) — never as a nested folder inside the repo. Nested worktrees show up as untracked noise in `git status`, get swept into builds, searches, and linters that walk the tree, and make the main repo's worktree management and cleanup harder
 - Keeps `main` clean and available for quick reference, hotfixes, or parallel reviews
 - Eliminates risk of accidentally committing work-in-progress to the trunk
 - Makes it safe to run tests, builds, and linting in isolation without polluting the main checkout
