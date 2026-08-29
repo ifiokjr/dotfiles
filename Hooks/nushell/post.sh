@@ -108,6 +108,19 @@ if [ -x "$NU_PATH" ]; then
 		# integration works across mixed Atuin/Nushell upgrade states.
 		sed -i '' -E 's/job spawn -t [^ ]+ \{/job spawn {/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null ||
 			sed -i -E 's/job spawn -t [^ ]+ \{/job spawn {/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null || true
+		# Nushell warns when multiple keybindings share a name, and Atuin's
+		# generated script registers both its Ctrl-R and Up-arrow bindings as
+		# `name: atuin`. Number the duplicates after the first so each is unique.
+		awk '
+			/name: atuin$/ {
+				count += 1
+				if (count > 1) {
+					sub(/name: atuin$/, "name: atuin-" count)
+				}
+			}
+			{ print }
+		' "$ATUIN_AUTOLOAD_FILE" >"$ATUIN_AUTOLOAD_FILE.tmp" &&
+			mv "$ATUIN_AUTOLOAD_FILE.tmp" "$ATUIN_AUTOLOAD_FILE"
 		echo -e "${GREEN}✓${NC} Generated atuin.nu"
 	else
 		echo -e "${YELLOW}!${NC} atuin not found, skipping atuin.nu"
