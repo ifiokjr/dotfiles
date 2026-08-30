@@ -121,6 +121,15 @@ if [ -x "$NU_PATH" ]; then
 			{ print }
 		' "$ATUIN_AUTOLOAD_FILE" >"$ATUIN_AUTOLOAD_FILE.tmp" &&
 			mv "$ATUIN_AUTOLOAD_FILE.tmp" "$ATUIN_AUTOLOAD_FILE"
+		# devenv 2.x applies its reloaded environment at the prompt as untyped
+		# (string) values, which turns $env.LAST_EXIT_CODE into a string. Atuin's
+		# pre_prompt hook then fails with "can't convert string to int" when it
+		# calls the typed _atuin_osc133_command_finished helper. Coerce the value
+		# back to an int before use.
+		# (SC2016: $env must stay literal — it is the Nushell variable in the sed expression)
+		# shellcheck disable=SC2016
+		sed -i '' 's/let last_exit = \$env\.LAST_EXIT_CODE$/let last_exit = ($env.LAST_EXIT_CODE? | default 0 | into int)/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null ||
+			sed -i 's/let last_exit = \$env\.LAST_EXIT_CODE$/let last_exit = ($env.LAST_EXIT_CODE? | default 0 | into int)/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null || true
 		echo -e "${GREEN}✓${NC} Generated atuin.nu"
 	else
 		echo -e "${YELLOW}!${NC} atuin not found, skipping atuin.nu"
