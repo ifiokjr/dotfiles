@@ -43,6 +43,7 @@ interface RebuildOptions {
 	addPreset?: string;
 	alwaysOn?: boolean;
 	brew?: boolean;
+	commit?: boolean;
 	desktop?: boolean;
 	dryRun?: boolean;
 	force?: boolean;
@@ -91,6 +92,10 @@ export const rebuildCommand = new Command()
 	.option("--skip-check", "Skip flake check before rebuilding")
 	.option("--update", "Update flake inputs before rebuilding")
 	.option("--brew", "With --update on macOS, run brew upgrade --cask --greedy")
+	.option(
+		"--commit",
+		"With --update, commit the files the update changed (flake.lock, managed skills, pnpm globals) after rebuilding, so only a git push remains",
+	)
 	.option("--lite", "Set machine.nix lite = true before rebuilding")
 	.option("--no-lite", "Set machine.nix lite = false before rebuilding")
 	.option("--desktop", "Set machine.nix isDesktop = true before rebuilding")
@@ -153,6 +158,7 @@ export const rebuildCommand = new Command()
 		await maybeCheckFlake(context, opts);
 		await runRebuild(context, config);
 		await installDotfilesCli({ dotfilesDir: context.dotfilesDir });
+		await maybeCommitRebuildChanges(context, opts);
 
 		if (opts.groups) {
 			printWarning(
@@ -169,6 +175,11 @@ function validateOptions(opts: RebuildOptions) {
 
 	if (opts.brew && !opts.update) {
 		printError("--brew requires --update");
+		Deno.exit(1);
+	}
+
+	if (opts.commit && !opts.update) {
+		printError("--commit requires --update");
 		Deno.exit(1);
 	}
 
@@ -567,6 +578,88 @@ async function maybeUpdateBrew(opts: RebuildOptions) {
 	}
 }
 
+/** Files the rebuild --update flow can change and that --commit commits. */
+export const UPDATE_COMMIT_PATHS = [
+	"Configs/nix/.config/nix/flake.lock",
+	"Configs/agents/.agents/skills",
+	"Configs/pnpm/.config/pnpm-global",
+];
+
+const UPDATE_COMMIT_MESSAGE = "chore: sync updates from dot rebuild --update";
+
+/**
+ * Commit the files the rebuild --update flow can change (flake.lock, managed
+ * agent skills, pnpm globals). Scoped strictly to those paths so unrelated
+ * work in the repo — staged or not — is never swept into the commit.
+ * Returns true when a commit was created.
+ */
+export async function commitRebuildChanges(
+	dotfilesDir: string,
+): Promise<boolean> {
+	const status = await runCommand(
+		["git", "status", "--porcelain", "--", ...UPDATE_COMMIT_PATHS],
+		{ cwd: dotfilesDir, stdout: "piped" },
+	);
+
+	if (!status.success) {
+		printWarning(
+			`git status failed (exit ${status.code}); skipping the update commit`,
+		);
+		return false;
+	}
+
+	if ((status.stdout ?? "").trim() === "") {
+		printInfo("No update files to commit");
+		return false;
+	}
+
+	printInfo("Committing updated files");
+	const add = await runCommand(
+		["git", "add", "--", ...UPDATE_COMMIT_PATHS],
+		{ cwd: dotfilesDir, stdout: "piped" },
+	);
+	if (!add.success) {
+		printWarning(
+			`git add failed (exit code ${add.code}); skipping the update commit`,
+		);
+		return false;
+	}
+
+	const commit = await runCommand(
+		[
+			"git",
+			"commit",
+			"-m",
+			UPDATE_COMMIT_MESSAGE,
+			"--",
+			...UPDATE_COMMIT_PATHS,
+		],
+		{ cwd: dotfilesDir, stdout: "piped" },
+	);
+	if (!commit.success) {
+		printWarning(`git commit failed (exit code ${commit.code})`);
+		return false;
+	}
+
+	const sha = await runCommand(["git", "rev-parse", "--short", "HEAD"], {
+		cwd: dotfilesDir,
+		stdout: "piped",
+	});
+	const shortSha = (sha.stdout ?? "").trim();
+	printSuccess(
+		`Committed updated files as ${shortSha} — run git push to publish`,
+	);
+	return true;
+}
+
+async function maybeCommitRebuildChanges(
+	context: RebuildContext,
+	opts: RebuildOptions,
+) {
+	if (!opts.commit) return;
+	await commitRebuildChanges(context.dotfilesDir);
+}
+
 async function maybeCheckFlake(context: RebuildContext, opts: RebuildOptions) {
 	if (opts.skipCheck) return;
 
@@ -872,6 +965,11 @@ function printPlan(
 		console.log(
 			"sync managed external agent skills, then redeploy agents",
 		);
+		if (opts.commit) {
+			console.log(
+				`commit changed files (${UPDATE_COMMIT_PATHS.join(", ")})`,
+			);
+		}
 	}
 	for (const command of commands) {
 		console.log(formatCommand(command.args));
