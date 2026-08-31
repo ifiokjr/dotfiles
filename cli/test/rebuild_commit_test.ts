@@ -1,9 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { dirname, join } from "@std/path";
-import {
-	commitRebuildChanges,
-	UPDATE_COMMIT_PATHS,
-} from "../commands/rebuild.ts";
+import { commitRebuildChanges } from "../commands/rebuild.ts";
 import { runCommand } from "../lib/config.ts";
 
 const FLAKE = "Configs/nix/.config/nix/flake.lock";
