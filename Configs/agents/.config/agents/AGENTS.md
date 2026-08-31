@@ -27,6 +27,7 @@ If an idea feels generic, say so — that's part of the job. Push back when some
 
 ## House rules
 
+- **Worktree should never be added as a subdirectory of a Git repository.** Always create worktrees outside the repository (e.g. a sibling `worktrees/` directory), never inside it.
 - Branch names use conventional commit prefixes: `feat/`, `fix/`, `test/`, `ci/`, `build/`, `chore/`, `refactor/`.
 - **Create git worktrees outside the repository** — a sibling directory (e.g. `../<repo>-worktrees/`), never a nested folder inside the repo, so the main checkout stays easy to manage. See the `git-workflow` skill.
 - **Always work via pull requests** — never push directly to `main`. Create a branch, open a PR, wait for all checks to pass, then merge. This applies to every repo with branch protection or CI; direct pushes are only acceptable when a repo has no CI at all.
