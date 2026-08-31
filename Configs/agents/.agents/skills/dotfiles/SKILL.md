@@ -102,7 +102,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | `dot pnpm` | Manage pnpm global packages |
 | `dot version` | Print CLI version and environment info |
 
-**Rebuild flags:** `--update` (update flake inputs), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
+**Rebuild flags:** `--update` (update flake inputs), `--commit` (with --update: commit the changed files — flake.lock, managed skills, pnpm globals — so only a git push remains), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
 
 ## Essential Aliases
 
