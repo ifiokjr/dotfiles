@@ -1,0 +1,38 @@
+{
+	"name": "@ifi/coding-style-guide",
+	"version": "0.1.0",
+	"description": "A code aesthetics and layout guide focused on how code looks - whitespace, comments, visual organization, and readability. Not about which functions to use.",
+	"main": "SKILL.md",
+	"files": [
+		"SKILL.md",
+		"languages/",
+		"README.md"
+	],
+	"scripts": {
+		"test": "echo \"No tests specified\" && exit 0"
+	},
+	"keywords": [
+		"coding-style",
+		"style-guide",
+		"code-aesthetics",
+		"readability",
+		"whitespace",
+		"documentation",
+		"rust",
+		"typescript",
+		"python",
+		"dart",
+		"early-returns",
+		"visual-organization"
+	],
+	"author": "Ifiok Jr.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ifiokjr/coding-style-guide.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ifiokjr/coding-style-guide/issues"
+	},
+	"homepage": "https://github.com/ifiokjr/coding-style-guide#readme"
+}

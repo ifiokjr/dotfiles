@@ -56,6 +56,8 @@ This selection comes from [`leancodepl/patrol`](https://github.com/leancodepl/pa
 
 The local `ui-integration-testing` skill translates behavior-first testing principles into shared strategy for Flutter, Patrol, Playwright, and other UI frameworks. Path: `Configs/agents/.agents/skills/ui-integration-testing/SKILL.md`.
 
+The locally authored `coding-style-guide` skill defines a code aesthetics and layout guide (whitespace placement, early returns, comment positioning, readability) with per-language guides for Rust, TypeScript, Python, and Dart. It is published standalone at [`ifiokjr/coding-style-guide`](https://github.com/ifiokjr/coding-style-guide); this copy is the canonical source. Path: `Configs/agents/.agents/skills/coding-style-guide/SKILL.md`.
+
 `dot rebuild --update` refreshes all externally managed selections from their configured branches, updates their source manifests, and runs `tuckr add agents` once so new or removed skill files are reflected under `~/.agents/skills`. The Matt Pocock and Patrol selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Codex, Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly.
 
 Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before any source is updated, and deployment verification checks every external source file through its configured shared and compatibility paths.
