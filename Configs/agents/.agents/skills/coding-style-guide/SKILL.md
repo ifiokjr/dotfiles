@@ -1,6 +1,6 @@
 ---
 name: "coding-style-guide"
-description: "A code aesthetics and layout guide focused on how code looks - whitespace, comments, visual organization, and readability. Covers early returns, flat structure, and code simplicity."
+description: "Use when writing, editing, or reviewing code in Dart, TypeScript, Rust, or Python. A code aesthetics and layout guide for how code looks - whitespace, comment placement, early returns, flat structure, and readability."
 ---
 
 # @ifi/coding-style-guide
