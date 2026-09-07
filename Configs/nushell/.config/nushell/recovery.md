@@ -17,8 +17,11 @@ Then open a new terminal window.
 
 ## Restore nushell as login shell
 
+Only run this **after a successful `dot rebuild`** — `chsh` to a path that does not exist yet leaves the machine unable to open terminals (Ghostty fails with "failed to launch the requested command: ... cannot execute: No such file or directory"). The guarded command below refuses to switch if nushell is not in the system profile yet.
+
 ```bash
-chsh -s /run/current-system/sw/bin/nu
+NU=/run/current-system/sw/bin/nu
+[ -x "$NU" ] && chsh -s "$NU" || echo "Run 'dot rebuild' first; $NU does not exist yet"
 ```
 
 ## Remove nushell config
