@@ -18,6 +18,7 @@ import {
 	printInfo,
 	printSuccess,
 	printWarning,
+	refreshShellIntegrations,
 	resolveDeployedDotfilesDir,
 	resolveDotfilesDir,
 	resolveMachineConfigPath,
@@ -169,6 +170,9 @@ export const rebuildCommand = new Command()
 		await maybeCheckFlake(context, opts);
 		await runRebuild(context, config);
 		await installDotfilesCli({ dotfilesDir: context.dotfilesDir });
+		// The rebuild may have changed the installed tool set, so regenerate or
+		// clean the shell integrations to match (mise/atuin/starship/...).
+		await refreshShellIntegrations(context.dotfilesDir);
 		await maybeCommitRebuildChanges(context, opts);
 
 		if (opts.groups) {

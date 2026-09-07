@@ -23,6 +23,7 @@ import {
 	printInfo,
 	printSuccess,
 	printWarning,
+	refreshShellIntegrations,
 	resolveDotfilesDir,
 	runCommand,
 } from "../lib/config.ts";
@@ -208,6 +209,13 @@ export const reloadCommand = new Command()
 					printSuccess(`Group reloaded: ${group}`);
 				}
 			}
+		}
+
+		// The nushell group is re-linked with `tuckr set`, which skips its post
+		// hook. Refresh the generated shell integrations so they match the
+		// currently installed tools (regenerate what exists, clean stale files).
+		if (!opts.dryRun && ordered.includes("nushell")) {
+			await refreshShellIntegrations(dotfilesDir);
 		}
 
 		console.log("");

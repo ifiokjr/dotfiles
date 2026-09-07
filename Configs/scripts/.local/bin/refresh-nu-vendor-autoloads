@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# refresh-nu-vendor-autoloads — Regenerate or clean Nushell integration files
+#
+# Nushell loads every script in its vendor/autoload directory at startup, and
+# the generated integrations (starship, atuin, mise, ...) embed the tool's
+# binary path at generation time. When the tool set changes — a package is
+# added, removed, or moved between profiles — each generated file must be
+# regenerated or deleted, otherwise every new shell errors trying to run a
+# binary that no longer exists (or silently misses a newly installed tool).
+#
+# This is called from Hooks/nushell/post.sh during setup, and from the
+# dotfiles CLI (`dotfiles rebuild`, `dotfiles reload`) so the integrations
+# always match the currently installed tools — not just the tool set that was
+# present the last time the nushell group was redeployed.
+
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${GREEN}✓${NC} Refreshing Nushell vendor autoloads"
+
+# ---------------------------------------------------------------------------
+# PATH augmentation — ensure nix-installed tools (starship, carapace, etc.)
+# are discoverable when this runs outside a login shell (e.g. from
+# `dotfiles rebuild`).
+# ---------------------------------------------------------------------------
+for p in "/etc/profiles/per-user/${USER:-$(whoami)}/bin" "/run/current-system/sw/bin" \
+	"$HOME/.local/state/nix/profiles/home-manager/home-path/bin" \
+	"$HOME/.nix-profile/bin" "$HOME/.local/bin" \
+	"/nix/var/nix/profiles/default/bin"; do
+	# shellcheck disable=SC2249
+	[ -d "$p" ] && case ":$PATH:" in *":$p:"*) ;; *) export PATH="$p:$PATH" ;; esac
+done
+
+# Locate the nushell binary: nix-darwin puts it at /run/current-system/sw/bin/nu,
+# but on Linux (or standalone nix) it may only be on PATH via `which`.
+NU_PATH="/run/current-system/sw/bin/nu"
+if [ ! -x "$NU_PATH" ]; then
+	NU_PATH="$(command -v nu 2>/dev/null || true)"
+fi
+
+if [ ! -x "$NU_PATH" ]; then
+	echo -e "${YELLOW}!${NC} nu not found, skipping vendor autoload refresh"
+	exit 0
+fi
+
+# shellcheck disable=SC2016
+VENDOR_AUTOLOAD_DIR=$("$NU_PATH" -c '$nu.data-dir | path join "vendor/autoload"')
+mkdir -p "$VENDOR_AUTOLOAD_DIR"
+
+# Generate dotfiles CLI completions into Nushell's vendor autoload directory.
+# Nushell automatically loads files in this directory, so users do not need to
+# manually edit config.nu after the nushell group is deployed.
+if command -v dot &>/dev/null; then
+	if dot completion nushell >"$VENDOR_AUTOLOAD_DIR/dot-completions.nu"; then
+		echo -e "${GREEN}✓${NC} Generated dot-completions.nu"
+	else
+		rm -f "$VENDOR_AUTOLOAD_DIR/dot-completions.nu"
+		echo -e "${YELLOW}!${NC} dot completion nushell failed, skipping dot-completions.nu"
+	fi
+else
+	rm -f "$VENDOR_AUTOLOAD_DIR/dot-completions.nu"
+	echo -e "${YELLOW}!${NC} dot not found, removing stale dot-completions.nu"
+fi
+
+# Generate devenv auto-activation hook so config.nu can source it on startup.
+DEVENV_HOOK_FILE="$HOME/.cache/devenv/hook.nu"
+if command -v devenv &>/dev/null; then
+	mkdir -p "$(dirname "$DEVENV_HOOK_FILE")"
+	if devenv hook nu >"$DEVENV_HOOK_FILE" 2>/dev/null; then
+		echo -e "${GREEN}✓${NC} Generated devenv hook.nu"
+	else
+		rm -f "$DEVENV_HOOK_FILE"
+		echo -e "${YELLOW}!${NC} devenv hook nu failed, skipping hook.nu"
+	fi
+else
+	rm -f "$DEVENV_HOOK_FILE"
+	echo -e "${YELLOW}!${NC} devenv not found, removing stale hook.nu"
+fi
+
+# Generate starship init (per https://starship.rs/guide/)
+if command -v starship &>/dev/null; then
+	# shellcheck disable=SC2016
+	"$NU_PATH" -c 'starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")'
+	echo -e "${GREEN}✓${NC} Generated starship.nu"
+else
+	rm -f "$VENDOR_AUTOLOAD_DIR/starship.nu"
+	echo -e "${YELLOW}!${NC} starship not found, removing stale starship.nu"
+fi
+
+# Generate carapace completions
+if command -v carapace &>/dev/null; then
+	carapace _carapace nushell >"$VENDOR_AUTOLOAD_DIR/carapace.nu"
+	echo -e "${GREEN}✓${NC} Generated carapace.nu"
+else
+	rm -f "$VENDOR_AUTOLOAD_DIR/carapace.nu"
+	echo -e "${YELLOW}!${NC} carapace not found, removing stale carapace.nu"
+fi
+
+# Generate atuin init
+ATUIN_AUTOLOAD_FILE="$VENDOR_AUTOLOAD_DIR/atuin.nu"
+if command -v atuin &>/dev/null; then
+	atuin init nu >"$ATUIN_AUTOLOAD_FILE"
+	# Older Atuin-generated Nushell init scripts used `job spawn -t <name>`,
+	# but Nushell 0.112+ removed `-t`. Normalize the generated script so the
+	# integration works across mixed Atuin/Nushell upgrade states.
+	sed -i '' -E 's/job spawn -t [^ ]+ \{/job spawn {/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null ||
+		sed -i -E 's/job spawn -t [^ ]+ \{/job spawn {/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null || true
+	# Nushell warns when multiple keybindings share a name, and Atuin's
+	# generated script registers both its Ctrl-R and Up-arrow bindings as
+	# `name: atuin`. Number the duplicates after the first so each is unique.
+	awk '
+			/name: atuin$/ {
+				count += 1
+				if (count > 1) {
+					sub(/name: atuin$/, "name: atuin-" count)
+				}
+			}
+			{ print }
+		' "$ATUIN_AUTOLOAD_FILE" >"$ATUIN_AUTOLOAD_FILE.tmp" &&
+			mv "$ATUIN_AUTOLOAD_FILE.tmp" "$ATUIN_AUTOLOAD_FILE"
+	# devenv 2.x applies its reloaded environment at the prompt as untyped
+	# (string) values, which turns $env.LAST_EXIT_CODE into a string. Atuin's
+	# pre_prompt hook then fails with "can't convert string to int" when it
+	# calls the typed _atuin_osc133_command_finished helper. Coerce the value
+	# back to an int before use.
+	# (SC2016: $env must stay literal — it is the Nushell variable in the sed expression)
+	# shellcheck disable=SC2016
+	sed -i '' 's/let last_exit = \$env\.LAST_EXIT_CODE$/let last_exit = ($env.LAST_EXIT_CODE? | default 0 | into int)/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null ||
+		sed -i 's/let last_exit = \$env\.LAST_EXIT_CODE$/let last_exit = ($env.LAST_EXIT_CODE? | default 0 | into int)/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null || true
+	echo -e "${GREEN}✓${NC} Generated atuin.nu"
+else
+	rm -f "$ATUIN_AUTOLOAD_FILE"
+	echo -e "${YELLOW}!${NC} atuin not found, removing stale atuin.nu"
+fi
+
+# Generate mise activation (patch add-hook for Nushell compatibility: update optional true -> each { merge } )
+if command -v mise &>/dev/null; then
+	mise activate nu >"$VENDOR_AUTOLOAD_DIR/mise.nu"
+	# Fix add-hook: "update optional true" pipeline is incompatible in recent Nushell; use each/merge instead
+	# (SC2016: $r must stay literal in sed replacement - it is the Nushell variable name in the generated script)
+	# shellcheck disable=SC2016
+	sed -i '' 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
+		sed -i 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
+	# Fix deprecated --ignore-errors flag (renamed to --optional in nushell 0.106.0)
+	sed -i '' 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
+		sed -i 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
+
+	# Nushell 0.114+ renamed `str upcase` to `str uppercase`. Older mise
+	# releases generate activate scripts using the deprecated name, which
+	# warns on every shell startup under Nushell >= 0.114. Only rename when
+	# the deployed nushell supports the new name so vendor autoloads
+	# generated before a rebuild keep working on older Nushell profiles.
+	NU_VERSION=$("$NU_PATH" -c 'version | get version' 2>/dev/null || echo "0.0.0")
+	NU_MAJOR=${NU_VERSION%%.*}
+	NU_MINOR=${NU_VERSION#*.}
+	NU_MINOR=${NU_MINOR%%.*}
+	if [ "${NU_MAJOR:-0}" -gt 0 ] || [ "${NU_MINOR:-0}" -ge 114 ]; then
+		sed -i '' 's/str upcase/str uppercase/g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
+			sed -i 's/str upcase/str uppercase/g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
+	fi
+	echo -e "${GREEN}✓${NC} Generated mise.nu"
+else
+	rm -f "$VENDOR_AUTOLOAD_DIR/mise.nu"
+	echo -e "${YELLOW}!${NC} mise not found, removing stale mise.nu"
+fi
+
+# Generate zoxide init
+if command -v zoxide &>/dev/null; then
+	# shellcheck disable=SC2016
+	"$NU_PATH" -c 'zoxide init nushell | save -f ($nu.data-dir | path join "vendor/autoload/zoxide.nu")'
+	echo -e "${GREEN}✓${NC} Generated zoxide.nu"
+else
+	rm -f "$VENDOR_AUTOLOAD_DIR/zoxide.nu"
+	echo -e "${YELLOW}!${NC} zoxide not found, removing stale zoxide.nu"
+fi

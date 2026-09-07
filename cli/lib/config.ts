@@ -195,6 +195,41 @@ export async function resolveDeployedDotfilesDir(): Promise<string | null> {
 	return null;
 }
 
+/**
+ * Re-run the shared Nushell vendor autoload refresh
+ * (Configs/scripts/.local/bin/refresh-nu-vendor-autoloads). The generated
+ * integrations embed tool binary paths, so after a rebuild or reload changes
+ * the tool set they must be regenerated or cleaned. Non-fatal: a failed or
+ * missing refresh only leaves integrations stale, it should never block the
+ * caller.
+ */
+export async function refreshShellIntegrations(
+	dotfilesDir: string,
+): Promise<boolean> {
+	const script = join(
+		dotfilesDir,
+		"Configs/scripts/.local/bin/refresh-nu-vendor-autoloads",
+	);
+
+	if (!await exists(script, { isFile: true })) {
+		printWarning(
+			"refresh-nu-vendor-autoloads not found; skipping shell integration refresh",
+		);
+		return false;
+	}
+
+	printHeader("Refreshing shell integrations");
+	const result = await runCommand([script], { cwd: dotfilesDir });
+	if (!result.success) {
+		printWarning(
+			`Shell integration refresh failed (exit ${result.code}); integrations may be stale`,
+		);
+		return false;
+	}
+
+	return true;
+}
+
 /** Known setup presets. */
 export interface Preset {
 	name: string;

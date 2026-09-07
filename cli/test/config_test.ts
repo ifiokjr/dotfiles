@@ -1,4 +1,5 @@
 import { assert, assertEquals } from "@std/assert";
+import { exists } from "@std/fs";
 import { join } from "@std/path";
 import {
 	commandExists,
@@ -10,6 +11,7 @@ import {
 	loadGroupMetadata,
 	machineConfigPath,
 	nixSystem,
+	refreshShellIntegrations,
 	resolveDeployedDotfilesDir,
 	resolveDotfilesDir,
 	resolveMachineConfigPath,
@@ -286,5 +288,33 @@ Deno.test("resolveDeployedDotfilesDir derives the root from nix symlinks", async
 
 		await Deno.remove(homeDir, { recursive: true });
 		await Deno.remove(fakeRepo, { recursive: true });
+	}
+});
+
+Deno.test("refreshShellIntegrations tolerates missing and failing scripts", async () => {
+	const tempDir = await Deno.makeTempDir();
+	const marker = join(tempDir, "marker.txt");
+
+	try {
+		// Missing script: skipped without error.
+		assertEquals(await refreshShellIntegrations(tempDir), false);
+
+		// Successful script: runs and reports success.
+		const binDir = join(tempDir, "Configs/scripts/.local/bin");
+		await Deno.mkdir(binDir, { recursive: true });
+		const script = join(binDir, "refresh-nu-vendor-autoloads");
+		await Deno.writeTextFile(
+			script,
+			`#!/usr/bin/env bash\ntouch "${marker}"\n`,
+		);
+		await Deno.chmod(script, 0o755);
+		assertEquals(await refreshShellIntegrations(tempDir), true);
+		assert(await exists(marker));
+
+		// Failing script: reported as skipped, but never fatal.
+		await Deno.writeTextFile(script, "#!/usr/bin/env bash\nexit 3\n");
+		assertEquals(await refreshShellIntegrations(tempDir), false);
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
 	}
 });
