@@ -9,7 +9,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
 - The global agent instructions file lives at `Configs/agents/.config/agents/AGENTS.md` and is symlinked to every harness's global location (`~/.pi/agent/AGENTS.md`, `~/.codex/AGENTS.md`, `~/.config/zed/AGENTS.md`, `~/.config/opencode/AGENTS.md`). Edit the canonical file only, never the symlinks.
 - Non-standard verification commands:
   - `dprint check --config Configs/dprint/dprint.json`
-  - `shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh`
+  - `shellcheck setup setup-tuckr-symlink.sh Hooks/*/pre.sh Hooks/*/post.sh`
   - `nix flake check ./Configs/nix/.config/nix --impure --no-build` (when Nix files change)
   - `rebuild` (when Nix config or packages change)
   - `docker build -t dotfiles-test .` (when Nix config or packages change for Linux confidence)

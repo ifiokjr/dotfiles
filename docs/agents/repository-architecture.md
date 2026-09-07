@@ -28,6 +28,8 @@
 
 ## Active Hooks
 
+- `Hooks/agents/pre.sh`: Preserve a previous Codex-exported Computer Use skill before the managed bridge is deployed.
+- `Hooks/agents/post.sh`: Verify agent tooling and expose dotfiles-managed skills to Codex.
 - `Hooks/nix/post.sh`: rebuild system config after Nix deployment.
 - `Hooks/nushell/post.sh`: generate vendor autoload and configure shell behavior.
 - `Hooks/pnpm/post.sh`: sync managed pnpm global manifests and install global packages.

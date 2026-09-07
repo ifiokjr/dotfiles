@@ -1,0 +1,11 @@
+{
+	"mcpServers": {
+		"computer-use": {
+			"command": "/bin/sh",
+			"args": [
+				"-c",
+				"exec \"${CODEX_HOME:-$HOME/.codex}/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient\" mcp"
+			]
+		}
+	}
+}

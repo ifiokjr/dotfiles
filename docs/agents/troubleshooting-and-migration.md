@@ -7,7 +7,7 @@
 tuckr add --force <group>
 
 # Ensure hooks are executable
-chmod +x Hooks/*/post.sh
+chmod +x Hooks/*/pre.sh Hooks/*/post.sh
 
 # Rebuild Nix config
 dot rebuild

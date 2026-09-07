@@ -28,7 +28,7 @@ import {
 } from "../lib/config.ts";
 
 /** Groups whose hooks are safe to run during a symlink-only reload. */
-const RELOAD_HOOK_GROUPS = ["nushell"];
+const RELOAD_HOOK_GROUPS = ["agents", "nushell"];
 
 /** Groups processed first regardless of alphabetical order. */
 const PRIMARY_GROUPS = ["nix"];
