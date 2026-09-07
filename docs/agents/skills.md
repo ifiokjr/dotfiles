@@ -8,6 +8,7 @@ Reusable global skills are tracked in `Configs/agents/.agents/skills/<skill-name
 
 Current dotfiles-managed skills:
 
+- `computer-use`: Path: `Configs/agents/.agents/skills/computer-use/SKILL.md`
 - `devenv`: Path: `Configs/agents/.agents/skills/devenv/SKILL.md`
 - `dotfiles`: Path: `Configs/agents/.agents/skills/dotfiles/SKILL.md`
 - `git-workflow`: Path: `Configs/agents/.agents/skills/git-workflow/SKILL.md`
@@ -58,7 +59,9 @@ The local `ui-integration-testing` skill translates behavior-first testing princ
 
 The locally authored `coding-style-guide` skill defines a code aesthetics and layout guide (whitespace placement, early returns, comment positioning, readability) with per-language guides for Rust, TypeScript, Python, and Dart. It is published standalone at [`ifiokjr/coding-style-guide`](https://github.com/ifiokjr/coding-style-guide); this copy is the canonical source. Path: `Configs/agents/.agents/skills/coding-style-guide/SKILL.md`.
 
-`dot rebuild --update` refreshes all externally managed selections from their configured branches, updates their source manifests, and runs `tuckr add agents` once so new or removed skill files are reflected under `~/.agents/skills`. The Matt Pocock and Patrol selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly. Codex skips symlinked `SKILL.md` files when scanning, so the `agents` post hook links each managed skill directory into `~/.codex/skills`, pointing at the repo copy where the files are real.
+`dot rebuild --update` refreshes all externally managed selections from their configured branches, updates their source manifests, and runs the `agents` setup hooks once so new or removed skill files are reflected under `~/.agents/skills`. `dot reload` runs the same hooks after a repository update. The Matt Pocock and Patrol selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly. Codex skips symlinked `SKILL.md` files when scanning, so the `agents` post hook links each managed skill directory into `~/.codex/skills`, pointing at the repo copy where the files are real.
+
+The managed `computer-use` skill is a small bridge to the client under `~/.codex/computer-use`. Codex updates that app bundle with the installed Codex version, so every configured harness uses the current client without storing the signed macOS application in git. The first `agents` setup preserves an older Codex-exported copy as `~/.agents/computer-use-codex-export` before Tuckr installs the bridge.
 
 Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before any source is updated, and deployment verification checks every external source file through its configured shared and compatibility paths.
 

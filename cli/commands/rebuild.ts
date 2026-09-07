@@ -496,7 +496,7 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 	}
 
 	printInfo("Deploying updated agent skill symlinks");
-	const deployment = await runCommand(["tuckr", "add", "agents"], {
+	const deployment = await runCommand(["tuckr", "set", "agents"], {
 		cwd: context.dotfilesDir,
 	});
 	const homeDir = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE");

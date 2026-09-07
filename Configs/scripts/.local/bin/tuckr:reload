@@ -74,7 +74,7 @@ def main [
     let late_groups = ["nushell" "helix"]
     # Only hooks that are safe during a symlink reload belong here. The nix
     # post-hook rebuilds the package closure and must remain an explicit action.
-    let hook_groups = ["nushell"]
+    let hook_groups = ["agents" "nushell"]
 
     let ordered = (
         ($groups | where { |g| $g in $primary_groups })

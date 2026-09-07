@@ -11,7 +11,7 @@ Run before pushing relevant changes:
 
 ```bash
 dprint check --config Configs/dprint/dprint.json
-shellcheck setup setup-tuckr-symlink.sh Hooks/*/post.sh
+shellcheck setup setup-tuckr-symlink.sh Hooks/*/pre.sh Hooks/*/post.sh
 tests/check-docs-consistency.sh
 
 # If nix files changed
