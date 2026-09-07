@@ -11,11 +11,11 @@
 import { Command } from "@cliffy/command";
 import {
 	MACHINE_PRESETS,
-	machineConfigPath,
 	printError,
 	printInfo,
 	printSuccess,
 	resolveDotfilesDir,
+	resolveMachineConfigPath,
 	resolveNixConfigDir,
 	runCommand,
 } from "../lib/config.ts";
@@ -28,8 +28,9 @@ export const machineCommand = new Command()
 			.description("Print current machine.nix configuration")
 			.action(async () => {
 				const dotfilesDir = await resolveDotfilesDir();
-				const nixDir = await resolveNixConfigDir(dotfilesDir);
-				const configPath = machineConfigPath(nixDir);
+				const configPath = await resolveMachineConfigPath(
+					await resolveNixConfigDir(dotfilesDir),
+				);
 
 				try {
 					const content = await Deno.readTextFile(configPath);
@@ -160,8 +161,9 @@ async function setMachineNixField(
 	value: boolean,
 ): Promise<void> {
 	const dotfilesDir = await resolveDotfilesDir();
-	const nixDir = await resolveNixConfigDir(dotfilesDir);
-	const configPath = machineConfigPath(nixDir);
+	const configPath = await resolveMachineConfigPath(
+		await resolveNixConfigDir(dotfilesDir),
+	);
 
 	let content: string;
 	try {
@@ -194,8 +196,9 @@ async function setMachineNixField(
 
 async function addMachinePreset(preset: string): Promise<void> {
 	const dotfilesDir = await resolveDotfilesDir();
-	const nixDir = await resolveNixConfigDir(dotfilesDir);
-	const configPath = machineConfigPath(nixDir);
+	const configPath = await resolveMachineConfigPath(
+		await resolveNixConfigDir(dotfilesDir),
+	);
 
 	let content: string;
 	try {
@@ -240,8 +243,9 @@ async function addMachinePreset(preset: string): Promise<void> {
 
 async function removeMachinePreset(preset: string): Promise<void> {
 	const dotfilesDir = await resolveDotfilesDir();
-	const nixDir = await resolveNixConfigDir(dotfilesDir);
-	const configPath = machineConfigPath(nixDir);
+	const configPath = await resolveMachineConfigPath(
+		await resolveNixConfigDir(dotfilesDir),
+	);
 
 	let content: string;
 	try {

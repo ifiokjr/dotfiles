@@ -10,7 +10,9 @@ import {
 	loadGroupMetadata,
 	machineConfigPath,
 	nixSystem,
+	resolveDeployedDotfilesDir,
 	resolveDotfilesDir,
+	resolveMachineConfigPath,
 	resolveNixConfigDir,
 	runCommand,
 } from "../lib/config.ts";
@@ -180,4 +182,109 @@ Deno.test("command helpers handle success and failure", async () => {
 		formatCommand(["dot", "groups", "info", "two words"]),
 		'dot groups info "two words"',
 	);
+});
+
+Deno.test("resolveMachineConfigPath follows the flake lookup order", async () => {
+	const previousHome = Deno.env.get("HOME");
+	const homeDir = await Deno.makeTempDir();
+	const dotfilesDir = await Deno.makeTempDir();
+	const nixConfigDir = join(dotfilesDir, "Configs/nix/.config/nix");
+
+	try {
+		Deno.env.set("HOME", homeDir);
+
+		// With no machine.nix anywhere, the canonical ~/.config/nix location is
+		// returned as the generation target.
+		assertEquals(
+			await resolveMachineConfigPath(nixConfigDir),
+			join(homeDir, ".config/nix/machine.nix"),
+		);
+
+		// A repo-side copy wins, matching the flake's NIX_USER_CONFIG_DIR lookup.
+		await Deno.mkdir(nixConfigDir, { recursive: true });
+		const repoMachinePath = join(nixConfigDir, "machine.nix");
+		await Deno.writeTextFile(repoMachinePath, "{}");
+		assertEquals(
+			await resolveMachineConfigPath(nixConfigDir),
+			repoMachinePath,
+		);
+
+		// Without the repo copy, the canonical ~/.config/nix file is used.
+		await Deno.remove(repoMachinePath);
+		const linkMachinePath = join(homeDir, ".config/nix/machine.nix");
+		await Deno.mkdir(join(homeDir, ".config/nix"), { recursive: true });
+		await Deno.writeTextFile(linkMachinePath, "{}");
+		assertEquals(
+			await resolveMachineConfigPath(nixConfigDir),
+			linkMachinePath,
+		);
+	} finally {
+		if (previousHome === undefined) {
+			Deno.env.delete("HOME");
+		} else {
+			Deno.env.set("HOME", previousHome);
+		}
+
+		await Deno.remove(homeDir, { recursive: true });
+		await Deno.remove(dotfilesDir, { recursive: true });
+	}
+});
+
+Deno.test("resolveDeployedDotfilesDir derives the root from nix symlinks", async () => {
+	const previousHome = Deno.env.get("HOME");
+	const homeDir = await Deno.makeTempDir();
+	const fakeRepo = await Deno.makeTempDir();
+	const nixDir = join(fakeRepo, "Configs/nix/.config/nix");
+
+	try {
+		Deno.env.set("HOME", homeDir);
+
+		// No ~/.config/nix at all.
+		assertEquals(await resolveDeployedDotfilesDir(), null);
+
+		// A real ~/.config/nix without a flake.nix symlink is also ignored.
+		await Deno.mkdir(join(homeDir, ".config/nix"), { recursive: true });
+		assertEquals(await resolveDeployedDotfilesDir(), null);
+
+		await Deno.mkdir(nixDir, { recursive: true });
+		await Deno.writeTextFile(join(nixDir, "flake.nix"), "{}");
+		await Deno.writeTextFile(join(fakeRepo, "setup"), "#!/usr/bin/env bash\n");
+
+		// Dir-level symlink: ~/.config/nix -> the repo's nix config dir.
+		await Deno.remove(join(homeDir, ".config/nix"));
+		await Deno.symlink(nixDir, join(homeDir, ".config/nix"));
+		assertEquals(
+			await resolveDeployedDotfilesDir(),
+			await Deno.realPath(fakeRepo),
+		);
+
+		// File-level symlink farm: real ~/.config/nix with flake.nix linked in.
+		await Deno.remove(join(homeDir, ".config/nix"));
+		await Deno.mkdir(join(homeDir, ".config/nix"));
+		await Deno.symlink(
+			join(nixDir, "flake.nix"),
+			join(homeDir, ".config/nix/flake.nix"),
+		);
+		assertEquals(
+			await resolveDeployedDotfilesDir(),
+			await Deno.realPath(fakeRepo),
+		);
+
+		// Symlinks that don't point inside a dotfiles checkout are ignored.
+		const unrelatedDir = await Deno.makeTempDir();
+		await Deno.remove(join(homeDir, ".config/nix/flake.nix"));
+		await Deno.remove(join(homeDir, ".config/nix"));
+		await Deno.symlink(unrelatedDir, join(homeDir, ".config/nix"));
+		assertEquals(await resolveDeployedDotfilesDir(), null);
+		await Deno.remove(unrelatedDir, { recursive: true });
+	} finally {
+		if (previousHome === undefined) {
+			Deno.env.delete("HOME");
+		} else {
+			Deno.env.set("HOME", previousHome);
+		}
+
+		await Deno.remove(homeDir, { recursive: true });
+		await Deno.remove(fakeRepo, { recursive: true });
+	}
 });
