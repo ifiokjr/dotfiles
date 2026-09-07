@@ -6,6 +6,7 @@
 
 import { Command } from "@cliffy/command";
 import { HelpCommand } from "@cliffy/command/help";
+import { cleanCommand } from "./commands/clean.ts";
 import { completionCommand } from "./commands/completion.ts";
 import { doctorCommand } from "./commands/doctor.ts";
 import { envCommand } from "./commands/env.ts";
@@ -30,6 +31,7 @@ await new Command()
 		"Manage your dotfiles — setup, rebuild, reload, and more.\n\n" +
 			"Run 'dotfiles help <command>' for detailed usage of any subcommand.",
 	)
+	.command("clean", cleanCommand)
 	.command("setup", setupCommand)
 	.command("rebuild", rebuildCommand)
 	.command("reload", reloadCommand)
