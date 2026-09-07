@@ -299,6 +299,72 @@ async function checkGitHubReachability(state: DoctorState): Promise<void> {
 	state.warnings++;
 }
 
+/** Parse the UserShell path from `dscl . -read /Users/<user> UserShell` output. */
+export function loginShellFromDscl(stdout: string): string {
+	return stdout.match(/UserShell:\s*(\S+)/)?.[1] ?? "";
+}
+
+/** Parse the login shell from `getent passwd <user>` output (field 7). */
+export function loginShellFromGetent(stdout: string): string {
+	return stdout.split(":")[6]?.trim() ?? "";
+}
+
+/**
+ * Check that the user's login shell binary exists so terminals can launch it.
+ * A login shell pointing at a not-yet-built path (e.g. /run/current-system/sw/bin/nu
+ * before the first successful rebuild) makes Ghostty and other terminals fail
+ * to launch with "cannot execute: No such file or directory".
+ */
+async function checkLoginShell(
+	platform: Platform,
+	state: DoctorState,
+): Promise<void> {
+	const user = Deno.env.get("USER") ?? "";
+
+	if (user === "") {
+		printInfo(
+			"Could not determine the current user; skipping the login shell check",
+		);
+
+		return;
+	}
+
+	let shell = "";
+
+	if (platform === "macos") {
+		const result = await runQuiet("dscl", [
+			".",
+			"-read",
+			`/Users/${user}`,
+			"UserShell",
+		]);
+		shell = loginShellFromDscl(result.stdout);
+	} else {
+		const result = await runQuiet("getent", ["passwd", user]);
+		shell = loginShellFromGetent(result.stdout);
+	}
+
+	if (shell === "") {
+		printInfo("Could not determine the login shell");
+
+		return;
+	}
+
+	try {
+		await Deno.stat(shell);
+	} catch {
+		printError(`Login shell points to a missing binary: ${shell}`);
+		printInfo(
+			"Terminals (Ghostty, etc.) fail to launch in this state. Run `dot rebuild` so the shell is built into the system profile before setting it with chsh.",
+		);
+		state.problems++;
+
+		return;
+	}
+
+	printSuccess(`Login shell binary exists: ${shell}`);
+}
+
 /** Print the final doctor result and exit non-zero for blocking issues. */
 function printDoctorSummary(state: DoctorState): void {
 	console.log("");
@@ -355,6 +421,8 @@ export const doctorCommand = new Command()
 		await checkSudo(state);
 
 		await checkNix(state);
+
+		await checkLoginShell(platform, state);
 
 		// === Platform Checks ===
 		await checkXcodeCommandLineTools(platform, state);
