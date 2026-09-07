@@ -122,6 +122,79 @@ export function machineConfigPath(nixConfigDir: string): string {
 	return join(nixConfigDir, "machine.nix");
 }
 
+/**
+ * Resolve the machine.nix file to read and write, matching the flake's own
+ * lookup order: the resolved nix config dir first (passed to nix as
+ * NIX_USER_CONFIG_DIR), then ~/.config/nix/machine.nix — the canonical
+ * location written by Hooks/nix/post.sh and generate-machine-config. When
+ * the file exists in neither place, the ~/.config/nix location is returned
+ * as the generation target, so a fresh clone (machine.nix is gitignored)
+ * can bootstrap itself.
+ */
+export async function resolveMachineConfigPath(
+	nixConfigDir: string,
+): Promise<string> {
+	const home = Deno.env.get("HOME") ?? "~";
+
+	if (await exists(join(nixConfigDir, "machine.nix"), { isFile: true })) {
+		return join(nixConfigDir, "machine.nix");
+	}
+
+	return join(home, ".config/nix", "machine.nix");
+}
+
+/**
+ * Dotfiles repo root implied by the deployed ~/.config/nix symlinks, if any.
+ * On machines where tuckr links the nix config into a checkout — either a
+ * dir-level symlink of ~/.config/nix itself, or per-file symlinks (flake.nix)
+ * inside a real ~/.config/nix directory — that checkout is the one nix builds
+ * from, and the one `rebuild` should update, evaluate, and compile from.
+ * Returns null when the links are missing or don't point inside a dotfiles
+ * checkout (verified with the same Configs + setup markers used by
+ * resolveDotfilesDir).
+ */
+export async function resolveDeployedDotfilesDir(): Promise<string | null> {
+	const home = Deno.env.get("HOME") ?? "~";
+	const linkPath = join(home, ".config/nix");
+
+	const nixDirs: string[] = [];
+	try {
+		const flakeNix = join(linkPath, "flake.nix");
+		if ((await Deno.lstat(flakeNix)).isSymlink) {
+			nixDirs.push(dirname(await Deno.realPath(flakeNix)));
+		}
+	} catch {
+		// flake.nix is not a symlink — fall through
+	}
+	try {
+		if ((await Deno.lstat(linkPath)).isSymlink) {
+			nixDirs.push(await Deno.realPath(linkPath));
+		}
+	} catch {
+		// ~/.config/nix does not exist — fall through
+	}
+
+	for (const nixDir of nixDirs) {
+		let dir = nixDir;
+		// Walk up from the nix dir to the repo root (Configs/nix/.config/nix is
+		// up to four levels below it).
+		for (let depth = 0; depth < 5; depth++) {
+			if (
+				await exists(join(dir, "Configs"), { isDirectory: true }) &&
+				await exists(join(dir, "setup"), { isFile: true })
+			) {
+				return dir;
+			}
+
+			const parent = dirname(dir);
+			if (parent === dir) break;
+			dir = parent;
+		}
+	}
+
+	return null;
+}
+
 /** Known setup presets. */
 export interface Preset {
 	name: string;
