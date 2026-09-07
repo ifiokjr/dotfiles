@@ -132,7 +132,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 
 **Location:** `Configs/nushell/.config/nushell/` **Deploys:** `~/.config/nushell/` **Description:** Nushell shell configuration including env.nu, config.nu, login.nu, and custom modules (secrets, direnv).
 
-**Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide), sets nushell as default shell via chsh, creates macOS config symlink
+**Hook:** `post_nushell` - Generates vendor autoload scripts (starship, carapace, atuin, mise, zoxide) via the shared `refresh-nu-vendor-autoloads` script (also run by `dotfiles rebuild` and `dotfiles reload`), sets nushell as default shell via chsh, creates macOS config symlink
 
 #### `zellij`
 
