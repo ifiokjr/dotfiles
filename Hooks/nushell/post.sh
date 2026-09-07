@@ -49,6 +49,9 @@ fi
 
 # Generate vendor autoload scripts using nushell to resolve the correct data dir
 # (on macOS without XDG_DATA_HOME, this is ~/Library/Application Support/nushell/)
+# Generated init scripts embed the tool's binary path, so when a tool is removed
+# its stale file must be deleted too — otherwise every new shell errors trying to
+# run a binary that no longer exists.
 if [ -x "$NU_PATH" ]; then
 	# shellcheck disable=SC2016
 	VENDOR_AUTOLOAD_DIR=$("$NU_PATH" -c '$nu.data-dir | path join "vendor/autoload"')
@@ -65,12 +68,13 @@ if [ -x "$NU_PATH" ]; then
 			echo -e "${YELLOW}!${NC} dot completion nushell failed, skipping dot-completions.nu"
 		fi
 	else
-		echo -e "${YELLOW}!${NC} dot not found, skipping dot-completions.nu"
+		rm -f "$VENDOR_AUTOLOAD_DIR/dot-completions.nu"
+		echo -e "${YELLOW}!${NC} dot not found, removing stale dot-completions.nu"
 	fi
 
 	# Generate devenv auto-activation hook so config.nu can source it on startup.
+	DEVENV_HOOK_FILE="$HOME/.cache/devenv/hook.nu"
 	if command -v devenv &>/dev/null; then
-		DEVENV_HOOK_FILE="$HOME/.cache/devenv/hook.nu"
 		mkdir -p "$(dirname "$DEVENV_HOOK_FILE")"
 		if devenv hook nu >"$DEVENV_HOOK_FILE" 2>/dev/null; then
 			echo -e "${GREEN}✓${NC} Generated devenv hook.nu"
@@ -79,7 +83,8 @@ if [ -x "$NU_PATH" ]; then
 			echo -e "${YELLOW}!${NC} devenv hook nu failed, skipping hook.nu"
 		fi
 	else
-		echo -e "${YELLOW}!${NC} devenv not found, skipping hook.nu"
+		rm -f "$DEVENV_HOOK_FILE"
+		echo -e "${YELLOW}!${NC} devenv not found, removing stale hook.nu"
 	fi
 
 	# Generate starship init (per https://starship.rs/guide/)
@@ -88,7 +93,8 @@ if [ -x "$NU_PATH" ]; then
 		"$NU_PATH" -c 'starship init nu | save -f ($nu.data-dir | path join "vendor/autoload/starship.nu")'
 		echo -e "${GREEN}✓${NC} Generated starship.nu"
 	else
-		echo -e "${YELLOW}!${NC} starship not found, skipping starship.nu"
+		rm -f "$VENDOR_AUTOLOAD_DIR/starship.nu"
+		echo -e "${YELLOW}!${NC} starship not found, removing stale starship.nu"
 	fi
 
 	# Generate carapace completions
@@ -96,7 +102,8 @@ if [ -x "$NU_PATH" ]; then
 		carapace _carapace nushell >"$VENDOR_AUTOLOAD_DIR/carapace.nu"
 		echo -e "${GREEN}✓${NC} Generated carapace.nu"
 	else
-		echo -e "${YELLOW}!${NC} carapace not found, skipping carapace.nu"
+		rm -f "$VENDOR_AUTOLOAD_DIR/carapace.nu"
+		echo -e "${YELLOW}!${NC} carapace not found, removing stale carapace.nu"
 	fi
 
 	# Generate atuin init
@@ -132,7 +139,8 @@ if [ -x "$NU_PATH" ]; then
 			sed -i 's/let last_exit = \$env\.LAST_EXIT_CODE$/let last_exit = ($env.LAST_EXIT_CODE? | default 0 | into int)/' "$ATUIN_AUTOLOAD_FILE" 2>/dev/null || true
 		echo -e "${GREEN}✓${NC} Generated atuin.nu"
 	else
-		echo -e "${YELLOW}!${NC} atuin not found, skipping atuin.nu"
+		rm -f "$ATUIN_AUTOLOAD_FILE"
+		echo -e "${YELLOW}!${NC} atuin not found, removing stale atuin.nu"
 	fi
 
 	# Generate mise activation (patch add-hook for Nushell compatibility: update optional true -> each { merge } )
@@ -162,7 +170,8 @@ if [ -x "$NU_PATH" ]; then
 		fi
 		echo -e "${GREEN}✓${NC} Generated mise.nu"
 	else
-		echo -e "${YELLOW}!${NC} mise not found, skipping mise.nu"
+		rm -f "$VENDOR_AUTOLOAD_DIR/mise.nu"
+		echo -e "${YELLOW}!${NC} mise not found, removing stale mise.nu"
 	fi
 
 	# Generate zoxide init
@@ -171,7 +180,8 @@ if [ -x "$NU_PATH" ]; then
 		"$NU_PATH" -c 'zoxide init nushell | save -f ($nu.data-dir | path join "vendor/autoload/zoxide.nu")'
 		echo -e "${GREEN}✓${NC} Generated zoxide.nu"
 	else
-		echo -e "${YELLOW}!${NC} zoxide not found, skipping zoxide.nu"
+		rm -f "$VENDOR_AUTOLOAD_DIR/zoxide.nu"
+		echo -e "${YELLOW}!${NC} zoxide not found, removing stale zoxide.nu"
 	fi
 else
 	echo -e "${YELLOW}!${NC} $NU_PATH not found, skipping vendor autoload generation"
