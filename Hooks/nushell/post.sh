@@ -146,6 +146,20 @@ if [ -x "$NU_PATH" ]; then
 		# Fix deprecated --ignore-errors flag (renamed to --optional in nushell 0.106.0)
 		sed -i '' 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
 			sed -i 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
+
+		# Nushell 0.114+ renamed `str upcase` to `str uppercase`. Older mise
+		# releases generate activate scripts using the deprecated name, which
+		# warns on every shell startup under Nushell >= 0.114. Only rename when
+		# the deployed nushell supports the new name so vendor autoloads
+		# generated before a rebuild keep working on older Nushell profiles.
+		NU_VERSION=$("$NU_PATH" -c 'version | get version' 2>/dev/null || echo "0.0.0")
+		NU_MAJOR=${NU_VERSION%%.*}
+		NU_MINOR=${NU_VERSION#*.}
+		NU_MINOR=${NU_MINOR%%.*}
+		if [ "${NU_MAJOR:-0}" -gt 0 ] || [ "${NU_MINOR:-0}" -ge 114 ]; then
+			sed -i '' 's/str upcase/str uppercase/g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
+				sed -i 's/str upcase/str uppercase/g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
+		fi
 		echo -e "${GREEN}✓${NC} Generated mise.nu"
 	else
 		echo -e "${YELLOW}!${NC} mise not found, skipping mise.nu"
