@@ -61,7 +61,7 @@
       # consumer (including setup bootstrap and CI) benefits.
       darwinWorkaroundsOverlay =
         final: prev:
-        prev.lib.optionalAttrs prev.stdenv.isDarwin {
+        prev.lib.optionalAttrs prev.stdenv.hostPlatform.isDarwin {
           # Work around intermittent ast-grep check failures on Darwin
           # (`Illegal byte sequence (os error 92)`) during source builds.
           ast-grep = prev.ast-grep.overrideAttrs (_: {
@@ -278,7 +278,7 @@
           finalHomeDirectory =
             if homeDirectory != null then
               homeDirectory
-            else if pkgs.stdenv.isLinux then
+            else if pkgs.stdenv.hostPlatform.isLinux then
               "/home/${username}"
             else
               "/Users/${username}";
