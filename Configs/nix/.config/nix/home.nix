@@ -211,7 +211,7 @@ in
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
     ]
-    ++ lib.optionals pkgs.stdenv.isDarwin (
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin (
       [
         # macOS-only custom packages from ifiokjr-nixpkgs.
         extra.ccase
@@ -224,7 +224,7 @@ in
         powershell
       ]
     )
-    ++ lib.optionals pkgs.stdenv.isLinux (
+    ++ lib.optionals pkgs.stdenv.hostPlatform.isLinux (
       # Linux-only packages (macOS equivalents are in darwin.nix systemPackages)
       [
         gnome-keyring
@@ -236,7 +236,7 @@ in
         ungoogled-chromium
       ]
     )
-    ++ lib.optionals (isDesktop && pkgs.stdenv.isDarwin) [
+    ++ lib.optionals (isDesktop && pkgs.stdenv.hostPlatform.isDarwin) [
       # Docker compatibility layer via podman (all macOS desktops)
       # Provides `docker` and `docker-compose` commands backed by podman
       (pkgs.writeShellScriptBin "docker" ''exec podman "$@"'')
@@ -246,7 +246,7 @@ in
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
-  home.file = lib.mkIf pkgs.stdenv.isDarwin {
+  home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     ".ssh/config" = {
       force = true;
       text = ''
@@ -306,7 +306,7 @@ in
   # Idempotent: podman machine init/start are no-ops if machine already exists/running.
   # --rootful enables root-level container capabilities (ports <1024, etc.).
   home.activation.initPodmanMachine = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-    lib.optionalString (isDesktop && pkgs.stdenv.isDarwin) ''
+    lib.optionalString (isDesktop && pkgs.stdenv.hostPlatform.isDarwin) ''
       echo "==> Initializing rootful podman VM (macOS desktop)…"
       if command -v podman >/dev/null 2>&1; then
         ${pkgs.podman}/bin/podman machine init --rootful 2>/dev/null || true
@@ -332,7 +332,7 @@ in
   # On Linux with standalone home-manager (not NixOS), we need a user-level
   # systemd service. On NixOS, use services.tailscale.enable in your
   # system config instead — this user service is only for non-NixOS Linux.
-  systemd.user.services.tailscaled = lib.mkIf pkgs.stdenv.isLinux {
+  systemd.user.services.tailscaled = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     Unit = {
       Description = "Tailscale node daemon";
       After = [ "network-online.target" ];
