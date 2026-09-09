@@ -7,6 +7,7 @@
   lite ? false,
   isDesktop ? false,
   alwaysOn ? false,
+  unattendedSudo ? false,
   homebrew-core,
   homebrew-cask,
   homebrew-bundle,
@@ -253,7 +254,7 @@
     };
   };
 
-  # Use global sudo timestamp so credentials are shared across all processes.
+  # Global sudo timestamp so credentials are shared across all processes.
   # Required because nix-darwin's Homebrew module runs `brew bundle` in a
   # different process tree during activation, and brew's internal `sudo`
   # calls (for cask installs) need to reuse the cached credentials.
@@ -265,6 +266,21 @@
   security.sudo.extraConfig = ''
     Defaults timestamp_type=global
     Defaults timestamp_timeout=15
+  ''
+  + lib.optionalString unattendedSudo ''
+    # Passwordless sudo so this machine can be administered unattended over
+    # SSH (Tailscale): `ssh <host> 'dot rebuild --latest'` has no TTY to
+    # answer a password prompt, and `nh darwin switch` shells out to sudo
+    # repeatedly (activation script, brew bundle cask installs,
+    # softwareupdate), so a cached timestamp alone cannot carry a headless
+    # rebuild — brew resets the sudo timestamp mid-activation and a prompt
+    # kills the run.
+    #
+    # Security tradeoff: any code running as this user can escalate to root
+    # without a password. Only enable this via `unattendedSudo = true` in
+    # machine.nix on headless fleet machines that are administered
+    # unattended; it is intentionally off for interactive workstations.
+    ${username} ALL=(ALL) NOPASSWD: ALL
   '';
 
   # Enable zsh system-wide

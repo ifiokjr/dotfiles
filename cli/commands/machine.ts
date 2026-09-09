@@ -89,6 +89,22 @@ export const machineCommand = new Command()
 			}),
 	)
 	.command(
+		"set-unattended-sudo",
+		new Command()
+			.description(
+				"Set unattended sudo in machine.nix (passwordless sudo for headless fleet machines)",
+			)
+			.arguments("<value:string>")
+			.action(async (_opts, value: string) => {
+				const enabled = parseBool(value);
+				if (enabled === null) {
+					printError("Value must be 'on', 'off', 'true', or 'false'");
+					Deno.exit(1);
+				}
+				await setMachineNixField("unattendedSudo", enabled);
+			}),
+	)
+	.command(
 		"add-preset",
 		new Command()
 			.description("Add a machine preset to machine.nix")

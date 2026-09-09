@@ -26,6 +26,16 @@
   # Intended for always-plugged-in desktops and servers.
   alwaysOn = false;
 
+  # Optional: Passwordless sudo for unattended administration over SSH
+  # (headless fleet machines), enabling `ssh <host> 'dot rebuild --latest'`.
+  # Disabled by default because enabling lets any code running as this user
+  # escalate to root without a password — only set it on machines you
+  # administer unattended. On macOS this adds a NOPASSWD sudoers rule; on
+  # Linux the home-manager activation installs
+  # /etc/sudoers.d/10-home-manager-unattended. The rebuild that first enables
+  # it still needs one interactive sudo authentication.
+  # unattendedSudo = false;
+
   # Optional: Machine presets — enables feature sets for specific use cases.
   # Use `rebuild --add-preset <name>` or `rebuild --remove-preset <name>` to manage.
   # presets = [];
