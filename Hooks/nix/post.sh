@@ -252,11 +252,15 @@ if [ ! -f "$MACHINE_NIX" ]; then
 	fi
 
 	mkdir -p "$NIX_LINK_DIR"
-	LITE_MACHINE_BLOCK=""
+	MACHINE_BOOL_BLOCKS=""
 	if [ "$SETUP_LITE_MODE" = "true" ]; then
-		LITE_MACHINE_BLOCK='
-  # Lite profile (CLI-focused, skips GUI-heavy applications)
-  lite = true;'
+		MACHINE_BOOL_BLOCKS+=$'\n  # Lite profile (CLI-focused, skips GUI-heavy applications)\n  lite = true;'
+	fi
+	if [ "$SETUP_DESKTOP" = "true" ]; then
+		MACHINE_BOOL_BLOCKS+=$'\n  # Desktop machine — enables podman/launchd desktop integration\n  isDesktop = true;'
+	fi
+	if [ "$SETUP_ALWAYS_ON" = "true" ]; then
+		MACHINE_BOOL_BLOCKS+=$'\n  # Always-on — never sleeps, screensaver locks automatically\n  alwaysOn = true;'
 	fi
 	cat >"$MACHINE_NIX" <<-ENDMACHINE
 		# Machine-specific configuration
@@ -271,34 +275,48 @@ if [ ! -f "$MACHINE_NIX" ]; then
 
 		  # Machine hostname
 		  hostname = "$HOSTNAME";
-		${LITE_MACHINE_BLOCK}
+		${MACHINE_BOOL_BLOCKS}
 		}
 	ENDMACHINE
 
-	echo "Created machine.nix  Username=$USERNAME  System=$SYSTEM  Hostname=$HOSTNAME  Lite=$SETUP_LITE_MODE"
+	echo "Created machine.nix  Username=$USERNAME  System=$SYSTEM  Hostname=$HOSTNAME  Lite=$SETUP_LITE_MODE  Desktop=${SETUP_DESKTOP:-false}  AlwaysOn=${SETUP_ALWAYS_ON:-false}"
 fi
 
-# If setup requested lite mode, ensure machine.nix explicitly enables it.
-if [ "$SETUP_LITE_MODE" = "true" ]; then
-	TMP_MACHINE_NIX="$(mktemp)"
+# Apply setup-requested machine profile flags (idempotent, works on generated
+# and pre-existing machine.nix files).
+set_machine_nix_bool() {
+	local field="$1"
+	local value="$2"
+	local tmp
+	tmp="$(mktemp)"
 
-	if grep -Eq '^[[:space:]]*lite[[:space:]]*=' "$MACHINE_NIX"; then
-		sed -E 's/^[[:space:]]*lite[[:space:]]*=.*/  lite = true;/' "$MACHINE_NIX" >"$TMP_MACHINE_NIX"
-		mv "$TMP_MACHINE_NIX" "$MACHINE_NIX"
-		echo "Updated machine.nix: set lite = true"
+	if grep -Eq "^[[:space:]]*${field}[[:space:]]*=" "$MACHINE_NIX"; then
+		sed -E "s/^[[:space:]]*${field}[[:space:]]*=.*/  ${field} = ${value};/" "$MACHINE_NIX" >"$tmp"
 	else
-		awk '
+		awk -v field="${field}" -v value="${value}" '
 			/^[[:space:]]*}[[:space:]]*$/ && !inserted {
 				print ""
-				print "  # Lite profile (CLI-focused, skips GUI-heavy applications)"
-				print "  lite = true;"
+				print "  " field " = " value ";"
 				inserted = 1
 			}
 			{ print }
-		' "$MACHINE_NIX" >"$TMP_MACHINE_NIX"
-		mv "$TMP_MACHINE_NIX" "$MACHINE_NIX"
-		echo "Updated machine.nix: added lite = true"
+		' "$MACHINE_NIX" >"$tmp"
 	fi
+
+	mv "$tmp" "$MACHINE_NIX"
+	echo "Updated machine.nix: set ${field} = ${value}"
+}
+
+if [ "$SETUP_LITE_MODE" = "true" ]; then
+	set_machine_nix_bool lite true
+fi
+
+if [ "${SETUP_DESKTOP:-false}" = "true" ]; then
+	set_machine_nix_bool isDesktop true
+fi
+
+if [ "${SETUP_ALWAYS_ON:-false}" = "true" ]; then
+	set_machine_nix_bool alwaysOn true
 fi
 
 # ---------------------------------------------------------------------------
@@ -317,6 +335,28 @@ if [ -z "$CFG_USERNAME" ] || [ -z "$CFG_SYSTEM" ]; then
 fi
 
 echo "Configuration:  Username=$CFG_USERNAME  System=$CFG_SYSTEM  Lite=$CFG_LITE"
+
+# ---------------------------------------------------------------------------
+# Validate the account home matches the machine.nix username
+# ---------------------------------------------------------------------------
+# home-manager resolves the user's home to /Users/<username> (macOS) or
+# /home/<username> (Linux) and aborts activation with a cryptic error when the
+# real home directory differs (e.g. macOS created an account named "minione"
+# with home "/Users/mini01"). Fail fast with actionable guidance instead.
+if uname -s | grep -q '^Darwin$'; then
+	EXPECTED_HOME="/Users/$CFG_USERNAME"
+else
+	EXPECTED_HOME="/home/$CFG_USERNAME"
+fi
+if [ "$HOME" != "$EXPECTED_HOME" ]; then
+	echo "ERROR: Home directory mismatch: HOME=$HOME but machine.nix username is $CFG_USERNAME (expected home: $EXPECTED_HOME)"
+	echo "  home-manager requires the account's short name and home directory to match."
+	echo "  Fix: recreate the macOS account so the username and home directory match"
+	echo "  (System Settings → Users & Groups → add a new administrator, e.g. ifiokjr),"
+	echo "  then re-run setup from that account. Alternatively rename the home directory"
+	echo "  and update the account's NFSHomeDirectory to /Users/$CFG_USERNAME."
+	exit 1
+fi
 
 # ---------------------------------------------------------------------------
 # Detect root-only nix (Docker/containers without systemd)
@@ -497,6 +537,28 @@ if [ "$REBUILD_EXIT" -eq 0 ]; then
 		fi
 	else
 		echo "    Skipping dotfiles CLI compilation (no cli/ directory found)"
+	fi
+fi
+
+# ---------------------------------------------------------------------------
+# Join the tailnet automatically when a pre-auth key is supplied
+# ---------------------------------------------------------------------------
+# Set TAILSCALE_AUTHKEY (a reusable pre-auth key from the Tailscale admin
+# console) in the bootstrap environment so headless machines join the tailnet
+# unattended, with Tailscale SSH enabled:
+#   curl -fsSL <setup-url> | TAILSCALE_AUTHKEY=tskey-auth-... bash -s -- ...
+if [ -n "${TAILSCALE_AUTHKEY:-}" ] && [ "$REBUILD_EXIT" -eq 0 ]; then
+	if ! command -v tailscale >/dev/null 2>&1; then
+		echo "    Warning: TAILSCALE_AUTHKEY set but tailscale was not installed by the rebuild"
+	elif sudo tailscale status >/dev/null 2>&1; then
+		echo "    Tailscale already connected"
+	else
+		echo "==> Joining the tailnet with a pre-auth key (Tailscale SSH enabled)..."
+		if sudo tailscale up --authkey "$TAILSCALE_AUTHKEY" --ssh >/dev/null 2>&1; then
+			echo "    Joined the tailnet"
+		else
+			echo "    Warning: Tailscale auto-join failed; run 'sudo tailscale up' manually"
+		fi
 	fi
 fi
 

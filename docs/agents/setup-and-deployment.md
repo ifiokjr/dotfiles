@@ -27,6 +27,8 @@ cd ~/path/to/dotfiles
 - `--groups GROUPS`: deploy specific comma-separated groups.
 - `--skip-nix`: skip Nix install.
 - `--lite`: enable CLI-focused install and skip GUI-heavy applications.
+- `--desktop`: mark `machine.nix` `isDesktop = true` (podman/launchd desktop bits).
+- `--always-on`: mark `machine.nix` `alwaysOn = true` (never sleeps, screensaver lock).
 - `--doctor`: run preflight checks without changing the machine.
 - `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
 - `--dry-run`: print the setup execution plan and exit.

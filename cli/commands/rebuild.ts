@@ -159,6 +159,19 @@ export const rebuildCommand = new Command()
 		const config = await readMachineConfig(machinePath);
 		printMachineConfig(config, machinePath);
 
+		const homeMismatch = homeDirectoryMismatch(
+			config.system,
+			config.username,
+			Deno.env.get("HOME"),
+		);
+		if (homeMismatch) {
+			printError(homeMismatch);
+			printWarning(
+				"home-manager activation requires the account's short name and home directory to match. Recreate the macOS account (System Settings → Users & Groups) so the username and home directory match, or update machine.nix.",
+			);
+			Deno.exit(1);
+		}
+
 		if (opts.dryRun) {
 			printPlan(context, config, opts);
 			return;
@@ -431,6 +444,32 @@ async function readMachineConfig(machinePath: string): Promise<MachineConfig> {
 
 function readStringField(content: string, field: string): string {
 	return content.match(new RegExp(`${field}\\s*=\\s*"([^"]+)"`))?.[1] ?? "";
+}
+
+/**
+ * Returns an actionable error message when the account home directory cannot
+ * satisfy home-manager, or null when it matches.
+ *
+ * home-manager resolves the user's home to /Users/<username> (macOS) or
+ * /home/<username> (Linux). macOS Setup Assistant can create accounts whose
+ * home directory differs from the short name (e.g. username "minione" with
+ * home "/Users/mini01"), and such a mismatch aborts activation with a cryptic
+ * error, so validate before building.
+ */
+export function homeDirectoryMismatch(
+	system: string,
+	username: string,
+	homeDir: string | undefined,
+): string | null {
+	if (!username || !homeDir) return null;
+
+	const expected = system.endsWith("darwin")
+		? `/Users/${username}`
+		: `/home/${username}`;
+
+	if (homeDir === expected) return null;
+
+	return `	$HOME (${homeDir}) does not match machine.nix username ${username} (expected home: ${expected})`;
 }
 
 function readBooleanField(content: string, field: string): boolean {

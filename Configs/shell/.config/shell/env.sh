@@ -136,7 +136,7 @@ unset _p
 # Kept here temporarily for backward compatibility during transition
 export OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS=true
 export OPENCODE_ALLOW_ALL_BASH=true
-export OPENCODE_TRUSTED_DIRECTORIES="/Users/ifiokjr/Developer,/tmp"
+export OPENCODE_TRUSTED_DIRECTORIES="$HOME/Developer,/tmp"
 
 # Source the unified agents configuration (overrides above if present)
 if [ -f "$HOME/.config/agents/agents.env.sh" ]; then

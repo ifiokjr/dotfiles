@@ -13,7 +13,7 @@ export OPENCODE_ALLOW_ALL_BASH=true
 # Trusted directories - these paths are automatically allowed
 # Note: The config file at ~/.config/opencode/config.json is the source of truth
 # These env vars provide fallback behavior
-export OPENCODE_TRUSTED_DIRECTORIES="/Users/ifiokjr/Developer:/Users/ifiokjr/Developer/.dotfiles:/tmp"
+export OPENCODE_TRUSTED_DIRECTORIES="$HOME/Developer:$HOME/Developer/.dotfiles:/tmp"
 
 # ---------------------------------------------------------------------------
 # Pi Agent Configuration
