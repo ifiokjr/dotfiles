@@ -128,14 +128,18 @@ runner_os="osx"
 
 if [ -z "$RUNNER_VERSION" ]; then
 	info "Resolving latest actions/runner release..."
-	RUNNER_VERSION=$(gh_api repos/actions/runner/releases/latest --jq .tag_name 2>/dev/null | sed 's/^v//')
-	if [ -z "$RUNNER_VERSION" ]; then
-		curl -fsSL https://api.github.com/repos/actions/runner/releases/latest |
-			/usr/bin/sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' |
-			head -n 1
+	# Tolerant pipeline: the whole thing can fail without killing the script
+	# under errexit (gh may be unauthenticated; the unauthenticated API has a
+	# low rate limit).
+	RUNNER_VERSION=$( {
+		gh_api repos/actions/runner/releases/latest --jq .tag_name 2>/dev/null ||
+			curl -fsSL https://api.github.com/repos/actions/runner/releases/latest 2>/dev/null ||
+			echo "v0"
+	} | sed 's/^v//' | head -n 1)
+	if [ -z "$RUNNER_VERSION" ] || [ "$RUNNER_VERSION" = "0" ]; then
+		die "Could not resolve the actions/runner release version; set RUNNER_VERSION explicitly"
 	fi
 fi
-[ -n "$RUNNER_VERSION" ] || die "Could not resolve the actions/runner release version"
 
 if [ -x "$RUNNER_DIR/config.sh" ] && [ "$(cat "$RUNNER_DIR/.version" 2>/dev/null)" = "$RUNNER_VERSION" ]; then
 	ok "Runner $RUNNER_VERSION already installed at $RUNNER_DIR"
