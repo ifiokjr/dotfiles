@@ -1,9 +1,11 @@
 {
   pkgs,
   lib,
+  username ? "",
   lite ? false,
   isDesktop ? false,
   alwaysOn ? false,
+  unattendedSudo ? false,
   presets ? [ ],
   ifiokjr-nixpkgs,
   ...
@@ -301,6 +303,49 @@ in
       "$HOME/.local/bin/pnpm:global:sync" --quiet --no-fail || true
     fi
   '';
+
+  # Install a sudoers drop-in granting the primary user passwordless sudo on
+  # unattended Linux machines (`unattendedSudo = true` in machine.nix), so
+  # `ssh <host> 'dot rebuild --latest'` works without a TTY — the Linux mirror
+  # of the darwin.nix sudoers rule. Plain home-manager has no system-config
+  # owner (that's NixOS territory), so activation keeps the drop-in in sync:
+  # the fragment is validated with visudo and installed atomically. `sudo -n`
+  # keeps this non-interactive; on the bootstrap run (no way to prompt) it
+  # warns with the manual command instead of hanging, mirroring the macOS
+  # flow where the first rebuild needs one interactive authentication.
+  home.activation.installUnattendedSudo = lib.mkIf
+    (unattendedSudo && pkgs.stdenv.hostPlatform.isLinux)
+    (lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      echo "==> Ensuring unattended sudo drop-in (/etc/sudoers.d)..."
+      if [ "$(id -u)" = "0" ]; then
+        echo "    Running as root; sudoers drop-in not needed"
+      elif ! command -v sudo >/dev/null 2>&1 || [ ! -d /etc/sudoers.d ]; then
+        echo "    Warning: sudo or /etc/sudoers.d not found; skipping unattended sudo setup"
+      else
+        dropin="/etc/sudoers.d/10-home-manager-unattended"
+        tmp="$(mktemp)"
+        cat >"$tmp" <<EOF
+# Managed by home-manager (dotfiles) — do not edit; set unattendedSudo in machine.nix.
+${username} ALL=(ALL) NOPASSWD: ALL
+EOF
+        visudo_bin="$(command -v visudo || true)"
+        if [ -z "$visudo_bin" ] && [ -x /usr/sbin/visudo ]; then
+          visudo_bin=/usr/sbin/visudo
+        fi
+        if [ -n "$visudo_bin" ] && "$visudo_bin" -cf "$tmp" >/dev/null 2>&1; then
+          if sudo -n install -m 0440 -o root -g root "$tmp" "$dropin" 2>/dev/null; then
+            echo "    Unattended sudo drop-in installed at $dropin"
+          else
+            echo "    Warning: no cached sudo credentials; drop-in not installed (bootstrap once):"
+            echo "      printf '%s\n' '${username} ALL=(ALL) NOPASSWD: ALL' | sudo tee $dropin >/dev/null"
+            echo "      sudo chmod 0440 $dropin"
+          fi
+        else
+          echo "    Warning: sudoers fragment failed visudo validation; not installed"
+        fi
+        rm -f "$tmp"
+      fi
+    '');
 
   # Initialize and start podman VM for Docker compatibility on all macOS desktops.
   # Idempotent: podman machine init/start are no-ops if machine already exists/running.

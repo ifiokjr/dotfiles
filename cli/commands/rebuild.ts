@@ -57,9 +57,11 @@ interface RebuildOptions {
 	noAlwaysOn?: boolean;
 	noDesktop?: boolean;
 	noLite?: boolean;
+	noUnattendedSudo?: boolean;
 	rebuildOs?: boolean;
 	removePreset?: string;
 	skipCheck?: boolean;
+	unattendedSudo?: boolean;
 	update?: boolean;
 }
 
@@ -69,6 +71,7 @@ interface MachineConfig {
 	lite: boolean;
 	presets: string[];
 	system: string;
+	unattendedSudo: boolean;
 	username: string;
 }
 
@@ -114,6 +117,14 @@ export const rebuildCommand = new Command()
 	.option(
 		"--no-always-on",
 		"Set machine.nix alwaysOn = false before rebuilding",
+	)
+	.option(
+		"--unattended-sudo",
+		"Set machine.nix unattendedSudo = true before rebuilding (passwordless sudo for headless machines)",
+	)
+	.option(
+		"--no-unattended-sudo",
+		"Set machine.nix unattendedSudo = false before rebuilding",
 	)
 	.option(
 		"--add-preset <preset:string>",
@@ -232,6 +243,11 @@ function validateOptions(opts: RebuildOptions) {
 		printError("Cannot use both --always-on and --no-always-on");
 		Deno.exit(1);
 	}
+
+	if (opts.unattendedSudo && opts.noUnattendedSudo) {
+		printError("Cannot use both --unattended-sudo and --no-unattended-sudo");
+		Deno.exit(1);
+	}
 }
 
 async function updateDotfilesRepo(
@@ -316,6 +332,8 @@ async function updateMachineConfig(machinePath: string, opts: RebuildOptions) {
 	if (opts.noDesktop) updates.push(["isDesktop", false]);
 	if (opts.alwaysOn) updates.push(["alwaysOn", true]);
 	if (opts.noAlwaysOn) updates.push(["alwaysOn", false]);
+	if (opts.unattendedSudo) updates.push(["unattendedSudo", true]);
+	if (opts.noUnattendedSudo) updates.push(["unattendedSudo", false]);
 
 	// machine.nix is gitignored per machine, so a fresh checkout does not have
 	// one. Bootstrap it the same way Hooks/nix/post.sh does instead of crashing.
@@ -375,6 +393,12 @@ async function generateMachineNix(machinePath: string) {
 
   # Machine hostname
   hostname = "${hostname}";
+
+  # Optional: passwordless sudo for unattended administration over SSH on
+  # headless fleet machines. Left off by default because it lets any code
+  # running as this user escalate to root without a password; enable with
+  # 'dot rebuild --unattended-sudo' or 'dot machine set-unattended-sudo on'.
+  # unattendedSudo = false;
 }
 `,
 	);
@@ -430,6 +454,7 @@ async function readMachineConfig(machinePath: string): Promise<MachineConfig> {
 		lite: readBooleanField(content, "lite"),
 		presets: parsePresets(content),
 		system,
+		unattendedSudo: readBooleanField(content, "unattendedSudo"),
 		username,
 	};
 }
@@ -495,6 +520,7 @@ function printMachineConfig(config: MachineConfig, machinePath: string) {
 	console.log(`  Lite: ${config.lite}`);
 	console.log(`  Desktop: ${config.isDesktop}`);
 	console.log(`  Always On: ${config.alwaysOn}`);
+	console.log(`  Unattended Sudo: ${config.unattendedSudo}`);
 	if (config.presets.length > 0) {
 		console.log(`  Presets: ${config.presets.join(", ")}`);
 	}

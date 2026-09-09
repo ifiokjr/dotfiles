@@ -78,10 +78,13 @@ Configs are symlinked, so editing either the repo file or the deployed path upda
 
 ## Remote Rebuilds
 
-Fleet Macs grant the primary user passwordless sudo (`security.sudo.extraConfig` in `Configs/nix/.config/nix/darwin.nix`), so machines can be rebuilt unattended over the tailnet without a TTY for the sudo password:
+Headless fleet machines can opt in to passwordless sudo with `unattendedSudo = true` in `machine.nix` (a per-machine flag, intentionally independent of `lite`). With the flag set, machines can be rebuilt unattended over the tailnet without a TTY for the sudo password:
 
 ```bash
 ssh <host> 'dot rebuild --latest'
 ```
 
-The rebuild that first introduces the NOPASSWD rule still needs one interactive authentication. Run it with a TTY (`ssh -t <host> 'dot rebuild --latest'`) or at the machine; every later rebuild is fully unattended.
+- **macOS**: the flag appends a `NOPASSWD` rule for the primary user to `/etc/sudoers.d/10-nix-darwin-extra-config` (`security.sudo.extraConfig` in `Configs/nix/.config/nix/darwin.nix`).
+- **Linux**: the home-manager activation installs and keeps `/etc/sudoers.d/10-home-manager-unattended` in sync (validated with `visudo` before install).
+- **Bootstrap**: the rebuild that first enables the flag still needs one interactive authentication. Run it with a TTY (`ssh -t <host> 'dot rebuild --unattended-sudo'`) or at the machine; every later rebuild is fully unattended.
+- **Security**: the flag lets any code running as the primary user escalate to root without a password. Only enable it on machines you administer unattended; leave interactive workstations off (default). Toggle with `dot machine set-unattended-sudo on|off` or `dot rebuild --unattended-sudo` / `--no-unattended-sudo`.

@@ -288,6 +288,11 @@ if [ ! -f "$MACHINE_NIX" ]; then
 		  # Machine hostname
 		  hostname = "$HOSTNAME";
 		${MACHINE_BOOL_BLOCKS}
+		  # Optional: passwordless sudo for unattended administration over SSH on
+		  # headless fleet machines. Left off because it lets any code running as
+		  # this user escalate to root without a password; enable on machines you
+		  # administer unattended with 'dot machine set-unattended-sudo on'.
+		  # unattendedSudo = false;
 		}
 	ENDMACHINE
 
