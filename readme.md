@@ -157,6 +157,7 @@ The setup flow layers metadata on top of Tuckr conventions:
 **Location:** `Configs/scripts/.local/bin/` **Deploys:** `~/.local/bin/` **Description:** Custom utility scripts including:
 
 - `dot rebuild` - Cross-platform system rebuild (`nh darwin switch` on macOS, `nh home switch` on Linux); successful runs also sync managed global pnpm packages, and `dot rebuild --update` refreshes `flake.lock` plus managed external agent skills before rebuilding
+- `dot clean` - Reclaim disk space: stale AI session transcripts, regenerable caches, Rust `target/` directories (`cargo-clean-all`), nix garbage (`nh clean user`), old rustup toolchains. Dry-run by default, `--apply` deletes. `dot clean --apply --auto --when-low 100` is what the scheduled disk-space janitor runs (launchd agent on macOS, systemd timer on Linux) whenever free space drops below the threshold
 - `generate-machine-config` - Auto-detect and generate machine.nix for Nix configuration
 - `update:node` - Update Node.js to latest version using pnpm env
 - `pnpm:global:sync` - Install the managed pnpm global project packages
