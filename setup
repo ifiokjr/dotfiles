@@ -349,6 +349,24 @@ check_if_in_repo() {
     return 1
 }
 
+# Detect the known "Nix Store" encrypted-volume mount failure in the installer
+# log and print remediation. Seen on fresh macOS installs where the terminal app
+# lacks Full Disk Access, so the generated volume password never reaches the
+# keychain and `diskutil mount "Nix Store"` fails (nix-installer#1535, #888).
+print_nix_volume_mount_hint() {
+    local log_file="$1"
+    if [ "$PLATFORM" = "macos" ] \
+        && grep -q "encrypt_apfs_volume" "$log_file" 2> /dev/null \
+        && grep -q "failed to mount" "$log_file" 2> /dev/null; then
+        print_warning "Known issue detected: the encrypted 'Nix Store' APFS volume failed to mount"
+        print_info "This happens on fresh macOS installs when the terminal app running setup"
+        print_info "lacks Full Disk Access, so the volume password never reaches the keychain"
+        print_info "Fix: System Settings > Privacy & Security > Full Disk Access > enable this"
+        print_info "terminal app, then re-run setup. If a leftover volume remains, remove it first:"
+        print_info "  sudo diskutil apfs deleteVolume \"Nix Store\""
+    fi
+}
+
 # Install Nix using Determinate Systems installer
 install_nix() {
     if [ "$SKIP_NIX" = true ]; then
@@ -373,10 +391,20 @@ install_nix() {
         nix_install_args+=("--no-confirm")
     fi
 
-    if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}"; then
+    # Log installer output (still streamed live) so known failure modes can be
+    # detected after a non-zero exit. pipefail keeps the installer's exit status
+    # visible through the tee pipeline.
+    local nix_install_log
+    nix_install_log="$(mktemp)"
+    set -o pipefail
+    if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}" 2>&1 | tee "$nix_install_log"; then
+        set +o pipefail
         print_error "Failed to install Nix"
+        print_nix_volume_mount_hint "$nix_install_log"
+        rm -f "$nix_install_log"
         exit 1
     fi
+    set +o pipefail
 
     # Source nix so it's available in the current shell
     if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
@@ -404,10 +432,15 @@ install_nix() {
                 sudo rm -rf /nix
             fi
 
-            if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}"; then
+            set -o pipefail
+            if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}" 2>&1 | tee "$nix_install_log"; then
+                set +o pipefail
                 print_error "Failed to install Nix on second attempt"
+                print_nix_volume_mount_hint "$nix_install_log"
+                rm -f "$nix_install_log"
                 exit 1
             fi
+            set +o pipefail
 
             # Re-source after reinstall
             if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
@@ -420,9 +453,12 @@ install_nix() {
         if ! command -v nix &> /dev/null; then
             print_error "Nix is still not available after installation"
             print_info "You may need to restart your terminal and re-run setup with --skip-nix"
+            rm -f "$nix_install_log"
             exit 1
         fi
     fi
+
+    rm -f "$nix_install_log"
 
     # Configure GitHub access token if available to avoid API rate limits when
     # fetching nixpkgs. GitHub Actions provides GITHUB_TOKEN automatically.
