@@ -150,6 +150,17 @@ fi
 # pnpmg runs pnpm in the managed global project directory.
 pnpmg() { pnpm --dir "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global" "$@"; }
 
+# ---------------------------------------------------------------------------
+# ZCode
+# ---------------------------------------------------------------------------
+# zcode runs the CLI bundled inside ZCode.app (macOS only). Arguments pass
+# through untouched.
+if [ "$(uname -s)" = "Darwin" ] && [ -x "/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs" ]; then
+	zcode() {
+		"/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs" "$@"
+	}
+fi
+
 # FVM auto-switching (allow-gated)
 if [ -f "$HOME/.config/shell/fvm.sh" ]; then
 	# shellcheck disable=SC1091

@@ -248,6 +248,20 @@ alias gstp='git stash pop'
 alias gsw='git switch'
 alias gswc='git switch --create'
 
+# ZCode — open a folder as a workspace via the zcode:// deep link
+zc() {
+	local p
+	for p in "${@:-.}"; do
+		p="${p:a}"       # absolute path relative to $PWD (symlinks preserved)
+		p="${p//\%/%25}" # percent-encode what would break the URL
+		p="${p// /%20}"
+		p="${p//\#/%23}"
+		p="${p//\?/%3F}"
+		p="${p//&/%26}"
+		open "zcode://workspace/open?path=$p"
+	done
+}
+
 # ---------------------------------------------------------------------------
 # Startup summary (only when DOTFILES_DEBUG is set)
 # ---------------------------------------------------------------------------
