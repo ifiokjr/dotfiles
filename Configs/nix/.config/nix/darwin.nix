@@ -266,7 +266,8 @@
   security.sudo.extraConfig = ''
     Defaults timestamp_type=global
     Defaults timestamp_timeout=15
-  '' + lib.optionalString unattendedSudo ''
+  ''
+  + lib.optionalString unattendedSudo ''
     # Passwordless sudo so this machine can be administered unattended over
     # SSH (Tailscale): `ssh <host> 'dot rebuild --latest'` has no TTY to
     # answer a password prompt, and `nh darwin switch` shells out to sudo
