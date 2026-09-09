@@ -354,19 +354,11 @@ async function generateMachineNix(machinePath: string) {
 		Deno.build.os === "darwin" ? "darwin" : "linux"
 	}`;
 
-	let hostname = "";
-	if (Deno.build.os === "darwin") {
-		// scutil gives the user-facing computer name; fall back to hostname.
-		hostname = await captureCommand(
-			["scutil", "--get", "ComputerName"],
-			Deno.cwd(),
-		);
-	}
-	if (!hostname) {
-		hostname = await captureCommand(["hostname", "-s"], Deno.cwd()) ||
-			await captureCommand(["hostname"], Deno.cwd()) ||
-			"unknown";
-	}
+	// Fleet convention: the machine hostname matches the account name (e.g.
+	// mini01). The nix-darwin activation enforces ComputerName/HostName from
+	// this value on every rebuild, correcting Setup Assistant defaults like
+	// "mini01’s Mac mini" or DHCP-derived names like "192".
+	const hostname = sanitizeHostname(username);
 
 	await Deno.mkdir(dirname(machinePath), { recursive: true });
 	await Deno.writeTextFile(
@@ -440,6 +432,19 @@ async function readMachineConfig(machinePath: string): Promise<MachineConfig> {
 		system,
 		username,
 	};
+}
+
+/**
+ * Lowercase a name and reduce it to a valid single-label hostname: every
+ * character that is not [a-z0-9-] becomes a hyphen, with runs collapsed and
+ * leading/trailing hyphens trimmed.
+ */
+export function sanitizeHostname(name: string): string {
+	return name
+		.toLowerCase()
+		.replace(/['’`"._\s]+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-+|-+$/g, "");
 }
 
 function readStringField(content: string, field: string): string {

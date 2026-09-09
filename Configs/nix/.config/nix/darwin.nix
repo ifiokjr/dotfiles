@@ -3,6 +3,7 @@
   lib,
   pkgs,
   username,
+  hostname ? null,
   lite ? false,
   isDesktop ? false,
   alwaysOn ? false,
@@ -19,6 +20,39 @@
 
   nix.enable = false;
   nixpkgs.config.allowUnfree = true;
+
+  # Enforce the machine identity from machine.nix on every activation so that
+  # Setup Assistant defaults (e.g. "mini01’s Mac mini") or DHCP-derived names
+  # (e.g. "192") are corrected automatically instead of persisting forever.
+  #
+  # networking.computerName takes the raw machine.nix hostname (spaces and
+  # Unicode are fine — it is the user-facing name), while hostName must match
+  # the strict single-label hostname syntax, so it is lowercased and every
+  # character that is not [a-z0-9-] is replaced with a hyphen (runs collapsed).
+  # localHostName defaults to hostName. A missing/empty hostname leaves the
+  # names untouched.
+  networking.computerName = hostname;
+  networking.hostName =
+    if hostname == null || hostname == "" then
+      null
+    else
+      let
+        raw = lib.toLower hostname;
+        separators = lib.stringToCharacters " '’`\"._";
+        dashes = lib.genList (_: "-") (lib.length separators);
+        allowed = lib.stringToCharacters "abcdefghijklmnopqrstuvwxyz0123456789-";
+      in
+      lib.concatStringsSep "-" (
+        lib.filter (part: part != "") (
+          lib.splitString "-" (
+            lib.concatStringsSep "" (
+              lib.filter (char: lib.elem char allowed) (
+                lib.stringToCharacters (lib.replaceStrings separators dashes raw)
+              )
+            )
+          )
+        )
+      );
 
   # User configuration
   users.users.${username} = {

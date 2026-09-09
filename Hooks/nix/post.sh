@@ -221,6 +221,18 @@ fi
 # ---------------------------------------------------------------------------
 # Generate machine.nix if missing
 # ---------------------------------------------------------------------------
+
+# Reduce a name to a valid single-label hostname: lowercase, spaces and
+# common punctuation collapsed into hyphens, leading/trailing hyphens trimmed.
+sanitize_hostname() {
+	local name
+	name="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
+	name="$(printf '%s' "$name" | sed -E 's/[[:space:]]+/-/g')"
+	name="$(printf '%s' "$name" | sed -E "s/['’\"._]+/-/g")"
+	name="$(printf '%s' "$name" | sed -E 's/-+/-/g; s/^-+//; s/-+$//')"
+	printf '%s' "$name"
+}
+
 if [ ! -f "$MACHINE_NIX" ]; then
 	echo "machine.nix not found at: $MACHINE_NIX"
 	echo "Auto-generating machine configuration..."
@@ -244,12 +256,12 @@ if [ ! -f "$MACHINE_NIX" ]; then
 
 	SYSTEM="${ARCH}-${NIX_OS}"
 
-	# Detect hostname
-	if [ "$NIX_OS" = "darwin" ]; then
-		HOSTNAME="$(scutil --get ComputerName 2>/dev/null || hostname -s)"
-	else
-		HOSTNAME="$(hostname -s 2>/dev/null || hostname)"
-	fi
+	# Seed the hostname from the account name (fleet convention: machine-named
+	# accounts, e.g. mini01). The nix-darwin activation enforces
+	# ComputerName/HostName from this value on every rebuild, so Setup Assistant
+	# defaults like "mini01’s Mac mini" or DHCP names like "192" are corrected
+	# automatically. Edit machine.nix if you want a different name.
+	HOSTNAME="$(sanitize_hostname "${USERNAME}")"
 
 	mkdir -p "$NIX_LINK_DIR"
 	MACHINE_BOOL_BLOCKS=""
