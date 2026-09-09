@@ -516,14 +516,17 @@ if [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "${GITHUB_PATH:-}" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Compile the dotfiles CLI binary after a successful rebuild.
+# Compile the dotfiles CLI binary after the rebuild.
 # This ensures 'dotfiles' and 'dot' are always in sync with the source.
 # ---------------------------------------------------------------------------
-if [ "$REBUILD_EXIT" -eq 0 ]; then
-	DOTFILES_REPO_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)}"
-	CLI_DIR="$DOTFILES_REPO_DIR/cli"
-	DOTFILES_BIN="$HOME/.local/bin/dotfiles"
+DOTFILES_REPO_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd -P)}"
+CLI_DIR="$DOTFILES_REPO_DIR/cli"
+DOTFILES_BIN="$HOME/.local/bin/dotfiles"
 
+# Refresh after a successful rebuild, and also install when the binary is
+# missing: a failed pnpm sync (or any non-rebuild failure) must not leave a
+# fresh machine without 'dot'.
+if [ ! -x "$DOTFILES_BIN" ] || [ "$REBUILD_EXIT" -eq 0 ]; then
 	if [ -d "$CLI_DIR" ] && [ -f "$CLI_DIR/main.ts" ]; then
 		if command -v deno >/dev/null 2>&1; then
 			echo "==> Compiling dotfiles CLI..."
