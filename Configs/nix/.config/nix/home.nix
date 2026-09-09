@@ -171,6 +171,7 @@ in
       zlib
 
       # Custom packages from ifiokjr/nixpkgs
+      extra.cargo-clean-all
       extra.cargo-interactive-update
       extra.deno
       extra.melos
