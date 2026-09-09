@@ -5,8 +5,9 @@
 # This script sets up your development environment by:
 # 1. Installing Determinate Nix (if not present)
 # 2. Cloning the dotfiles repository (if not present)
-# 3. Setting up Tuckr symlinks
-# 4. Deploying configuration groups
+# 3. Installing the dot CLI (compiled from source or the committed binary)
+# 4. Setting up Tuckr symlinks
+# 5. Deploying configuration groups
 #
 # Usage:
 #   Local:  ./setup [options]
@@ -246,11 +247,6 @@ parse_args() {
 }
 
 install_dot_cli() {
-    if ! command_exists deno; then
-        print_warning "deno not found; skipping dot CLI compile"
-        return 0
-    fi
-
     local cli_dir="$DOTFILES_DIR/cli"
     local repo_binary="$DOTFILES_DIR/Configs/scripts/.local/bin/dotfiles"
     local bin_dir="$HOME/.local/bin"
@@ -259,13 +255,41 @@ install_dot_cli() {
     local bash_completion_dir="$HOME/.local/share/bash-completion/completions"
 
     if [ ! -f "$cli_dir/main.ts" ]; then
-        print_warning "dotfiles CLI source not found; skipping dot CLI compile"
+        print_warning "dotfiles CLI source not found; skipping dot CLI install"
         return 0
     fi
 
     print_header "Installing dot CLI"
     mkdir -p "$bin_dir"
-    (cd "$cli_dir" && deno compile --allow-all --output "$repo_binary" main.ts)
+
+    # Compile the CLI from source. Prefer a deno already on PATH; on fresh
+    # machines deno is not installed until the first rebuild, so fall back to
+    # running deno from nix (nix is installed by the first setup phase). If
+    # neither is available, skip gracefully - the nushell vendor-autoload
+    # refresh regenerates completions after the first rebuild.
+    local compile_ok=false
+    if command_exists deno; then
+        if (cd "$cli_dir" && deno compile --allow-all --output "$repo_binary" main.ts); then
+            compile_ok=true
+        else
+            print_warning "dot CLI compile failed with deno"
+        fi
+    elif command_exists nix; then
+        print_info "deno not found; compiling with deno from nix"
+        if (cd "$cli_dir" && run_nix run nixpkgs#deno -- compile --allow-all --output "$repo_binary" main.ts); then
+            compile_ok=true
+        else
+            print_warning "dot CLI compile failed with deno from nix"
+        fi
+    else
+        print_info "Neither deno nor nix available; skipping dot CLI compile"
+    fi
+
+    if [ "$compile_ok" != true ] || [ ! -f "$repo_binary" ]; then
+        print_warning "dot CLI binary unavailable; completions will be generated after the first rebuild"
+        return 0
+    fi
+
     ln -sf "$repo_binary" "$installed_binary"
     ln -sf "$installed_binary" "$installed_alias"
     print_success "Installed dot CLI: $installed_alias"
@@ -1103,6 +1127,14 @@ main() {
         install_nushell
     fi
 
+    # Install the dot CLI before groups are deployed so the nushell vendor
+    # autoload refresh (run by the nushell group's post hook) can find `dot`
+    # and generate dot-completions.nu on fresh machines.
+    if should_run_phase install-dot-cli; then
+        write_setup_phase "install-dot-cli"
+        install_dot_cli
+    fi
+
     if should_run_phase setup-tuckr-symlink; then
         write_setup_phase "setup-tuckr-symlink"
         setup_tuckr_symlink
@@ -1120,8 +1152,6 @@ main() {
         print_error "Setup completed with errors"
         exit "$deploy_exit"
     fi
-
-    install_dot_cli
 
     echo ""
     echo -e "${GREEN}${BOLD}╔════════════════════════════════════════╗${NC}"
