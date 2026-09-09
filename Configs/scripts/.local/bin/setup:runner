@@ -106,6 +106,16 @@ interactive_token() {
 	[ -n "${token:-}" ] && printf '%s' "$token"
 }
 
+resolve_registration_token() {
+	# An explicitly provided token wins (e.g. minted out-of-band by automation
+	# and passed over SSH; expires after 1h).
+	if [ -n "${RUNNER_REGISTRATION_TOKEN:-}" ]; then
+		printf '%s' "$RUNNER_REGISTRATION_TOKEN"
+		return 0
+	fi
+	mint_registration_token || true
+}
+
 # ---------------------------------------------------------------------------
 # Download and extract the runner when needed. The runner self-updates after
 # that, so this only bootstraps the initial install.
@@ -152,7 +162,7 @@ if [ -f ".credentials" ]; then
 	ok "Runner already registered (.credentials present) - reusing stored identity"
 else
 	info "Registering runner '$RUNNER_NAME' for $REPO..."
-	token="$(mint_registration_token || true)"
+	token="$(resolve_registration_token || true)"
 	if [ -z "${token:-}" ]; then
 		token="$(interactive_token || true)"
 	fi
