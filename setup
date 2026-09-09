@@ -18,6 +18,8 @@
 #   --groups GROUPS     Deploy specific groups (comma-separated; overrides preset selection)
 #   --skip-nix          Skip Nix installation (use if already installed)
 #   --lite              Force CLI-focused mode and skip GUI-heavy applications
+#   --desktop           Mark machine.nix isDesktop = true (podman/launchd desktop bits)
+#   --always-on         Mark machine.nix alwaysOn = true (never sleeps, screensaver lock)
 #   --doctor            Run preflight checks without changing the machine
 #   --validate-metadata Validate Configs/*.group.toml files and exit
 #   --dry-run           Print the setup plan and exit without making changes
@@ -49,6 +51,8 @@ PRESET=""
 SKIP_NIX=false
 LITE=false
 LITE_EXPLICIT=false
+DESKTOP=false
+ALWAYS_ON=false
 VALIDATE_METADATA=false
 NO_CONFIRM=false
 DOCTOR=false
@@ -106,6 +110,8 @@ Options:
   --groups GROUPS     Deploy specific groups (comma-separated; overrides preset selection)
   --skip-nix          Skip Nix installation (use if already installed)
   --lite              Force CLI-focused mode and skip GUI-heavy applications
+  --desktop           Mark machine.nix isDesktop = true (podman/launchd desktop bits)
+  --always-on         Mark machine.nix alwaysOn = true (never sleeps, screensaver lock)
   --doctor            Run preflight checks without changing the machine
   --validate-metadata Validate Configs/*.group.toml files and exit
   --dry-run           Print the setup plan and exit without making changes
@@ -148,6 +154,8 @@ apply_bootstrap_defaults() {
     fi
 
     export SETUP_LITE="$LITE"
+    export SETUP_DESKTOP="$DESKTOP"
+    export SETUP_ALWAYS_ON="$ALWAYS_ON"
 }
 
 # Parse command line arguments
@@ -173,6 +181,14 @@ parse_args() {
             --lite)
                 LITE=true
                 LITE_EXPLICIT=true
+                shift
+                ;;
+            --desktop)
+                DESKTOP=true
+                shift
+                ;;
+            --always-on)
+                ALWAYS_ON=true
                 shift
                 ;;
             --doctor)
@@ -781,6 +797,8 @@ apply_setup_defaults() {
     fi
 
     export SETUP_LITE="$LITE"
+    export SETUP_DESKTOP="$DESKTOP"
+    export SETUP_ALWAYS_ON="$ALWAYS_ON"
 }
 
 run_bootstrap_doctor() {
