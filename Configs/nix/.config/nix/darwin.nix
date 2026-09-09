@@ -314,6 +314,14 @@
       wvous-tr-corner = 1;
       wvous-bl-corner = 1;
       wvous-br-corner = 1;
+
+      # Minimal Dock: fresh machines only pin the terminal (Finder is always
+      # pinned by macOS itself). Ghostty is installed by the cask during the
+      # same rebuild, so the icon resolves on first activation. Add more apps
+      # by appending their /Applications paths here.
+      persistent-apps = [
+        "/Applications/Ghostty.app"
+      ];
     };
 
     finder = {
