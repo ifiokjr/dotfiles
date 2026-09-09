@@ -112,6 +112,32 @@ fvm-auto-activate
 # Secrets
 use modules/secrets.nu [msr, msload]
 alias ms = monosecret -f $"($env.HOME)/monosecret.toml" --reason "dotfiles secret management"
+# zcode: run the CLI bundled inside ZCode.app (macOS only); all arguments
+# pass through untouched. Nushell can't define commands conditionally, so
+# the availability check happens at call time.
+def --wrapped zcode [...rest: string] {
+    let bin = "/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs"
+    if not ($bin | path exists) {
+        error make {msg: $"zcode: ZCode.app CLI not found at ($bin)"}
+    }
+    ^$bin ...$rest
+}
+# zc: open a folder as a ZCode workspace via the zcode:// deep link. Paths
+# expand relative to the current directory (symlinks preserved); with no
+# argument, opens the current directory.
+def zc [...paths: string] {
+    let targets = if ($paths | is-empty) { ["."] } else { $paths }
+    for p in $targets {
+        let encoded = ($p
+            | path expand --no-symlink
+            | str replace -a "%" "%25"
+            | str replace -a " " "%20"
+            | str replace -a "#" "%23"
+            | str replace -a "?" "%3F"
+            | str replace -a "&" "%26")
+        ^open $"zcode://workspace/open?path=($encoded)"
+    }
+}
 # General aliases
 # Reload shell
 alias s = exec nu
