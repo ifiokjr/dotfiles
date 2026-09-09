@@ -188,7 +188,7 @@ export const rebuildCommand = new Command()
 			await runRebuild(context, config);
 			await installDotfilesCli({ dotfilesDir: context.dotfilesDir });
 			// The rebuild may have changed the installed tool set, so regenerate or
-			// clean the shell integrations to match (mise/atuin/starship/...).
+			// clean the shell integrations to match (atuin/starship/...).
 			await refreshShellIntegrations(context.dotfilesDir);
 			await maybeCommitRebuildChanges(context, opts);
 		} finally {
@@ -978,7 +978,7 @@ async function runRebuildWithRetry(spec: RebuildAttemptSpec): Promise<void> {
 					}`,
 				);
 				printWarning(
-					"These upstream tests fail in the Nix sandbox. Add a permanent workaround in darwinWorkaroundsOverlay (Configs/nix/.config/nix/flake.nix) so future rebuilds succeed on the first try. See the existing mise entry as a template.",
+					"These upstream tests fail in the Nix sandbox. Add a permanent workaround in darwinWorkaroundsOverlay (Configs/nix/.config/nix/flake.nix) so future rebuilds succeed on the first try. See the existing direnv/nushell entries as a template.",
 				);
 				printWarning(`Full build log retained at: ${logPath}`);
 			} else {
