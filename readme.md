@@ -41,6 +41,8 @@ If you are setting up a new machine or want the human-oriented walkthrough first
 - `--cwd <path>` - Clone to custom location (default: `~/Developer/.dotfiles`)
 - `--skip-nix` - Skip Nix installation
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
+- `--desktop` - Mark `machine.nix` `isDesktop = true` (podman/launchd desktop bits)
+- `--always-on` - Mark `machine.nix` `alwaysOn = true` (never sleeps, screensaver lock)
 - `--doctor` - Run preflight checks without changing the machine
 - `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--dry-run` - Print the setup execution plan and exit
