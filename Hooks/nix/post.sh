@@ -540,5 +540,27 @@ if [ "$REBUILD_EXIT" -eq 0 ]; then
 	fi
 fi
 
+# ---------------------------------------------------------------------------
+# Join the tailnet automatically when a pre-auth key is supplied
+# ---------------------------------------------------------------------------
+# Set TAILSCALE_AUTHKEY (a reusable pre-auth key from the Tailscale admin
+# console) in the bootstrap environment so headless machines join the tailnet
+# unattended, with Tailscale SSH enabled:
+#   curl -fsSL <setup-url> | TAILSCALE_AUTHKEY=tskey-auth-... bash -s -- ...
+if [ -n "${TAILSCALE_AUTHKEY:-}" ] && [ "$REBUILD_EXIT" -eq 0 ]; then
+	if ! command -v tailscale >/dev/null 2>&1; then
+		echo "    Warning: TAILSCALE_AUTHKEY set but tailscale was not installed by the rebuild"
+	elif sudo tailscale status >/dev/null 2>&1; then
+		echo "    Tailscale already connected"
+	else
+		echo "==> Joining the tailnet with a pre-auth key (Tailscale SSH enabled)..."
+		if sudo tailscale up --authkey "$TAILSCALE_AUTHKEY" --ssh >/dev/null 2>&1; then
+			echo "    Joined the tailnet"
+		else
+			echo "    Warning: Tailscale auto-join failed; run 'sudo tailscale up' manually"
+		fi
+	fi
+fi
+
 # Propagate rebuild failure so callers know the rebuild didn't fully succeed.
 exit "$REBUILD_EXIT"
