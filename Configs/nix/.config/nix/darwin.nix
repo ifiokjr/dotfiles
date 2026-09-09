@@ -142,7 +142,12 @@
       ];
     };
     casks =
-      lib.optionals (!lite) [
+      lib.optionals lite [
+        # Keep a full browser available for development and automation on
+        # lite CI runners.
+        "google-chrome"
+      ]
+      ++ lib.optionals (!lite) [
         # Productivity & Communication
         "1password"
         "discord"
