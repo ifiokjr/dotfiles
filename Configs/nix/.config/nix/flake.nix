@@ -182,6 +182,7 @@
         {
           system ? "aarch64-darwin",
           username,
+          hostname ? null,
           lite ? false,
           isDesktop ? false,
           alwaysOn ? false,
@@ -198,6 +199,7 @@
               _module.args = {
                 inherit
                   username
+                  hostname
                   lite
                   isDesktop
                   alwaysOn
@@ -346,6 +348,7 @@
         mkDarwinConfig {
           system = machineConfig.system;
           username = machineConfig.username;
+          hostname = machineConfig.hostname or null;
           lite = machineConfig.lite or false;
           isDesktop = machineConfig.isDesktop or false;
           alwaysOn = machineConfig.alwaysOn or false;
