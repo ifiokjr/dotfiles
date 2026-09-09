@@ -111,6 +111,13 @@ matches_platform() {
 
 FILTERED=()
 for group in "${GROUPS[@]}"; do
+  # Skip the nix group: its deployment is a single directory symlink
+  # (~/.config/nix -> the repo) that `dot rebuild` self-heals. Re-linking
+  # files individually here would create self-referential links inside the
+  # repo and break flake evaluation.
+  if [[ "$group" == "nix" ]]; then
+    continue
+  fi
   if is_platform_group "$group"; then
     if matches_platform "$group"; then
       FILTERED+=("$group")

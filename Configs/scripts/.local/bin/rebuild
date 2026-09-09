@@ -9,6 +9,44 @@ use nu_modules/platform.nu
 use nu_modules/nix_config.nu
 use nu_modules/version_tracker.nu
 
+# Ensure ~/.config/nix is a directory symlink into the dotfiles repo.
+#
+# The flake must always evaluate the latest pulled state of the repo, and
+# file-level symlinks (what tuckr creates per file) break both: new files
+# added to the nix group never appear, and Nix does not follow symlinks that
+# escape the flake root (evaluation fails with a mangled path). A single
+# directory symlink - the layout long-running machines already have - makes
+# `dot rebuild` self-maintaining: git pull is the only step ever needed.
+# Idempotent: correct state is detected and left untouched.
+def ensure-nix-config-linked [] {
+    let repo_nix = "($env.HOME)/Library/Application Support/dotfiles/Configs/nix/.config/nix"
+    let link = "($env.HOME)/.config/nix"
+
+    # Without the tuckr repo symlink (setup not run) there is nothing to do.
+    if not ($repo_nix | path exists) {
+        return
+    }
+
+    let already_linked = try {
+        (($link | path type) == "symlink") and (($link | path expand) == ($repo_nix | path expand))
+    } catch {
+        false
+    }
+    if $already_linked {
+        return
+    }
+
+    info "Relinking ~/.config/nix to the dotfiles repo..."
+    # Preserve machine-local state: machine.nix is gitignored and lives only
+    # on the machine.
+    if ($"($link)/machine.nix" | path exists) {
+        cp -f $"($link)/machine.nix" $"($repo_nix)/machine.nix"
+    }
+    rm -rf $link
+    ^ln -s $repo_nix $link
+    success "~/.config/nix now tracks the dotfiles repo"
+}
+
 def sync_pnpm_global_packages [] {
     let primary_sync_script = $"($env.HOME)/.local/bin/pnpm:global:sync"
     let fallback_sync_script = $"($env.FILE_PWD)/pnpm:global:sync"
@@ -246,6 +284,9 @@ def main [
             success $"Updated dotfiles to ($current_hash)"
         }
     }
+
+    # Self-heal the deployed nix config before anything evaluates the flake.
+    ensure-nix-config-linked
 
     let nix_config = (nix_config config-dir)
     let machine_config = $"($nix_config)/machine.nix"
