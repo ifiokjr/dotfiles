@@ -18,6 +18,9 @@
 #   --preset NAME       Use a named setup preset: core, dev, workstation, ci
 #   --groups GROUPS     Deploy specific groups (comma-separated; overrides preset selection)
 #   --skip-nix          Skip Nix installation (use if already installed)
+#   --with-runner       Install and register a GitHub Actions self-hosted runner
+#                       (ifiokjr/kickjump, named after the hostname) as a
+#                       launchd service so it runs across reboots
 #   --lite              Force CLI-focused mode and skip GUI-heavy applications
 #   --desktop           Mark machine.nix isDesktop = true (podman/launchd desktop bits)
 #   --always-on         Mark machine.nix alwaysOn = true (never sleeps, screensaver lock)
@@ -54,6 +57,7 @@ LITE=false
 LITE_EXPLICIT=false
 DESKTOP=false
 ALWAYS_ON=false
+WITH_RUNNER=false
 VALIDATE_METADATA=false
 NO_CONFIRM=false
 DOCTOR=false
@@ -177,6 +181,10 @@ parse_args() {
                 ;;
             --skip-nix)
                 SKIP_NIX=true
+                shift
+                ;;
+            --with-runner)
+                WITH_RUNNER=true
                 shift
                 ;;
             --lite)
@@ -1151,6 +1159,19 @@ main() {
         echo ""
         print_error "Setup completed with errors"
         exit "$deploy_exit"
+    fi
+
+    # Install a GitHub Actions self-hosted runner when requested (--with-runner).
+    # The runner registers for ifiokjr/kickjump and installs a launchd service
+    # so it keeps running across reboots. Non-fatal on failure.
+    if [ "$WITH_RUNNER" = true ] && should_run_phase install-runner; then
+        write_setup_phase "install-runner"
+        if [ -x "$DOTFILES_DIR/Configs/scripts/.local/bin/setup:runner" ]; then
+            "$DOTFILES_DIR/Configs/scripts/.local/bin/setup:runner" ||
+                print_warning "Runner setup failed; run 'dot setup:runner' to retry"
+        else
+            print_warning "setup:runner not found; skipping runner install"
+        fi
     fi
 
     echo ""

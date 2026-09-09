@@ -46,6 +46,9 @@ phase_rank() {
 	deploy | deploy:*)
 		printf '50\n'
 		;;
+	install-runner)
+		printf '55\n'
+		;;
 	*)
 		printf '0\n'
 		;;
@@ -54,7 +57,7 @@ phase_rank() {
 
 from_target_is_valid() {
 	case "$1" in
-	install-nix | install-tuckr | install-nushell | install-dot-cli | setup-tuckr-symlink | deploy | deploy:*)
+	install-nix | install-tuckr | install-nushell | install-dot-cli | setup-tuckr-symlink | deploy | deploy:* | install-runner)
 		return 0
 		;;
 	esac

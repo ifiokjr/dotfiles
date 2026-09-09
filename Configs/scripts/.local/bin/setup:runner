@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+# setup:runner - Install and register a GitHub Actions self-hosted runner
+#
+# Ensures a GitHub Actions self-hosted runner for ifiokjr/kickjump is
+# downloaded, registered, and installed as a launchd service (via the
+# runner's svc.sh) so it is always running across reboots. A runner that is
+# merely started with ./run.sh dies when the machine restarts; the launchd
+# service keeps it alive.
+#
+# Safe to re-run:
+#   - skips downloading when the requested runner version is already extracted
+#   - skips registration when the runner is already registered (.credentials
+#     present) - a registered runner reconnects with its stored credentials
+#     and never needs a new registration token
+#   - `config.sh --replace` replaces a stale same-name registration (e.g.
+#     after a machine wipe), keeping runner names stable for `runs-on:`
+#
+# Registration token sources, in order:
+#   1. authenticated gh CLI
+#   2. GITHUB_TOKEN environment variable (PAT with repo admin rights)
+#   3. interactive paste of a PAT or registration token (TTY only)
+#
+# Usage:
+#   setup:runner [options]
+#
+# Options:
+#   --repo OWNER/REPO   Target repository (default: ifiokjr/kickjump)
+#   --name NAME         Runner name (default: hostname -s)
+#   --labels LABELS     Extra runner labels (default: the runner name)
+#   --version VERSION   Runner release version to pin (default: latest)
+
+set -o errexit
+
+REPO="${REPO:-ifiokjr/kickjump}"
+RUNNER_DIR="${RUNNER_DIR:-$HOME/actions-runner}"
+RUNNER_VERSION="${RUNNER_VERSION:-}"
+
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+info() { echo -e "${BLUE}→${NC} $*"; }
+ok() { echo -e "${GREEN}✓${NC} $*"; }
+warn() { echo -e "${YELLOW}!${NC} $*"; }
+die() { warn "$*"; exit 1; }
+
+usage() {
+	sed -n '2,35p' "$0" | grep -E '^#' | sed 's/^# \{0,1\}//'
+	exit 0
+}
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	--repo)
+		REPO="$2"
+		shift 2
+		;;
+	--name)
+		RUNNER_NAME="$2"
+		shift 2
+		;;
+	--labels)
+		RUNNER_LABELS="$2"
+		shift 2
+		;;
+	--version)
+		RUNNER_VERSION="$2"
+		shift 2
+		;;
+	--help | -h)
+		usage
+		;;
+	*)
+		warn "Unknown option: $1"
+		usage
+		;;
+	esac
+done
+
+RUNNER_NAME="${RUNNER_NAME:-$(hostname -s)}"
+RUNNER_LABELS="${RUNNER_LABELS:-$RUNNER_NAME}"
+
+# ---------------------------------------------------------------------------
+# GitHub API access: prefer an authenticated gh CLI; fall back to
+# GITHUB_TOKEN via gh's token env (works without `gh auth login`).
+# ---------------------------------------------------------------------------
+gh_api() {
+	if [ -n "${GITHUB_TOKEN:-}" ] && ! gh auth status >/dev/null 2>&1; then
+		GH_TOKEN="$GITHUB_TOKEN" gh api "$@"
+	else
+		gh api "$@"
+	fi
+}
+
+mint_registration_token() {
+	gh_api -X POST "repos/$REPO/actions/runners/registration-token" --jq .token 2>/dev/null
+}
+
+interactive_token() {
+	[ -t 0 ] || return 1
+	echo -e "${BLUE}→${NC} Paste a registration token (Settings → Actions → Runners → New runner) or a PAT:"
+	read -rs token
+	[ -n "${token:-}" ] && printf '%s' "$token"
+}
+
+# ---------------------------------------------------------------------------
+# Download and extract the runner when needed. The runner self-updates after
+# that, so this only bootstraps the initial install.
+# ---------------------------------------------------------------------------
+case "$(uname -m)" in
+arm64) runner_arch="arm64" ;;
+*) runner_arch="x64" ;;
+esac
+runner_os="osx"
+
+if [ -z "$RUNNER_VERSION" ]; then
+	info "Resolving latest actions/runner release..."
+	RUNNER_VERSION=$(gh_api repos/actions/runner/releases/latest --jq .tag_name 2>/dev/null | sed 's/^v//')
+	if [ -z "$RUNNER_VERSION" ]; then
+		curl -fsSL https://api.github.com/repos/actions/runner/releases/latest |
+			/usr/bin/sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' |
+			head -n 1
+	fi
+fi
+[ -n "$RUNNER_VERSION" ] || die "Could not resolve the actions/runner release version"
+
+if [ -x "$RUNNER_DIR/config.sh" ] && [ "$(cat "$RUNNER_DIR/.version" 2>/dev/null)" = "$RUNNER_VERSION" ]; then
+	ok "Runner $RUNNER_VERSION already installed at $RUNNER_DIR"
+else
+	tarball="actions-runner-${runner_os}-${runner_arch}-${RUNNER_VERSION}.tar.gz"
+	url="https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/${tarball}"
+	tmp_tar="$(mktemp -u)/${tarball}"
+	mkdir -p "$(dirname "$tmp_tar")"
+	info "Downloading actions/runner v${RUNNER_VERSION} (${runner_os}-${runner_arch})..."
+	curl -fL --retry 3 -o "$tmp_tar" "$url"
+	mkdir -p "$RUNNER_DIR"
+	tar -xzf "$tmp_tar" -C "$RUNNER_DIR"
+	printf '%s' "$RUNNER_VERSION" >"$RUNNER_DIR/.version"
+	rm -rf "$(dirname "$tmp_tar")"
+	ok "Runner v${RUNNER_VERSION} extracted to $RUNNER_DIR"
+fi
+
+cd "$RUNNER_DIR"
+
+# ---------------------------------------------------------------------------
+# Register the runner if it is not registered yet.
+# ---------------------------------------------------------------------------
+if [ -f ".credentials" ]; then
+	ok "Runner already registered (.credentials present) - reusing stored identity"
+else
+	info "Registering runner '$RUNNER_NAME' for $REPO..."
+	token="$(mint_registration_token || true)"
+	if [ -z "${token:-}" ]; then
+		token="$(interactive_token || true)"
+	fi
+	[ -n "${token:-}" ] || die "No registration token available. Set GITHUB_TOKEN (PAT with repo admin) or run interactively."
+
+	# --replace removes any stale same-name registration (e.g. after a wipe)
+	./config.sh --url "https://github.com/$REPO" \
+		--token "$token" \
+		--name "$RUNNER_NAME" \
+		--labels "$RUNNER_LABELS" \
+		--work "_work" \
+		--replace \
+		--unattended
+	ok "Runner '$RUNNER_NAME' registered"
+fi
+
+# ---------------------------------------------------------------------------
+# Install and start the launchd service so the runner survives reboots.
+# svc.sh is generated by config.sh at registration time (it does not exist in
+# a fresh extraction), and `.service` marks an already-installed service -
+# `svc.sh install` fails if the plist already exists, so only install once.
+# ---------------------------------------------------------------------------
+if [ ! -f "./svc.sh" ]; then
+	warn "svc.sh not generated (runner not registered); skipping service install"
+	exit 0
+fi
+
+if [ -f "./.service" ]; then
+	ok "Runner service already installed - ensuring it is started"
+	./svc.sh start
+else
+	info "Installing launchd service..."
+	./svc.sh install
+	./svc.sh start
+	ok "Runner service installed and started - it will run automatically across reboots"
+fi
+./svc.sh status || true
