@@ -5,8 +5,14 @@
 # declaratively by writing rows into the system TCC database during activation.
 #
 # One-time prerequisite: the terminal running `dot rebuild` needs Full Disk
-# Access so the activation script can write the TCC database. After that, every
-# rebuild re-applies the grants below automatically.
+# Access so the activation script can write the TCC database. Without it the
+# script skips grants with a warning instead of failing the rebuild. After
+# that, every rebuild re-applies the grants below automatically.
+#
+# Smart installs: before granting, bundle-identifier clients are checked via
+# Spotlight (with a LaunchServices fallback). Apps that are not installed are
+# skipped with a message, so a lite machine without e.g. Slack never breaks —
+# and if an app is installed later, the next rebuild grants it automatically.
 #
 # Notes:
 #   - Clients that start with "/" are treated as absolute binary paths
@@ -50,14 +56,19 @@ let
   # Named columns keep the INSERT working across macOS versions regardless of
   # extra columns (boots_count, is_deleted, ...) the access table gains.
   # auth_value=2 means allowed; client_type 0 = bundle identifier, 1 = path.
+  # The || echo keeps activation alive when a single grant fails (e.g. a
+  # transient database lock); the failure stays visible in the output.
   insertGrant = client: service: ''
     /usr/bin/sqlite3 "$TCC_DB" "INSERT OR REPLACE INTO access(service, client, client_type, auth_value, auth_reason, auth_version, csreq, policy_id, indirect_object_identifier_type, indirect_object_identifier, indirect_object_code_identity, flags, last_modified) VALUES('${service}', '${client}', ${
       if lib.hasPrefix "/" client then "1" else "0"
-    }, 2, 4, 1, NULL, NULL, 0, 'UNUSED', NULL, 0, $NOW);"
+    }, 2, 4, 1, NULL, NULL, 0, 'UNUSED', NULL, 0, $NOW);" 2>/dev/null || echo "==> TCC: WARNING: grant failed: ${service} -> ${client}"
   '';
 
-  # Emit the grant block for one client: path-based clients are skipped when
-  # the binary is not present; bundle identifiers are granted unconditionally.
+  # Emit the grant block for one client:
+  #   - path-based clients are skipped when the binary is not present;
+  #   - bundle identifiers are checked against Spotlight first (fast) with a
+  #     LaunchServices fallback, so apps that are not installed (e.g. on lite
+  #     machines) are skipped gracefully instead of writing dead rows.
   clientBlock =
     client: services:
     let
@@ -72,7 +83,12 @@ let
         fi
       ''
     else
-      grants;
+      ''
+        if app_installed "${client}"; then
+        ${grants}      else
+          echo "==> TCC: app not installed, skipping: ${client}"
+        fi
+      '';
 
   grantScript = lib.concatStrings (lib.mapAttrsToList clientBlock cfg.allow);
 in
@@ -106,10 +122,70 @@ in
           # "camera"
           # "microphone"
         ];
+
+        # Browsers: Google Meet video calls and screen sharing/mirroring.
+        "com.google.Chrome" = [
+          "accessibility"
+          "screen-recording"
+          "camera"
+          "microphone"
+        ];
+
+        # Communication / video calling apps.
+        "com.tinyspeck.slackmacgap" = [
+          "camera"
+          "microphone"
+          "screen-recording"
+        ];
+        "us.zoom.xos" = [
+          "camera"
+          "microphone"
+          "screen-recording"
+        ];
+        "com.hnc.Discord" = [
+          "camera"
+          "microphone"
+          "screen-recording"
+        ];
+
+        # Duet Display: input bridging (accessibility) + screen mirroring.
+        "com.kairos.duetMac" = [
+          "accessibility"
+          "post-event"
+          "screen-recording"
+        ];
+
+        # Window management / launcher: accessibility is their core function.
+        "com.lwouis.alt-tab-macos" = [
+          "accessibility"
+        ];
+        "com.raycast.macos" = [
+          "accessibility"
+        ];
+
+        # Media capture / streaming.
+        "com.obsproject.obs-studio" = [
+          "screen-recording"
+          "camera"
+          "microphone"
+        ];
+        "com.reincubate.macos.cam" = [
+          "camera"
+        ];
+        "com.openai.codex" = [
+          "microphone"
+          "screen-recording"
+        ];
+
+        # Virtualization: input sharing between host and VMs.
+        "com.parallels.desktop.console" = [
+          "accessibility"
+        ];
       };
       description = ''
         Map of TCC clients (bundle identifier or absolute binary path) to the
-        list of TCC services to grant each of them.
+        list of TCC services to grant each of them. Clients whose app is not
+        installed are skipped during activation.
       '';
     };
   };
@@ -119,14 +195,33 @@ in
       # ── Declarative TCC permission grants (managed by tcc.nix) ─────────
       TCC_DB="/Library/Application Support/com.apple.TCC/TCC.db"
       NOW="$(date +%s)"
-      if [[ ! -f "$TCC_DB" ]]; then
-        echo "==> TCC: database not found, skipping grants"
+
+      # Skip gracefully when the terminal lacks Full Disk Access: even root
+      # cannot read or write the TCC database without it. Structured as
+      # if/else (never `exit`) so the surrounding activation is unaffected.
+      if [[ ! -f "$TCC_DB" ]] || ! /usr/bin/sqlite3 "$TCC_DB" "SELECT 1" >/dev/null 2>&1; then
+        echo "==> TCC: database not accessible - grant Full Disk Access to the terminal running rebuild; skipping TCC grants"
       else
         ${grantScript}
         # Restart tccd so new grants are picked up immediately
         /usr/bin/launchctl stop com.apple.tccd 2>/dev/null || true
         echo "==> TCC: permissions granted"
       fi
+
+      # Bundle-identifier existence check: Spotlight first (fast), then
+      # LaunchServices for machines where Spotlight has not indexed yet.
+      app_installed() {
+        local bundle_id="$1"
+        if [[ -n "$(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '$bundle_id'" 2>/dev/null | head -n 1)" ]]; then
+          return 0
+        fi
+        /usr/bin/osascript -e "id of application id \"$bundle_id\"" >/dev/null 2>&1
+      }
+
+      ${grantScript}
+      # Restart tccd so new grants are picked up immediately
+      /usr/bin/launchctl stop com.apple.tccd 2>/dev/null || true
+      echo "==> TCC: permissions granted"
     '';
   };
 }
