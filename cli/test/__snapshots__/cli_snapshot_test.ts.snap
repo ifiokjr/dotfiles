@@ -18,22 +18,22 @@ Options:
 
 Commands:
 
-  clean                  - Reclaim disk space: stale AI session transcripts, regenerable caches, nix GC. Dry-run by default.
-  setup                  - Initial dotfiles setup — install Nix, clone repo, deploy groups                                  
-  rebuild                - Rebuild system configuration (nix-darwin switch or home-manager switch)                          
-  reload                 - Reload tuckr configuration groups (non-destructive, re-applies symlinks)                         
-  doctor                 - Run preflight checks without changing the machine                                                
-  groups                 - Manage configuration groups — list, inspect, deploy, and undeploy                                
-  machine                - Manage machine.nix — inspect and modify system configuration                                     
-  nix                    - Manage nix configuration directly                                                                
-  env                    - Manage environment configuration and secrets                                                     
-  pnpm                   - Manage pnpm global packages managed by dotfiles                                                  
-  uninstall              - Completely remove dotfiles installation (nix, symlinks, state)                                   
-  reset                  - Uninstall and re-setup dotfiles from scratch                                                     
-  self                   - Manage the dotfiles CLI binary                                                                   
-  completion  <shell>    - Generate shell completion providers                                                              
-  version                - Print CLI version and environment info                                                           
-  help        [command]  - Show this help or the help of a sub-command.                                                     
+  clean                  - Reclaim disk space: stale AI session transcripts, regenerable caches, Rust target dirs, nix GC. Dry-run by default.
+  setup                  - Initial dotfiles setup — install Nix, clone repo, deploy groups                                                    
+  rebuild                - Rebuild system configuration (nix-darwin switch or home-manager switch)                                            
+  reload                 - Reload tuckr configuration groups (non-destructive, re-applies symlinks)                                           
+  doctor                 - Run preflight checks without changing the machine                                                                  
+  groups                 - Manage configuration groups — list, inspect, deploy, and undeploy                                                  
+  machine                - Manage machine.nix — inspect and modify system configuration                                                       
+  nix                    - Manage nix configuration directly                                                                                  
+  env                    - Manage environment configuration and secrets                                                                       
+  pnpm                   - Manage pnpm global packages managed by dotfiles                                                                    
+  uninstall              - Completely remove dotfiles installation (nix, symlinks, state)                                                     
+  reset                  - Uninstall and re-setup dotfiles from scratch                                                                       
+  self                   - Manage the dotfiles CLI binary                                                                                     
+  completion  <shell>    - Generate shell completion providers                                                                                
+  version                - Print CLI version and environment info                                                                             
+  help        [command]  - Show this help or the help of a sub-command.                                                                       
 
 "
 `;

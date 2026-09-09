@@ -1,8 +1,13 @@
 /**
  * `dotfiles clean` — reclaim disk space
  *
- * Deletes stale AI session transcripts, regenerable caches, and runs store
- * garbage collection. Dry-run by default; pass --apply to delete.
+ * Deletes stale AI session transcripts, regenerable caches, Rust target
+ * directories, and runs store garbage collection (nh). Dry-run by default;
+ * pass --apply to delete.
+ *
+ * `--when-low <GB>` gates the whole run on free disk space so a scheduler
+ * (launchd agent / systemd timer) can call `clean --apply --auto --when-low`
+ * periodically without doing work while the disk still has room.
  */
 
 import { Command } from "@cliffy/command";
@@ -17,11 +22,18 @@ import {
 } from "../lib/config.ts";
 
 const HOME = Deno.env.get("HOME") ?? "/tmp";
+const GIBIBYTE = 1024 * 1024 * 1024;
 
 interface CleanOptions {
 	apply?: boolean;
 	days?: number;
 	only?: string[];
+	/** Monitor mode: conservative defaults, no Trash emptying. */
+	auto?: boolean;
+	/** Only run when fewer than this many GiB are free (launchd/systemd). */
+	whenLow?: number;
+	/** Keep cargo target dirs of projects compiled within the last N days. */
+	cargoKeepDays?: number;
 }
 
 interface Target {
@@ -31,7 +43,7 @@ interface Target {
 	estimate?: boolean;
 }
 
-function fmtBytes(bytes: number): string {
+export function fmtBytes(bytes: number): string {
 	if (bytes < 1024) return `${bytes} B`;
 	const units = ["KB", "MB", "GB", "TB"];
 	let value = bytes / 1024;
@@ -51,6 +63,47 @@ async function duBytes(path: string): Promise<number | null> {
 	if (!success || !stdout) return null;
 	const kb = Number.parseInt(stdout.split("\t")[0], 10);
 	return Number.isFinite(kb) ? kb * 1024 : null;
+}
+
+/** Parse the "Available" 1K-blocks column of `df -k` output. */
+export function parseDfAvailableKilobytes(stdout: string): number | null {
+	const lines = stdout.trim().split("\n");
+	if (lines.length < 2) return null;
+	const columns = lines[lines.length - 1].trim().split(/\s+/);
+	// Both macOS and Linux `df -k` put Available in the 4th column.
+	const kb = Number.parseInt(columns[3], 10);
+	return Number.isFinite(kb) ? kb * 1024 : null;
+}
+
+/** Bytes still available on the volume containing `path`, or null. */
+export async function freeBytes(path = "/"): Promise<number | null> {
+	const { success, stdout } = await runCommand(["df", "-k", path], {
+		stdout: "piped",
+	});
+	if (!success || !stdout) return null;
+	return parseDfAvailableKilobytes(stdout);
+}
+
+/**
+ * Build the `cargo-clean-all` invocation. The tool deletes every `target/`
+ * directory under a root; `--yes` skips its confirmation prompt, `--keep-days`
+ * protects projects that were built recently, and `--skip` avoids scanning
+ * macOS system/app dirs that never contain source projects.
+ */
+export function cargoCleanAllArgs(keepDays: number, home: string): string[] {
+	const args = ["cargo-clean-all", "--yes"];
+	if (keepDays > 0) args.push("--keep-days", String(keepDays));
+	for (
+		const dir of [
+			`${home}/Library`,
+			`${home}/Downloads`,
+			`${home}/.Trash`,
+		]
+	) {
+		args.push("--skip", dir);
+	}
+	args.push(home);
+	return args;
 }
 
 /** Recursively collect regular files older than cutoff, skipping symlinks. */
@@ -155,6 +208,14 @@ const cacheTargets = (): Target[] => [
 	{ label: "npm cache", path: `${HOME}/.npm/_cacache` },
 	{ label: "cargo registry", path: `${HOME}/.cargo/registry` },
 	{ label: "uv cache", path: `${HOME}/.cache/uv` },
+	{ label: "deno cache", path: `${HOME}/.cache/deno` },
+	{
+		label: "deno cache (macOS)",
+		path: `${HOME}/Library/Caches/deno`,
+	},
+	{ label: "gradle caches", path: `${HOME}/.gradle/caches` },
+	{ label: "flutter pub cache", path: `${HOME}/.pub-cache` },
+	{ label: "dart analysis cache", path: `${HOME}/.dartServer` },
 	{ label: "puppeteer browsers", path: `${HOME}/.cache/puppeteer` },
 	{
 		label: "Playwright browsers",
@@ -295,13 +356,31 @@ async function cleanCaches(apply: boolean): Promise<number> {
 		freed += bytes;
 	}
 
+	// The pnpm store is a pure content-addressable cache: existing node_modules
+	// keep working after deletion because packages are hard-linked into them.
+	// `pnpm store path` points at the current versioned store (…/store/v11);
+	// its parent also holds older vN stores left by pnpm upgrades that
+	// `pnpm store prune` never cleans — on a single machine those were tens of
+	// GB, so remove the whole store root.
 	if (await commandExists("pnpm")) {
-		if (apply) {
-			printInfo("Running `pnpm store prune` (removes unreferenced packages)…");
-			const { success } = await runCommand(["pnpm", "store", "prune"]);
-			if (success) printSuccess("pnpm store pruned");
-		} else {
-			printInfo("pnpm store: prune on --apply (unreferenced packages)");
+		const storePath = await pnpmStorePath();
+		if (storePath) {
+			const storeRoot = storePath.replace(/\/v\d+$/, "");
+			let bytes = await duBytes(storeRoot);
+			if (bytes !== null && bytes > 0) {
+				if (apply) {
+					try {
+						await Deno.remove(storeRoot, { recursive: true });
+						printInfo(`pnpm store: removed ${fmtBytes(bytes)}`);
+					} catch (error) {
+						printError(`Failed to remove pnpm store: ${error}`);
+						bytes = 0;
+					}
+				} else {
+					printInfo(`pnpm store (${storeRoot}): ${fmtBytes(bytes)}`);
+				}
+				freed += bytes;
+			}
 		}
 	}
 
@@ -323,6 +402,54 @@ async function cleanCaches(apply: boolean): Promise<number> {
 	return freed;
 }
 
+/** `pnpm store path` — the content-addressable package cache location. */
+async function pnpmStorePath(): Promise<string | null> {
+	const { success, stdout } = await runCommand(["pnpm", "store", "path"], {
+		stdout: "piped",
+	});
+	if (!success || !stdout) return null;
+	const path = stdout.trim().split("\n").pop()?.trim();
+	return path || null;
+}
+
+/**
+ * Delete Rust `target/` directories across the home directory with
+ * `cargo-clean-all`. The standalone binary is invoked directly so this keeps
+ * working even when the rustup `cargo` shim is broken.
+ */
+async function cleanCargoTargets(
+	apply: boolean,
+	keepDays: number,
+): Promise<number> {
+	if (!(await commandExists("cargo-clean-all"))) {
+		printWarning(
+			"cargo-clean-all not found; skipping Rust target directory cleanup",
+		);
+		return 0;
+	}
+
+	const note = keepDays > 0
+		? `keeping projects built in the last ${keepDays} days`
+		: "all projects";
+	if (!apply) {
+		const args = cargoCleanAllArgs(keepDays, HOME).map((arg) =>
+			arg === "--yes" ? "--dry-run" : arg
+		);
+		printInfo(`Rust target directories (${note}); previewing:`);
+		await runCommand(args);
+		return 0;
+	}
+
+	printInfo(`Rust target directories (${note}):`);
+	const { success } = await runCommand(cargoCleanAllArgs(keepDays, HOME));
+	if (!success) {
+		printError("cargo-clean-all failed; see output above");
+		return 0;
+	}
+	printSuccess("Rust target directories cleaned");
+	return 0;
+}
+
 async function cleanNix(apply: boolean): Promise<number> {
 	if (!(await commandExists("nix-collect-garbage"))) {
 		printWarning(
@@ -330,6 +457,42 @@ async function cleanNix(apply: boolean): Promise<number> {
 		);
 		return 0;
 	}
+
+	// `nh clean user` never needs elevation (unlike `nh clean all`, which wants
+	// sudo for the system profile and hangs when there is no TTY). It covers the
+	// user profiles, direnv gcroots, and a full store GC, so it is a superset of
+	// the old `nix-collect-garbage -d`.
+	if (await commandExists("nh")) {
+		if (apply) {
+			printInfo(
+				"Running `nh clean user` (old generations, gcroots, store GC)…",
+			);
+			const { success } = await runCommand(["nh", "clean", "user"]);
+			if (success) {
+				printSuccess("Nix user profiles and store garbage collected");
+			} else {
+				printError("nh clean user failed; see output above");
+			}
+			// Opportunistic: also clean system generations when sudo happens to be
+			// cached (e.g. right after a rebuild). Fails silently otherwise.
+			const system = await runCommand(["sudo", "-n", "nh", "clean", "all"]);
+			if (system.success) {
+				printSuccess("Nix system profiles garbage collected");
+			} else {
+				printInfo(
+					"System profiles not cleaned (sudo credentials not cached) — run `sudo nh clean all` after a rebuild to reclaim those too",
+				);
+			}
+		} else {
+			printInfo("Running `nh clean user --dry`:");
+			await runCommand(["nh", "clean", "user", "--dry"]);
+			printInfo(
+				"System profiles: `sudo nh clean all` when sudo is available",
+			);
+		}
+		return 0;
+	}
+
 	if (apply) {
 		printInfo(
 			"Running `nix-collect-garbage -d` (old generations + unreferenced store paths)…",
@@ -440,11 +603,35 @@ function printManualReviewTargets(): void {
 	printHeader("Also worth reviewing manually (not auto-deleted)");
 	const notes: [string, string][] = [
 		[
+			"~/Downloads — installers, archives, torrents",
+			"`dust -d 1 ~/Downloads`, delete what you no longer need",
+		],
+		[
+			"~/.tart + ~/Parallels — macOS/Linux VM disk images (often 30–100 GB each)",
+			"`tart list` → `tart delete <name>`; remove unused VMs from the Parallels Control Center",
+		],
+		[
+			"~/fvm — Flutter SDK versions",
+			"`fvm list`, then `fvm remove <version>` for releases you no longer target",
+		],
+		[
+			"~/.local/share/containers — podman machine VM disks",
+			"`podman machine list`, then remove unused machines/images (`podman system prune`)",
+		],
+		[
+			"~/.android/avd — emulator images",
+			"`avdmanager delete avd -n <name>` for unused devices",
+		],
+		[
+			"~/Library/Application Support/MobileSync/Backup — iPhone/iPad backups",
+			"delete old device backups in Finder → Devices or Settings → General → Storage",
+		],
+		[
 			"~/.ollama — downloaded models",
 			"`ollama list`, then `ollama rm <model>`",
 		],
 		[
-			"~/Library/Android/sdk — SDK + emulator images",
+			"~/Library/Android/sdk — SDK + emulator system images",
 			"`sdkmanager --uninstall` unused platforms/system-images",
 		],
 		[
@@ -456,12 +643,8 @@ function printManualReviewTargets(): void {
 			"uninstall unused games in Steam",
 		],
 		[
-			"~/.local/share/containers — container/VM images",
-			"`podman system prune` (or the equivalent for your engine)",
-		],
-		[
-			"~/Developer/projects — build artifacts (node_modules, target, dist)",
-			"remove per project and reinstall/rebuild when needed",
+			"~/Developer — build artifacts (target, node_modules, dist, .next)",
+			"`dot clean --only cargo --apply` handles target/; remove node_modules per project and reinstall when needed",
 		],
 		[
 			"~/.codex/thread_history_1.sqlite + logs_2.sqlite — Codex chat DBs",
@@ -487,7 +670,7 @@ function printSummary(freed: number, apply: boolean): void {
 
 export const cleanCommand = new Command()
 	.description(
-		"Reclaim disk space: stale AI session transcripts, regenerable caches, nix GC. Dry-run by default.",
+		"Reclaim disk space: stale AI session transcripts, regenerable caches, Rust target dirs, nix GC. Dry-run by default.",
 	)
 	.option("--apply", "Actually delete files (default is a dry-run report)")
 	.option(
@@ -497,20 +680,60 @@ export const cleanCommand = new Command()
 	)
 	.option(
 		"--only <category:string>",
-		"Limit to a category: sessions, caches, nix, rustup, trash (repeatable)",
+		"Limit to a category: sessions, caches, cargo, nix, rustup, trash (repeatable)",
 		{ collect: true },
+	)
+	.option(
+		"--auto",
+		"Monitor mode: keep cargo targets built today and never touch the Trash (used by the launchd/systemd scheduler)",
+	)
+	.option(
+		"--when-low <gib:number>",
+		"Only run when fewer than this many GiB are free (exit early otherwise)",
+	)
+	.option(
+		"--cargo-keep-days <days:number>",
+		"Keep cargo target dirs of projects built within the last N days (0 = clean all; --auto defaults to 1)",
 	)
 	.action(async (options: CleanOptions) => {
 		const apply = options.apply ?? false;
 		const days = options.days ?? 30;
+		const auto = options.auto ?? false;
+		const cargoKeepDays = options.cargoKeepDays ??
+			(auto ? 1 : 0);
 		const only = new Set(options.only ?? []);
 		const wants = (category: string) => only.size === 0 || only.has(category);
+		// Auto mode skips the Trash unless it is the explicitly requested
+		// category — an unattended scheduler must not empty the user's Trash.
+		const wantsTrash = wants("trash") &&
+			(only.has("trash") || !auto);
 
 		printHeader(
 			`Cleaning disk space${
 				apply ? "" : " (dry run — pass --apply to delete)"
-			}`,
+			}${auto ? " [auto]" : ""}`,
 		);
+
+		const free = await freeBytes();
+		if (free !== null) printInfo(`Disk space free: ${fmtBytes(free)}`);
+		if (options.whenLow !== undefined) {
+			if (free === null) {
+				printWarning("Could not determine free space; ignoring --when-low");
+			} else if (free >= options.whenLow * GIBIBYTE) {
+				printSuccess(
+					`${
+						fmtBytes(free)
+					} free is at or above the ${options.whenLow} GB threshold — nothing to do`,
+				);
+				return;
+			} else {
+				printWarning(
+					`${
+						fmtBytes(free)
+					} free is below the ${options.whenLow} GB threshold — cleaning`,
+				);
+			}
+		}
 
 		let freed = 0;
 		if (wants("sessions")) {
@@ -521,6 +744,9 @@ export const cleanCommand = new Command()
 			printInfo("Regenerable caches:");
 			freed += await cleanCaches(apply);
 		}
+		if (wants("cargo")) {
+			freed += await cleanCargoTargets(apply, cargoKeepDays);
+		}
 		if (wants("nix")) {
 			freed += await cleanNix(apply);
 		}
@@ -528,10 +754,19 @@ export const cleanCommand = new Command()
 			printInfo("Rust toolchains (keeping stable + newest nightly):");
 			freed += await cleanRustup(apply);
 		}
-		if (wants("trash")) {
+		if (wantsTrash) {
 			freed += await cleanTrash(apply);
 		}
 
 		if (!apply) printManualReviewTargets();
 		printSummary(freed, apply);
+
+		if (apply) {
+			const after = await freeBytes();
+			if (free !== null && after !== null) {
+				printInfo(
+					`Free space: ${fmtBytes(free)} → ${fmtBytes(after)}`,
+				);
+			}
+		}
 	});

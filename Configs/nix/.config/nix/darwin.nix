@@ -235,6 +235,27 @@
     };
   };
 
+  # Disk space janitor: run the non-interactive `dot clean` sweep whenever free
+  # space drops below the 100 GiB threshold. Checked hourly and at login; each
+  # run exits immediately while the disk still has room. `--auto` only deletes
+  # regenerable data (caches, Rust target dirs, nix garbage, session
+  # transcripts older than 30 days) and never touches the Trash. The PATH must
+  # include the user's home-manager profile (nh, cargo-clean-all) and
+  # ~/.local/bin (the `dot` binary compiled by Hooks/nix/post.sh).
+  launchd.agents.dotfiles-clean = {
+    script = ''
+      export PATH="/etc/profiles/per-user/$USER/bin:$HOME/.local/bin:$HOME/.nix-profile/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+      [ -x "$HOME/.local/bin/dot" ] || exit 0
+      exec "$HOME/.local/bin/dot" clean --apply --auto --when-low 100
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      StartInterval = 3600;
+      StandardOutPath = "/tmp/dotfiles-clean.log";
+      StandardErrorPath = "/tmp/dotfiles-clean.log";
+    };
+  };
+
   # Raise system-wide file descriptor limits from the macOS default of 256.
   # Without this, nix builds and tools like devenv frequently hit "Too many open
   # files". The daemon runs as root at boot so it can raise kernel ceilings and
