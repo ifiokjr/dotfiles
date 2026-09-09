@@ -327,6 +327,33 @@ in
   };
 
   # ---------------------------------------------------------------------------
+  # Disk space janitor (Linux standalone home-manager)
+  # ---------------------------------------------------------------------------
+  # Hourly check that runs the non-interactive `dot clean` sweep when free
+  # space drops below 100 GiB. macOS equivalent: launchd.agents.dotfiles-clean
+  # in darwin.nix.
+  systemd.user.services.dotfiles-clean = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    Unit.Description = "Clean regenerable caches when disk space is low";
+    Service = {
+      Type = "oneshot";
+      ExecStart = pkgs.writeShellScript "dotfiles-clean-monitor" ''
+        export PATH="/etc/profiles/per-user/$USER/bin:$HOME/.local/bin:$HOME/.nix-profile/bin:/run/current-system/sw/bin:/usr/bin:/bin"
+        [ -x "$HOME/.local/bin/dot" ] || exit 0
+        exec "$HOME/.local/bin/dot" clean --apply --auto --when-low 100
+      '';
+    };
+  };
+
+  systemd.user.timers.dotfiles-clean = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    Timer = {
+      Unit = "dotfiles-clean.service";
+      OnBootSec = "10min";
+      OnUnitActiveSec = "1h";
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
+  # ---------------------------------------------------------------------------
   # Tailscale systemd user service (Linux standalone home-manager)
   # ---------------------------------------------------------------------------
   # On macOS, nix-darwin handles tailscaled via services.tailscale.enable.
