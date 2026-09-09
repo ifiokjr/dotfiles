@@ -253,4 +253,4 @@ alias gswc='git switch --create'
 # ---------------------------------------------------------------------------
 [[ -n "$DOTFILES_DEBUG" ]] && printf '\e[34m→\e[0m zsh total: %0.0f ms\n' "$(( (EPOCHREALTIME - _zsh_start_ns) * 1000 ))"
 # Vite+ bin (https://viteplus.dev)
-. "$HOME/.vite-plus/env"
+[[ -f "$HOME/.vite-plus/env" ]] && . "$HOME/.vite-plus/env"
