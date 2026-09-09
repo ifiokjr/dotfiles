@@ -75,3 +75,13 @@ tuckr set nix
 ## Live Update Model
 
 Configs are symlinked, so editing either the repo file or the deployed path updates the same file immediately.
+
+## Remote Rebuilds
+
+Fleet Macs grant the primary user passwordless sudo (`security.sudo.extraConfig` in `Configs/nix/.config/nix/darwin.nix`), so machines can be rebuilt unattended over the tailnet without a TTY for the sudo password:
+
+```bash
+ssh <host> 'dot rebuild --latest'
+```
+
+The rebuild that first introduces the NOPASSWD rule still needs one interactive authentication. Run it with a TTY (`ssh -t <host> 'dot rebuild --latest'`) or at the machine; every later rebuild is fully unattended.
