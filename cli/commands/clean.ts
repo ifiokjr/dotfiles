@@ -356,13 +356,31 @@ async function cleanCaches(apply: boolean): Promise<number> {
 		freed += bytes;
 	}
 
+	// The pnpm store is a pure content-addressable cache: existing node_modules
+	// keep working after deletion because packages are hard-linked into them.
+	// `pnpm store path` points at the current versioned store (…/store/v11);
+	// its parent also holds older vN stores left by pnpm upgrades that
+	// `pnpm store prune` never cleans — on a single machine those were tens of
+	// GB, so remove the whole store root.
 	if (await commandExists("pnpm")) {
-		if (apply) {
-			printInfo("Running `pnpm store prune` (removes unreferenced packages)…");
-			const { success } = await runCommand(["pnpm", "store", "prune"]);
-			if (success) printSuccess("pnpm store pruned");
-		} else {
-			printInfo("pnpm store: prune on --apply (unreferenced packages)");
+		const storePath = await pnpmStorePath();
+		if (storePath) {
+			const storeRoot = storePath.replace(/\/v\d+$/, "");
+			let bytes = await duBytes(storeRoot);
+			if (bytes !== null && bytes > 0) {
+				if (apply) {
+					try {
+						await Deno.remove(storeRoot, { recursive: true });
+						printInfo(`pnpm store: removed ${fmtBytes(bytes)}`);
+					} catch (error) {
+						printError(`Failed to remove pnpm store: ${error}`);
+						bytes = 0;
+					}
+				} else {
+					printInfo(`pnpm store (${storeRoot}): ${fmtBytes(bytes)}`);
+				}
+				freed += bytes;
+			}
 		}
 	}
 
@@ -382,6 +400,16 @@ async function cleanCaches(apply: boolean): Promise<number> {
 	}
 
 	return freed;
+}
+
+/** `pnpm store path` — the content-addressable package cache location. */
+async function pnpmStorePath(): Promise<string | null> {
+	const { success, stdout } = await runCommand(["pnpm", "store", "path"], {
+		stdout: "piped",
+	});
+	if (!success || !stdout) return null;
+	const path = stdout.trim().split("\n").pop()?.trim();
+	return path || null;
 }
 
 /**
