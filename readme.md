@@ -485,6 +485,19 @@ sudo update
 - Running with sudo changes context to root user ($HOME becomes /var/root)
 - Root can't access your user's cache, and builds may fail or use wrong paths
 
+**Problem: `Password:` prompts during the rebuild**
+
+`dot rebuild` asks for your password once up front (`sudo -v`) and refreshes the cached credentials in the background for the duration of the rebuild, so the nix build and the nix-darwin activation share one authentication.
+
+If you are asked for a password _again_ during the activation step, Homebrew is the cause: brew runs `sudo --reset-timestamp` on every invocation, and any privileged brew operation (cask install/uninstall hooks) after that reset has to prompt again. This only happens when the Caskroom has drifted from the Brewfile — e.g. a cask was installed manually that the Brewfile does not list, so `brew bundle --zap --force-cleanup` wants to remove it.
+
+**Solution:** remove the stale cask once, interactively (one password), then rebuilds return to a single prompt:
+
+```bash
+brew uninstall --cask --force --zap <cask>
+dot rebuild
+```
+
 Or let the `post_nix` hook handle rebuilds:
 
 ```bash
