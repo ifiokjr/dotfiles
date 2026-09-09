@@ -608,8 +608,14 @@ async function ensureSudoSession(): Promise<Deno.ChildProcess | null> {
 }
 
 /** Stop the keepalive so it does not outlive the rebuild. */
-function stopSudoKeepalive(keepalive: Deno.ChildProcess | null) {
-	keepalive?.kill();
+export function stopSudoKeepalive(keepalive: Deno.ChildProcess | null) {
+	try {
+		keepalive?.kill();
+	} catch {
+		// The keepalive deliberately exits on its own once the sudo ticket is
+		// invalidated (see ensureSudoSession), and Deno throws when killing a
+		// process that already terminated. Nothing left to stop in that case.
+	}
 }
 
 async function maybeInstallOsUpdates(opts: RebuildOptions) {
