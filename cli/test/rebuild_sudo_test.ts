@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { sudoKeepaliveScript } from "../commands/rebuild.ts";
+import { stopSudoKeepalive, sudoKeepaliveScript } from "../commands/rebuild.ts";
 
 Deno.test("sudoKeepaliveScript refreshes sudo for the rebuild process", () => {
 	const script = sudoKeepaliveScript(4242);
@@ -53,4 +53,18 @@ Deno.test("sudoKeepaliveScript exits without prompting when sudo fails", async (
 
 	assertEquals(output.success, true);
 	await Deno.remove(binDir, { recursive: true });
+});
+
+Deno.test("stopSudoKeepalive tolerates an already-terminated keepalive", async () => {
+	// The keepalive exits on its own once the sudo ticket is invalidated, and
+	// Deno throws when killing a terminated process. Stopping such a keepalive
+	// must be a no-op instead of crashing the rebuild in its finally block.
+	const command = new Deno.Command("true");
+	const keepalive = command.spawn();
+	await keepalive.status;
+
+	stopSudoKeepalive(keepalive);
+
+	// Also safe when there is nothing to stop (non-macOS or failed auth).
+	stopSudoKeepalive(null);
 });
