@@ -657,7 +657,7 @@ export const cleanCommand = new Command()
 	)
 	.option(
 		"--auto",
-		"Monitor mode: keep cargo targets newer than 7 days and never touch the Trash (used by the launchd/systemd scheduler)",
+		"Monitor mode: keep cargo targets built today and never touch the Trash (used by the launchd/systemd scheduler)",
 	)
 	.option(
 		"--when-low <gib:number>",
@@ -665,14 +665,14 @@ export const cleanCommand = new Command()
 	)
 	.option(
 		"--cargo-keep-days <days:number>",
-		"Keep cargo target dirs of projects built within the last N days (0 = clean all; --auto defaults to 7)",
+		"Keep cargo target dirs of projects built within the last N days (0 = clean all; --auto defaults to 1)",
 	)
 	.action(async (options: CleanOptions) => {
 		const apply = options.apply ?? false;
 		const days = options.days ?? 30;
 		const auto = options.auto ?? false;
 		const cargoKeepDays = options.cargoKeepDays ??
-			(auto ? 7 : 0);
+			(auto ? 1 : 0);
 		const only = new Set(options.only ?? []);
 		const wants = (category: string) => only.size === 0 || only.has(category);
 		// Auto mode skips the Trash unless it is the explicitly requested
