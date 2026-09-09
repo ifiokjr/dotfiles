@@ -148,27 +148,6 @@
               })
             else
               prev.nushell;
-
-          # mise's `oci::layer::tests::preserve_metadata_dir_layer_keeps_special_permission_bits`
-          # asserts that `bin/helper` retains mode 0o4755 (setuid) after OCI layer
-          # extraction. The Nix Darwin sandbox builds as a non-root `nixbld` user,
-          # which cannot preserve setuid bits, so the extracted file ends up 0o755
-          # and the test panics (`left: 493, right: 2541`). This is fundamentally
-          # unsatisfiable in a sandboxed non-root build, so skip just that test and
-          # keep the rest of mise's suite (1349 passing tests). Append to upstream's
-          # existing `checkFlags` (which already skips other sandbox-incompatible
-          # tests) without clobbering it, and handle both string and list forms.
-          mise = prev.mise.overrideAttrs (
-            old:
-            let
-              skipFlag = "--skip=oci::layer::tests::preserve_metadata_dir_layer_keeps_special_permission_bits";
-              existing = old.checkFlags or [ ];
-            in
-            {
-              checkFlags =
-                if prev.lib.isString existing then "${existing} ${skipFlag}" else existing ++ [ skipFlag ];
-            }
-          );
         };
 
       # Overlay consulted by `dot rebuild`'s auto-recovery: when an upstream

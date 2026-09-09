@@ -4,7 +4,7 @@ set -uo pipefail
 # refresh-nu-vendor-autoloads — Regenerate or clean Nushell integration files
 #
 # Nushell loads every script in its vendor/autoload directory at startup, and
-# the generated integrations (starship, atuin, mise, ...) embed the tool's
+# the generated integrations (starship, atuin, ...) embed the tool's
 # binary path at generation time. When the tool set changes — a package is
 # added, removed, or moved between profiles — each generated file must be
 # regenerated or deleted, otherwise every new shell errors trying to run a
@@ -135,37 +135,6 @@ if command -v atuin &>/dev/null; then
 else
 	rm -f "$ATUIN_AUTOLOAD_FILE"
 	echo -e "${YELLOW}!${NC} atuin not found, removing stale atuin.nu"
-fi
-
-# Generate mise activation (patch add-hook for Nushell compatibility: update optional true -> each { merge } )
-if command -v mise &>/dev/null; then
-	mise activate nu >"$VENDOR_AUTOLOAD_DIR/mise.nu"
-	# Fix add-hook: "update optional true" pipeline is incompatible in recent Nushell; use each/merge instead
-	# (SC2016: $r must stay literal in sed replacement - it is the Nushell variable name in the generated script)
-	# shellcheck disable=SC2016
-	sed -i '' 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
-		sed -i 's#| update optional true | into cell-path#| each { |r| $r | merge { optional: true } } | into cell-path#' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
-	# Fix deprecated --ignore-errors flag (renamed to --optional in nushell 0.106.0)
-	sed -i '' 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
-		sed -i 's#--ignore-errors#--optional#g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
-
-	# Nushell 0.114+ renamed `str upcase` to `str uppercase`. Older mise
-	# releases generate activate scripts using the deprecated name, which
-	# warns on every shell startup under Nushell >= 0.114. Only rename when
-	# the deployed nushell supports the new name so vendor autoloads
-	# generated before a rebuild keep working on older Nushell profiles.
-	NU_VERSION=$("$NU_PATH" -c 'version | get version' 2>/dev/null || echo "0.0.0")
-	NU_MAJOR=${NU_VERSION%%.*}
-	NU_MINOR=${NU_VERSION#*.}
-	NU_MINOR=${NU_MINOR%%.*}
-	if [ "${NU_MAJOR:-0}" -gt 0 ] || [ "${NU_MINOR:-0}" -ge 114 ]; then
-		sed -i '' 's/str upcase/str uppercase/g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null ||
-			sed -i 's/str upcase/str uppercase/g' "$VENDOR_AUTOLOAD_DIR/mise.nu" 2>/dev/null || true
-	fi
-	echo -e "${GREEN}✓${NC} Generated mise.nu"
-else
-	rm -f "$VENDOR_AUTOLOAD_DIR/mise.nu"
-	echo -e "${YELLOW}!${NC} mise not found, removing stale mise.nu"
 fi
 
 # Generate zoxide init
