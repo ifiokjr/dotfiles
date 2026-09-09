@@ -141,13 +141,68 @@
           # permission errors while checking `env_shlvl_in_repl` and
           # `env_shlvl_in_exec_repl`. Skip checks until nixpkgs updates to a
           # fixed revision.
+          #
+          # Every version is also wrapped to sanitize an inherited PWD before
+          # the real binary starts. Nushell trusts the PWD env var over
+          # getcwd(3) and validates it instead of canonicalizing it, so any
+          # parent that spawns `nu` with a trailing slash in PWD (ZCode.app's
+          # integrated terminal does this for workspace directories) bricks
+          # the shell at startup with "$env.PWD contains trailing slashes";
+          # there is no in-session recovery because even `cd` needs a valid
+          # cwd. Trailing slashes are stripped, and a non-absolute PWD is
+          # unset so nushell falls back to the real working directory.
           nushell =
-            if prev.nushell.version == "0.112.1" then
-              prev.nushell.overrideAttrs (_: {
-                doCheck = false;
-              })
-            else
-              prev.nushell;
+            let
+              nushell' =
+                if prev.nushell.version == "0.112.1" then
+                  prev.nushell.overrideAttrs (_: {
+                    doCheck = false;
+                  })
+                else
+                  prev.nushell;
+              # replaceVars injects the unwrapped store path at build time,
+              # so the wrapper works no matter how it is invoked (PATH,
+              # login shell symlink, shebang) and keeps a symlink-proof
+              # absolute reference to the real binary.
+              nu-sanitize-pwd =
+                prev.replaceVars
+                  (prev.writeText "nu-sanitize-pwd.sh" ''
+                    #!/bin/sh
+                    # Sanitize an inherited PWD for nushell. Rationale lives in
+                    # the darwinWorkaroundsOverlay in flake.nix.
+                    case $PWD in
+                      /*) ;;
+                      *) unset PWD ;;
+                    esac
+                    if [ -n "''${PWD+x}" ]; then
+                      while :; do
+                        case $PWD in
+                          /) break ;;
+                          */) PWD=''${PWD%/} ;;
+                          *) break ;;
+                        esac
+                      done
+                      export PWD
+                    fi
+                    exec "@nu@" "$@"
+                  '')
+                  {
+                    nu = "${nushell'}/bin/nu";
+                  };
+            in
+            prev.symlinkJoin {
+              name = "${nushell'.name}-pwd-sanitized";
+              paths = [ nushell' ];
+              inherit (nushell') version;
+              meta = nushell'.meta or { };
+              passthru = nushell'.passthru or { };
+              postBuild = ''
+                # Replace the bin/nu symlink with the sanitizer wrapper; the
+                # rest of the package (man pages, etc.) stays symlinked.
+                rm "$out/bin/nu"
+                install -m755 ${nu-sanitize-pwd} "$out/bin/nu"
+              '';
+            };
         };
 
       # Overlay consulted by `dot rebuild`'s auto-recovery: when an upstream
