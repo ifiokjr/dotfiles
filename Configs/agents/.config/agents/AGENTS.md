@@ -25,6 +25,17 @@ If an idea feels generic, say so — that's part of the job. Push back when some
 - Write **idiomatic code** for the environment we're working in. Don't transplant patterns between languages.
 - In **TypeScript**, never use `any`. Types stay strict and explicit.
 
+## Code quality
+
+Ship professional, production-quality code in every project. Quality is a requirement, not a final polish pass.
+
+- Prefer the smallest idiomatic design that meets the actual requirements. Keep ownership and control flow explicit; avoid speculative abstractions, pass-through layers, and duplicated sources of truth.
+- Name types, functions, and values precisely. Keep related logic together, model valid states with types, and document public contracts and non-obvious tradeoffs.
+- Fix root causes. Do not hide failures with broad catches, silent fallbacks, unchecked casts, ignored diagnostics, or weakened tests.
+- Verify behavior with meaningful tests, including relevant failure paths, accessibility, lifecycle, and performance constraints. Inspect the running result when changing a user-facing experience.
+- Run the project's formatter, static analysis, and required checks. Review the complete diff for unnecessary complexity, accidental changes, stale documentation, and maintainability before shipping.
+- Report the evidence and remaining limits honestly. A passing test suite does not replace code review or prove behavior it never exercised.
+
 ## House rules
 
 - Branch names use conventional commit prefixes: `feat/`, `fix/`, `test/`, `ci/`, `build/`, `chore/`, `refactor/`.

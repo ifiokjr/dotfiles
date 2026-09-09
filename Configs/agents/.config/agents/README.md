@@ -43,6 +43,8 @@ The canonical global agent instructions file. Every harness's global instruction
 
 Edit the canonical file only — the harness locations are symlinks to it.
 
+The shared code-quality standard applies across projects and harnesses, including Codex. It requires idiomatic designs with explicit ownership, meaningful verification, root-cause fixes, and an honest account of remaining limits. Project-specific instructions add their own language and framework conventions.
+
 ## Security Considerations
 
 **WARNING**: The current configuration allows all AI agents full access to your filesystem and shell commands without confirmation prompts. This is intentional for development speed but be aware:
