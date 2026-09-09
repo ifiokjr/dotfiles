@@ -203,6 +203,7 @@
       ++ lib.optionals (isDesktop && lite) [
         # Essential desktop apps for lite macOS machines
         "ghostty" # Terminal emulator — needed even in lite mode on desktop machines
+        "google-chrome" # Browser for web-based checks in CI workflows
       ];
   };
 
