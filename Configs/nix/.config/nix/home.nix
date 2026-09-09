@@ -254,18 +254,18 @@ in
         # ProxyCommand avoids depending on the local Tailscale TUN interface, which
         # can be disabled in some macOS/client states while `tailscale nc` still works.
         Host mini01
-            HostName 100.94.21.127
-            HostKeyAlias mini01.tailbfc6bf.ts.net
-            User ifiokjr
+            HostName mini01-1.tailbfc6bf.ts.net
+            HostKeyAlias mini01-1.tailbfc6bf.ts.net
+            User mini01
             ProxyCommand tailscale nc %h %p
             UserKnownHostsFile ~/.ssh/known_hosts.tailscale
             StrictHostKeyChecking accept-new
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
         Host mini02
-            HostName 100.97.208.114
-            HostKeyAlias mini02.tailbfc6bf.ts.net
-            User ifiokjr
+            HostName mini02-1.tailbfc6bf.ts.net
+            HostKeyAlias mini02-1.tailbfc6bf.ts.net
+            User mini02
             ProxyCommand tailscale nc %h %p
             UserKnownHostsFile ~/.ssh/known_hosts.tailscale
             StrictHostKeyChecking accept-new
