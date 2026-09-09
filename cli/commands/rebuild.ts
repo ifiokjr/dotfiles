@@ -165,15 +165,22 @@ export const rebuildCommand = new Command()
 		}
 
 		await ensureNixAvailable();
-		await maybeInstallOsUpdates(opts);
-		await maybeUpdateFlake(context, opts);
-		await maybeCheckFlake(context, opts);
-		await runRebuild(context, config);
-		await installDotfilesCli({ dotfilesDir: context.dotfilesDir });
-		// The rebuild may have changed the installed tool set, so regenerate or
-		// clean the shell integrations to match (mise/atuin/starship/...).
-		await refreshShellIntegrations(context.dotfilesDir);
-		await maybeCommitRebuildChanges(context, opts);
+
+		const keepalive = await ensureSudoSession();
+
+		try {
+			await maybeInstallOsUpdates(opts);
+			await maybeUpdateFlake(context, opts);
+			await maybeCheckFlake(context, opts);
+			await runRebuild(context, config);
+			await installDotfilesCli({ dotfilesDir: context.dotfilesDir });
+			// The rebuild may have changed the installed tool set, so regenerate or
+			// clean the shell integrations to match (mise/atuin/starship/...).
+			await refreshShellIntegrations(context.dotfilesDir);
+			await maybeCommitRebuildChanges(context, opts);
+		} finally {
+			stopSudoKeepalive(keepalive);
+		}
 
 		if (opts.groups) {
 			printWarning(
@@ -482,6 +489,83 @@ async function ensureNixAvailable() {
 		printError("nix not found after bootstrapping PATH");
 		Deno.exit(1);
 	}
+}
+
+// Refresh interval for the sudo keepalive. It must stay well under the
+// 15-minute `timestamp_timeout` nix-darwin configures (darwin.nix
+// security.sudo.extraConfig) so the ticket never lapses mid-rebuild.
+const SUDO_KEEPALIVE_INTERVAL_SECONDS = 5;
+
+/**
+ * Returns the shell loop that refreshes the sudo timestamp until the rebuild
+ * process (`pid`) exits or the ticket becomes invalid.
+ *
+ * `sudo -nv` is non-interactive: it silently refreshes a valid ticket and
+ * fails without prompting once the credentials are gone, so the loop can
+ * never hang in the background waiting for input.
+ */
+export function sudoKeepaliveScript(pid: number): string {
+	return `while kill -0 ${pid} 2>/dev/null && sudo -nv 2>/dev/null; do sleep ${SUDO_KEEPALIVE_INTERVAL_SECONDS}; done`;
+}
+
+/**
+ * Authenticate sudo once and keep the cached credentials alive for the whole
+ * rebuild.
+ *
+ * # Why This Exists
+ *
+ * nix-darwin's activation runs `brew bundle`, and brew resets the sudo
+ * timestamp on every invocation (`sudo --reset-timestamp`), so any privileged
+ * brew work re-prompts mid-activation. On headless machines that prompt can
+ * hang until the terminal closes and then kills the entire rebuild. An upfront
+ * `sudo -v` moves the prompt to a predictable moment before the long build,
+ * and the keepalive keeps the ticket alive through long builds that would
+ * otherwise outlive the 15-minute timestamp timeout and prompt again.
+ *
+ * Note: nothing but a password can re-cache credentials after brew's reset, so
+ * the keepalive deliberately exits (without prompting) once the ticket is
+ * invalidated. Prompting during privileged brew work is then unavoidable when
+ * the Caskroom has drifted from the Brewfile (e.g. a manually installed cask).
+ *
+ * Returns the keepalive process, or null when there is nothing to keep alive
+ * (non-macOS, authentication refused, or spawn failure).
+ */
+async function ensureSudoSession(): Promise<Deno.ChildProcess | null> {
+	if (Deno.build.os !== "darwin") return null;
+
+	if (await commandSucceeds(["sudo", "-nv"])) {
+		printInfo("sudo credentials already cached");
+	} else {
+		printInfo(
+			"Authenticating sudo (one password prompt for the whole rebuild)",
+		);
+		const auth = await runCommand(["sudo", "-v"]);
+
+		if (!auth.success) {
+			printWarning(
+				"sudo authentication failed; later steps may prompt for a password again",
+			);
+			return null;
+		}
+	}
+
+	try {
+		const command = new Deno.Command("bash", {
+			args: ["-c", sudoKeepaliveScript(Deno.pid)],
+			stdin: "null",
+			stdout: "null",
+			stderr: "null",
+		});
+		return command.spawn();
+	} catch {
+		printWarning("Could not start the sudo keepalive");
+		return null;
+	}
+}
+
+/** Stop the keepalive so it does not outlive the rebuild. */
+function stopSudoKeepalive(keepalive: Deno.ChildProcess | null) {
+	keepalive?.kill();
 }
 
 async function maybeInstallOsUpdates(opts: RebuildOptions) {
