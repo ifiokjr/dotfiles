@@ -272,9 +272,9 @@ in
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
         Host mini03
-            HostName 100.77.105.14
-            HostKeyAlias mini03.tailbfc6bf.ts.net
-            User ifiokjr
+            HostName mini03-1.tailbfc6bf.ts.net
+            HostKeyAlias mini03-1.tailbfc6bf.ts.net
+            User mini03
             ProxyCommand tailscale nc %h %p
             UserKnownHostsFile ~/.ssh/known_hosts.tailscale
             StrictHostKeyChecking accept-new
