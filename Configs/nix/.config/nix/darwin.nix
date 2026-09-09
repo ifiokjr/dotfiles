@@ -13,6 +13,10 @@
 }:
 
 {
+  imports = [
+    ./tcc.nix
+  ];
+
   nix.enable = false;
   nixpkgs.config.allowUnfree = true;
 
