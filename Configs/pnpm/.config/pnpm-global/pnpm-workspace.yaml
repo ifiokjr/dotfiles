@@ -1,7 +1,7 @@
 allowBuilds:
   "@google/genai": true
   core-js: true
-  esbuild: set this to true or false
+  esbuild: true
   keytar: true
   koffi: true
   node-pty: true

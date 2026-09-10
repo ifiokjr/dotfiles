@@ -178,7 +178,7 @@ in
       extra.deno
       extra.melos
       extra.monochange
-      extra.pnpm-11
+      extra.pnpm
       extra.op # 1password
       extra.serverpod_cli
       extra.surfpool
