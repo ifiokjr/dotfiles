@@ -36,6 +36,16 @@ Ship professional, production-quality code in every project. Quality is a requir
 - Run the project's formatter, static analysis, and required checks. Review the complete diff for unnecessary complexity, accidental changes, stale documentation, and maintainability before shipping.
 - Report the evidence and remaining limits honestly. A passing test suite does not replace code review or prove behavior it never exercised.
 
+## Secrets and the 1Password quota
+
+All secret access on this machine goes through Monosecret and one **shared, rate-limited 1Password service account**. Draining the quota breaks secret resolution for every project and every harness at once, so treat each read and write as expensive:
+
+- Resolve secrets only through Monosecret (`msr --reason "<why>" <cmd>`, `msload`, `ms`). Never assume secrets are ambient, and never shell out to the `op` CLI for secrets directly.
+- **Never retry secret access in a loop.** If a read or write fails — rate limit, auth error, read-only token, missing vault — stop, report the error, and fix the root cause. Retrying a failing secret operation is how the shared quota gets destroyed.
+- `DevelopmentRead` is a read-only account: writing to any `op://` provider always fails. Local development values belong in the project's dotenv provider or Monosecret cache; write to 1Password deliberately and rarely, from an account with write access.
+- Batch secret access: one `msr` invocation for the whole task or session, not one per command or per test. Keep resolution out of hot paths (dev servers, file watchers, per-test setup) that re-resolve on every restart.
+- Trust Monosecret's local cache — fresh entries never touch 1Password. Rate-limit or throttle errors mean stop now: report the blocker and wait it out rather than pushing through.
+
 ## House rules
 
 - Branch names use conventional commit prefixes: `feat/`, `fix/`, `test/`, `ci/`, `build/`, `chore/`, `refactor/`.
