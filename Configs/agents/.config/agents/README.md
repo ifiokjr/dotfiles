@@ -72,18 +72,20 @@ Installed plugins:
 
 ### Installing Plugins
 
-Plugins are automatically installed by the `Hooks/agents/post.sh` hook when the `agents` config group is deployed. To install manually:
+Plugins are installed to the global OpenCode config (`~/.config/opencode`) by the `Hooks/agents/post.sh` hook when the `agents` config group is deployed. OCX v2 records installed components in `~/.config/opencode/.ocx/receipt.jsonc` and re-running the install is idempotent. To install manually:
 
 ```bash
-# Install OCX (if not already installed)
-npm install -g @kdcokenny/ocx
+# Install OCX through the managed pnpm project
+pnpm:global:sync
 
-# Add a plugin
-ocx add kdco/worktree --from https://registry.kdco.dev
+# Add a plugin to the global OpenCode config
+ocx add kdco/worktree --from https://registry.kdco.dev --global
 
-# List installed plugins
-ocx list
+# List installed plugins (state lives in the global receipt)
+cat ~/.config/opencode/.ocx/receipt.jsonc
 ```
+
+Note: OCX v2 requires the `--global` flag when installing outside a project; without it the command fails with "No ocx.jsonc found" because it looks for a project-local manifest.
 
 ## Adding New AI Tools
 

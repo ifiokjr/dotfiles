@@ -23,21 +23,21 @@ fi
 # ---------------------------------------------------------------------------
 # Install OpenCode plugins
 # ---------------------------------------------------------------------------
+# OCX v2 manages per-project manifests; --global targets ~/.config/opencode.
+# 'add' auto-initializes the global manifest, upserts idempotently, and
+# records state in ~/.config/opencode/.ocx/receipt.jsonc.
 if command -v ocx &>/dev/null; then
 	echo "Installing OpenCode plugins..."
 
 	# Install worktree plugin for git worktree management
 	# Docs: https://github.com/kdcokenny/opencode-worktree
-	if ! ocx list | grep -q "kdco/worktree"; then
-		echo "Installing opencode-worktree plugin..."
-		ocx add kdco/worktree --from https://registry.kdco.dev || echo "Warning: Failed to install opencode-worktree"
-	else
-		echo "opencode-worktree already installed"
+	if ! ocx add kdco/worktree --from https://registry.kdco.dev --global; then
+		echo "Warning: Failed to install opencode-worktree"
 	fi
 else
 	echo "Warning: OCX not available, skipping OpenCode plugin installation"
 	echo "After running 'pnpm:global:sync', install the plugin with:"
-	echo "  ocx add kdco/worktree --from https://registry.kdco.dev"
+	echo "  ocx add kdco/worktree --from https://registry.kdco.dev --global"
 fi
 
 # ---------------------------------------------------------------------------
