@@ -15,7 +15,7 @@ These dotfiles manage a cross-platform (macOS/Linux) Nix-based development envir
 
 ## Secrets (Monosecret + 1Password)
 
-Secrets are declared in `~/monosecret.toml` and resolved at runtime via [Monosecret](https://github.com/ifiokjr/monosecret). The default profile uses 1Password providers; secret values must never be committed or written to ordinary plaintext files.
+Secrets are declared in `~/monosecret.toml` and resolved at runtime via [Monosecret](https://github.com/ifiokjr/monosecret). The default profile reads through a 24h local cache (`~/.env.dotfiles.cache`, mode 600) in front of the 1Password provider, so repeated local commands do not consume 1Password service-account request quota. Secret values must never be committed to a repository.
 
 The dotfiles provide three Monosecret shortcuts. Each pins the managed `~/monosecret.toml` file. `ms` uses a general management reason, while `msr` and `msload` require a caller-supplied `--reason` that is recorded in Monosecret's audit log:
 
@@ -54,6 +54,15 @@ Both secret-loading commands reject missing or blank reasons. Use a concise, spe
 
 `OP_SERVICE_ACCOUNT_TOKEN` bootstraps automated 1Password access. Monosecret can resolve it from the system keyring, interactive 1Password access, or the mode-600 `~/.env.dotfiles` fallback. Prefer the keyring. Use `setup:env --set-token` only when the keyring is unavailable or being reset; no other secrets belong in that fallback file.
 
+### Local development cache
+
+The `op-cached` route serves secrets from the plaintext `~/.env.dotfiles.cache` while entries are fresh (24h); on a miss or expiry it reads 1Password and writes the values back. `ms check` never fills the cache — the first `msr`/`msload` run after a miss does. After rotating a value in 1Password with `ms set <NAME>` the cache refreshes automatically; to force a re-read (or wipe plaintext copies from disk) run:
+
+```nu
+ms cache clear <NAME>   # one secret
+ms cache clear          # every cached secret in the profile
+```
+
 ### Security rules
 
 - Prefer `msr --reason "<why>"` because secrets exist only in the child process.
@@ -62,6 +71,7 @@ Both secret-loading commands reject missing or blank reasons. Use a concise, spe
 - `ms get <NAME>` writes the raw value to stdout. Never print, log, or paste its output into chat.
 - Run `ms set <NAME>` without a value so Monosecret prompts securely instead of recording the value in shell history.
 - Never assume secrets are ambient, and never copy resolved values into repository files.
+- `~/.env.dotfiles.cache` holds plaintext secret values for 24h. It stays in `$HOME` at mode 600 and is never committed, moved, or printed.
 
 ### Troubleshooting
 
@@ -71,6 +81,7 @@ If a command fails with authentication, permission, or rate-limit errors:
 2. Run `ms check` to identify unresolved required secrets.
 3. If 1Password bootstrap fails, restore keyring access or use `setup:env --set-token` for the service-account-token fallback.
 4. Use `msload --reason "<why>"` only when several interactive commands genuinely need the same environment.
+5. If 1Password reports rate limiting, stop retrying until the limit resets — warm-cache runs keep working offline; `ms cache clear` only when values must be re-read.
 
 Example: if `gh pr list` reports an authentication error, retry with `msr --reason "list GitHub pull requests" gh pr list`.
 
