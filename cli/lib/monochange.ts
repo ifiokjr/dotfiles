@@ -7,6 +7,7 @@ import {
 
 const MONOCHANGE_SOURCE: ManagedSkillSource = {
 	compatibilityRoots: [".pi/agent/skills"],
+	channel: "release",
 	displayName: "monochange skills",
 	manifestFile: ".monochange-source.json",
 	repository: "monochange/monochange",
