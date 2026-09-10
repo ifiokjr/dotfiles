@@ -12,7 +12,7 @@ if [ ! -d "$MANAGED_SKILL_DIR" ] || [ ! -d "$DEPLOYED_SKILL_DIR" ]; then
 	exit 0
 fi
 
-if [ -L "$DEPLOYED_SKILL_DIR/SKILL.md" ]; then
+if [ -L "$DEPLOYED_SKILL_DIR" ] || [ -L "$DEPLOYED_SKILL_DIR/SKILL.md" ]; then
 	exit 0
 fi
 
