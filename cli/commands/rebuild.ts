@@ -32,10 +32,25 @@ import {
 	verifyMattPocockSkillDeployment,
 } from "../lib/matt_pocock.ts";
 import {
+	MDT_SOURCE,
+	syncMdtSkills,
+	verifyMdtSkillDeployment,
+} from "../lib/mdt.ts";
+import {
+	MONOCHANGE_SOURCE,
+	syncMonochangeSkills,
+	verifyMonochangeSkillDeployment,
+} from "../lib/monochange.ts";
+import {
 	PATROL_SOURCE,
 	syncPatrolSkills,
 	verifyPatrolSkillDeployment,
 } from "../lib/patrol.ts";
+import {
+	PINA_SOURCE,
+	syncPinaSkills,
+	verifyPinaSkillDeployment,
+} from "../lib/pina.ts";
 import {
 	PSTACK_SOURCE,
 	syncPstackSkills,
@@ -789,7 +804,14 @@ async function maybeUpdateFlake(context: RebuildContext, opts: RebuildOptions) {
 }
 
 async function updateManagedAgentSkills(context: RebuildContext) {
-	const sources = [PSTACK_SOURCE, MATT_POCOCK_SOURCE, PATROL_SOURCE];
+	const sources = [
+		PSTACK_SOURCE,
+		MDT_SOURCE,
+		MATT_POCOCK_SOURCE,
+		MONOCHANGE_SOURCE,
+		PATROL_SOURCE,
+		PINA_SOURCE,
+	];
 	const conflicts = findManagedSkillConflicts(sources);
 
 	if (conflicts.length > 0) {
@@ -822,6 +844,25 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 				patrol.resolvedSha.slice(0, 12)
 			}`,
 		);
+
+		const mdt = await syncMdtSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${mdt.skillCount} mdt skills at ${mdt.resolvedSha.slice(0, 12)}`,
+		);
+
+		const monochange = await syncMonochangeSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${monochange.skillCount} monochange skills at ${
+				monochange.resolvedSha.slice(0, 12)
+			}`,
+		);
+
+		const pina = await syncPinaSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${pina.skillCount} pina skills at ${
+				pina.resolvedSha.slice(0, 12)
+			}`,
+		);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
 		printError(`Managed agent skill update failed: ${message}`);
@@ -843,14 +884,24 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		...(await verifyPstackSkillDeployment(context.dotfilesDir, homeDir)).map(
 			(issue) => `P-Stack: ${issue}`,
 		),
+		...(await verifyMdtSkillDeployment(context.dotfilesDir, homeDir)).map(
+			(issue) => `mdt: ${issue}`,
+		),
 		...(await verifyMattPocockSkillDeployment(
 			context.dotfilesDir,
 			homeDir,
 		)).map((issue) => `Matt Pocock: ${issue}`),
+		...(await verifyMonochangeSkillDeployment(
+			context.dotfilesDir,
+			homeDir,
+		)).map((issue) => `monochange: ${issue}`),
 		...(await verifyPatrolSkillDeployment(
 			context.dotfilesDir,
 			homeDir,
 		)).map((issue) => `Patrol: ${issue}`),
+		...(await verifyPinaSkillDeployment(context.dotfilesDir, homeDir)).map(
+			(issue) => `pina: ${issue}`,
+		),
 	];
 	if (deploymentIssues.length > 0) {
 		for (const issue of deploymentIssues) {
