@@ -63,7 +63,7 @@ fi
 
 # ----- Step 2: Run rebuild (nh home switch on Linux) -----
 step "Running rebuild"
-nu "$HOME/.local/bin/rebuild" --skip-check
+"$HOME/.local/bin/dot" rebuild --skip-check
 pass "rebuild completed"
 
 # ----- Step 3: Run verification tests -----

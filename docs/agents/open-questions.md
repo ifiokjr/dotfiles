@@ -10,7 +10,7 @@
 
 **Decision:** Use `tuckr set nix` for setup or an explicit Nix deployment, and `tuckr add --only-files nix` during reloads.
 
-The `nix` group has a `post_up` hook (`Hooks/nix/post.sh`) that rebuilds the Nix configuration. Setup intentionally runs that hook. In contrast, `dot reload` and `tuckr:reload` are symlink-only operations: they use `tuckr add --only-files nix` so a reload only reconciles Nix symlinks and cannot rebuild packages or modify the tracked `Configs/nix/.config/nix/flake.lock`. Use `dot rebuild` when package activation is intended.
+The `nix` group has a `post_up` hook (`Hooks/nix/post.sh`) that rebuilds the Nix configuration. Setup intentionally runs that hook. In contrast, `dot reload` is a symlink-only operation: it uses `tuckr add --only-files nix` so a reload only reconciles Nix symlinks and cannot rebuild packages or modify the tracked `Configs/nix/.config/nix/flake.lock`. Use `dot rebuild` when package activation is intended.
 
 ## 3) Lowercase-Only Docs Rule vs Required Tooling Filenames
 

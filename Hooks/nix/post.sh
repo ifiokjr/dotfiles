@@ -18,7 +18,7 @@ if [ -d "$HOME/.nix-profile/bin" ]; then
 	export PATH="$HOME/.nix-profile/bin:$PATH"
 fi
 
-# Add ~/.local/bin to PATH (for rebuild, generate-machine-config, etc.
+# Add ~/.local/bin to PATH (for generate-machine-config, pnpm:global:sync, etc.
 # deployed by the scripts group which is deployed before nix)
 if [ -d "$HOME/.local/bin" ]; then
 	export PATH="$HOME/.local/bin:$PATH"

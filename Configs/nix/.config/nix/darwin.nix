@@ -552,7 +552,7 @@
         echo >&2 ""
         echo >&2 "⚠️  WARNING: macOS version $CURRENT is below minimum ${minimumVersion}"
         echo >&2 "    macOS 26.5+ is required for security compliance."
-        echo >&2 "    Run: rebuild --update-os"
+        echo >&2 "    Run: dot rebuild --rebuild-os"
         echo >&2 ""
       fi
     '';

@@ -6,9 +6,6 @@
  * from rebuilding packages or modifying the tracked flake.lock while ensuring
  * every Nix file is linked by Tuckr.
  *
- * Reimplements the nushell tuckr:reload script natively in TypeScript for
- * type safety, discoverability, and proper flag handling.
- *
  * Groups are deployed in order: nix first, then regular groups alphabetically,
  * then late groups (nushell, helix).
  */

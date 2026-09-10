@@ -402,6 +402,7 @@ export async function runCommand(
 		cwd?: string;
 		env?: Record<string, string>;
 		stdout?: "inherit" | "piped" | "null";
+		stderr?: "inherit" | "piped" | "null";
 	},
 ): Promise<{ code: number; stdout?: string; success: boolean }> {
 	const [command, ...args] = cmd;
@@ -410,7 +411,7 @@ export async function runCommand(
 		cwd: options?.cwd,
 		env: options?.env ? { ...Deno.env.toObject(), ...options.env } : undefined,
 		stdout: options?.stdout ?? "inherit",
-		stderr: "inherit",
+		stderr: options?.stderr ?? "inherit",
 	});
 
 	const status = await p.output();

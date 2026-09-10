@@ -389,15 +389,15 @@
             The file is gitignored and specific to each machine.
 
             Note: This requires --impure flag since machine.nix is gitignored.
-            Use --skip-check with the rebuild script to bypass flake check.
+            Use `dot rebuild --skip-check` to bypass flake check.
           '';
     in
     {
       # Build darwin flake using:
       #   sudo NIX_USER_CONFIG_DIR=~/.config/nix darwin-rebuild switch --flake ~/.config/nix --impure
       #
-      # Or use the rebuild script (recommended):
-      #   rebuild
+      # Or use the CLI (recommended):
+      #   dot rebuild
       #
       # The configuration is read from machine.nix in NIX_USER_CONFIG_DIR.
       # --impure flag is required to read gitignored machine.nix via env var.

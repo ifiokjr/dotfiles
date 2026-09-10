@@ -201,6 +201,7 @@ export const rebuildCommand = new Command()
 			// The rebuild may have changed the installed tool set, so regenerate or
 			// clean the shell integrations to match (atuin/starship/...).
 			await refreshShellIntegrations(context.dotfilesDir);
+			await cleanupRemovedScripts();
 			await maybeCommitRebuildChanges(context, opts);
 		} finally {
 			stopSudoKeepalive(keepalive);
@@ -656,8 +657,112 @@ async function maybeInstallOsUpdates(opts: RebuildOptions) {
 	await runCommand(["sudo", "softwareupdate", "--install", "--all"]);
 }
 
+interface DeterminateVersions {
+	current: string;
+	latest: string;
+}
+
+/**
+ * Parse `determinate-nixd version` output into the installed and latest
+ * advertised versions. The client line is preferred because that is the binary
+ * on PATH; the daemon line is a fallback for outputs that only report one side.
+ */
+export function parseDeterminateVersions(
+	output: string,
+): DeterminateVersions | null {
+	const daemon = output.match(
+		/^Determinate Nixd daemon version:\s*(\S+)$/m,
+	)?.[1];
+	const client = output.match(
+		/^Determinate Nixd client version:\s*(\S+)$/m,
+	)?.[1];
+	const latest = output.match(/^Latest version:\s*(\S+)$/m)?.[1];
+	const current = client ?? daemon;
+
+	if (!current || !latest) return null;
+	return { current, latest };
+}
+
+/** Compare dotted numeric versions: -1 when a < b, 0 when equal, 1 when a > b. */
+export function compareDeterminateVersions(a: string, b: string): number {
+	const partsA = a.split(".");
+	const partsB = b.split(".");
+	const length = Math.max(partsA.length, partsB.length);
+
+	for (let i = 0; i < length; i++) {
+		const numA = Number.parseInt(partsA[i] ?? "0", 10);
+		const numB = Number.parseInt(partsB[i] ?? "0", 10);
+		if (numA !== numB) return numA < numB ? -1 : 1;
+	}
+
+	return 0;
+}
+
+/** Whether stdin is a terminal the upgrade prompt can be asked on. */
+function isInteractive(): boolean {
+	try {
+		return Deno.stdin.isTerminal();
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * With --update, check whether Determinate Systems advertises a newer Nix and
+ * offer to upgrade via `determinate-nixd upgrade` before the flake update, so
+ * the rebuild itself runs on the new Nix. Best effort: silent no-op without
+ * determinate-nixd (plain Nix installs) or when the check fails (offline).
+ */
+async function maybeUpgradeDeterminateNix(opts: RebuildOptions) {
+	if (!opts.update) return;
+
+	printInfo("Checking for Determinate Nix updates");
+
+	let output: string | undefined;
+	try {
+		const check = await runCommand(["determinate-nixd", "version"], {
+			stderr: "null",
+			stdout: "piped",
+		});
+		output = check.stdout?.trim() ? check.stdout : undefined;
+	} catch {
+		// determinate-nixd is not installed; not a Determinate Nix machine.
+	}
+
+	const versions = output ? parseDeterminateVersions(output) : null;
+	if (!versions) return;
+
+	if (compareDeterminateVersions(versions.latest, versions.current) <= 0) {
+		printSuccess(`Determinate Nix ${versions.current} is up to date`);
+		return;
+	}
+
+	printWarning(
+		`Determinate Nix ${versions.latest} is available (installed: ${versions.current})`,
+	);
+
+	const confirmed = isInteractive() &&
+		prompt("Upgrade Determinate Nix now? [y/N]")?.trim().toLowerCase() === "y";
+	if (!confirmed) {
+		printInfo("Skipping; run `sudo determinate-nixd upgrade` to update it");
+		return;
+	}
+
+	printInfo("Upgrading Determinate Nix (this may take a while)");
+	// sudo is already cached by ensureSudoSession on macOS; on Linux this may
+	// prompt once for the password.
+	const upgrade = await runCommand(["sudo", "determinate-nixd", "upgrade"]);
+	if (upgrade.success) {
+		printSuccess(`Determinate Nix upgraded to ${versions.latest}`);
+	} else {
+		printWarning("Determinate Nix upgrade failed (continuing)");
+	}
+}
+
 async function maybeUpdateFlake(context: RebuildContext, opts: RebuildOptions) {
 	if (!opts.update) return;
+
+	await maybeUpgradeDeterminateNix(opts);
 
 	printInfo("Updating flake inputs");
 	const updateCommand = withSudoIfNeeded(context, [
@@ -886,6 +991,42 @@ async function maybeCommitRebuildChanges(
 ) {
 	if (!opts.commit) return;
 	await commitRebuildChanges(context.dotfilesDir);
+}
+
+/**
+ * Scripts deleted from the repo whose symlinks tuckr deployed to
+ * `~/.local/bin`. Only setup redeploys the scripts group, so nothing else
+ * would ever prune them and the dead links would keep shadowing the command
+ * name. Removes a link only when it is a symlink whose target no longer
+ * resolves — real files and working links are never touched.
+ */
+export async function cleanupRemovedScripts(home?: string): Promise<number> {
+	const removed = [
+		"rebuild", // Replaced by `dot rebuild`
+		"tuckr:reload", // Replaced by `dot reload`
+	];
+	const homeDir = home ?? Deno.env.get("HOME");
+	if (!homeDir) return 0;
+
+	let count = 0;
+	for (const name of removed) {
+		const path = `${homeDir}/.local/bin/${name}`;
+		try {
+			const stat = await Deno.lstat(path);
+			if (!stat.isSymlink) continue;
+			try {
+				await Deno.realPath(path); // Resolves fine; the link still works.
+				continue;
+			} catch {
+				await Deno.remove(path);
+				printInfo(`Removed stale script symlink: ${path}`);
+				count++;
+			}
+		} catch {
+			// Nothing deployed at this path; nothing to clean up.
+		}
+	}
+	return count;
 }
 
 async function maybeCheckFlake(context: RebuildContext, opts: RebuildOptions) {
@@ -1190,6 +1331,9 @@ function printPlan(
 
 	printHeader("Rebuild plan");
 	if (opts.update) {
+		console.log(
+			"check for Determinate Nix updates (determinate-nixd; upgrade on request)",
+		);
 		console.log(
 			"sync managed external agent skills, then redeploy agents",
 		);

@@ -15,16 +15,6 @@ Deno.test("reload keeps the Nix group symlink-only", () => {
 	assertEquals(reloadGroupArgs("git"), []);
 });
 
-Deno.test("legacy reload keeps the Nix group out of hook groups", async () => {
-	const script = await Deno.readTextFile(
-		join(repoDir, "Configs/scripts/.local/bin/tuckr:reload"),
-	);
-
-	assert(script.includes('let hook_groups = ["agents" "nushell"]'));
-	assert(script.includes("^tuckr add ...$tuckr_args --only-files $group"));
-	assert(!script.includes('let hook_groups = ["agents" "nix" "nushell"]'));
-});
-
 Deno.test("Nix post-hook does not touch the tracked flake lock", async () => {
 	const hook = await Deno.readTextFile(join(repoDir, "Hooks/nix/post.sh"));
 
