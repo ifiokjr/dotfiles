@@ -11,7 +11,7 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
   - `dprint check --config Configs/dprint/dprint.json`
   - `shellcheck setup setup-tuckr-symlink.sh Hooks/*/pre.sh Hooks/*/post.sh`
   - `nix flake check ./Configs/nix/.config/nix --impure --no-build` (when Nix files change)
-  - `rebuild` (when Nix config or packages change)
+  - `dot rebuild` (when Nix config or packages change)
   - `docker build -t dotfiles-test .` (when Nix config or packages change for Linux confidence)
 - Formatting/style rule: if any line(s) are commented out, include an explanation comment explaining why they are disabled.
 - Secret handling: this repo uses the dotfiles-specific Monosecret + 1Password workflow. Secrets are not ambient; use `msr --reason "<why>" <command>` for lazy injection or `msload --reason "<why>"` only when a shell session intentionally needs all secrets. See `Configs/agents/.agents/skills/dotfiles/SKILL.md` (deployed to `~/.agents/skills/dotfiles/SKILL.md`).

@@ -202,7 +202,7 @@ alias dkcl = docker compose logs -f
 alias dkce = docker compose exec
 alias dkps = docker ps
 # Nix / Devenv
-alias nr = rebuild
+alias nr = dot rebuild
 alias nfc = nix flake check --flake ~/.config/nix
 alias nfu = nix flake update --flake ~/.config/nix
 alias ns = nix search nixpkgs

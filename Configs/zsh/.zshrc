@@ -212,7 +212,7 @@ if command -v lsd &>/dev/null; then
 fi
 
 # Nix
-alias nr='rebuild'
+alias nr='dot rebuild'
 alias nfc='nix flake check --flake ~/.config/nix'
 alias nfu='nix flake update --flake ~/.config/nix'
 alias ns='nix search nixpkgs'

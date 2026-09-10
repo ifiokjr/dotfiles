@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Helper script to apply nix-darwin and home-manager configurations
-# This is now a wrapper around the rebuild script
+# This is now a wrapper around `dot rebuild`
 
 set -e
 
@@ -9,7 +9,6 @@ cd "$SCRIPT_DIR"
 
 # Colors for output
 RED='\033[0;31m'
-GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
@@ -33,19 +32,19 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
 	echo "Apply nix-darwin and home-manager configurations"
 	echo "Configuration is read from machine.nix (see machine.nix.example)"
 	echo ""
-	echo "This script is a wrapper around the 'rebuild' command."
-	echo "For more options, use: rebuild --help"
+	echo "This script is a wrapper around the 'dot rebuild' command."
+	echo "For more options, use: dot rebuild --help"
 	exit 0
 fi
 
-print_warn "This script is deprecated. Please use 'rebuild' instead."
+print_warn "This script is deprecated. Please use 'dot rebuild' instead."
 print_info "Running rebuild..."
 echo ""
 
 # Increase file descriptor limit for Nix builds
 ulimit -n 10240
 
-# Use the rebuild script with explicit #default
+# Use darwin-rebuild directly with the explicit #default configuration
 if sudo darwin-rebuild switch --flake "$SCRIPT_DIR#default"; then
 	print_info "Configuration applied successfully!"
 	print_info "Both system (darwin) and user (home-manager) configurations have been updated."

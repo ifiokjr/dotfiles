@@ -127,7 +127,6 @@ def main [] {
 
     let scripts = [
         "commands"
-        "rebuild"
         "generate-machine-config"
         "install:helix:custom"
         "update:node"
