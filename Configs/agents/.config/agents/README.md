@@ -60,32 +60,11 @@ The shared code-quality standard applies across projects and harnesses, includin
 3. Tool-specific config files (e.g., `~/.config/opencode/config.json`)
 4. Default behavior (lowest)
 
-## OpenCode Plugins
+## OpenCode Integration
 
-OpenCode plugins are managed via [OCX](https://github.com/kdcokenny/ocx) (OpenCode eXtensions manager).
+OpenCode reads global instructions from `~/.config/opencode/AGENTS.md`, which Tuckr deploys as a symlink to the canonical `Configs/agents/.config/agents/AGENTS.md` shared by every harness. Git workflows, including worktree rules, are covered by those house rules together with the `git-workflow` skill under `Configs/agents/.agents/skills/git-workflow`.
 
-Installed plugins:
-
-| Plugin                | Source          | Description                                    |
-| --------------------- | --------------- | ---------------------------------------------- |
-| **opencode-worktree** | `kdco/worktree` | Git worktrees with automatic terminal spawning |
-
-### Installing Plugins
-
-Plugins are installed to the global OpenCode config (`~/.config/opencode`) by the `Hooks/agents/post.sh` hook when the `agents` config group is deployed. OCX v2 records installed components in `~/.config/opencode/.ocx/receipt.jsonc` and re-running the install is idempotent. To install manually:
-
-```bash
-# Install OCX through the managed pnpm project
-pnpm:global:sync
-
-# Add a plugin to the global OpenCode config
-ocx add kdco/worktree --from https://registry.kdco.dev --global
-
-# List installed plugins (state lives in the global receipt)
-cat ~/.config/opencode/.ocx/receipt.jsonc
-```
-
-Note: OCX v2 requires the `--global` flag when installing outside a project; without it the command fails with "No ocx.jsonc found" because it looks for a project-local manifest.
+No OpenCode plugins are installed; the `kdco/worktree` plugin was removed in favor of the AGENTS.md guidance above.
 
 ## Adding New AI Tools
 
@@ -93,13 +72,12 @@ When adding a new AI tool:
 
 1. Create its config directory under `.config/<tool>/`
 2. Add any environment variables to `agents.env.sh`
-3. For OpenCode plugins, add installation to `Hooks/agents/post.sh`
-4. To give it the global agent instructions, add a symlink at `Configs/agents/<harness-path>/<file>` pointing to `../.config/agents/AGENTS.md` (relative), using the harness's global file name and location
-5. Document the tool in this README
-6. Update the table above
+3. To give it the global agent instructions, add a symlink at `Configs/agents/<harness-path>/<file>` pointing to `../.config/agents/AGENTS.md` (relative), using the harness's global file name and location
+4. Document the tool in this README
+5. Update the table above
 
 ## Related
 
 - [Shell environment](../shell/.config/shell/env.sh) - Sources this configuration
 - Pi config lives in user-managed `~/.pi/agent/settings.json`
-- [Agents hook](../../../Hooks/agents/post.sh) - Post-install plugin setup
+- [Agents hook](../../../Hooks/agents/post.sh) - Post-install skill linking

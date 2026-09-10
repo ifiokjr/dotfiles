@@ -2,43 +2,9 @@
 set -euo pipefail
 
 # post.sh - Agents configuration post-install hook
-# Installs OpenCode plugins and tools
+# Links managed skill directories into harness-specific skill locations
 
 echo "Setting up AI agents configuration..."
-
-MANAGED_PNPM_BIN="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global/node_modules/.bin"
-if [ -d "$MANAGED_PNPM_BIN" ]; then
-	export PATH="$MANAGED_PNPM_BIN:$PATH"
-fi
-
-# ---------------------------------------------------------------------------
-# Verify the declaratively managed OCX installation
-# ---------------------------------------------------------------------------
-if command -v ocx &>/dev/null; then
-	echo "OCX is installed through the managed pnpm project: $(which ocx)"
-else
-	echo "Warning: OCX is unavailable; run 'pnpm:global:sync' to install it"
-fi
-
-# ---------------------------------------------------------------------------
-# Install OpenCode plugins
-# ---------------------------------------------------------------------------
-# OCX v2 manages per-project manifests; --global targets ~/.config/opencode.
-# 'add' auto-initializes the global manifest, upserts idempotently, and
-# records state in ~/.config/opencode/.ocx/receipt.jsonc.
-if command -v ocx &>/dev/null; then
-	echo "Installing OpenCode plugins..."
-
-	# Install worktree plugin for git worktree management
-	# Docs: https://github.com/kdcokenny/opencode-worktree
-	if ! ocx add kdco/worktree --from https://registry.kdco.dev --global; then
-		echo "Warning: Failed to install opencode-worktree"
-	fi
-else
-	echo "Warning: OCX not available, skipping OpenCode plugin installation"
-	echo "After running 'pnpm:global:sync', install the plugin with:"
-	echo "  ocx add kdco/worktree --from https://registry.kdco.dev --global"
-fi
 
 # ---------------------------------------------------------------------------
 # Expose dotfiles-managed skills to Codex
