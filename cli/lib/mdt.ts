@@ -7,6 +7,7 @@ import {
 
 const MDT_SOURCE: ManagedSkillSource = {
 	compatibilityRoots: [".pi/agent/skills"],
+	channel: "release",
 	displayName: "mdt skills",
 	manifestFile: ".mdt-source.json",
 	repository: "ifiokjr/mdt",

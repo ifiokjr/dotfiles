@@ -847,21 +847,23 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 
 		const mdt = await syncMdtSkills(context.dotfilesDir);
 		printSuccess(
-			`Updated ${mdt.skillCount} mdt skills at ${mdt.resolvedSha.slice(0, 12)}`,
+			`Updated ${mdt.skillCount} mdt skill at ${mdt.resolvedRef} (${
+				mdt.resolvedSha.slice(0, 12)
+			})`,
 		);
 
 		const monochange = await syncMonochangeSkills(context.dotfilesDir);
 		printSuccess(
-			`Updated ${monochange.skillCount} monochange skills at ${
+			`Updated ${monochange.skillCount} monochange skill at ${monochange.resolvedRef} (${
 				monochange.resolvedSha.slice(0, 12)
-			}`,
+			})`,
 		);
 
 		const pina = await syncPinaSkills(context.dotfilesDir);
 		printSuccess(
-			`Updated ${pina.skillCount} pina skills at ${
+			`Updated ${pina.skillCount} pina skill at ${pina.resolvedRef} (${
 				pina.resolvedSha.slice(0, 12)
-			}`,
+			})`,
 		);
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);

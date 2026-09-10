@@ -7,6 +7,7 @@ import {
 
 const PINA_SOURCE: ManagedSkillSource = {
 	compatibilityRoots: [".pi/agent/skills"],
+	channel: "release",
 	displayName: "pina skills",
 	manifestFile: ".pina-source.json",
 	repository: "pina-rs/pina",

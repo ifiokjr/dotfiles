@@ -7,6 +7,12 @@ export interface ManagedSkillSpec {
 }
 
 export interface ManagedSkillSource {
+	/**
+	 * Where to track the source. "branch" (the default) follows the head of
+	 * `ref`; "release" follows the repository's latest full GitHub release,
+	 * so skill content always matches a released package version.
+	 */
+	channel?: "branch" | "release";
 	compatibilityRoots?: readonly string[];
 	displayName: string;
 	manifestFile: string;
@@ -26,6 +32,11 @@ interface ManagedSkillManifest {
 	version: 1;
 }
 
+interface ResolvedSource {
+	ref: string;
+	sha: string;
+}
+
 interface StagedSkill {
 	backup: string;
 	hadOriginal: boolean;
@@ -35,6 +46,7 @@ interface StagedSkill {
 }
 
 export interface ManagedSkillSyncResult {
+	resolvedRef: string;
 	resolvedSha: string;
 	skillCount: number;
 }
@@ -119,26 +131,31 @@ export async function syncManagedSkills(
 	source: ManagedSkillSource,
 	dotfilesDir: string,
 ): Promise<ManagedSkillSyncResult> {
-	const resolvedSha = await resolveSourceSha(source);
+	const resolved = await resolveSource(source);
 	const tempDir = await Deno.makeTempDir({ prefix: source.tempPrefix });
 	const archivePath = join(tempDir, "source.tar.gz");
 	const checkoutDir = join(tempDir, "checkout");
 
 	try {
 		await Deno.mkdir(checkoutDir, { recursive: true });
-		await downloadArchive(source, resolvedSha, archivePath);
+		await downloadArchive(source, resolved.sha, archivePath);
 		await extractArchive(source, archivePath, checkoutDir);
 		await installManagedSkillsFromCheckout(
 			source,
 			checkoutDir,
 			dotfilesDir,
-			resolvedSha,
+			resolved.sha,
+			resolved.ref,
 		);
 	} finally {
 		await Deno.remove(tempDir, { recursive: true }).catch(() => undefined);
 	}
 
-	return { resolvedSha, skillCount: source.skills.length };
+	return {
+		resolvedRef: resolved.ref,
+		resolvedSha: resolved.sha,
+		skillCount: source.skills.length,
+	};
 }
 
 /**
@@ -153,6 +170,7 @@ export async function installManagedSkillsFromCheckout(
 	checkoutDir: string,
 	dotfilesDir: string,
 	resolvedSha: string,
+	resolvedRef: string = source.ref,
 ): Promise<void> {
 	assertCommitSha(source, resolvedSha);
 
@@ -208,7 +226,10 @@ export async function installManagedSkillsFromCheckout(
 			item.replacementPlaced = true;
 		}
 
-		await writeManifest(source, managedRoot, transactionId, resolvedSha);
+		await writeManifest(source, managedRoot, transactionId, {
+			ref: resolvedRef,
+			sha: resolvedSha,
+		});
 
 		for (const item of staged) {
 			if (item.hadOriginal) {
@@ -249,9 +270,58 @@ async function restoreStagedSkills(
 	}
 }
 
-async function resolveSourceSha(source: ManagedSkillSource): Promise<string> {
+/** Resolve the ref a source tracks, then pin it to an exact commit. */
+async function resolveSource(
+	source: ManagedSkillSource,
+): Promise<ResolvedSource> {
+	const ref = source.channel === "release"
+		? await resolveLatestRelease(source)
+		: source.ref;
+	const sha = await resolveSourceSha(source, ref);
+
+	return { ref, sha };
+}
+
+/** Resolve the repository's latest full GitHub release to its tag name. */
+async function resolveLatestRelease(
+	source: ManagedSkillSource,
+): Promise<string> {
 	const response = await fetch(
-		`https://api.github.com/repos/${source.repository}/commits/${source.ref}`,
+		`https://api.github.com/repos/${source.repository}/releases/latest`,
+		{
+			headers: {
+				Accept: "application/vnd.github+json",
+				"User-Agent": source.userAgent,
+			},
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to resolve the latest ${source.displayName} release: HTTP ${response.status}`,
+		);
+	}
+
+	const payload: unknown = await response.json();
+
+	if (
+		!isObject(payload) || typeof payload.tag_name !== "string" ||
+		payload.tag_name === ""
+	) {
+		throw new Error(
+			`GitHub returned an invalid ${source.displayName} release response`,
+		);
+	}
+
+	return payload.tag_name;
+}
+
+async function resolveSourceSha(
+	source: ManagedSkillSource,
+	ref: string,
+): Promise<string> {
+	const response = await fetch(
+		`https://api.github.com/repos/${source.repository}/commits/${ref}`,
 		{
 			headers: {
 				Accept: "application/vnd.github+json",
@@ -332,12 +402,12 @@ async function writeManifest(
 	source: ManagedSkillSource,
 	managedRoot: string,
 	transactionId: string,
-	resolvedSha: string,
+	resolved: ResolvedSource,
 ) {
 	const manifest: ManagedSkillManifest = {
 		repository: `https://github.com/${source.repository}`,
-		ref: source.ref,
-		resolvedSha,
+		ref: resolved.ref,
+		resolvedSha: resolved.sha,
 		skills: source.skills.map((skill) => skill.name),
 		version: 1,
 	};
