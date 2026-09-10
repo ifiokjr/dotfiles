@@ -85,6 +85,17 @@ git push origin feat/widget-rendering
 
 See also [Core Principle #1: Commit early and often](#1-commit-early-and-often) — commit freely with `wip:` during development, but clean up before sharing.
 
+### 5. Stack related changes as stacked pull requests
+
+**When a unit of work splits into related, dependent changes, default to a stack of small pull requests instead of one giant PR or a branch that needs constant rebasing onto `main`.**
+
+- GitHub natively supports stacked pull requests (public preview): each PR targets the layer below it, shows only its own diff, and displays a stack map showing where it fits in the whole change
+- When a lower layer merges, GitHub automatically rebases and retargets every PR above it — this removes the need to rebase onto `main` after every merge
+- Build and manage stacks from the terminal with the official `github/gh-stack` extension — see [Stacked pull requests](#stacked-pull-requests) for the command flow
+- [Core Principle #4: Clean up history before sharing](#4-clean-up-history-before-sharing) applies per layer: clean each branch's commits before `gh stack submit`
+- Squash remains the merge method: `gh stack merge --squash` lands a stack without violating a squash-only repo policy
+- Preview caveats: all branches in a stack must live in the same repository (no fork stacks), and merge queue support is still rolling out
+
 ## Capabilities
 
 ### Branch Strategy
@@ -172,6 +183,34 @@ But **never leave work uncommitted for long** — stash or commit, don't let it 
 2. Generate PR title and description
 3. Suggest reviewers based on changed files (`git log --format='%an' -- <files>`)
 
+If the work splits into related, dependent changes, prefer a stack of PRs — see [Stacked pull requests](#stacked-pull-requests).
+
+### Stacked pull requests
+
+GitHub stacked PRs (public preview) let related changes be reviewed and merged as independent layers instead of one giant PR. Install the official extension once per machine:
+
+```bash
+gh extension install github/gh-stack
+```
+
+Typical flow (non-interactive, agent-friendly):
+
+```bash
+gh stack init                              # start a stack from the trunk
+gh stack add -Am "feat(scope): layer one"  # stage, commit, and branch the next layer
+gh stack add -Am "feat(scope): layer two"
+gh stack submit --auto                     # push branches and open the linked PRs without an editor
+gh stack view --short                      # inspect the stack
+gh stack sync                              # fetch, cascade-rebase, push, reconcile PR state
+gh stack merge --yes --squash              # land the stack with squash merges
+```
+
+- `gh stack rebase` cascade-rebases the whole stack after edits; `--continue`/`--abort` behave like `git rebase`
+- Merging the top ready PR lands every unmerged layer below it in one operation; merging a lower layer leaves the PRs above it open, automatically rebased and retargeted
+- `gh stack merge` is all-or-nothing up to the chosen PR; branch protection rules still apply at merge time
+- `gh stack modify` opens an interactive TUI for reordering, folding, or dropping layers — avoid it in agent runs unless the user asks
+- Use `gh stack link` when branches and PRs already exist but are not yet linked as a stack
+
 ### PR link in summaries
 
 When a PR has been opened, **always include the full GitHub PR URL** in any summary or status update you provide. This makes it easy for the user to click through to the PR directly.
@@ -183,6 +222,28 @@ PR: https://github.com/owner/repo/pull/42
 ```
 
 Use `gh pr view --json url --jq .url` to retrieve the URL if you do not already have it.
+
+### Attaching images and screenshots with the GitHub CLI
+
+`gh` 2.99.0+ uploads images and videos directly when creating or editing PRs, issues, and comments — no browser round-trip:
+
+```bash
+gh pr create --title "..." --body "..." --attach './before.png#Before' --attach './after.png#After'
+gh pr comment --attach ./screenshot.png
+gh issue comment --attach ./regression.webm
+```
+
+- Works with `gh pr create/edit/comment` and `gh issue create/edit/comment`; repeat `--attach` for multiple files (up to 50 per command)
+- Alt text follows the path after `#` (`./login.png#The login error state`); without it the filename is used
+- A local path already referenced in the body (e.g. `![alt](./login.png)`) is rewritten in place to point at the uploaded asset
+- Formats: PNG, JPEG, GIF, WebP, SVG, MP4, MOV, WebM; 10 MB max for images, 10 MB video on free plans (100 MB on paid)
+
+**Hard rule — never upload secrets or personal images via `--attach`. This is absolute and has no exceptions.**
+
+- Never attach images containing tokens, API keys, passwords, `.env` contents, SSH keys, or terminal output showing secret material — in this repo that includes any `msr`/`msload`/1Password output
+- Never attach personal images: private photos, identity documents, other people's personal information, or screenshots exposing browser tabs, bookmarks, or account pages
+- Uploaded assets land on GitHub's CDN where **anyone with the URL can view them**, and they cannot be reliably deleted afterwards — treat every upload as permanent and public
+- Read the image before attaching it; redact or crop anything sensitive. If in doubt, do not upload it — describe it in text instead
 
 ### Non-interactive safety for agent-run Git/GitHub commands
 
