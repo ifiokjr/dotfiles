@@ -168,7 +168,6 @@
         "dbeaver-community"
         "gdevelop"
         "ghostty"
-        "opencode-desktop"
         "podman-desktop"
         "react-native-debugger"
         "reactotron"
