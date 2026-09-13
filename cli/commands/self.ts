@@ -6,11 +6,14 @@ import { Command } from "@cliffy/command";
 import { ensureDir } from "@std/fs";
 import { dirname, join } from "@std/path";
 import {
+	compiledDotCliBinary,
+	ensureDotCliLinks,
 	printError,
 	printHeader,
 	printInfo,
 	printSuccess,
 	printWarning,
+	resolveDotCliBinary,
 	resolveDotfilesDir,
 	runCommand,
 } from "../lib/config.ts";
@@ -38,9 +41,7 @@ export async function installDotfilesCli(opts: InstallDotfilesCliOptions = {}) {
 	const dotfilesDir = opts.dotfilesDir ?? await resolveDotfilesDir();
 	const binDir = opts.binDir ?? defaultBinDir();
 	const cliDir = join(dotfilesDir, "cli");
-	const repoBinary = join(dotfilesDir, "Configs/scripts/.local/bin/dotfiles");
-	const installedBinary = join(binDir, "dotfiles");
-	const installedAlias = join(binDir, "dot");
+	const repoBinary = compiledDotCliBinary(dotfilesDir);
 
 	printHeader("Installing dotfiles CLI");
 	printInfo("Compiling dotfiles binary from current source tree");
@@ -59,13 +60,16 @@ export async function installDotfilesCli(opts: InstallDotfilesCliOptions = {}) {
 		Deno.exit(compile.code);
 	}
 
-	await ensureDir(binDir);
-	await linkOrCopy(repoBinary, installedBinary);
-	await replaceSymlink(installedAlias, installedBinary);
-	await installCompletions(installedAlias);
+	// Prefer the binary inside the Tuckr checkout: the installed links must
+	// match the path `tuckr add --force scripts` deploys, otherwise it treats
+	// the link as a conflict and removes it without relinking. `dot rebuild`
+	// compiles into that checkout, so the deployed binary is the current one.
+	const linkTarget = await resolveDotCliBinary(repoBinary);
+	const links = await ensureDotCliLinks(linkTarget, binDir);
+	await installCompletions(links.dotLink);
 
-	printSuccess(`Installed dotfiles: ${installedBinary}`);
-	printSuccess(`Installed dot alias: ${installedAlias}`);
+	printSuccess(`Installed dotfiles: ${links.dotfilesLink} → ${linkTarget}`);
+	printSuccess(`Installed dot alias: ${links.dotLink}`);
 }
 
 function defaultBinDir(): string {
@@ -128,15 +132,6 @@ async function installNushellCompletions(dotBinary: string) {
 	const completionFile = join(autoloadDir, "dot-completions.nu");
 	await Deno.writeTextFile(completionFile, completions.stdout);
 	printSuccess(`Updated Nushell completions: ${completionFile}`);
-}
-
-async function linkOrCopy(source: string, destination: string) {
-	try {
-		await replaceSymlink(destination, source);
-	} catch {
-		await Deno.copyFile(source, destination);
-		await Deno.chmod(destination, 0o755);
-	}
 }
 
 async function replaceSymlink(path: string, target: string) {

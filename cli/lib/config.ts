@@ -5,7 +5,7 @@
  * ~/Developer/.dotfiles. This mirrors the logic in the bash setup script.
  */
 
-import { exists } from "@std/fs";
+import { ensureDir, exists } from "@std/fs";
 import { dirname, join } from "@std/path";
 
 /** Well-known default location for the dotfiles repo. */
@@ -193,6 +193,108 @@ export async function resolveDeployedDotfilesDir(): Promise<string | null> {
 	}
 
 	return null;
+}
+
+/**
+ * Platform-specific Tuckr dotfiles directory. Tuckr resolves every group
+ * source from here and compares it against the literal target of an existing
+ * symlink, so links pointing at another checkout (for example the development
+ * checkout at ~/Developer/.dotfiles) are reported as conflicts.
+ */
+export function resolveTuckrDir(): string {
+	const home = Deno.env.get("HOME") ?? "~";
+	switch (detectPlatform()) {
+		case "macos":
+			return join(home, "Library/Application Support/dotfiles");
+		case "windows":
+			return join(home, "AppData/Roaming/dotfiles");
+		default:
+			return join(home, ".config/dotfiles");
+	}
+}
+
+/** Path of the compiled CLI binary inside a dotfiles checkout. */
+const DOT_CLI_BINARY_RELATIVE = "Configs/scripts/.local/bin/dotfiles";
+
+/** Compiled CLI binary path inside a dotfiles checkout. */
+export function compiledDotCliBinary(dotfilesDir: string): string {
+	return join(dotfilesDir, DOT_CLI_BINARY_RELATIVE);
+}
+
+/**
+ * Binary that the installed ~/.local/bin/dotfiles link should point at: the
+ * one inside the Tuckr checkout when it exists, otherwise the compiled binary
+ * in the checkout being installed from.
+ *
+ * `tuckr add --force scripts` removes a ~/.local/bin/dotfiles symlink whose
+ * target is not exactly the Tuckr path and does not recreate it in the same
+ * run, which leaves ~/.local/bin/dot dangling and the `dot` command missing.
+ * Keeping the link on the Tuckr path avoids the conflict entirely.
+ */
+export async function resolveDotCliBinary(
+	compiledBinary: string,
+): Promise<string> {
+	const deployedBinary = join(resolveTuckrDir(), DOT_CLI_BINARY_RELATIVE);
+	if (await exists(deployedBinary, { isFile: true })) {
+		return deployedBinary;
+	}
+
+	return compiledBinary;
+}
+
+export interface DotCliLinks {
+	/** True when a link was missing or pointed somewhere else. */
+	changed: boolean;
+	/** ~/.local/bin/dotfiles — the path Tuckr deploys for the scripts group. */
+	dotfilesLink: string;
+	/** ~/.local/bin/dot — the short command name. */
+	dotLink: string;
+}
+
+/**
+ * Point ~/.local/bin/dotfiles and ~/.local/bin/dot at the compiled CLI binary.
+ * Idempotent: links that already point at the right target are left alone.
+ */
+export async function ensureDotCliLinks(
+	binary: string,
+	binDir = join(Deno.env.get("HOME") ?? "~", ".local/bin"),
+): Promise<DotCliLinks> {
+	const dotfilesLink = join(binDir, "dotfiles");
+	const dotLink = join(binDir, "dot");
+
+	const dotfilesChanged = await ensureSymlink(dotfilesLink, binary);
+	const dotChanged = await ensureSymlink(dotLink, dotfilesLink);
+
+	return {
+		changed: dotfilesChanged || dotChanged,
+		dotfilesLink,
+		dotLink,
+	};
+}
+
+/**
+ * Create or repoint a symlink, returning true when the path changed. A real
+ * file at a path the CLI owns (a stale copy of the binary) is replaced: the
+ * caller is explicitly installing the CLI, not adopting files.
+ */
+async function ensureSymlink(
+	linkPath: string,
+	target: string,
+): Promise<boolean> {
+	try {
+		const stat = await Deno.lstat(linkPath);
+		if (stat.isSymlink && (await Deno.readLink(linkPath)) === target) {
+			return false;
+		}
+
+		await Deno.remove(linkPath);
+	} catch (error) {
+		if (!(error instanceof Deno.errors.NotFound)) throw error;
+	}
+
+	await ensureDir(dirname(linkPath));
+	await Deno.symlink(target, linkPath);
+	return true;
 }
 
 /**

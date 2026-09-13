@@ -254,6 +254,40 @@ parse_args() {
     fi
 }
 
+# Platform-specific Tuckr dotfiles directory. Tuckr resolves every group source
+# from this location, so symlinks must point into it to match what it deploys.
+tuckr_location() {
+    case "$PLATFORM" in
+        macos)
+            printf '%s\n' "$HOME/Library/Application Support/dotfiles"
+            ;;
+        linux | bsd | windows)
+            printf '%s\n' "$HOME/.config/dotfiles"
+            ;;
+    esac
+}
+
+# Point ~/.local/bin/dot and ~/.local/bin/dotfiles at the compiled CLI binary
+# inside the Tuckr checkout.
+#
+# Tuckr compares the literal target of an existing symlink against the path it
+# deploys, so a ~/.local/bin/dotfiles link into this checkout is a conflict:
+# `tuckr add --force scripts` removes it and does not recreate it in the same
+# run, which leaves ~/.local/bin/dot dangling and the `dot` command missing.
+# Pointing both links at the Tuckr path keeps them in agreement.
+link_dot_cli() {
+    local binary
+    binary="$(tuckr_location)/Configs/scripts/.local/bin/dotfiles"
+
+    if [ ! -f "$binary" ]; then
+        return 0
+    fi
+
+    mkdir -p "$HOME/.local/bin"
+    ln -sfn "$binary" "$HOME/.local/bin/dotfiles"
+    ln -sfn "$HOME/.local/bin/dotfiles" "$HOME/.local/bin/dot"
+}
+
 install_dot_cli() {
     local cli_dir="$DOTFILES_DIR/cli"
     local repo_binary="$DOTFILES_DIR/Configs/scripts/.local/bin/dotfiles"
@@ -298,8 +332,17 @@ install_dot_cli() {
         return 0
     fi
 
-    ln -sf "$repo_binary" "$installed_binary"
-    ln -sf "$installed_binary" "$installed_alias"
+    # Prefer the binary inside the Tuckr checkout when it already exists (the
+    # symlink created later in setup makes this checkout and the Tuckr one the
+    # same tree); see link_dot_cli for why the link target matters.
+    local deployed_binary
+    deployed_binary="$(tuckr_location)/Configs/scripts/.local/bin/dotfiles"
+    if [ -f "$deployed_binary" ]; then
+        repo_binary="$deployed_binary"
+    fi
+
+    ln -sfn "$repo_binary" "$installed_binary"
+    ln -sfn "$installed_binary" "$installed_alias"
     print_success "Installed dot CLI: $installed_alias"
 
     mkdir -p "$bash_completion_dir"
@@ -814,6 +857,10 @@ setup_tuckr_symlink() {
         print_error "Failed to setup Tuckr symlink"
         exit 1
     fi
+
+    # The Tuckr location exists now, so the CLI links can move onto it before
+    # group deployment runs `tuckr add --force scripts`.
+    link_dot_cli
 
     print_success "Tuckr symlink configured"
 }
