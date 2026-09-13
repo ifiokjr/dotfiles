@@ -13,15 +13,19 @@
 import { Command } from "@cliffy/command";
 import {
 	commandExists,
+	compiledDotCliBinary,
 	detectPlatform,
 	discoverGroups,
+	ensureDotCliLinks,
 	printError,
 	printHeader,
 	printInfo,
 	printSuccess,
 	printWarning,
 	refreshShellIntegrations,
+	resolveDotCliBinary,
 	resolveDotfilesDir,
+	resolveTuckrDir,
 	runCommand,
 } from "../lib/config.ts";
 
@@ -82,15 +86,6 @@ function orderGroups(groups: string[]): string[] {
 		(g) => !PRIMARY_GROUPS.includes(g) && !LATE_GROUPS.includes(g),
 	);
 	return [...primary, ...regular, ...late];
-}
-
-/** Resolve the tuckr dotfiles directory (platform-specific). */
-function resolveTuckrDir(): string {
-	const home = Deno.env.get("HOME") ?? "~";
-	if (detectPlatform() === "macos") {
-		return `${home}/Library/Application Support/dotfiles`;
-	}
-	return `${home}/.config/dotfiles`;
 }
 
 export const reloadCommand = new Command()
@@ -169,6 +164,23 @@ export const reloadCommand = new Command()
 		printInfo("Current tuckr status:");
 		await runCommand(["tuckr", "status"], { cwd: dotfilesDir });
 		console.log("");
+
+		// The compiled CLI binary lives inside the scripts group, so Tuckr owns
+		// ~/.local/bin/dotfiles — and removes a link that points outside its
+		// checkout without relinking it in the same run. Repair the links (and
+		// point them at the Tuckr checkout) before deploying anything, otherwise
+		// the scripts group kills the `dot` command, the nushell hook's
+		// `dot completion nushell` call fails, and users lose the CLI they need
+		// to recover with.
+		if (!opts.dryRun) {
+			const linkTarget = await resolveDotCliBinary(
+				compiledDotCliBinary(dotfilesDir),
+			);
+			const links = await ensureDotCliLinks(linkTarget);
+			if (links.changed) {
+				printSuccess(`Restored dot CLI links → ${linkTarget}`);
+			}
+		}
 
 		// Build tuckr args
 		const tuckrArgs: string[] = [];
