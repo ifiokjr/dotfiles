@@ -1,0 +1,11 @@
+# Local-only files that are deliberately gitignored and can never be
+# committed. The working-tree scan (.githooks/pre-push) would otherwise block
+# every push on the GitHub access token nix reads from this file.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Gitignored local secrets that never enter version control"
+paths = [
+	'''Configs/nix/.config/nix/nix.conf''',
+]

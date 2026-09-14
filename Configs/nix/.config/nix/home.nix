@@ -8,6 +8,7 @@
   unattendedSudo ? false,
   presets ? [ ],
   ifiokjr-nixpkgs,
+  devenv,
   ...
 }:
 
@@ -46,7 +47,10 @@ in
       cargo-sweep
       cargo-update
       cloudflared
-      devenv
+      # devenv from its own flake: the nixpkgs build currently links an
+      # outdated libghostty-vt, which breaks `devenv shell`'s terminal UI
+      # (cachix/devenv#3183).
+      devenv.packages.${pkgs.stdenv.system}.devenv
       direnv
       dprint
       fluxcd
@@ -176,7 +180,6 @@ in
       extra.cargo-clean-all
       extra.cargo-interactive-update
       extra.deno
-      extra.melos
       extra.monochange
       extra.pnpm
       extra.op # 1password
