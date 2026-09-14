@@ -1,0 +1,295 @@
+# monochange.toml configuration
+
+`monochange.toml` is the source of truth for package ids, group release identities, changelog rendering, versioned files, source providers, lint rules, and custom CLI workflows.
+
+Read it before editing changesets or suggesting commands. The same repository can mix package ecosystems, use group-level versions, hide private packages from release planning, and expose custom CLI workflows that do not exist anywhere else.
+
+## Minimal package configuration
+
+```toml
+[defaults]
+parent_bump = "patch"
+include_private = false
+package_type = "npm"
+
+[package."@acme/api"]
+path = "packages/api"
+
+[package."@acme/ui"]
+path = "packages/ui"
+
+[ecosystems.npm]
+enabled = true
+```
+
+The minimal shape usually has defaults, package tables, and enabled ecosystems. `parent_bump` controls how dependency changes propagate, `include_private` decides whether private packages are included by default, and `package_type` supplies a default ecosystem for package tables that do not declare one.
+
+Use explicit `type` on packages when the repo mixes ecosystems:
+
+```toml
+[package."@acme/ui"]
+path = "packages/ui"
+type = "npm"
+
+[package.acme_core]
+path = "crates/acme_core"
+type = "cargo"
+
+[package.acme_cli]
+path = "crates/acme_cli"
+type = "cargo"
+```
+
+Canonical ecosystem/package types in current code are `cargo`, `npm`, `deno`, `dart`, `python`, and `go`. The legacy `flutter` spelling is accepted as an alias for Dart/Flutter packages and normalizes to the `dart` ecosystem.
+
+## Bump propagation to dependents
+
+Packages and groups declare what their own changes mean for dependent packages via `bump_propagation`:
+
+```toml
+[package."@acme/api"]
+path = "packages/api"
+# dependents match this package's release severity, never exceeding a minor
+bump_propagation = "inherit"
+bump_propagation_max = "minor"
+
+[package."@acme/tooling"]
+path = "packages/tooling"
+# dependents always release at least a minor after this package's changes
+bump_propagation = "minor"
+
+[package."@acme/leaf"]
+path = "packages/leaf"
+# dependents never release because of this package
+bump_propagation = "none"
+
+[group.sdk]
+packages = ["@acme/api"]
+# a group declaration applies to members that declare nothing
+bump_propagation = "major"
+```
+
+`inherit` matches the target's own release severity (breaking in the package means breaking for dependents). A fixed severity is a floor. Precedence is most-specific-first: the package declaration beats its group's, which beats `[defaults].bump_propagation` (workspace-wide policy), which beats the legacy `[defaults].parent_bump` floor. `bump_propagation_max` clamps inherit mode and is invalid otherwise (validated at every layer). Changesets can always author an explicit bump for a dependent, and `caused_by` suppresses the automatic propagation record for that relationship.
+
+## Grouped versions
+
+Groups make multiple packages share one outward version and release identity.
+
+```toml
+[group.sdk]
+packages = ["@acme/api", "@acme/ui"]
+tag = true
+release = true
+version_format = "primary"
+changelog = { path = "CHANGELOG.md", format = "keep_a_changelog", include = "all" }
+```
+
+Use package ids in changesets when a specific package changed. Use the group id only when the change is intentionally group-owned.
+
+`version_format` defaults to `namespaced` when omitted, which renders tags like `<name>/v<version>` and avoids collisions. Use `primary` only for the one release owner that should claim top-level tags like `v1.2.3`. Custom templates are also accepted, for example `version_format = "{{ ecosystem }}/{{ name }}/v{{ version }}"`; they can use only `{{ name }}`, `{{ version }}`, and `{{ ecosystem }}`, must include `{{ version }}`, and must render unique valid Git tags.
+
+Groups are best for products released as a unit: SDKs made of several packages, plugins that must stay version-aligned, or cross-language distributions that share one public changelog. Keep unrelated packages out of a group even if they live in the same workspace, because a group turns multiple package releases into one outward release identity.
+
+## Versioned files
+
+`PrepareRelease` updates native manifests and configured `versioned_files`.
+
+```toml
+[package.acme_core]
+path = "crates/acme_core"
+type = "cargo"
+versioned_files = ["Cargo.toml"]
+
+[group.sdk]
+packages = ["@acme/api", "@acme/ui"]
+versioned_files = [
+	{ path = "package.json", type = "npm" },
+	{ path = "README.md", regex = 'acme-sdk@(?<version>\\d+\\.\\d+\\.\\d+)' },
+]
+```
+
+String entries infer the package ecosystem when they appear under `[package.*]`. Group entries should be explicit because a group can span ecosystems.
+
+Typed entries write internal dependency references with a range prefix. Set `prefix` on an entry to choose it exactly — `"^"`, `"~"`, `">="`, `"="`, `"v"`, or `""` for a bare version:
+
+```toml
+versioned_files = [
+	# write internal npm dependencies as tilde ranges, e.g. "~1.2.3"
+	{ path = "package.json", type = "npm", fields = ["dependencies"], prefix = "~" },
+]
+```
+
+Without `prefix`, the ecosystem default applies (`^` for npm, deno, and dart; `>=` for python; `v` for go; empty for cargo), overridable with `[ecosystems.<name>] dependency_version_prefix`. The prefix affects internal dependency references only — the package's own version is written bare. `format` and `regex` entries do not take a prefix. `monochange versions sync --strategy` ignores this configuration and uses its own fixed per-ecosystem prefixes; it never writes `~` or `=`.
+
+Use regex entries for docs, install snippets, generated metadata, or examples that are not native package manifests. The regex must include a named `version` capture so monochange knows exactly which portion to replace.
+
+## Ecosystem settings
+
+```toml
+[ecosystems.cargo]
+enabled = true
+versioned_files = ["Cargo.toml"]
+lockfile_commands = ["cargo generate-lockfile"]
+
+[ecosystems.npm]
+enabled = true
+lockfile_commands = ["pnpm install --lockfile-only"]
+```
+
+Use ecosystem `publish` defaults when most packages share the same publishing behavior, and override at `[package.*].publish` when needed.
+
+Lockfile commands are command-driven. Configure them when the repository has a preferred package manager or when inferred defaults would update the wrong files. They normally run as part of a release workflow after versions are prepared and before the release commit is created.
+
+Cargo semantic classification can opt into a bounded cargo-semver-checks matrix:
+
+```toml
+[ecosystems.cargo.semver_checks]
+enabled = true
+timeout_seconds = 300
+
+[[ecosystems.cargo.semver_checks.matrix]]
+name = "default"
+feature_mode = "default"
+
+[[ecosystems.cargo.semver_checks.matrix]]
+name = "all-features"
+feature_mode = "all"
+
+[[ecosystems.cargo.semver_checks.matrix]]
+name = "wasm"
+feature_mode = "none"
+features = ["wasm"]
+target = "wasm32-unknown-unknown"
+```
+
+Use `default`, `all`, `none`, or `heuristic` for `feature_mode`. Add `features`, `baseline_features`, or `current_features` when a public configuration needs explicit or endpoint-specific feature selection. Matrix names must be unique; the matrix is limited to 16 cells and each cell is limited to 1–1800 seconds. This table is invalid for non-Cargo ecosystems.
+
+The matrix runs only during `monochange change classify --detection-level semantic`. It executes Cargo builds, including build scripts and procedural macros, so do not enable it for untrusted code running with elevated credentials.
+
+## Publishing settings
+
+```toml
+[ecosystems.npm.publish]
+enabled = true
+mode = "builtin"
+registry = "npm"
+trusted_publishing = true
+
+[package."@acme/private-tool"]
+path = "tools/private-tool"
+type = "npm"
+publish = { enabled = false }
+
+[package."@acme/custom-registry-package"]
+path = "packages/custom"
+type = "npm"
+publish = { enabled = true, mode = "external" }
+```
+
+Built-in publishing is for canonical public registries. Use `mode = "external"` for private registries or custom release jobs.
+
+Use `publish = { enabled = false }` for packages that should be versioned but never published. Use external mode when monochange should still plan versions and release records but another CI job owns registry credentials, custom rate limits, private feeds, or manual approval gates.
+
+## Changelog configuration
+
+```toml
+[defaults.changelog]
+path = "{{ path }}/CHANGELOG.md"
+format = "keep_a_changelog"
+initial_header = """
+# Changelog
+
+All notable changes to this project will be documented in this file.
+"""
+
+[changelog.types]
+feat = { bump = "minor", section = "feat", description = "New user-facing functionality" }
+fix = { bump = "patch", section = "fix", description = "Bug fixes" }
+docs = { bump = "none", section = "docs", description = "Documentation only" }
+
+[changelog.sections]
+feat = { heading = "Added", priority = 20 }
+fix = { heading = "Fixed", priority = 30 }
+docs = { heading = "Documentation", priority = 40 }
+```
+
+Use streams when one release needs different developer and user wording. The `default` stream always exists, so only custom audiences need declarations:
+
+```toml
+[changelog.streams.user]
+description = "Product release notes"
+
+[changelog.types.native]
+bump = "major"
+section = "breaking"
+
+[changelog.types.app_feature]
+bump = "minor"
+section = "feat"
+stream = "user"
+
+[changelog.outputs.user]
+stream = "user"
+format = "json"
+mode = "release"
+path = "{{ path }}/release-notes/{{ version }}.json"
+targets = ["app"]
+
+[source.releases]
+source = "monochange"
+changelog_output = "user"
+```
+
+`[changelog.outputs.<id>]` selects one stream and one or more package/group targets. Paths support `{{ path }}`, `{{ id }}`, and `{{ version }}`. Formats are `monochange`, `keep_a_changelog`, `json`, and `text`; JSON/text require `mode = "release"`, while append mode maintains cumulative Markdown files. The existing package/group changelog is the implicit `default` output.
+
+A mobile repository can use `native` major changes to require a new store binary and `app_feature` minor changes for a patch delivery workflow. Agents should always derive that decision from the configured type and verify the dry-run manifest instead of guessing from file names.
+
+## Package CLI registration
+
+A package that ships a CLI binary can register it under `[package.<id>].cli`. Registration is additive to the package's ecosystem type: library or registry surface analysis continues unchanged, and change classification additionally diffs the CLI's command surface against a committed baseline.
+
+```toml
+[package.monochange]
+path = "crates/monochange"
+cli = { name = "monochange", snapshot = "monochange snapshot --view index" }
+```
+
+- `name` is the binary name users invoke; it keys the committed baseline at `.monochange/cli-snapshots/<name>.json` and must be unique in the workspace.
+- `snapshot` is required: a command that prints a normalized command-surface snapshot JSON document on stdout. Use a string, or a table with `{ command, cwd, shell }` like `[ecosystems.*].lockfile_commands` entries. For foreign CLIs, commit a small emitter script that produces the JSON.
+- Refresh baselines in the release workflow: `monochange snapshot --package <id> --save`.
+- Inspect registrations with `monochange snapshot --list`.
+
+`monochange change classify` then reports command-surface breaks (removed options or commands propose `major`, additions propose `minor`) instead of unclassified package changes. Skip comparisons with `--skip-cli-snapshots` or `MONOCHANGE_SKIP_CLI_SNAPSHOTS=1`.
+
+## Custom CLI workflows
+
+`[cli.<name>]` creates `monochange run <name>` in that repository. These workflows are the maintainable place to compose built-in steps with local shell commands, input defaults, dry-run behavior, and CI-specific guards.
+
+Name workflow commands after user intent (`change`, `release`, `publish-check`) rather than implementation detail. Keep destructive workflows explicit, and expose safe dry-run or JSON-producing workflows for agents and automation.
+
+```toml
+[cli.change]
+help_text = "Create a changeset"
+inputs = [
+	{ name = "package", type = "string_list", required = true },
+	{ name = "bump", type = "choice", choices = ["none", "patch", "minor", "major"], default = "patch" },
+	{ name = "reason", type = "string", required = true },
+	{ name = "type", type = "string" },
+	{ name = "caused_by", type = "string_list" },
+]
+steps = [
+	{ name = "create change file", type = "CreateChangeFile", inputs = ["interactive", "package", "bump", "version", "type", "caused_by", "reason", "details", "output"] },
+]
+
+[cli.release]
+help_text = "Prepare versioned package files"
+inputs = [
+	{ name = "format", type = "choice", choices = ["text", "markdown", "json"], default = "text" },
+]
+steps = [
+	{ name = "plan release", type = "PrepareRelease", inputs = ["format"] },
+	{ name = "refresh lockfiles", type = "Command", command = "pnpm install --lockfile-only" },
+]
+```
+
+Validate custom workflows with `monochange step validate` and inspect them with `monochange help`.
