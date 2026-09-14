@@ -176,7 +176,6 @@ in
       extra.cargo-clean-all
       extra.cargo-interactive-update
       extra.deno
-      extra.melos
       extra.monochange
       extra.pnpm
       extra.op # 1password
