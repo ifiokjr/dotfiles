@@ -213,7 +213,10 @@ alias dkce = docker compose exec
 alias dkps = docker ps
 # Nix / Devenv
 alias nr = dot rebuild
-alias nfc = nix flake check --flake ~/.config/nix
+# `nix flake check` takes the flake as a positional argument (only
+# `nix flake update` has a --flake flag), and needs --impure to read the
+# gitignored machine.nix.
+alias nfc = nix flake check --impure ~/.config/nix
 alias nfu = nix flake update --flake ~/.config/nix
 alias ns = nix search nixpkgs
 alias de = devenv up

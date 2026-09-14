@@ -37,7 +37,18 @@ jobs:
           NIX_CONFIG: access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: ✅ validate flake
-        run: nix flake check --flake ./Configs/nix/.config/nix --impure --no-build
+        run: |
+          # `nix flake check` takes the flake as a positional argument; unlike
+          # `nix flake update`, it has no --flake flag. This mirrors the
+          # invocation in cli/commands/rebuild.ts.
+          #
+          # machine.nix is gitignored, so a fresh checkout has none and the
+          # flake cannot be evaluated without it. Seed the example through
+          # NIX_USER_CONFIG_DIR (the flake's first lookup path) so the
+          # checkout itself stays clean.
+          mkdir -p "$RUNNER_TEMP/nix-config"
+          cp Configs/nix/.config/nix/machine.nix.example "$RUNNER_TEMP/nix-config/machine.nix"
+          NIX_USER_CONFIG_DIR="$RUNNER_TEMP/nix-config" nix flake check ./Configs/nix/.config/nix --impure --no-build
         env:
           NIX_CONFIG: access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
