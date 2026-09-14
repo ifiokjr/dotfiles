@@ -114,12 +114,19 @@ async function withFakeSudo(
 	}
 }
 
+/**
+ * Emulates root's `rm -rf`: the blocker the tests create is only an unwritable
+ * directory, and root ignores permission bits, so granting write permission
+ * stands in for CAP_DAC_OVERRIDE. `printf '%s\n' "$*"` logs the argv portably —
+ * `echo` cannot be used, because dash treats a leading `-n` as its own flag and
+ * drops it from the log.
+ */
 const emulatedRootRm = (logPath: string) =>
 	[
 		"#!/bin/sh",
-		`echo "$@" >> '${logPath}'`,
+		`printf '%s\\n' "$*" >> '${logPath}'`,
 		`if [ "$1" = "-n" ]; then shift; fi`,
-		// The test shim is only ever asked to remove the path it is handed.
+		// The shim is only ever handed a single path, as the final argument.
 		`target=""`,
 		`for arg in "$@"; do target="$arg"; done`,
 		`chmod -R u+rwX "$target" 2>/dev/null`,
