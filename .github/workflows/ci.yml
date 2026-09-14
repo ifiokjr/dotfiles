@@ -21,7 +21,7 @@ jobs:
       contents: read
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@v6.1.0 # v6
         with:
           persist-credentials: false
 
@@ -31,7 +31,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
+        uses: DeterminateSystems/flakehub-cache-action@v3.22.3 # v3
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -75,7 +75,7 @@ jobs:
           done
 
       - name: 🦕 install deno
-        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        uses: denoland/setup-deno@v2.0.5 # v2
         with:
           deno-version: v2.x
 
@@ -116,7 +116,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@v6.1.0 # v6
         with:
           persist-credentials: false
 
@@ -126,7 +126,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
+        uses: DeterminateSystems/flakehub-cache-action@v3.22.3 # v3
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -175,11 +175,11 @@ jobs:
       security-events: write # Required to upload findings to GitHub Advanced Security (if enabled).
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@v6.1.0 # v6
         with:
           persist-credentials: false
 
       - name: 🦌 run zizmor
-        uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+        uses: zizmorcore/zizmor-action@v0.6.4 # v0
         with:
           fail-severity: high
