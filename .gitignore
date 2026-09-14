@@ -38,6 +38,9 @@ Configs/nix/.config/nix/.devenv.flake.nix
 **/.devenv/
 **/.devenv.flake.nix
 
+# video-agent-kit per-machine runtime state (resolved plugin paths, env report)
+.video_agent/
+
 # Log files
 logs/
 *.log
