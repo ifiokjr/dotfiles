@@ -356,6 +356,18 @@
     "https://cache.flakehub.com"
   ];
 
+  # devenv is installed from its own flake (see home.nix) and publishes its
+  # builds to cachix. Without these, the package builds from source on every
+  # devenv release. Matches the nixConfig declared by github:cachix/devenv.
+  nix.settings.extra-substituters = [
+    "https://devenv.cachix.org"
+    "https://cachix.cachix.org"
+  ];
+  nix.settings.extra-trusted-public-keys = [
+    "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+    "cachix.cachix.org-1:eWNHQldwUO7G2VkjpnjDbWwy4KQ/HNxht7H4SSoMckM="
+  ];
+
   # Keep fish intentionally disabled by default.
   # Enable alternative shell support in nix-darwin when you want Fish available.
   # programs.fish.enable = true;

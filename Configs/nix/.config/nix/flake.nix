@@ -11,6 +11,12 @@
       url = "github:ifiokjr/nixpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # devenv 2.x's terminal UI is built against the libghostty-vt from
+    # devenv's own nixpkgs pin. Do NOT follow our nixpkgs here: while
+    # nixpkgs#563205 is open, its libghostty-vt is older than what devenv
+    # expects, and the ABI mismatch makes `devenv shell` fail with
+    # `terminal error: invalid value` (cachix/devenv#3183).
+    devenv.url = "github:cachix/devenv";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     # Declarative tap management
     homebrew-core = {
@@ -34,6 +40,7 @@
       home-manager,
       nixpkgs,
       ifiokjr-nixpkgs,
+      devenv,
       nix-homebrew,
       homebrew-core,
       homebrew-cask,
@@ -330,6 +337,7 @@
             inherit
               username
               ifiokjr-nixpkgs
+              devenv
               lite
               isDesktop
               alwaysOn
