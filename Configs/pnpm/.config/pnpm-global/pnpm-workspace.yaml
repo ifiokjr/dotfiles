@@ -1,5 +1,6 @@
 allowBuilds:
   "@google/genai": true
+  "@opencode-ai/cli": true
   core-js: true
   esbuild: true
   keytar: true

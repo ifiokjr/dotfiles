@@ -139,7 +139,7 @@ if ! pnpm rebuild --pending; then
   exit $?
 fi
 
-for command in codex ocx opencode pi playwright-cli; do
+for command in codex ocx opencode opencode2 pi playwright-cli; do
   if [ ! -x "$RUNTIME_BIN/$command" ] || ! "$RUNTIME_BIN/$command" --version >/dev/null; then
     fail "Managed pnpm CLI failed its smoke test: $command"
     exit $?
