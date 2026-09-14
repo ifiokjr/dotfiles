@@ -7,5 +7,5 @@ useDefault = true
 [allowlist]
 description = "Gitignored local secrets that never enter version control"
 paths = [
-  '''Configs/nix/.config/nix/nix.conf''',
+	'''Configs/nix/.config/nix/nix.conf''',
 ]
