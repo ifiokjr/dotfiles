@@ -305,7 +305,8 @@ Run `dot rebuild --update` to refresh flake inputs (including `ifiokjr-nixpkgs`)
 
 ```bash
 # Check flake syntax
-nix flake check ~/.config/nix
+# --impure is required to read the gitignored machine.nix
+nix flake check --impure ~/.config/nix
 
 # Show flake outputs
 nix flake show ~/.config/nix
@@ -327,7 +328,8 @@ sudo darwin-rebuild --rollback
 
 ```bash
 # Check flake syntax
-nix flake check
+# --impure is required to read the gitignored machine.nix
+nix flake check --impure
 
 # Show flake outputs
 nix flake show

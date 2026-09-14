@@ -164,7 +164,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | Alias | Command |
 |-------|---------|
 | `nr` | `dot rebuild` |
-| `nfc` | `nix flake check --flake ~/.config/nix` |
+| `nfc` | `nix flake check --impure ~/.config/nix` |
 | `nfu` | `nix flake update --flake ~/.config/nix` |
 | `ns` | `nix search nixpkgs` |
 | `update` | `nix flake update --flake ~/.config/nix` |
