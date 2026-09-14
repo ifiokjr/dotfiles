@@ -6,14 +6,9 @@
 # ---------------------------------------------------------------------------
 # OpenCode Configuration
 # ---------------------------------------------------------------------------
-# Allow all file access without permission prompts
-export OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS=true
-export OPENCODE_ALLOW_ALL_BASH=true
-
-# Trusted directories - these paths are automatically allowed
-# Note: The config file at ~/.config/opencode/config.json is the source of truth
-# These env vars provide fallback behavior
-export OPENCODE_TRUSTED_DIRECTORIES="$HOME/Developer:$HOME/Developer/.dotfiles:/tmp"
+# OpenCode reads permissions only from its own config file. There is no env var
+# for skipping prompts or trusting directories, so permissions and trusted paths
+# live in ~/.config/opencode/config.json.
 
 # ---------------------------------------------------------------------------
 # Pi Agent Configuration

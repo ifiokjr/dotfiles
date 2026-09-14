@@ -131,14 +131,17 @@ unset _p
 # ---------------------------------------------------------------------------
 # OpenCode
 # ---------------------------------------------------------------------------
-# Deprecated: These environment variables are now managed via the 'agents' config group
-# See: Configs/agents/.config/agents/agents.env.sh
-# Kept here temporarily for backward compatibility during transition
-export OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS=true
-export OPENCODE_ALLOW_ALL_BASH=true
-export OPENCODE_TRUSTED_DIRECTORIES="$HOME/Developer,/tmp"
+# OpenCode 1 and the OpenCode 2 preview need mutually exclusive permission
+# config: V1 reads the "permission" map in config.json, while V2 reads a
+# "permissions" rule array from opencode.json. V1 refuses to start when it finds
+# V2's key, and V2 ignores a config file that sits inside the directory it
+# already scans, so V2 gets its own config directory instead of sharing
+# ~/.config/opencode/. Keep the two directories separate.
+opencode2() {
+	OPENCODE_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode-v2" command opencode2 "$@"
+}
 
-# Source the unified agents configuration (overrides above if present)
+# Source the unified agents configuration
 if [ -f "$HOME/.config/agents/agents.env.sh" ]; then
 	# shellcheck disable=SC1091
 	. "$HOME/.config/agents/agents.env.sh"

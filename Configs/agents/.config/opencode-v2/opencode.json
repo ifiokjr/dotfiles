@@ -1,0 +1,6 @@
+{
+	"model": "ollama-cloud/kimi-k2.7-code",
+	"permissions": [
+		{ "action": "*", "resource": "*", "effect": "allow" }
+	]
+}

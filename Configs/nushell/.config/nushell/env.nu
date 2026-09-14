@@ -155,9 +155,8 @@ $env.PATH = (
 # ---------------------------------------------------------------------------
 # OpenCode
 # ---------------------------------------------------------------------------
-$env.OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS = true
-$env.OPENCODE_ALLOW_ALL_BASH = true
-$env.OPENCODE_TRUSTED_DIRECTORIES = $"($env.HOME)/Developer,/tmp"
+# OpenCode reads permissions only from its own config file, so nothing is set
+# here; see ~/.config/opencode/config.json.
 # ---------------------------------------------------------------------------
 # Directory stack (like zsh auto_pushd)
 # ---------------------------------------------------------------------------

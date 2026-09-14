@@ -149,6 +149,16 @@ def zc [...paths: string] {
         ^open $"zcode://workspace/open?path=($encoded)"
     }
 }
+# opencode2 runs the OpenCode 2 preview against its own config directory.
+# OpenCode 1 and V2 need mutually exclusive permission config: V1 reads the
+# "permission" map in config.json, V2 reads a "permissions" rule array from
+# opencode.json. V1 refuses to start when it finds V2's key, and V2 ignores a
+# config file placed inside the directory it already scans, so V2 gets its own
+# directory. Keep the two config directories separate.
+def --wrapped opencode2 [...rest: string] {
+    with-env { OPENCODE_CONFIG_DIR: $"($env.HOME)/.config/opencode-v2" } { ^opencode2 ...$rest }
+}
+
 # General aliases
 # Reload shell
 alias s = exec nu

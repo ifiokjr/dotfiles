@@ -15,20 +15,28 @@ This directory centralizes configuration for all AI coding agents and tools.
 
 ### `agents.env.sh`
 
-Environment variables that control agent behavior across all tools:
-
-- `OPENCODE_DANGEROUSLY_SKIP_PERMISSIONS=true` - Skip all permission prompts
-- `OPENCODE_ALLOW_ALL_BASH=true` - Allow any bash command execution
-- `OPENCODE_TRUSTED_DIRECTORIES` - Comma-separated list of auto-allowed paths
+Environment variables that control agent behavior across all tools. OpenCode exposes no environment variable for permission prompts or trusted directories, so its settings live in `opencode/config.json` instead of here.
 
 ### `opencode/config.json`
 
-OpenCode-specific configuration:
+OpenCode 1 configuration, used by the `opencode` command:
 
-- Full file access permissions
-- Trusted directory list
-- Default model/provider settings
-- UI confirmation preferences
+- Global `permission` rules, with `"*"` set to `allow` for unrestricted access
+- `external_directory` allowances covering the trusted directory list
+- Default model selection
+
+OpenCode validates this file strictly and rejects unknown keys, so every key must exist in the [config schema](https://opencode.ai/config.json).
+
+### `opencode-v2/opencode.json`
+
+OpenCode 2 preview configuration, used by the `opencode2` command:
+
+- `permissions` as an ordered array of `{ action, resource, effect }` rules
+- Default model selection
+
+OpenCode 1 and OpenCode 2 use mutually exclusive permission formats. V1 reads the `permission` map from `~/.config/opencode/config.json`, while V2 reads a `permissions` array from an `opencode.json` in its config directory, and V1 refuses to start when it encounters V2's key. Both versions scan the same default config directory, so V2 gets a separate directory here and the `opencode2` wrapper in the shell configs sets `OPENCODE_CONFIG_DIR` to point at it. Keep the two config directories separate, and do not add an `opencode.json` to `~/.config/opencode/`, or OpenCode 1 stops starting.
+
+There is no published schema for the V2 format, so this file omits `$schema` — pointing it at the V1 schema would flag `permissions` as invalid.
 
 ### `AGENTS.md`
 
