@@ -65,6 +65,16 @@ async function duBytes(path: string): Promise<number | null> {
 	return Number.isFinite(kb) ? kb * 1024 : null;
 }
 
+/** Whether a path exists; verifies that a privileged removal really landed. */
+async function pathExists(path: string): Promise<boolean> {
+	try {
+		await Deno.lstat(path);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /** Parse the "Available" 1K-blocks column of `df -k` output. */
 export function parseDfAvailableKilobytes(stdout: string): number | null {
 	const lines = stdout.trim().split("\n");
@@ -189,6 +199,57 @@ async function chromeCloneDir(): Promise<string | null> {
 	return base ? `${base}/X/com.google.Chrome.code_sign_clone` : null;
 }
 
+/**
+ * Whether a path may be removed with sudo: strictly inside HOME, and not HOME
+ * itself. The privileged fallback refuses anything else, so a bad value from
+ * `pnpm store path` or a platform lookup can never reach `sudo rm -rf`.
+ */
+export function isSudoRemovablePath(path: string, home: string): boolean {
+	const root = `${home.replace(/\/+$/, "")}/`;
+	return path.startsWith(root) && path.length > root.length;
+}
+
+/**
+ * Remove a cache path recursively, retrying with sudo when the unprivileged
+ * removal is denied.
+ *
+ * A stray `sudo npm install` (or a root-run pnpm/uv) leaves root-owned files
+ * inside the user's own cache. Their parent directories are root-owned and not
+ * writable, so unlinking fails with EPERM and `Deno.remove` aborts partway
+ * through the tree: the cache never goes away and every `dot clean` reports
+ * the same error. Retrying the whole tree under sudo clears it.
+ *
+ * `unattended` passes `-n` so the scheduled `--auto` run can never block on a
+ * password prompt. Returns true when sudo was required.
+ */
+export async function removeCachePath(
+	path: string,
+	unattended: boolean,
+): Promise<boolean> {
+	// A trailing slash would make `rm -rf` follow a symlink into its target.
+	const target = path.replace(/\/+$/, "");
+	try {
+		await Deno.remove(target, { recursive: true });
+		return false;
+	} catch (error) {
+		if (!(error instanceof Deno.errors.PermissionDenied)) throw error;
+		if (!isSudoRemovablePath(target, HOME)) throw error;
+		printWarning(
+			`${target} contains root-owned files; retrying with sudo…`,
+		);
+		const args = ["sudo"];
+		if (unattended) args.push("-n");
+		args.push("rm", "-rf", target);
+		const { success } = await runCommand(args);
+		if (!success || (await pathExists(target))) throw error;
+		return true;
+	}
+}
+
+/** Note appended to a removal report when root privileges were required. */
+const viaSudo = (privileged: boolean) =>
+	privileged ? " (needed sudo for root-owned files)" : "";
+
 /** Extract a dated nightly's date string, e.g. `2026-09-05`. */
 const nightlyDate = (name: string) => name.match(/\d{4}-\d{2}-\d{2}/);
 
@@ -306,7 +367,7 @@ async function cleanSessions(
 	return freed;
 }
 
-async function cleanCaches(apply: boolean): Promise<number> {
+async function cleanCaches(apply: boolean, auto: boolean): Promise<number> {
 	let freed = 0;
 
 	const clonesDir = await chromeCloneDir();
@@ -344,10 +405,15 @@ async function cleanCaches(apply: boolean): Promise<number> {
 		if (bytes === null || bytes === 0) continue;
 		if (apply) {
 			try {
-				await Deno.remove(target.path, { recursive: true });
-				printInfo(`${target.label}: removed ${fmtBytes(bytes)}`);
+				const privileged = await removeCachePath(target.path, auto);
+				printInfo(
+					`${target.label}: removed ${fmtBytes(bytes)}${viaSudo(privileged)}`,
+				);
 			} catch (error) {
 				printError(`Failed to remove ${target.label}: ${error}`);
+				printInfo(
+					`Clear it with \`sudo rm -rf "${target.path}"\` once sudo is available`,
+				);
 				continue;
 			}
 		} else {
@@ -370,10 +436,15 @@ async function cleanCaches(apply: boolean): Promise<number> {
 			if (bytes !== null && bytes > 0) {
 				if (apply) {
 					try {
-						await Deno.remove(storeRoot, { recursive: true });
-						printInfo(`pnpm store: removed ${fmtBytes(bytes)}`);
+						const privileged = await removeCachePath(storeRoot, auto);
+						printInfo(
+							`pnpm store: removed ${fmtBytes(bytes)}${viaSudo(privileged)}`,
+						);
 					} catch (error) {
 						printError(`Failed to remove pnpm store: ${error}`);
+						printInfo(
+							`Clear it with \`sudo rm -rf "${storeRoot}"\` once sudo is available`,
+						);
 						bytes = 0;
 					}
 				} else {
@@ -742,7 +813,7 @@ export const cleanCommand = new Command()
 		}
 		if (wants("caches")) {
 			printInfo("Regenerable caches:");
-			freed += await cleanCaches(apply);
+			freed += await cleanCaches(apply, auto);
 		}
 		if (wants("cargo")) {
 			freed += await cleanCargoTargets(apply, cargoKeepDays);
