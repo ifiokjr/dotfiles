@@ -15,6 +15,14 @@
 let
   extraPackages = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
   extra = extraPackages;
+
+  # rive-cli is a vendor binary published only for macOS arm64 and Linux
+  # x86_64, so it is unavailable on the repo's other supported targets
+  # (aarch64-linux, x86_64-darwin), where the package throws
+  # "unsupported platform" during evaluation.
+  riveSystemSupported =
+    pkgs.stdenv.hostPlatform.system == "aarch64-darwin"
+    || pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -217,6 +225,7 @@ in
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
     ]
+    ++ lib.optionals riveSystemSupported [ extra.rive-cli ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin (
       [
         # macOS-only custom packages from ifiokjr-nixpkgs.
