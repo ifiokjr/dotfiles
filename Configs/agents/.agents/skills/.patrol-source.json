@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/leancodepl/patrol",
 	"ref": "master",
-	"resolvedSha": "d708738bab8666d75330e3b8e235119d68a324d3",
+	"resolvedSha": "cb11b158a1184b948a348499b1a08ca430ea7d78",
 	"skills": [
 		"patrol-setup",
 		"patrol-write-test"
