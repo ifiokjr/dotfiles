@@ -32,13 +32,13 @@ Mutually exclusive.
 | `--verify` | Compile RML, Luau, and WGSL; write nothing. Exit 1 on errors |
 | `--once` | Write an unsigned `.riv` to `build/<name>.riv` |
 | `--publish` | Write a signed `.riv`. Needs `rive login` |
-| `--test` | Run `Tests` scripts headlessly. **Exit 6** on failures |
+| `--test` | Run `Tests` scripts headlessly. Exit 6 on failures |
 | `--screenshot[=<path>]` | Build, render one frame headless, write a PNG |
 | `--semantics[=<path>]` | Write the accessibility tree as JSON |
 | `--data-dump[=<path>]` | Write bound view model values as JSON (`-` for stdout) |
 | `--bench=<frames>` | Time frames headless; report advance/render stats |
 
-`screenshot` defaults to `build/<name>.png`; `semantics` to `build/<name>.semantics.json`; `data-dump` to `build/<name>.data.json`. **The screenshot path resolves against the current directory, not the project directory**, and a missing directory fails with only `screenshot failed: <path>` — create it first.
+`screenshot` defaults to `build/<name>.png`; `semantics` to `build/<name>.semantics.json`; `data-dump` to `build/<name>.data.json`. The screenshot path resolves against the current directory, not the project directory, and a missing directory fails with only `screenshot failed: <path>`. Create it first.
 
 ## Modifiers
 
@@ -58,11 +58,11 @@ Mutually exclusive.
 | `--define=<NAME[=n]>` | AssemblyScript build constant; repeatable |
 | `--format=json` / `--json` | Machine-readable envelope with `--once`/`--verify`/`--publish`/`--test` |
 
-`--viewport` is not a fit. An artboard that lays itself out reflows into it — that is what makes it the responsiveness check. A fixed-size artboard renders at its authored size anchored top-left, so a small viewport crops it. That is the flag working, not a layout bug. Every `--fit` mode except `layout` leaves the artboard at its authored size and scales into the window instead.
+`--viewport` is not a fit. An artboard that lays itself out reflows into it, and that is what makes it the responsiveness check. A fixed-size artboard renders at its authored size anchored top-left, so a small viewport crops it. That is the flag working, not a layout bug. Every `--fit` mode except `layout` leaves the artboard at its authored size and scales into the window instead.
 
 ## Driving the scene
 
-These need `--screenshot`, `--semantics`, or `--data-dump`; without one they are usage errors. They share **one ordered queue**, replayed in the order written.
+These need `--screenshot`, `--semantics`, or `--data-dump`; without one they are usage errors. They share one ordered queue, replayed in the order written.
 
 | Flag | Behavior |
 |---|---|
@@ -77,15 +77,15 @@ These need `--screenshot`, `--semantics`, or `--data-dump`; without one they are
 
 Details that change results:
 
-- **A capture with no `--advance` is the pose before anything advanced.** Start previews at `--advance=1`.
-- **`--advance` steps where you put it**, not from scene time zero. One before a click runs an intro first.
+- A capture with no `--advance` is the pose before anything advanced. Start previews at `--advance=1`.
+- `--advance` steps where you put it, not from scene time zero. One before a click runs an intro first.
 - `click` is a move, a press, and a release with a frame between each.
-- **Quote drag values.** The `>` is a shell redirect otherwise: the flag gets truncated and a file named `200,80:12` appears in the working directory.
-- The drag **step count is the velocity**. A capture is deterministic, so fling distance is reproducible and a fling that lands identically at every step count is not carrying momentum.
-- Gamepad names are W3C (`south`, `dpadLeft`, `leftX`). A bare index is **W3C 0-based**, but a Luau `gamepadEvent` reads the same slot as `changeIndex` **+ 1**. Prefer names.
+- Quote drag values. The `>` is a shell redirect otherwise: the flag gets truncated and a file named `200,80:12` appears in the working directory.
+- The drag step count is the velocity. A capture is deterministic, so fling distance is reproducible and a fling that lands identically at every step count is not carrying momentum.
+- Gamepad names are W3C (`south`, `dpadLeft`, `leftX`). A bare index is W3C 0-based, but a Luau `gamepadEvent` reads the same slot as `changeIndex` plus 1. Prefer names.
 - `--data` paths are relative to the instance bound to the artboard and never include the view model's own name. A flat view model takes the bare property (`--data=level=100`).
 - Keys reach only what holds focus, and a headless run starts with nothing focused unless the file establishes it. `--key` says so rather than silently matching nothing.
-- **Every listener whose target contains the point fires.** Drawing over something does not block it unless the thing on top is `isTargetOpaque`, and a fully transparent fill is still hit-testable.
+- Every listener whose target contains the point fires. Drawing over something does not block it unless the thing on top is `isTargetOpaque`, and a fully transparent fill is still hit-testable.
 
 ## Exit codes
 
@@ -96,7 +96,7 @@ Details that change results:
 | 2 | Usage: bad flag value, unknown flag, two build modes at once, an interaction with no capture mode |
 | 3 | Not logged in |
 | 6 | Test cases failed (the build itself was fine) |
-| 7 | A service could not be reached — safe to retry |
+| 7 | A service could not be reached. Safe to retry |
 
 An unrecognized flag is a hard exit-2 error, so a green exit does mean your flags landed. But `--artboard` with an unknown name silently falls back to the first artboard and exits 0.
 
@@ -110,7 +110,7 @@ An unrecognized flag is a hard exit-2 error, so a green exit does mean your flag
 
 `data.problems[]` entries carry `{severity, kind, code, script, line, column, message}` and `severity` is one of `error`, `warning`, `hint`.
 
-**`line` and `column` are zero-based in JSON, one-based in the terminal log and in `rive inspect`.** Add 1 before showing a human.
+`line` and `column` are zero-based in JSON, one-based in the terminal log and in `rive inspect`. Add 1 before showing a human.
 
 `rive inspect . --json` is JSON-native, as are `--data-dump`, `--semantics`, `rive schema --json`, and `rive doctor --format=json`. `--summary` gives problems plus object counts per type per artboard.
 
@@ -125,7 +125,7 @@ rive inspect . --json | jq '.problems'                   # problems
 rive inspect . --json | jq -c '[..|objects|select(.type?=="LayoutComponent" and .styleId==null)]|length'
 ```
 
-The last one asserts every layout box still has its style linked — anything other than `0` means a box was added without its `LayoutComponentStyle` and will not lay out as written.
+The last one asserts every layout box still has its style linked. Anything other than `0` means a box was added without its `LayoutComponentStyle` and will not lay out as written.
 
 Nodes carry a `line` field pointing back at the source, and enums are decoded alongside their integer:
 
@@ -136,11 +136,11 @@ Nodes carry a `line` field pointing back at the source, and enums are decoded al
    "children":[{"type":"CubicEaseInterpolator","line":40,"x1":0.42,"y1":0,"x2":0.58,"y2":1}]}]}
 ```
 
-That makes keyframe readback a direct assertion: pull the `KeyedProperty` for a property key, then check the frames and values. `interpolationType` reads back as an **integer** with the name under `.enums`. `interpolatorId` is never emitted. `computed*` values are `0` until something lays the scene out.
+That makes keyframe readback a direct assertion: pull the `KeyedProperty` for a property key, then check the frames and values. `interpolationType` reads back as an integer with the name under `.enums`. `interpolatorId` is never emitted. `computed*` values are `0` until something lays the scene out.
 
-`List<Id>` properties (such as a bind's `sourcePathIds`) are **omitted from the tree**, so a bind's path is not visible in `inspect` — `problems` is the only readback for those.
+`List<Id>` properties (such as a bind's `sourcePathIds`) are omitted from the tree, so a bind's path is not visible in `inspect`. `problems` is the only readback for those.
 
-The `problems` kinds actually checked include `syntax`, `unresolved-bind-path`, `bind-target-missing-property`, `incompatible-bind-types`, `missing-reference`, `no-default-state-machine`, `no-artboards`, `derived-property-authored`, `incomparable-condition`, `duplicate-script-name`, `paint-without-shape-paint`, `scroll-without-physics`, `draw-target-not-child-of-rules`, `artboards-overlap`, `states-overlap`, `listener-converter-on-write`, `artboard-without-style`. **A required reference being present is checked; whether it resolves is not.**
+The `problems` kinds actually checked include `syntax`, `unresolved-bind-path`, `bind-target-missing-property`, `incompatible-bind-types`, `missing-reference`, `no-default-state-machine`, `no-artboards`, `derived-property-authored`, `incomparable-condition`, `duplicate-script-name`, `paint-without-shape-paint`, `scroll-without-physics`, `draw-target-not-child-of-rules`, `artboards-overlap`, `states-overlap`, `listener-converter-on-write`, `artboard-without-style`. A required reference being present is checked; whether it resolves is not.
 
 ## Logs
 
@@ -159,7 +159,7 @@ logs:
 
 With the watcher running, type into its terminal: `s|screenshot [path]`, `p|pause`, `a|artboard [name]`, `f|fit [mode]`, `z|size`, `d|data [path]`, `rev [path]`, `?|help`.
 
-The window opens at the artboard's size and follows it until you drag it. `z` resumes following. The default fit is `layout`, so dragging the window is a real reflow rather than a zoom — which is what makes the window a responsive check.
+The window opens at the artboard's size and follows it until you drag it. `z` resumes following. The default fit is `layout`, so dragging the window is a real reflow rather than a zoom, which is what makes the window a responsive check.
 
 ## Environment
 
@@ -173,7 +173,7 @@ The window opens at the artboard's size and follows it until you drag it. `z` re
 | `RIVE_DOCS_DIR`, `RIVE_SAMPLES_DIR` | Override the bundled docs and samples |
 | `RIVE_API_BASE` | API host; also isolates the stored login |
 
-**Pickers draw on stderr**, so `rive samples > log` still prompts. Set `RIVE_NO_TUI=1` in scripts and CI.
+Pickers draw on stderr, so `rive samples > log` still prompts. Set `RIVE_NO_TUI=1` in scripts and CI.
 
 Credentials live in `~/.config/rive/app.rive.cli/` on macOS and Linux, and in Windows Credential Manager. A process with a different `HOME` reports `Not logged in` even on a signed-in machine.
 
@@ -191,7 +191,7 @@ myproject/
 
 `rive.yaml` requires only `name`. Other keys: `main` (default artboard by name), `debugLevel`, `optimizationLevel` (`none|medium|max`), `shaderOutputs`, `artboard` (`width`/`height`/`background`), `artboards` (per-artboard overrides), `exclude`, `excludeFromRev`, `revFlavor` (`editable|library`), `push`, `window` (macOS), `output.dir` (default `build`), `logs`. Unknown keys are ignored without warning.
 
-A project may hold **any number of `.rml` files in any folders**; they compile as one document, which is how a scene splits across files. Also accepted: `.luau` scripts, `.wgsl` shaders, `.png`/`.jpg`/`.jpeg`/`.webp` images, and fonts. Anything else becomes a blob asset. `rive.yaml`, `.riv`, `.rev`, and `.log` are skipped.
+A project may hold any number of `.rml` files in any folders; they compile as one document, which is how a scene splits across files. Also accepted: `.luau` scripts, `.wgsl` shaders, `.png`/`.jpg`/`.jpeg`/`.webp` images, and fonts. Anything else becomes a blob asset. `rive.yaml`, `.riv`, `.rev`, and `.log` are skipped.
 
 ## Samples
 
@@ -210,13 +210,13 @@ A project may hold **any number of `.rml` files in any folders**; they compile a
 | Keyboard, text and gamepad events in a script | `input_demo` |
 | An app shell under the macOS traffic lights | `integrated_titlebar` |
 
-Copy one out as a starting point — `keyboard_menu`, `pointer_reactive`, `text_input`, and `rml_split` are the richest RML exemplars.
+Copy one out as a starting point. `keyboard_menu`, `pointer_reactive`, `text_input`, and `rml_split` are the richest RML exemplars.
 
 ## Publishing
 
-- `--once` writes an **unsigned** `.riv`; any runtime can load it locally.
-- `--publish` writes a **signed** one through the Rive compile service. Needs `rive login`.
-- **A file carrying scripts that is destined for the web must be `--publish`ed.** The CDN and web runtimes reject unsigned scripts, and nothing locally warns you.
+- `--once` writes an unsigned `.riv`; any runtime can load it locally.
+- `--publish` writes a signed one through the Rive compile service. Needs `rive login`.
+- A file carrying scripts that is destined for the web must be published with `--publish`. The CDN and web runtimes reject unsigned scripts, and nothing locally warns you.
 - Publish caps at 100 scripts and 10 MB, and fails closed.
 - `--rev` writes the editable document for the Rive Editor.
 - `rive push` syncs the project to a Rive file and records `push: {projectId, fileId}` in `rive.yaml`.

@@ -1,4 +1,4 @@
-# Running Custom Playwright Code
+# Running custom Playwright code
 
 Use `run-code` to execute arbitrary Playwright code for advanced scenarios not covered by CLI commands.
 
@@ -18,8 +18,8 @@ playwright-cli run-code --filename=./my-script.js
 ```
 
 
-The code must be a single function expression, it is wrapped in `(...)` and evaluated.
-import/export/require syntax is not supported.
+The code must be a single function expression. The CLI wraps it in `(...)` and evaluates it.
+The import, export, and require syntax is not supported.
 
 ## Geolocation
 
@@ -63,7 +63,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Media Emulation
+## Media emulation
 
 ```bash
 # Emulate dark color scheme
@@ -87,7 +87,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Wait Strategies
+## Wait strategies
 
 ```bash
 # Wait for network idle
@@ -111,7 +111,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Frames and Iframes
+## Frames and iframes
 
 ```bash
 # Work with iframe
@@ -127,7 +127,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## File Downloads
+## File downloads
 
 ```bash
 # Handle file download
@@ -155,7 +155,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Page Information
+## Page information
 
 ```bash
 # Get page title
@@ -179,7 +179,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## JavaScript Execution
+## JavaScript execution
 
 ```bash
 # Execute JavaScript and return result
@@ -200,7 +200,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Error Handling
+## Error handling
 
 ```bash
 # Try-catch in run-code
@@ -214,7 +214,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Complex Workflows
+## Complex workflows
 
 ```bash
 # Login and save state

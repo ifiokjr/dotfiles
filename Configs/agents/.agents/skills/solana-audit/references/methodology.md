@@ -1,6 +1,6 @@
-# Audit Methodology, Tooling, and Reporting
+# Audit methodology, tooling, and reporting
 
-The expansion of the SKILL.md workflow: scoping questions, review order, tooling matrix (maintenance status as of Sep 2026), invariant testing, the pre-mainnet checklist, and the report template.
+This file expands the SKILL.md workflow with scoping questions, review order, the tooling matrix (maintenance status as of Sep 2026), invariant testing, the pre-mainnet checklist, and the report template.
 
 ## Scoping questions (ask before opening the code)
 
@@ -11,11 +11,11 @@ The expansion of the SKILL.md workflow: scoping questions, review order, tooling
 5. What oracles feed it, and what collateral does it accept?
 6. What is in scope beyond the programs: clients/SDK, keepers, deploy scripts, CI, front-end?
 
-Deliverable of scoping: a one-paragraph threat model — assets, actors, entry points, invariants — agreed before findings start.
+The deliverable of scoping is a one-paragraph threat model covering assets, actors, entry points, and invariants, agreed before findings start.
 
 ## Review order
 
-1. `Cargo.toml` / `Anchor.toml` / `declare_id!` — `overflow-checks`, dependency pins, program ids.
+1. `Cargo.toml` / `Anchor.toml` / `declare_id!`: `overflow-checks`, dependency pins, program ids.
 2. Authority and admin paths (smallest code, largest blast radius).
 3. Money paths: every instruction that moves tokens or changes balances.
 4. State machine: init/close/reinit, migrations, account layout.
@@ -40,19 +40,19 @@ Deliverable of scoping: a one-paragraph threat model — assets, actors, entry p
 | `solana-verify` ([solana-foundation/solana-verifiable-build](https://github.com/solana-foundation/solana-verifiable-build)) | Deterministic builds + on-chain hash verification + registry | The verification standard; see `release-security.md` caveats |
 | Helius webhooks / Yellowstone gRPC | Runtime monitoring, authority-change alarms | See `release-security.md` |
 
-EVM tools (Echidna, Halmos, Foundry) do not apply. Names that do **not** exist (do not recommend): "Vega" build tool, "yakfuzz", a `solana-auditors-book` repo.
+EVM tools (Echidna, Halmos, Foundry) do not apply. Names that do not exist (do not recommend): "Vega" build tool, "yakfuzz", a `solana-auditors-book` repo.
 
 ## Invariant testing that is worth the effort
 
 Write the protocol's invariants as executable properties, then attack them:
 
-- **Solvency:** for random operation sequences, `total assets ≥ total liabilities + dust` in every reachable state.
-- **Share math:** no sequence of deposit/withdraw/donate rounds value to an early depositor beyond fees (the ERC-4626 first-depositor attack — see `cross-ecosystem.md`).
-- **Conservation:** tokens in − tokens out = inventory, per pool/vault, across swaps including fee edges.
-- **Authority immutability:** authority fields change only via the admin instruction set, reachable only by the authority signer.
-- **Liquidity math:** swap/liquidity operations never overflow at max-parameter corners (the Cetus class — fuzz the corners of the parameter space deliberately).
+- Solvency: for random operation sequences, `total assets ≥ total liabilities + dust` in every reachable state.
+- Share math: no sequence of deposit/withdraw/donate rounds value to an early depositor beyond fees (the ERC-4626 first-depositor attack; see `cross-ecosystem.md`).
+- Conservation: tokens in − tokens out = inventory, per pool/vault, across swaps including fee edges.
+- Authority immutability: authority fields change only via the admin instruction set, reachable only by the authority signer.
+- Liquidity math: swap/liquidity operations never overflow at max-parameter corners (the Cetus class; fuzz the corners of the parameter space deliberately).
 
-Harness: litesvm in-process, proptest-style sequences of adversarial instruction mixes (the attacker model: one wallet, unlimited capital, atomic multi-instruction transactions). Trident when the Anchor integration fits. Keep the harness in-repo afterward as a regression suite — it is the cheapest long-term defense an audit can leave behind.
+Harness: litesvm in-process, proptest-style sequences of adversarial instruction mixes (the attacker model: one wallet, unlimited capital, atomic multi-instruction transactions). Trident when the Anchor integration fits. Keep the harness in-repo afterward as a regression suite, because it is the cheapest long-term defense an audit can leave behind.
 
 ## Pre-mainnet checklist
 
@@ -84,7 +84,7 @@ Ops layer:
 # Security Audit: <Protocol>
 Auditor / engagement / date
 Scope: <programs, commits, deployed program IDs + verified hashes>
-Out of scope: <explicit list — clients, infra, dependencies, unaudited modules>
+Out of scope: <explicit list of clients, infra, dependencies, unaudited modules>
 
 ## Executive summary
 <n> findings: <c> Critical, <h> High, <m> Medium, <l> Low, <i> Informational.
@@ -96,7 +96,7 @@ What was reviewed vs not; residual risk statement.
 | --- | --- | --- | --- |
 
 ## Findings
-### <ID> <Title> — <Severity>
+### <ID> <Title>, <Severity>
 - **Location:** file:line, instruction, account
 - **Mechanism:** what is missing/wrong, precisely
 - **Exploit scenario:** step-by-step instruction sequence an attacker follows
@@ -116,6 +116,6 @@ Severity tests (from SKILL.md, with the calibration question): would this findin
 
 ## After the report
 
-- Re-review every fix (fix review is its own engagement — see `audited-programs.md`).
+- Re-review every fix (fix review is its own engagement; see `audited-programs.md`).
 - Re-verify the deployed hash after the patched upgrade ships; confirm the fix is live, not merged.
 - Leave the invariant/fuzz harness in-repo; recommend continuous auditing or per-release diff review for anything with TVL growth.

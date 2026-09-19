@@ -1,12 +1,12 @@
-# Storage Management
+# Storage management
 
 Manage cookies, localStorage, sessionStorage, and browser storage state.
 
-## Storage State
+## Storage state
 
 Save and restore complete browser state including cookies and storage.
 
-### Save Storage State
+### Save storage state
 
 ```bash
 # Save to auto-generated filename (storage-state-{timestamp}.json)
@@ -16,7 +16,7 @@ playwright-cli state-save
 playwright-cli state-save my-auth-state.json
 ```
 
-### Restore Storage State
+### Restore storage state
 
 ```bash
 # Load storage state from file
@@ -26,7 +26,7 @@ playwright-cli state-load my-auth-state.json
 playwright-cli open https://example.com
 ```
 
-### Storage State File Format
+### Storage state file format
 
 The saved file contains:
 
@@ -58,31 +58,31 @@ The saved file contains:
 
 ## Cookies
 
-### List All Cookies
+### List all cookies
 
 ```bash
 playwright-cli cookie-list
 ```
 
-### Filter Cookies by Domain
+### Filter cookies by domain
 
 ```bash
 playwright-cli cookie-list --domain=example.com
 ```
 
-### Filter Cookies by Path
+### Filter cookies by path
 
 ```bash
 playwright-cli cookie-list --path=/api
 ```
 
-### Get Specific Cookie
+### Get a specific cookie
 
 ```bash
 playwright-cli cookie-get session_id
 ```
 
-### Set a Cookie
+### Set a cookie
 
 ```bash
 # Basic cookie
@@ -95,21 +95,21 @@ playwright-cli cookie-set session abc123 --domain=example.com --path=/ --httpOnl
 playwright-cli cookie-set remember_me token123 --expires=1893456000
 ```
 
-### Delete a Cookie
+### Delete a cookie
 
 ```bash
 playwright-cli cookie-delete session_id
 ```
 
-### Clear All Cookies
+### Clear all cookies
 
 ```bash
 playwright-cli cookie-clear
 ```
 
-### Advanced: Multiple Cookies or Custom Options
+### Advanced: multiple cookies or custom options
 
-For complex scenarios like adding multiple cookies at once, use `run-code`:
+For scenarios like adding multiple cookies at once, use `run-code`:
 
 ```bash
 playwright-cli run-code "async page => {
@@ -120,47 +120,47 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Local Storage
+## Local storage
 
-### List All localStorage Items
+### List all localStorage items
 
 ```bash
 playwright-cli localstorage-list
 ```
 
-### Get Single Value
+### Get a single value
 
 ```bash
 playwright-cli localstorage-get token
 ```
 
-### Set Value
+### Set a value
 
 ```bash
 playwright-cli localstorage-set theme dark
 ```
 
-### Set JSON Value
+### Set a JSON value
 
 ```bash
 playwright-cli localstorage-set user_settings '{"theme":"dark","language":"en"}'
 ```
 
-### Delete Single Item
+### Delete a single item
 
 ```bash
 playwright-cli localstorage-delete token
 ```
 
-### Clear All localStorage
+### Clear all localStorage
 
 ```bash
 playwright-cli localstorage-clear
 ```
 
-### Advanced: Multiple Operations
+### Advanced: multiple operations
 
-For complex scenarios like setting multiple values at once, use `run-code`:
+For scenarios like setting multiple values at once, use `run-code`:
 
 ```bash
 playwright-cli run-code "async page => {
@@ -172,27 +172,27 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Session Storage
+## Session storage
 
-### List All sessionStorage Items
+### List all sessionStorage items
 
 ```bash
 playwright-cli sessionstorage-list
 ```
 
-### Get Single Value
+### Get a single value
 
 ```bash
 playwright-cli sessionstorage-get form_data
 ```
 
-### Set Value
+### Set a value
 
 ```bash
 playwright-cli sessionstorage-set step 3
 ```
 
-### Delete Single Item
+### Delete a single item
 
 ```bash
 playwright-cli sessionstorage-delete step
@@ -206,7 +206,7 @@ playwright-cli sessionstorage-clear
 
 ## IndexedDB
 
-### List Databases
+### List databases
 
 ```bash
 playwright-cli run-code "async page => {
@@ -217,7 +217,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-### Delete Database
+### Delete a database
 
 ```bash
 playwright-cli run-code "async page => {
@@ -227,9 +227,9 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Common Patterns
+## Common patterns
 
-### Authentication State Reuse
+### Authentication state reuse
 
 ```bash
 # Step 1: Login and save state
@@ -248,7 +248,7 @@ playwright-cli open https://app.example.com/dashboard
 # Already logged in!
 ```
 
-### Save and Restore Roundtrip
+### Save and restore roundtrip
 
 ```bash
 # Set up authentication state
@@ -266,7 +266,7 @@ playwright-cli open https://example.com
 # Cookies and localStorage are restored!
 ```
 
-## Security Notes
+## Security notes
 
 - Never commit storage state files containing auth tokens
 - Add `*.auth-state.json` to `.gitignore`

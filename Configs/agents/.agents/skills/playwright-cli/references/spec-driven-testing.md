@@ -1,18 +1,18 @@
-# Spec-driven testing (plan → generate → heal)
+# Spec-driven testing (plan, generate, heal)
 
 End-to-end workflow for authoring and maintaining Playwright tests using `playwright-cli`. The three sections below can be used independently:
 
-- **Planning** — explore the app, produce a spec file describing what to test.
-- **Generate** — turn a spec into Playwright test files. Update the spec if it's vague or stale.
-- **Heal** — diagnose failing tests, fix the code, reconcile the spec with reality.
+- **Planning.** Explore the app and produce a spec file describing what to test.
+- **Generate.** Turn a spec into Playwright test files. Update the spec if it is vague or stale.
+- **Heal.** Diagnose failing tests, fix the code, and reconcile the spec with reality.
 
-All three lean on the same mechanic: run `npx playwright test --debug=cli` in the background, then `playwright-cli attach tw-XXXX` to drive the paused page interactively. See [playwright-tests.md](playwright-tests.md) for the debug/attach mechanics and [test-generation.md](test-generation.md) for how every `playwright-cli` action emits Playwright TypeScript.
+All three phases use the same approach. Run `npx playwright test --debug=cli` in the background, then run `playwright-cli attach tw-XXXX` to drive the paused page interactively. See [playwright-tests.md](playwright-tests.md) for how `--debug=cli` and `attach` work together, and [test-generation.md](test-generation.md) for how every `playwright-cli` action emits Playwright TypeScript.
 
 ---
 
 ## 1. Planning
 
-Goal: produce a spec file (e.g. `specs/<feature>.plan.md`) that enumerates the scenarios to test. **Always** write the spec to a file.
+Goal: produce a spec file (for example, `specs/<feature>.plan.md`) that lists the scenarios to test. Always write the spec to a file.
 
 ### 1.1 Prerequisite: workspace
 
@@ -24,7 +24,7 @@ test -f playwright.config.ts || test -f playwright.config.js
 npx --no-install playwright --version
 ```
 
-If there is no Playwright install, bootstrap one and let the user pick the defaults:
+If there is no Playwright install, install it and let the user pick the defaults:
 
 ```bash
 npm init playwright@latest
@@ -32,7 +32,7 @@ npm init playwright@latest
 
 ### 1.2 Prerequisite: seed test
 
-A **seed test** is a minimal test that lands the page in the state every scenario starts from: navigation to the app, any required login, feature flags, etc. Scenarios assume a fresh start *after* the seed. `--debug=cli` pauses *inside* this test, so the seed is where every planning and generation session begins.
+A **seed test** is a minimal test that puts the page into the state every scenario starts from, such as navigation to the app, any required login, and feature flags. Scenarios assume a fresh start *after* the seed. `--debug=cli` pauses *inside* this test, so the seed is where every planning and generation session begins.
 
 Minimum viable seed:
 
@@ -45,7 +45,7 @@ test('seed', async ({ page }) => {
 });
 ```
 
-Preferred — push navigation into a fixture so scenario tests reuse it:
+The preferred setup pushes navigation into a fixture so scenario tests reuse it:
 
 ```ts
 // tests/fixtures.ts
@@ -99,8 +99,8 @@ Map out:
 - Persistence: reload, local/session storage, URL fragments.
 - Navigation: which controls change the URL, back/forward behaviour.
 
-**Important**: Do not just open the app url with playwright-cli, always go through the test to capture any custom setup done there.
-**Important**: Stop the background test when done exploring.
+Do not open the app URL directly with playwright-cli. Always go through the test to capture any custom setup done there.
+Stop the background test when you have finished exploring.
 
 ### 1.4 Write the spec file
 
@@ -141,11 +141,11 @@ Save under `specs/<feature>.plan.md`. Use this structure:
 
 Guidelines:
 
-- Each scenario is independent and starts from the seed's fresh state — never chain scenarios.
-- Scenario names are kebab-case and match the test file name (`should-add-single-todo` → `should-add-single-todo.spec.ts`).
-- Cover happy path, edge cases, validation, negative flows, persistence.
-- Write steps at the user level ("Type 'Buy milk' into the input"), not the API level ("call `fill`").
-- Put observable outcomes in `- expect:` bullets; each becomes an assertion during generation.
+- Each scenario is independent and starts from the seed's fresh state. Never chain scenarios.
+- Scenario names are kebab-case and match the test file name (`should-add-single-todo` becomes `should-add-single-todo.spec.ts`).
+- Cover happy path, edge cases, validation, negative flows, and persistence.
+- Write steps at the user level ("Type 'Buy milk' into the input"), not at the API level ("call `fill`").
+- Put observable outcomes in `- expect:` bullets. Each one becomes an assertion during generation.
 
 ---
 
@@ -155,13 +155,13 @@ Goal: take a spec file and produce Playwright test files. Optionally update the 
 
 ### 2.1 Inputs
 
-- **Spec file**, e.g. `specs/basic-operations.plan.md`.
-- **Target**: either a single scenario (e.g. `1.2`), a whole group (`1`), or all.
-- **Seed file**, read from the `**Seed:**` line of the scenario's group.
+- Spec file, for example `specs/basic-operations.plan.md`.
+- Target: either a single scenario (for example `1.2`), a whole group (`1`), or all.
+- Seed file, read from the `**Seed:**` line of the scenario's group.
 
 ### 2.2 Generate one scenario
 
-For each target scenario, in sequence (never in parallel — scenarios share the seed session):
+For each target scenario, in sequence (never in parallel, because scenarios share the seed session):
 
 ```bash
 PLAYWRIGHT_HTML_OPEN=never npx playwright test <seed-file> --debug=cli   # background
@@ -169,9 +169,9 @@ playwright-cli attach tw-XXXX
 # resume
 ```
 
-**Do not** just open the app url with playwright-cli, always go through the test to capture any custom setup done there.
+Do not open the app URL directly with playwright-cli. Always go through the test to capture any custom setup done there.
 
-Walk the scenario's `Steps:` one by one with `playwright-cli`, treating the spec as the plan and the live app as the source of truth. If a step is vague ("click the button" — which button?), references an element that no longer exists, or contradicts the app's actual behaviour, use your judgement: update the spec to match what the app really does, then keep going. Editing the spec mid-generation is expected.
+Walk the scenario's `Steps:` one by one with `playwright-cli`, treating the spec as the plan and the live app as the source of truth. If a step is vague ("click the button", but which button?), references an element that no longer exists, or contradicts the app's actual behaviour, use your judgement: update the spec to match what the app really does, then keep going. Editing the spec during generation is expected.
 
 Every action prints the equivalent Playwright TypeScript (see [test-generation.md](test-generation.md)):
 
@@ -216,11 +216,11 @@ Rules:
 - Prefix each numbered step with a `// N. <step text>` comment before its actions.
 - Use the describe group name verbatim from the spec (no `1.` ordinal).
 - Import from `./fixtures` if the project has one; otherwise `@playwright/test`.
-- **Important**: close the CLI session and stop the background test before moving to the next scenario.
+- Close the CLI session and stop the background test before moving to the next scenario.
 
 ### 2.3 Generate multiple scenarios
 
-Loop 2.2 over the targeted scenarios one at a time, restarting the seed between each so every test starts from a clean page. This is safe to parallelise due to unique generated session names - just make sure each test run is stopped.
+Loop 2.2 over the targeted scenarios one at a time, restarting the seed between each so every test starts from a clean page. This is safe to parallelise because generated session names are unique. Just make sure each test run is stopped.
 
 ### 2.4 Run generated tests
 
@@ -244,7 +244,7 @@ Goal: fix failing tests, and update the spec if the app's intended behaviour cha
 PLAYWRIGHT_HTML_OPEN=never npx playwright test
 ```
 
-Record the list of failing `<file>:<line>` entries and process them one at a time. Do not attempt parallel fixes — shared state and the single CLI session make that fragile.
+Record the list of failing `<file>:<line>` entries and process them one at a time. Do not attempt parallel fixes, because shared state and the single CLI session make that fragile.
 
 ### 3.2 Debug one failure
 
@@ -256,7 +256,7 @@ PLAYWRIGHT_HTML_OPEN=never npx playwright test tests/<group>/<scenario>.spec.ts:
 playwright-cli attach tw-XXXX
 ```
 
-The test is paused at the start. Step forward or run to until just before the failing action or assertion, then diagnose:
+The test is paused at the start. Step forward or run it until just before the failing action or assertion, then diagnose:
 
 ```bash
 playwright-cli snapshot                # did the element change / move / rename?
@@ -265,13 +265,13 @@ playwright-cli requests                # failed request? wrong payload?
 playwright-cli show --annotate         # ask the user to point somewhere
 ```
 
-Common causes: selector drift, new wrapper element, label/ARIA rename, timing (transition, async load), assertion text updated in the app, test data leaking between runs.
+Common causes: selector drift, a new wrapper element, a label or ARIA rename, timing (transition, async load), assertion text updated in the app, test data leaking between runs.
 
-Rehearse the corrected interaction with `playwright-cli` — the generated code in the output is what you paste back into the test.
+Rehearse the corrected interaction with `playwright-cli`. The generated code in the output is what you paste back into the test.
 
 ### 3.3 Apply the fix
 
-Edit the test file: update the locator, assertion, step order, or inputs to match the corrected behaviour. Stop the background debug run. Rerun the single test to confirm green.
+Edit the test file: update the locator, assertion, step order, or inputs to match the corrected behaviour. Stop the background debug run. Rerun the single test to confirm it passes.
 
 Never skip hooks or add sleeps as a fix. Never use `networkidle`.
 
@@ -279,19 +279,19 @@ Never skip hooks or add sleeps as a fix. Never use `networkidle`.
 
 Open the spec referenced by the `// spec:` header in the test file and locate the scenario that matches the test.
 
-- **Fix was purely technical** (locator drift, better assertion shape) and the spec's user-level behaviour still matches the app → leave the spec alone.
-- **Fix changed user-visible steps, inputs, order, or expected outcomes** that the spec describes → update the spec to match reality. Keep the scenario id and file path stable; only the step / expect lines change.
-- **Unclear whether the app change is intentional** (spec is stale) **or a regression** (test was right, app is wrong) → **stop and ask the user**. Provide:
-  - the scenario id (e.g. `2.3`),
+- If the fix was purely technical (locator drift, a better assertion shape) and the spec's user-level behaviour still matches the app, leave the spec alone.
+- If the fix changed the user-visible steps, inputs, order, or expected outcomes that the spec describes, update the spec to match reality. Keep the scenario id and file path stable, and change only the step and expect lines.
+- If it is unclear whether the app change is intentional (the spec is stale) or a regression (the test was right and the app is wrong), stop and ask the user. Provide:
+  - the scenario id (for example `2.3`),
   - the spec lines that no longer match,
   - the observed app behaviour (quote a snapshot excerpt or a concrete outcome).
 
-Only after the user answers, either update the spec (intentional change) or file/flag the test as covering a bug (regression).
+Only after the user answers should you update the spec (intentional change) or file or flag the test as covering a bug (regression).
 
 ### 3.5 Iteration and giving up
 
 - Fix failures one at a time; rerun after each.
-- If after thorough investigation you are confident the test is correct but the app is wrong *and* the user has confirmed it's a bug: mark the test `test.fixme(...)` with a comment pointing at the user's decision or issue link. Never silently skip.
+- If, after thorough investigation, you are confident the test is correct but the app is wrong, and the user has confirmed it is a bug, mark the test `test.fixme(...)` with a comment pointing at the user's decision or issue link. Never silently skip.
 
 ---
 
@@ -299,7 +299,7 @@ Only after the user answers, either update the spec (intentional change) or file
 
 | For... | See |
 |---|---|
-| `--debug=cli` / attach mechanics | [playwright-tests.md](playwright-tests.md) |
-| How `playwright-cli` actions become TS | [test-generation.md](test-generation.md) |
-| Mocking requests during exploration/generation | [request-mocking.md](request-mocking.md) |
+| How `--debug=cli` and `attach` work together | [playwright-tests.md](playwright-tests.md) |
+| How `playwright-cli` actions become TypeScript | [test-generation.md](test-generation.md) |
+| Mocking requests during exploration and generation | [request-mocking.md](request-mocking.md) |
 | Managing the CLI browser session | [session-management.md](session-management.md) |

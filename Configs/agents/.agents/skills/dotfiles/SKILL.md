@@ -3,15 +3,15 @@ name: dotfiles
 description: Use for every task in ifiokjr/dotfiles, or whenever work uses its secrets, aliases, Nix setup, Tuckr deployment, or dot CLI.
 ---
 
-# Dotfiles Ecosystem
+# Dotfiles ecosystem
 
-These dotfiles manage a cross-platform (macOS/Linux) Nix-based development environment. The default shell is **Nushell** (not Bash). Configuration is deployed via [tuckr](https://github.com/RuktDaGmmer/tuckr) symlinks from `Configs/` groups and rebuilt with Nix/nix-darwin.
+These dotfiles manage a cross-platform (macOS/Linux) Nix-based development environment. The default shell is Nushell (not Bash). Configuration is deployed via [tuckr](https://github.com/RuktDaGmmer/tuckr) symlinks from `Configs/` groups and rebuilt with Nix/nix-darwin.
 
-## Core Rules
+## Core rules
 
-1. **Shell is Nushell** — all interactive terminals use Nushell. Write commands in Nushell syntax, not Bash.
-2. **Secrets are NOT ambient** — never assume `GITHUB_TOKEN`, `OPENAI_API_KEY`, etc. exist in the environment. Use the Monosecret workflow below.
-3. **Prefer aliases** — use the short aliases instead of full commands. They exist for speed and correctness.
+1. The shell is Nushell. All interactive terminals use Nushell. Write commands in Nushell syntax, not Bash.
+2. Secrets are not ambient. Never assume `GITHUB_TOKEN`, `OPENAI_API_KEY`, etc. exist in the environment. Use the Monosecret workflow below.
+3. Prefer aliases. Use the short aliases instead of full commands. They exist for speed and correctness.
 
 ## Secrets (Monosecret + 1Password)
 
@@ -21,9 +21,9 @@ The dotfiles provide three Monosecret shortcuts. Each pins the managed `~/monose
 
 | Mode | Command | When to use |
 |------|---------|-------------|
-| **Manage** | `ms <command>` | Run Monosecret commands such as `check`, `get`, `set`, and `audit` |
-| **Preferred** | `msr --reason "<why>" <command>` | Inject all resolved secrets into one child command, then discard them |
-| **Session** | `msload --reason "<why>"` | Load all declared secrets into the current shell for repeated interactive use |
+| Manage | `ms <command>` | Run Monosecret commands such as `check`, `get`, `set`, and `audit` |
+| Preferred | `msr --reason "<why>" <command>` | Inject all resolved secrets into one child command, then discard them |
+| Session | `msload --reason "<why>"` | Load all declared secrets into the current shell for repeated interactive use |
 
 ### Common workflows
 
@@ -56,7 +56,7 @@ Both secret-loading commands reject missing or blank reasons. Use a concise, spe
 
 ### Local development cache
 
-The `op-cached` route serves secrets from the plaintext `~/.env.dotfiles.cache` while entries are fresh (24h); on a miss or expiry it reads 1Password and writes the values back. `ms check` never fills the cache — the first `msr`/`msload` run after a miss does. After rotating a value in 1Password with `ms set <NAME>` the cache refreshes automatically; to force a re-read (or wipe plaintext copies from disk) run:
+The `op-cached` route serves secrets from the plaintext `~/.env.dotfiles.cache` while entries are fresh (24h); on a miss or expiry it reads 1Password and writes the values back. `ms check` never fills the cache. The first `msr`/`msload` run after a miss does. After rotating a value in 1Password with `ms set <NAME>` the cache refreshes automatically; to force a re-read (or wipe plaintext copies from disk) run:
 
 ```nu
 ms cache clear <NAME>   # one secret
@@ -81,11 +81,11 @@ If a command fails with authentication, permission, or rate-limit errors:
 2. Run `ms check` to identify unresolved required secrets.
 3. If 1Password bootstrap fails, restore keyring access or use `setup:env --set-token` for the service-account-token fallback.
 4. Use `msload --reason "<why>"` only when several interactive commands genuinely need the same environment.
-5. If 1Password reports rate limiting, stop retrying until the limit resets — warm-cache runs keep working offline; `ms cache clear` only when values must be re-read.
+5. If 1Password reports rate limiting, stop retrying until the limit resets. Warm-cache runs keep working offline; run `ms cache clear` only when values must be re-read.
 
 Example: if `gh pr list` reports an authentication error, retry with `msr --reason "list GitHub pull requests" gh pr list`.
 
-## Devenv (Development Environment)
+## Devenv (development environment)
 
 Projects using [devenv](https://devenv.sh) get a managed shell with all dependencies. Always enter the devenv shell before running project commands.
 
@@ -94,7 +94,7 @@ Projects using [devenv](https://devenv.sh) get a managed shell with all dependen
 | `ds` | `devenv shell` | Enter the project's development shell |
 | `de` | `devenv up` | Start the project's development services |
 
-**Always prefix with `ds` when you need devenv:** `ds cargo test`, `ds pnpm build`, etc.
+Always prefix commands with `ds` when you need devenv: `ds cargo test`, `ds pnpm build`, etc.
 When commands need secrets and devenv, use `msr --reason "test with project secrets" devenv shell cargo test`, or run `msload --reason "interactive project test session"` before an interactive `ds cargo test` session.
 
 ## Dotfiles CLI (`dot` / `dotfiles`)
@@ -103,20 +103,20 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 
 | Command | Purpose |
 |---------|---------|
-| `dot setup` | Initial setup — install Nix, clone repo, deploy groups |
+| `dot setup` | Install Nix, clone the repo, and deploy groups |
 | `dot rebuild` | Rebuild system config (nix-darwin switch or home-manager switch) |
 | `dot reload` | Re-deploy Tuckr symlinks without rebuilding Nix or changing the tracked `flake.lock` |
-| `dot clean` | Reclaim disk space — delete stale AI session history and regenerable caches (dry-run by default, `--apply` to delete) |
+| `dot clean` | Reclaim disk space by deleting stale AI session history and regenerable caches (dry-run by default, `--apply` to delete) |
 | `dot doctor` | Run preflight checks without changing the machine |
-| `dot groups` | Manage config groups — list, deploy, undeploy |
+| `dot groups` | List, deploy, and undeploy config groups |
 | `dot machine` | Inspect/modify `machine.nix` (hostname, lite mode, presets) |
 | `dot env` | Manage environment config and secrets |
 | `dot pnpm` | Manage pnpm global packages |
 | `dot version` | Print CLI version and environment info |
 
-**Rebuild flags:** `--update` (update flake inputs, plus a Determinate Nix update check that offers to run `determinate-nixd upgrade` when a newer release is available), `--commit` (with --update: commit the changed files — flake.lock, managed skills, pnpm globals — so only a git push remains), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
+Rebuild flags: `--update` (update flake inputs, plus a Determinate Nix update check that offers to run `determinate-nixd upgrade` when a newer release is available), `--commit` (with --update, commits the changed files: flake.lock, managed skills, and pnpm globals, so only a git push remains), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
 
-## Essential Aliases
+## Essential aliases
 
 ### Monosecret
 
@@ -126,7 +126,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | `msr` | Require `--reason "<why>"`, then run one child command through `monosecret run --` |
 | `msload` | Require `--reason "<why>"`, then load all declared secrets into the current shell session |
 
-### Shell / Editor
+### Shell / editor
 
 | Alias | Command |
 |-------|---------|
@@ -136,7 +136,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | `zj` | `zellij` (terminal multiplexer) |
 | `cl` | `clear` |
 
-### Dev Tools
+### Dev tools
 
 | Alias | Command |
 |-------|---------|
@@ -181,7 +181,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | `cf` | `cargo fmt` |
 | `cw` | `cargo watch -x run` |
 
-### File Listing (lsd)
+### File listing (lsd)
 
 | Alias | Command |
 |-------|---------|
@@ -219,21 +219,21 @@ See `Configs/nushell/.config/nushell/config.nu` for the full list. Most follow t
 | `grh` | `git reset` | Reset |
 | `gw` | `git worktree` | Worktree management |
 
-## Project Architecture
+## Project architecture
 
-- **`Configs/`** — Tuckr config groups, each maps to `~/.config/<group>/` via symlinks
-- **`Configs/nix/`** — Nix flake, `darwin.nix` (macOS), `home.nix` (packages), `machine.nix` (per-machine)
-- **`Configs/monosecret/`** — `monosecret.toml` declaring all secrets and their 1Password paths
-- **`Configs/nushell/`** — Nushell config, aliases, env, modules (including `secrets.nu`)
-- **`Configs/shell/`** — POSIX shell env (bash/zsh), aliases
-- **`Hooks/`** — Post-deploy scripts per config group (e.g. `Hooks/nix/post.sh` rebuilds)
-- **`cli/`** — The `dotfiles`/`dot` Deno-compiled CLI binary
+- `Configs/` holds Tuckr config groups. Each group maps to `~/.config/<group>/` via symlinks.
+- `Configs/nix/` holds the Nix flake, `darwin.nix` (macOS), `home.nix` (packages), and `machine.nix` (per-machine).
+- `Configs/monosecret/` holds `monosecret.toml`, declaring all secrets and their 1Password paths.
+- `Configs/nushell/` holds the Nushell config, aliases, env, and modules (including `secrets.nu`).
+- `Configs/shell/` holds POSIX shell env (bash/zsh) and aliases.
+- `Hooks/` holds post-deploy scripts per config group (e.g. `Hooks/nix/post.sh` rebuilds).
+- `cli/` holds the `dotfiles`/`dot` Deno-compiled CLI binary.
 
-## Key Conventions
+## Key conventions
 
-- **Package manager**: Nix (`nix profile add`; never `nix profile install`)
-- **Shell**: Nushell is default; `$env.VAR` syntax, `^cmd` for externals, no `&&` (use `;` or `and`/`or`)
-- **Git**: Conventional commits, feature branches (`feat/`, `fix/`, `ci/`), squash merges
-- **Formatting**: dprint (`dprint check --config Configs/dprint/dprint.json`)
-- **Rebuild**: `dot rebuild` or `nr` after any Nix config change
-- **Verification**: `dot doctor` for preflight checks, `nfc` for flake check
+- Package manager: Nix (`nix profile add`; never `nix profile install`)
+- Shell: Nushell is default; `$env.VAR` syntax, `^cmd` for externals, no `&&` (use `;` or `and`/`or`)
+- Git: Conventional commits, feature branches (`feat/`, `fix/`, `ci/`), squash merges
+- Formatting: dprint (`dprint check --config Configs/dprint/dprint.json`)
+- Rebuild: `dot rebuild` or `nr` after any Nix config change
+- Verification: `dot doctor` for preflight checks, `nfc` for flake check

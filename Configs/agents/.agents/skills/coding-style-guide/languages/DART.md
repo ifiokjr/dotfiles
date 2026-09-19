@@ -1,28 +1,28 @@
-# Dart Style Guide - Visual Aesthetics
+# Dart style guide: visual aesthetics
 
-This guide focuses on the visual presentation and layout of Dart code—whitespace placement, comment positioning, and code organization for maximum readability. It does not cover which functions to use or language feature choices.
+This guide focuses on the visual presentation and layout of Dart code: whitespace placement, comment positioning, and code organization for readability. It does not cover which functions to use or language feature choices.
 
-## Table of Contents
+## Table of contents
 
-1. [Whitespace and Visual Breathing Room](#whitespace-and-visual-breathing-room)
-2. [Early Returns and Flat Structure](#early-returns-and-flat-structure)
-3. [Variable Declaration and Grouping](#variable-declaration-and-grouping)
-4. [Comment Placement](#comment-placement)
-5. [Extraction Patterns](#extraction-patterns)
-6. [Documentation Aesthetics](#documentation-aesthetics)
-7. [Security and Performance Comments](#security-and-performance-comments)
+1. [Whitespace and visual breathing room](#whitespace-and-visual-breathing-room)
+2. [Early returns and flat structure](#early-returns-and-flat-structure)
+3. [Variable declaration and grouping](#variable-declaration-and-grouping)
+4. [Comment placement](#comment-placement)
+5. [Extraction patterns](#extraction-patterns)
+6. [Documentation aesthetics](#documentation-aesthetics)
+7. [Security and performance comments](#security-and-performance-comments)
 
 ---
 
-## Whitespace and Visual Breathing Room
+## Whitespace and visual breathing room
 
-### The Rule
+### The rule
 
 Blank lines are semantic. They separate concepts and give the reader time to process.
 
-### Where to Add Blank Lines
+### Where to add blank lines
 
-**1. Before control flow statements:**
+1. Before control flow statements.
 
 ```dart
 // Good
@@ -39,7 +39,7 @@ if (config.isValid()) {
 }
 ```
 
-**2. Between logical groups:**
+2. Between logical groups.
 
 ```dart
 // Good: Three distinct groups separated by blank lines
@@ -59,7 +59,7 @@ void initializeApp() {
 }
 ```
 
-**3. After complex variable declarations:**
+3. After complex variable declarations.
 
 ```dart
 // Good: Breathing room after complex declaration
@@ -76,7 +76,7 @@ final query = 'SELECT * FROM users WHERE id = \${userId} AND status = "\${status
 final result = executeQuery(query);
 ```
 
-**4. Before return statements (when there's prior logic):**
+4. Before return statements, when there is prior logic.
 
 ```dart
 // Good
@@ -95,9 +95,9 @@ double calculateTotal(List<Item> items) {
 }
 ```
 
-### Grouping Related Code
+### Grouping related code
 
-Group related operations, then separate groups with blank lines:
+Group related operations, then separate the groups with blank lines:
 
 ```dart
 // Good: Three clear groups
@@ -122,13 +122,13 @@ void processOrder(Order order) {
 
 ---
 
-## Early Returns and Flat Structure
+## Early returns and flat structure
 
-### The Orange Flag: Deep Nesting
+### The orange flag: deep nesting
 
 Indentation is a code smell. If you see more than 2-3 levels of nesting, refactor.
 
-### Guard Clauses First
+### Guard clauses first
 
 Handle error cases and edge conditions at the start, then proceed with the main logic.
 
@@ -189,7 +189,7 @@ Receipt processPayment(Payment payment) {
 }
 ```
 
-### Using Pattern Matching (Dart 3+)
+### Using pattern matching (Dart 3+)
 
 ```dart
 // Good: Using switch for flat structure
@@ -221,9 +221,9 @@ Future<Result> processOrder(Order order) async {
 
 ---
 
-## Variable Declaration and Grouping
+## Variable declaration and grouping
 
-### Variables at the Top
+### Variables at the top
 
 Declare variables at the start of functions when their values don't depend on intermediate computations.
 
@@ -241,9 +241,9 @@ Response handleRequest(Request req) {
 }
 ```
 
-### Declaration Proximity
+### Declaration proximity
 
-When a variable depends on prior computation, declare it near where it's used:
+When a variable depends on a prior computation, declare it near where it's used:
 
 ```dart
 // Good: Declaration follows computation
@@ -261,11 +261,11 @@ Data processData(String input) {
 
 ---
 
-## Comment Placement
+## Comment placement
 
-### Inline Comments
+### Inline comments
 
-Place inline comments on their own line above the code they describe, not at the end of lines:
+Place inline comments on their own line above the code they describe, not at the end of the line:
 
 ```dart
 // Good
@@ -280,7 +280,7 @@ if (!token.isValid()) { // Security check
 }
 ```
 
-### Section Comments
+### Section comments
 
 Use comments to mark sections of related code:
 
@@ -305,18 +305,18 @@ void initializeServer() {
 
 ---
 
-## Extraction Patterns
+## Extraction patterns
 
-### When to Extract
+### When to extract
 
 Extract code into functions when:
 
 - The logic is nested more than 2-3 levels deep
-- The function body exceeds ~30-40 lines
+- The function body exceeds roughly 30-40 lines
 - A logical unit can be named clearly
 - The same pattern appears in multiple places
 
-### Naming Extracted Functions
+### Naming extracted functions
 
 Name extracted functions for what they do, not how:
 
@@ -345,9 +345,9 @@ void checkStuff(Order order) {
 
 ---
 
-## Documentation Aesthetics
+## Documentation aesthetics
 
-### Doc Comment Structure
+### Doc comment structure
 
 ````dart
 /// Brief summary of what this does.
@@ -367,7 +367,7 @@ int myFunction(int x) {
 }
 ````
 
-### Using Documentation Macros
+### Using documentation macros
 
 Reuse documentation with Dart macros:
 
@@ -389,9 +389,9 @@ void validateOrderData(Order order) { }
 
 ---
 
-## Security and Performance Comments
+## Security and performance comments
 
-### When to Comment
+### When to comment
 
 Always add comments when code exists for security or performance reasons:
 
@@ -422,11 +422,11 @@ Categories: `Security:`, `Performance:`, `Optimization:`
 
 ---
 
-## Formatter and Linter
+## Formatter and linter
 
-### Dart/Flutter-Specific Tools
+### Dart and Flutter tools
 
-**Formatter**: `dart format` (built-in)
+Formatter: `dart format` (built-in)
 
 ```bash
 # Format specific files
@@ -439,7 +439,7 @@ dart format .
 flutter format lib/
 ```
 
-**Linter**: `dart analyze` (built-in)
+Linter: `dart analyze` (built-in)
 
 ```bash
 # Run analyzer (no auto-fix, but shows issues)
@@ -452,12 +452,12 @@ flutter analyze
 dart analyze --fatal-warnings
 ```
 
-### Workflow After Editing Dart Files
+### Workflow after editing Dart files
 
-1. **Edit**: Make your changes
-2. **Format**: `dart format <files>` or `flutter format`
-3. **Analyze**: `dart analyze` or `flutter analyze`
-4. **Fix**: Address all warnings and errors manually (Dart analyzer has limited auto-fix)
-5. **Commit**: Only commit when analyzer reports clean
+1. Edit: make your changes
+2. Format: `dart format <files>` or `flutter format`
+3. Analyze: `dart analyze` or `flutter analyze`
+4. Fix: address all warnings and errors manually (the Dart analyzer has limited auto-fix)
+5. Commit: only commit when the analyzer reports clean
 
-**Note**: Always fix all analyzer warnings. Configure lint rules in `analysis_options.yaml`. If a rule shouldn't apply, disable it with a comment explaining why.
+Note: always fix all analyzer warnings. Configure lint rules in `analysis_options.yaml`. If a rule shouldn't apply, disable it with a comment explaining why.

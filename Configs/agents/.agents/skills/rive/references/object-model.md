@@ -22,21 +22,21 @@ The names are the ones the Editor uses, so there is no separate RML object model
 
 - `Rive` is the only top-level element and must come first.
 - `version` is the RML format version, currently `1`.
-- `kind` is `fragment` for a project file you write, `bundle` for a self-contained editor export. **A fragment never declares `<Backboard>` or `<MarkupFragment>`**; in a fragment those settings live in `rive.yaml`.
-- A document is a **forest under one wrapper, not a single tree** — a flat sequence of root elements.
-- **Artboards hold scene content.** Assets, view models, converters, and enums are direct children of `<Rive>` and never nested inside an artboard.
-- A project may split across many `.rml` files in any folders; they compile as **one document**. Files compile in path order, which is the artboard order in the `.riv`.
+- `kind` is `fragment` for a project file you write, `bundle` for a self-contained editor export. A fragment never declares `<Backboard>` or `<MarkupFragment>`; in a fragment those settings live in `rive.yaml`.
+- A document is a forest under one wrapper, not a single tree: a flat sequence of root elements.
+- Artboards hold scene content. Assets, view models, converters, and enums are direct children of `<Rive>` and never nested inside an artboard.
+- A project may split across many `.rml` files in any folders; they compile as one document. Files compile in path order, which is the artboard order in the `.riv`.
 
 ## Ids and references
 
 Ids are two numbers separated by a colon (`0:12`, `14:11981`).
 
-- **One namespace across the whole document**, not one per type. A `StateMachineLayer` and a `DataConverterGroupItem` cannot both be `0:91`; duplicates are a build failure.
+- One namespace across the whole document, not one per type. A `StateMachineLayer` and a `DataConverterGroupItem` cannot both be `0:91`; duplicates are a build failure.
 - Leading zeros are malformed (`04:23` is not `4:23`). `0:0` is reserved for the editor's dangling marker.
-- **Elements only need an `id` when another element references them.** Ids are assigned for the rest at build time.
+- Elements only need an `id` when another element references them. Ids are assigned for the rest at build time.
 - References are attributes ending in `Id`: `styleId`, `scriptAssetId`, `fontAssetId`, `objectId`, `stateToId`.
 
-**Nesting fills reference properties automatically.** The referent is the *nearest matching ancestor*, not necessarily the immediate parent:
+Nesting fills reference properties automatically. The referent is the *nearest matching ancestor*, not necessarily the immediate parent:
 
 ```xml
 <LinearAnimation name="Spin" id="0:6">
@@ -49,7 +49,7 @@ Ids are two numbers separated by a colon (`0:12`, `14:11981`).
 </LinearAnimation>
 ```
 
-Some relationships are **inverted** — the parent names its child, and the child is what is being pointed at. `BindableProperty`, `KeyFrameInterpolator`, and `TargetEffect` all work this way:
+Some relationships are inverted: the parent names its child, and the child is what is being pointed at. `BindableProperty`, `KeyFrameInterpolator`, and `TargetEffect` all work this way:
 
 ```xml
 <StateTransition stateToId="0:13">
@@ -64,7 +64,7 @@ Some relationships are **inverted** — the parent names its child, and the chil
 </StateTransition>
 ```
 
-A few things are linked by **nesting alone**, with no id at all: `LayoutParticipant` inside a `Shape`/`Text`/`Image`, `Mesh` inside the `Image` it deforms, and `Skin` inside that `Mesh` or a `PointsPath`.
+A few things are linked by nesting alone, with no id at all: `LayoutParticipant` inside a `Shape`/`Text`/`Image`, `Mesh` inside the `Image` it deforms, and `Skin` inside that `Mesh` or a `PointsPath`.
 
 ## Value formats
 
@@ -73,18 +73,18 @@ A few things are linked by **nesting alone**, with no id at all: `LayoutParticip
 | Color | ARGB hex, no `#`: `colorValue="FFFF5A3C"` |
 | Boolean | `"true"` / `"false"` |
 | Enum | Prefer the name: `layoutWidthScaleType="fill"`. Integers work but skip validation |
-| Rotation | **Radians.** A full turn is `6.2831855` |
-| Animation timing | **Frames**, at the animation's `fps` (default 60) |
-| Transition duration | **Milliseconds** |
-| Fractional index | A fraction as a string: `childOrder="3/4"` (`"1"` is malformed — write `"1/1"`) |
+| Rotation | Radians. A full turn is `6.2831855` |
+| Animation timing | Frames, at the animation's `fps` (default 60) |
+| Transition duration | Milliseconds |
+| Fractional index | A fraction as a string: `childOrder="3/4"` (`"1"` is malformed, so write `"1/1"`) |
 
-Enums are the one place a typo is caught for you. An unrecognized name is an error listing the accepted values, so **prefer symbolic names over integers**:
+Enums are the one place a typo is caught for you. An unrecognized name is an error listing the accepted values, so prefer symbolic names over integers:
 
 ```
 Fill attribute blendModeValue expects an integer or one of: inherit, srcOver, screen, ...
 ```
 
-Colors are the opposite — `colorValue` accepts anything and gives whatever it cannot parse an alpha of zero, so a bad color draws nothing and reports nothing.
+Colors are the opposite: `colorValue` accepts anything and gives whatever it cannot parse an alpha of zero, so a bad color draws nothing and reports nothing.
 
 ## Type hierarchy
 
@@ -97,15 +97,15 @@ Component                        (abstract)
 │  └─ WorldTransformComponent    (abstract)  + opacity
 ```
 
-The shared transform set on every positioned object: **`x`, `y`, `rotation`, `scaleX`, `scaleY`, `opacity`** — all six animatable and bindable, and they are most of what a Rive file animates.
+The shared transform set on every positioned object is `x`, `y`, `rotation`, `scaleX`, `scaleY`, and `opacity`. All six are animatable and bindable, and they are most of what a Rive file animates.
 
 | Type | What it is |
 |---|---|
-| `Artboard` | One scene: a size and an origin. The unit a runtime displays. **It is itself a `LayoutComponent`**, so it carries a style like any other layout box |
+| `Artboard` | One scene: a size and an origin. The unit a runtime displays. It is itself a `LayoutComponent`, so it carries a style like any other layout box |
 | `Node` | Draws nothing; holds a transform its children inherit. This is the editor's *group* |
 | `Shape` | A container holding geometry and paint |
 | `Rectangle`, `Ellipse`, `Triangle`, `Polygon`, `Star` | Parametric paths |
-| `PointsPath` | A custom path — Rive's vector network |
+| `PointsPath` | A custom path, Rive's vector network |
 | `Image` | A raster, sized by its asset |
 | `Text` | Container plus style plus runs |
 | `LayoutComponent` | A drawable flex/grid box |
@@ -114,15 +114,15 @@ The shared transform set on every positioned object: **`x`, `y`, `rotation`, `sc
 | `RootBone` / `Bone` | A skeleton |
 | `Mesh` | A deformable triangulation over an image or path |
 
-There is **no `Scene` element**. "Scene" is prose for an artboard's content.
+There is no `Scene` element. "Scene" is prose for an artboard's content.
 
-**Abstract types cannot be authored.** Writing one is a build error: `Component`, `ContainerComponent`, `Drawable`, `ShapePaint`, `Constraint`, `LayerState`, `Animation`, `BlendState`, `KeyFrame`, `BindableProperty`, `ViewModelProperty`, `ViewModelInstanceValue`, and others.
+Abstract types cannot be authored. Writing one is a build error: `Component`, `ContainerComponent`, `Drawable`, `ShapePaint`, `Constraint`, `LayerState`, `Animation`, `BlendState`, `KeyFrame`, `BindableProperty`, `ViewModelProperty`, `ViewModelInstanceValue`, and others.
 
 ## Draw order
 
-**The first sibling draws on top** — front-to-back, the reverse of HTML and SVG. To bring something forward, move it earlier among its parent's children. If a shape you added is invisible, suspect this first.
+The first sibling draws on top, front-to-back, the reverse of HTML and SVG. To bring something forward, move it earlier among its parent's children. If a shape you added is invisible, suspect this first.
 
-**Paint order inside a single shape is the opposite**: paint children paint last-declared-on-top. That is what makes a glow work — feathered paint first, crisp paint after.
+Paint order inside a single shape is the opposite: paint children paint last-declared-on-top. That is what makes a glow work: feathered paint first, crisp paint after.
 
 `DrawRules` + `DrawTarget` override sibling order, but the target must be nested inside its rules or the rule silently does nothing:
 
@@ -134,7 +134,7 @@ There is **no `Scene` element**. "Scene" is prose for an artboard's content.
 
 ## Key property keys
 
-Keyframes and binds address properties by **numeric key, never by name**. `rive schema <Type>` prints the key for every property.
+Keyframes and binds address properties by numeric key, never by name. `rive schema <Type>` prints the key for every property.
 
 | Property | Key | Type |
 |---|---|---|
@@ -172,13 +172,13 @@ Keyframes and binds address properties by **numeric key, never by name**. `rive 
 | `ViewModelInstanceBoolean.propertyValue` | 593 | bool |
 | `ViewModelInstanceColor.propertyValue` | 555 | Color |
 
-Note that keys are **not unique across types**: `BindablePropertyInteger` and `BindablePropertyTrigger` share `686`, and `BindablePropertyAsset`, `Artboard`, and `ViewModel` all share `823`. The element name is the discriminator.
+Note that keys are not unique across types: `BindablePropertyInteger` and `BindablePropertyTrigger` share `686`, and `BindablePropertyAsset`, `Artboard`, and `ViewModel` all share `823`. The element name is the discriminator.
 
 `rive schema --animatable` filters to keyable properties; `--bindable` to data-bindable ones.
 
 ## Assets
 
-Assets are root elements. `file=` is an **authoring attribute** — it tells the compiler which file to embed — so `rive schema` never lists it.
+Assets are root elements. `file=` is an authoring attribute that tells the compiler which file to embed, so `rive schema` never lists it.
 
 ```xml
 <ImageAsset file="logo.png" name="logo" id="0:60"/>
@@ -188,11 +188,11 @@ Assets are root elements. `file=` is an **authoring attribute** — it tells the
 <BlobAsset file="levels.json" name="levels" id="0:81"/>
 ```
 
-SVG and Lottie are **editor-only**: `SVGAsset` and `LottieAsset` are stripped on export, and the conversion from those formats to real Rive objects does not exist in this toolchain. Convert upstream.
+SVG and Lottie are editor-only: `SVGAsset` and `LottieAsset` are stripped on export, and the conversion from those formats to real Rive objects does not exist in this toolchain. Convert upstream.
 
 ## Components
 
-To make a scene nestable, **all four steps are required and none is validated**:
+To make a scene nestable, all four steps are required and none is validated:
 
 ```xml
 <!-- 1. the artboard, 2. marked as a component -->
@@ -244,18 +244,18 @@ A minimal complete file to start from:
 </Rive>
 ```
 
-`rive docs skeleton` prints this. **Every artboard needs a `defaultStateMachineId` and a `LayoutComponentStyle`** — without a state machine, data binds are never applied and pointer input is never routed, though animations still play, so the file does not look dead.
+`rive docs skeleton` prints this. Every artboard needs a `defaultStateMachineId` and a `LayoutComponentStyle`. Without a state machine, data binds are never applied and pointer input is never routed, though animations still play, so the file does not look dead.
 
 ## Where to go deeper
 
 `rive docs <topic>`:
 
-- `format` — the RML format, including both nesting-reference tables and the full property list
-- `skeleton` — a complete file to start from
-- `transforms` — groups, transforms, opacity, draw order
-- `drawing` — shapes, paint, gradients, images
-- `assets` — images, fonts, audio, shaders, blobs
-- `layout` — responsive layout
-- `data` — view models, data binding, enums, custom properties
-- `gotchas` — things that fail quietly, ordered by cost
-- `README` — the `problems` taxonomy and what each check does not cover
+- `format`: the RML format, including both nesting-reference tables and the full property list
+- `skeleton`: a complete file to start from
+- `transforms`: groups, transforms, opacity, draw order
+- `drawing`: shapes, paint, gradients, images
+- `assets`: images, fonts, audio, shaders, blobs
+- `layout`: responsive layout
+- `data`: view models, data binding, enums, custom properties
+- `gotchas`: things that fail quietly, ordered by cost
+- `README`: the `problems` taxonomy and what each check does not cover

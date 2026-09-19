@@ -1,28 +1,28 @@
-# TypeScript Style Guide - Visual Aesthetics
+# TypeScript style guide: visual aesthetics
 
-This guide focuses on the visual presentation and layout of TypeScript code—whitespace placement, comment positioning, and code organization for maximum readability. It does not cover which functions to use or language feature choices.
+This guide focuses on the visual presentation and layout of TypeScript code: whitespace placement, comment positioning, and code organization for readability. It does not cover which functions to use or language feature choices.
 
-## Table of Contents
+## Table of contents
 
-1. [Whitespace and Visual Breathing Room](#whitespace-and-visual-breathing-room)
-2. [Early Returns and Flat Structure](#early-returns-and-flat-structure)
-3. [Variable Declaration and Grouping](#variable-declaration-and-grouping)
-4. [Comment Placement](#comment-placement)
-5. [Extraction Patterns](#extraction-patterns)
-6. [Documentation Aesthetics](#documentation-aesthetics)
-7. [Security and Performance Comments](#security-and-performance-comments)
+1. [Whitespace and visual breathing room](#whitespace-and-visual-breathing-room)
+2. [Early returns and flat structure](#early-returns-and-flat-structure)
+3. [Variable declaration and grouping](#variable-declaration-and-grouping)
+4. [Comment placement](#comment-placement)
+5. [Extraction patterns](#extraction-patterns)
+6. [Documentation aesthetics](#documentation-aesthetics)
+7. [Security and performance comments](#security-and-performance-comments)
 
 ---
 
-## Whitespace and Visual Breathing Room
+## Whitespace and visual breathing room
 
-### The Rule
+### The rule
 
 Blank lines are semantic. They separate concepts and give the reader time to process.
 
-### Where to Add Blank Lines
+### Where to add blank lines
 
-**1. Before control flow statements:**
+1. Before control flow statements.
 
 ```typescript
 // Good
@@ -39,7 +39,7 @@ if (config.isValid()) {
 }
 ```
 
-**2. Between logical groups:**
+2. Between logical groups.
 
 ```typescript
 // Good: Three distinct groups separated by blank lines
@@ -59,7 +59,7 @@ function initializeApp(): App {
 }
 ```
 
-**3. After complex variable declarations:**
+3. After complex variable declarations.
 
 ```typescript
 // Good: Breathing room after complex declaration
@@ -77,7 +77,7 @@ const query =
 const result = executeQuery(query);
 ```
 
-**4. Before return statements (when there's prior logic):**
+4. Before return statements, when there is prior logic.
 
 ```typescript
 // Good
@@ -96,9 +96,9 @@ function calculateTotal(items: Item[]): number {
 }
 ```
 
-### Grouping Related Code
+### Grouping related code
 
-Group related operations, then separate groups with blank lines:
+Group related operations, then separate the groups with blank lines:
 
 ```typescript
 // Good: Three clear groups
@@ -123,13 +123,13 @@ function processOrder(order: Order): void {
 
 ---
 
-## Early Returns and Flat Structure
+## Early returns and flat structure
 
-### The Orange Flag: Deep Nesting
+### The orange flag: deep nesting
 
 Indentation is a code smell. If you see more than 2-3 levels of nesting, refactor.
 
-### Guard Clauses First
+### Guard clauses first
 
 Handle error cases and edge conditions at the start, then proceed with the main logic.
 
@@ -190,7 +190,7 @@ async function processPayment(payment: Payment): Promise<Receipt> {
 }
 ```
 
-### Using Early Returns with try/catch
+### Using early returns with try/catch
 
 ```typescript
 // ❌ Avoid: Nested try/catch
@@ -238,9 +238,9 @@ async function loadData(): Promise<Data> {
 
 ---
 
-## Variable Declaration and Grouping
+## Variable declaration and grouping
 
-### Variables at the Top
+### Variables at the top
 
 Declare variables at the start of functions when their values don't depend on intermediate computations.
 
@@ -258,9 +258,9 @@ function handleRequest(req: Request): Response {
 }
 ```
 
-### Declaration Proximity
+### Declaration proximity
 
-When a variable depends on prior computation, declare it near where it's used:
+When a variable depends on a prior computation, declare it near where it's used:
 
 ```typescript
 // Good: Declaration follows computation
@@ -278,11 +278,11 @@ function processData(input: string): Data {
 
 ---
 
-## Comment Placement
+## Comment placement
 
-### Inline Comments
+### Inline comments
 
-Place inline comments on their own line above the code they describe, not at the end of lines:
+Place inline comments on their own line above the code they describe, not at the end of the line:
 
 ```typescript
 // Good
@@ -297,7 +297,7 @@ if (!token.isValid()) { // Security check
 }
 ```
 
-### Section Comments
+### Section comments
 
 Use comments to mark sections of related code:
 
@@ -322,18 +322,18 @@ function initializeServer(): void {
 
 ---
 
-## Extraction Patterns
+## Extraction patterns
 
-### When to Extract
+### When to extract
 
 Extract code into functions when:
 
 - The logic is nested more than 2-3 levels deep
-- The function body exceeds ~30-40 lines
+- The function body exceeds roughly 30-40 lines
 - A logical unit can be named clearly
 - The same pattern appears in multiple places
 
-### Naming Extracted Functions
+### Naming extracted functions
 
 Name extracted functions for what they do, not how:
 
@@ -362,9 +362,9 @@ function checkStuff(order: Order): void {
 
 ---
 
-## Documentation Aesthetics
+## Documentation aesthetics
 
-### Doc Comment Structure
+### Doc comment structure
 
 ````typescript
 /**
@@ -384,15 +384,15 @@ function myFunction(x: number): number {
 }
 ````
 
-### Reusable Documentation with MDT
+### Reusable documentation with MDT
 
 Use MDT templates or JSDoc `@template` for reusable documentation blocks.
 
 ---
 
-## Security and Performance Comments
+## Security and performance comments
 
-### When to Comment
+### When to comment
 
 Always add comments when code exists for security or performance reasons:
 
@@ -424,11 +424,11 @@ Categories: `Security:`, `Performance:`, `Optimization:`
 
 ---
 
-## Formatter and Linter
+## Formatter and linter
 
-### TypeScript/JavaScript-Specific Tools
+### TypeScript and JavaScript tools
 
-**Formatter**: `prettier` (or `dprint`)
+Formatter: `prettier` (or `dprint`)
 
 ```bash
 # Format specific files with prettier
@@ -441,7 +441,7 @@ npx prettier --write .
 npx dprint fmt src/main.ts
 ```
 
-**Linter**: `eslint`
+Linter: `eslint`
 
 ```bash
 # Run eslint with auto-fix first
@@ -454,12 +454,12 @@ npx eslint .
 npx eslint . --max-warnings 0
 ```
 
-### Workflow After Editing TypeScript Files
+### Workflow after editing TypeScript files
 
-1. **Edit**: Make your changes
-2. **Format**: `npx prettier --write <files>`
-3. **Auto-fix**: `npx eslint . --fix`
-4. **Check**: `npx eslint . --max-warnings 0` - fix any remaining issues manually
-5. **Commit**: Only commit when eslint reports clean
+1. Edit: make your changes
+2. Format: `npx prettier --write <files>`
+3. Auto-fix: `npx eslint . --fix`
+4. Check: `npx eslint . --max-warnings 0`, then fix any remaining issues manually
+5. Commit: only commit when eslint reports clean
 
-**Note**: Always fix all eslint warnings. If a warning shouldn't exist, disable it in `.eslintrc` with a comment explaining why.
+Note: always fix all eslint warnings. If a warning shouldn't exist, disable it in `.eslintrc` with a comment explaining why.

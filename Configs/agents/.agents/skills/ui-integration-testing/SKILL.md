@@ -3,13 +3,13 @@ name: ui-integration-testing
 description: Use whenever a project needs UI tests or integration-test setup for Flutter, Patrol, Playwright, React, or another app framework.
 ---
 
-# UI Integration Testing
+# UI integration testing
 
 Optimize for confidence per maintenance cost. Default to integration tests for user-visible behavior: exercise real components together, interact through the public UI, and assert outcomes a user can observe.
 
 ## Choose the test level
 
-Choose the lowest level that crosses every boundary needed to prove the use case—not the smallest unit that happens to execute the changed line.
+Choose the lowest level that crosses every boundary needed to prove the use case, not the smallest unit that happens to execute the changed line.
 
 | Level | Use it for |
 | --- | --- |

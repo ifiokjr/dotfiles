@@ -1,30 +1,30 @@
-# Rust Style Guide - Visual Aesthetics
+# Rust style guide: visual aesthetics
 
-This guide focuses on the visual presentation and layout of Rust code—whitespace placement, comment positioning, and code organization for maximum readability. It does not cover which functions to use or language feature choices.
+This guide focuses on the visual presentation and layout of Rust code: whitespace placement, comment positioning, and code organization for readability. It does not cover which functions to use or language feature choices.
 
-## Table of Contents
+## Table of contents
 
-1. [Whitespace and Visual Breathing Room](#whitespace-and-visual-breathing-room)
-2. [Sequential Control Flow Statements](#sequential-control-flow-statements)
-3. [Early Returns and Flat Structure](#early-returns-and-flat-structure)
-4. [Variable Declaration and Grouping](#variable-declaration-and-grouping)
-5. [Comment Placement](#comment-placement)
-6. [Extraction Patterns](#extraction-patterns)
-7. [Documentation Aesthetics](#documentation-aesthetics)
-8. [Security and Performance Comments](#security-and-performance-comments)
-9. [Formatter and Linter](#formatter-and-linter)
+1. [Whitespace and visual breathing room](#whitespace-and-visual-breathing-room)
+2. [Sequential control flow statements](#sequential-control-flow-statements)
+3. [Early returns and flat structure](#early-returns-and-flat-structure)
+4. [Variable declaration and grouping](#variable-declaration-and-grouping)
+5. [Comment placement](#comment-placement)
+6. [Extraction patterns](#extraction-patterns)
+7. [Documentation aesthetics](#documentation-aesthetics)
+8. [Security and performance comments](#security-and-performance-comments)
+9. [Formatter and linter](#formatter-and-linter)
 
 ---
 
-## Whitespace and Visual Breathing Room
+## Whitespace and visual breathing room
 
-### The Rule
+### The rule
 
 Blank lines are semantic. They separate concepts and give the reader time to process.
 
-### Where to Add Blank Lines
+### Where to add blank lines
 
-**1. Before control flow statements:**
+1. Before control flow statements.
 
 ```rust
 // Good
@@ -41,7 +41,7 @@ if config.is_valid() {
 }
 ```
 
-**2. Between logical groups:**
+2. Between logical groups.
 
 ```rust
 // Good: Three distinct groups separated by blank lines
@@ -61,7 +61,7 @@ fn initialize_app() -> Result<App, Error> {
 }
 ```
 
-**3. After complex variable declarations:**
+3. After complex variable declarations.
 
 ```rust
 // Good: Breathing room after complex declaration
@@ -78,7 +78,7 @@ let query = format!("SELECT * FROM users WHERE id = {} AND status = '{}'", user_
 let result = execute_query(&query)?;
 ```
 
-**4. Before return statements (when there's prior logic):**
+4. Before return statements, when there is prior logic.
 
 ```rust
 // Good
@@ -97,9 +97,9 @@ fn calculate_total(items: &[Item]) -> f64 {
 }
 ```
 
-### Grouping Related Code
+### Grouping related code
 
-Group related operations, then separate groups with blank lines:
+Group related operations, then separate the groups with blank lines:
 
 ```rust
 // Good: Three clear groups
@@ -122,11 +122,11 @@ fn process_order(order: Order) {
 }
 ```
 
-### Sequential Control Flow Statements
+### Sequential control flow statements
 
-**Rule**: Sequential `if` statements, `for` loops, `match` statements, etc. should each have a blank line before them.
+Sequential `if` statements, `for` loops, `match` statements, etc. should each have a blank line before them.
 
-**The Principle**: Code should never feel cramped or hurried. Each control flow statement deserves its own space.
+Code should never feel cramped or hurried. Each control flow statement deserves its own space.
 
 ```rust
 // ❌ Avoid: Cramped sequential control flow
@@ -161,11 +161,11 @@ fn validate_input(input: &str) -> Result<(), Error> {
 }
 ```
 
-### The Orange Flag: Deep Nesting
+### The orange flag: deep nesting
 
 Indentation is a code smell. If you see more than 2-3 levels of nesting, refactor.
 
-### Guard Clauses First
+### Guard clauses first
 
 Handle error cases and edge conditions at the start, then proceed with the main logic.
 
@@ -220,7 +220,7 @@ fn process_payment(payment: &Payment) -> Result<Receipt, Error> {
 }
 ```
 
-### Using the `?` Operator for Flatness
+### Using the `?` operator for flatness
 
 ```rust
 // ❌ Avoid: Nested match statements
@@ -245,9 +245,9 @@ fn load_config() -> Result<Config, Error> {
 }
 ```
 
-### Using `let-else` for Early Returns
+### Using `let-else` for early returns
 
-`let-else` is a powerful construct for destructuring with an early return in the else branch. Like sequential if statements, each `let-else` should have a blank line before it.
+`let-else` destructures a value and returns early from the else branch. Like sequential if statements, each `let-else` should have a blank line before it.
 
 ```rust
 // ❌ Avoid: Nested match or if-let
@@ -323,9 +323,9 @@ fn extract_config(data: &Value) -> Result<Config, Error> {
 
 ---
 
-## Variable Declaration and Grouping
+## Variable declaration and grouping
 
-### Variables at the Top
+### Variables at the top
 
 Declare variables at the start of functions when their values don't depend on intermediate computations.
 
@@ -343,9 +343,9 @@ fn handle_request(req: Request) -> Response {
 }
 ```
 
-### Declaration Proximity
+### Declaration proximity
 
-When a variable depends on prior computation, declare it near where it's used:
+When a variable depends on a prior computation, declare it near where it's used:
 
 ```rust
 // Good: Declaration follows computation
@@ -363,11 +363,11 @@ fn process_data(input: &str) -> Result<Data, Error> {
 
 ---
 
-## Comment Placement
+## Comment placement
 
-### Inline Comments
+### Inline comments
 
-Place inline comments on their own line above the code they describe, not at the end of lines:
+Place inline comments on their own line above the code they describe, not at the end of the line:
 
 ```rust
 // Good
@@ -382,7 +382,7 @@ if !token.is_valid() { // Security check
 }
 ```
 
-### Section Comments
+### Section comments
 
 Use comments to mark sections of related code:
 
@@ -407,18 +407,18 @@ fn initialize_server() {
 
 ---
 
-## Extraction Patterns
+## Extraction patterns
 
-### When to Extract
+### When to extract
 
 Extract code into functions when:
 
 - The logic is nested more than 2-3 levels deep
-- The function body exceeds ~30-40 lines
+- The function body exceeds roughly 30-40 lines
 - A logical unit can be named clearly
 - The same pattern appears in multiple places
 
-### Naming Extracted Functions
+### Naming extracted functions
 
 Name extracted functions for what they do, not how:
 
@@ -449,9 +449,9 @@ fn check_stuff(order: &Order) {
 
 ---
 
-## Documentation Aesthetics
+## Documentation aesthetics
 
-### Doc Comment Structure
+### Doc comment structure
 
 ````rust
 /// Brief summary of what this does.
@@ -469,15 +469,15 @@ fn my_function(x: i32) -> i32 {
 }
 ````
 
-### Using Documentation Macros
+### Using documentation macros
 
 Reuse documentation with Rust's `#[doc = ...]` or macro-generated docs.
 
 ---
 
-## Security and Performance Comments
+## Security and performance comments
 
-### When to Comment
+### When to comment
 
 Always add comments when code exists for security or performance reasons:
 
@@ -510,11 +510,11 @@ Categories: `Security:`, `Performance:`, `Safety:`, `Optimization:`
 
 ---
 
-## Formatter and Linter
+## Formatter and linter
 
-### Rust-Specific Tools
+### Rust-specific tools
 
-**Formatter**: `rustfmt`
+Formatter: `rustfmt`
 
 ```bash
 # Format specific files
@@ -524,7 +524,7 @@ cargo fmt -- src/main.rs src/lib.rs
 cargo fmt
 ```
 
-**Linter**: `clippy`
+Linter: `clippy`
 
 ```bash
 # Run clippy with auto-fix first
@@ -537,12 +537,12 @@ cargo clippy
 cargo clippy -- -D warnings
 ```
 
-### Workflow After Editing Rust Files
+### Workflow after editing Rust files
 
-1. **Edit**: Make your changes
-2. **Format**: `cargo fmt`
-3. **Auto-fix**: `cargo clippy --fix`
-4. **Check**: `cargo clippy` - fix any remaining issues manually
-5. **Commit**: Only commit when clippy reports clean
+1. Edit: make your changes
+2. Format: `cargo fmt`
+3. Auto-fix: `cargo clippy --fix`
+4. Check: `cargo clippy`, then fix any remaining issues manually
+5. Commit: only commit when clippy reports clean
 
-**Note**: Always fix all clippy warnings. If a warning shouldn't exist, add an allow attribute with a comment explaining why, or configure it in `.clippy.toml` or `clippy.toml`.
+Note: always fix all clippy warnings. If a warning shouldn't exist, add an allow attribute with a comment explaining why, or configure it in `.clippy.toml` or `clippy.toml`.
