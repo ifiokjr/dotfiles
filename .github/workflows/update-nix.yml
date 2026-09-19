@@ -22,7 +22,7 @@ jobs:
       pull-requests: write # Required to open the automated pull request.
     steps:
       - name: 📥 checkout repository
-        uses: actions/checkout@v6.1.0 # v6
+        uses: actions/checkout@v7.0.1 # v7
         with:
           persist-credentials: false
 
