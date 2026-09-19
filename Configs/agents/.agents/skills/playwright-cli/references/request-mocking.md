@@ -1,8 +1,8 @@
-# Request Mocking
+# Request mocking
 
 Intercept, mock, modify, and block network requests.
 
-## CLI Route Commands
+## CLI route commands
 
 ```bash
 # Mock with custom status
@@ -25,7 +25,7 @@ playwright-cli unroute "**/*.jpg"
 playwright-cli unroute
 ```
 
-## URL Patterns
+## URL patterns
 
 ```
 **/api/users           - Exact path match
@@ -34,11 +34,11 @@ playwright-cli unroute
 **/search?q=*          - Match query parameters
 ```
 
-## Advanced Mocking with run-code
+## Advanced mocking with run-code
 
 For conditional responses, request body inspection, response modification, or delays:
 
-### Conditional Response Based on Request
+### Conditional response based on a request
 
 ```bash
 playwright-cli run-code "async page => {
@@ -53,7 +53,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-### Modify Real Response
+### Modify a real response
 
 ```bash
 playwright-cli run-code "async page => {
@@ -66,7 +66,7 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-### Simulate Network Failures
+### Simulate network failures
 
 ```bash
 playwright-cli run-code "async page => {
@@ -75,7 +75,7 @@ playwright-cli run-code "async page => {
 # Options: connectionrefused, timedout, connectionreset, internetdisconnected
 ```
 
-### Delayed Response
+### Delayed response
 
 ```bash
 playwright-cli run-code "async page => {

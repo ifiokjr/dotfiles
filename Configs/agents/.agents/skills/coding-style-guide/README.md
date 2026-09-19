@@ -1,33 +1,33 @@
 # @ifi/coding-style-guide
 
-A code aesthetics and layout guide focused on **how code looks**—whitespace placement, comment positioning, visual organization, and readability. This is not about which functions or language features to use; it's about making code visually simple and readable.
+A code aesthetics and layout guide focused on how code looks: whitespace placement, comment positioning, visual organization, and readability. This is not about which functions or language features to use; it is about making code visually simple and readable.
 
-> **Note**: This guide does not dictate which functions, methods, or language features to use. Those decisions belong to other skills (e.g., a Rust patterns skill or a Flutter architecture skill). This skill is purely about the _visual presentation_ of code.
+> Note: This guide does not dictate which functions, methods, or language features to use. Those decisions belong to other skills (e.g., a Rust patterns skill or a Flutter architecture skill). This skill is purely about the _visual presentation_ of code.
 
-## 🎯 Philosophy
+## Philosophy
 
-**Simple code is better than complex code.**
+Simple code is better than complex code.
 
-This is a general truth. Wherever possible, choose the simpler, neater solution—unless it hinders performance or security. Code is read far more often than it is written, so optimize for the reader.
+This is a general truth. Wherever possible, choose the simpler, neater solution, unless it hinders performance or security. Code is read far more often than it is written, so optimize for the reader.
 
 This style guide prioritizes:
 
-1. **Visual breathing room**: Code needs space to be understood
-2. **Early clarity**: State what's happening upfront, exit early from bad states
-3. **Flat over deep**: Indentation is a code smell; prefer early returns
-4. **Explanation of exceptions**: When you must add complexity for security or performance, explain why
+1. Visual breathing room: code needs space to be understood.
+2. Early clarity: state what's happening upfront, and exit early from bad states.
+3. Flat over deep: indentation is a code smell, so prefer early returns.
+4. Explanation of exceptions: when you must add complexity for security or performance, explain why.
 
-## 📚 What's Included
+## What's included
 
-### Core Principles
+### Core principles
 
-- **Simplicity First**: Choose the simpler solution unless security or performance require complexity
-- **Whitespace Is Semantics**: Blank lines separate concepts and give the reader breathing room
-- **Early Returns**: Guard clauses and flat structure over deep nesting
-- **Variables at the Top**: Declare state upfront when possible
-- **Security/Performance Comments**: Explain why when complexity is required
+- Simplicity first: choose the simpler solution unless security or performance require complexity.
+- Whitespace is semantics: blank lines separate concepts and give the reader breathing room.
+- Early returns: use guard clauses and flat structure over deep nesting.
+- Variables at the top: declare state upfront when possible.
+- Security and performance comments: explain why when complexity is required.
 
-### Language-Specific Guides
+### Language-specific guides
 
 | Language                                | Focus                                               |
 | --------------------------------------- | --------------------------------------------------- |
@@ -36,25 +36,25 @@ This style guide prioritizes:
 | [Python](./languages/PYTHON.md)         | Whitespace, early returns, documentation aesthetics |
 | [Dart](./languages/DART.md)             | Whitespace, early returns, documentation aesthetics |
 
-## 🚀 Quick Start
+## Quick start
 
-### For New Projects
+### For new projects
 
-1. **Read the main guide**: [SKILL.md](./SKILL.md)
-2. **Choose your language**: Rust, TypeScript, Python, or Dart
-3. **Apply visual patterns**: Whitespace, early returns, flat structure
-4. **Set up formatters**: Always use automated formatters (rustfmt, prettier, black, dartfmt)
+1. Read the main guide: [SKILL.md](./SKILL.md)
+2. Choose your language: Rust, TypeScript, Python, or Dart
+3. Apply the visual patterns: whitespace, early returns, flat structure
+4. Set up formatters: always use automated formatters (rustfmt, prettier, black, dartfmt)
 
-### For Existing Projects
+### For existing projects
 
-1. **Review the visual patterns**: Look at examples in your language guide
-2. **Apply incrementally**: Start with whitespace and early returns
-3. **Document complexity**: Add comments explaining security/performance choices
-4. **Extract when nested**: Break deep nesting into smaller functions
+1. Review the visual patterns in your language guide
+2. Apply them incrementally, starting with whitespace and early returns
+3. Document complexity with comments explaining security or performance choices
+4. Extract deeply nested code into smaller functions
 
-## 📖 Key Patterns
+## Key patterns
 
-### Simplicity First
+### Simplicity first
 
 ```
 Given two implementations that achieve the same goal,
@@ -67,7 +67,7 @@ choose the one that:
 Exception: When security or performance requires complexity
 ```
 
-When you must introduce complexity, **always add a comment explaining why**:
+When you must introduce complexity, always add a comment explaining why:
 
 ```rust
 // Security: We must validate the signature before parsing
@@ -77,9 +77,9 @@ if !is_valid_signature(input) {
 }
 ```
 
-### Early Returns Example
+### Early returns example
 
-**❌ Avoid:**
+Avoid:
 
 ```rust
 if let Some(user) = request.user {
@@ -91,7 +91,7 @@ if let Some(user) = request.user {
 }
 ```
 
-**✅ Prefer:**
+Prefer:
 
 ```rust
 let user = request.user.ok_or(Error::NoUser)?;
@@ -107,7 +107,7 @@ if !user.has_permission("write") {
 // Happy path is now clear and at top level
 ```
 
-### Whitespace Is Semantics
+### Whitespace is semantics
 
 ```rust
 // Good: Three clear groups
@@ -131,60 +131,60 @@ fn process_order(order: Order) {
 }
 ```
 
-## 🔧 Tool Integration
+## Tool integration
 
 ### Formatters
 
-This style guide **complements** automated formatters:
+This style guide complements automated formatters:
 
-- **Always use**: `rustfmt`, `prettier`, `black`, `dartfmt`, `dprint`
-- **This guide covers**: Blank line placement, grouping, early return patterns, comment positioning
-- **Formatters cover**: Indentation, trailing commas, spacing around operators, line length
+- Always use: `rustfmt`, `prettier`, `black`, `dartfmt`, `dprint`
+- This guide covers: blank line placement, grouping, early return patterns, comment positioning.
+- Formatters cover: indentation, trailing commas, spacing around operators, line length.
 
 Never fight the formatter on mechanical details. This guide addresses aesthetic choices that formatters don't make.
 
-### Always Run the Formatter After Editing
+### Always run the formatter after editing
 
-**Rule**: After editing any code file or markdown file, always run the project's formatter.
+After editing any code file or markdown file, always run the project's formatter.
 
-- **dprint** - Universal formatter for many languages
-- **prettier** - JavaScript, TypeScript, CSS, HTML, Markdown
-- **rustfmt** - Rust
-- **black** - Python
-- **dartfmt** - Dart/Flutter
+- dprint: many languages
+- prettier: JavaScript, TypeScript, CSS, HTML, Markdown
+- rustfmt: Rust
+- black: Python
+- dartfmt: Dart and Flutter
 
 Run the formatter on the specific files you edited. Auto-formatted code is essential for consistent codebases.
 
-### Always Run the Linter and Fix All Issues
+### Always run the linter and fix all issues
 
-**Rule**: Unless the linter is very slow, run the project's linter after editing files.
+Unless the linter is very slow, run the project's linter after editing files.
 
-**Warnings Are Errors**: Treat all linter warnings as errors. If a warning shouldn't exist, remove it from the lint settings.
+Treat all linter warnings as errors. If a warning shouldn't exist, remove it from the lint settings.
 
-**Workflow**:
+Workflow:
 
 1. Edit files
-2. Run formatter
-3. Run linter with auto-fix first
-4. Run linter again and fix remaining issues manually
+2. Run the formatter
+3. Run the linter with auto-fix first
+4. Run the linter again and fix remaining issues manually
 
-## 📋 Summary
+## Summary
 
 | Principle              | Rule                                            | Exception                                            |
 | ---------------------- | ----------------------------------------------- | ---------------------------------------------------- |
-| **Simplicity**         | Choose the simpler solution                     | When security or performance requires complexity     |
-| **Whitespace**         | Blank lines before control flow, between groups | Short, tightly-coupled operations                    |
-| **Variable placement** | Declare at top when possible                    | When value depends on prior computation              |
-| **Nesting**            | Avoid more than 2-3 levels deep                 | When language idioms require it                      |
-| **Comments**           | Explain why, not what                           | Security and performance require explanation of what |
-| **Extraction**         | Break complex logic into small functions        | When it hurts performance                            |
-| **Formatting**         | Run formatter after every edit                  | N/A - Always run it                                  |
-| **Linting**            | Run linter after edits, fix all issues          | Only skip if linter is very slow                     |
+| Simplicity             | Choose the simpler solution                     | When security or performance requires complexity     |
+| Whitespace             | Blank lines before control flow, between groups | Short, tightly coupled operations                    |
+| Variable placement     | Declare at top when possible                    | When the value depends on a prior computation        |
+| Nesting                | Avoid more than 2-3 levels deep                 | When language idioms require it                      |
+| Comments               | Explain why, not what                           | Security and performance require explanation of what |
+| Extraction             | Break complex logic into small functions        | When it hurts performance                            |
+| Formatting             | Run the formatter after every edit              | Always run it                                        |
+| Linting                | Run the linter after edits, fix all issues      | Only skip if the linter is very slow                 |
 
-## 📄 License
+## License
 
-MIT - See [LICENSE](./LICENSE) for details.
+MIT. See [LICENSE](./LICENSE) for details.
 
 ---
 
-_"Code is read far more often than it is written."_ — Write for your future self and your teammates.
+_"Code is read far more often than it is written."_ Write for your future self and your teammates.

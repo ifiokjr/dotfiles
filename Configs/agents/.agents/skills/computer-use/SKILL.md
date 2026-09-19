@@ -3,7 +3,7 @@ name: computer-use
 description: Control local Mac apps through Computer Use when a task requires reading or operating app UI. Prefer a purpose-built connector, API, or CLI when available.
 ---
 
-# Computer Use
+# Computer use
 
 Use the `computer-use` MCP server for local macOS UI automation. The server can
 list apps, read accessibility state and screenshots, click, type, scroll, drag,

@@ -4,7 +4,7 @@ description: Use whenever a task requires driving a real browser with playwright
 allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)
 ---
 
-# Browser Automation with playwright-cli
+# Browser automation with playwright-cli
 
 ## Quick start
 
@@ -167,7 +167,7 @@ playwright-cli video-stop
 playwright-cli video-show-actions --duration=600 --position=top-right
 playwright-cli video-hide-actions
 
-# launch the dashboard for UI review / design feedback — user annotates the page, you receive the annotated screenshot, snapshot, and notes
+# launch the dashboard for UI review / design feedback. The user annotates the page, and you receive the annotated screenshot, snapshot, and notes
 playwright-cli show --annotate
 
 # generate a Playwright locator for an element from its ref or selector
@@ -183,7 +183,7 @@ playwright-cli highlight --hide
 
 ## Raw output
 
-The global `--raw` option strips page status, generated code, and snapshot sections from the output, returning only the result value. Use it to pipe command output into other tools. Commands that don't produce output return nothing.
+The global `--raw` option strips page status, generated code, and snapshot sections from the output, so the command returns only the result value. Use it to pipe command output into other tools. Commands that don't produce output return nothing.
 
 ```bash
 playwright-cli --raw eval "JSON.stringify(performance.timing)" | jq '.loadEventEnd - .navigationStart'
@@ -196,7 +196,7 @@ TOKEN=$(playwright-cli --raw cookie-get session_id)
 playwright-cli --raw localstorage-get theme
 ```
 
-For structured output wrapping every reply as JSON, pass --json
+Pass --json to wrap every reply as JSON
 ```bash
 playwright-cli list --json
 ```
@@ -305,7 +305,7 @@ playwright-cli click "getByRole('button', { name: 'Submit' })"
 playwright-cli click "getByTestId('submit-button')"
 ```
 
-## Browser Sessions
+## Browser sessions
 
 ```bash
 # create new browser session named "mysession" with persistent profile
@@ -392,11 +392,11 @@ playwright-cli show --annotate
 
 ## Specific tasks
 
-* **Running and Debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
+* **Running and debugging Playwright tests** [references/playwright-tests.md](references/playwright-tests.md)
 * **Request mocking** [references/request-mocking.md](references/request-mocking.md)
 * **Running Playwright code** [references/running-code.md](references/running-code.md)
 * **Browser session management** [references/session-management.md](references/session-management.md)
-* **Spec-driven testing (plan / generate / heal)** [references/spec-driven-testing.md](references/spec-driven-testing.md)
+* **Spec-driven testing (plan, generate, heal)** [references/spec-driven-testing.md](references/spec-driven-testing.md)
 * **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
 * **Test generation** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)

@@ -3,30 +3,30 @@ name: git-workflow
 description: Use whenever work requires Git branches, worktrees, commits, rebases, merges, conflict resolution, or history cleanup.
 ---
 
-# Git Workflow
+# Git workflow
 
 Help with Git operations and workflow best practices.
 
-## Core Principles
+## Core principles
 
 ### 1. Commit early and often
 
-**Make small, frequent commits rather than accumulating large batches of changes.**
+Make small, frequent commits rather than accumulating large batches of changes.
 
-- Commit after every logical unit of work — even if it's just "wip: explore approach" or "wip: add failing test"
+- Commit after every logical unit of work, even if the commit is only "wip: explore approach" or "wip: add failing test"
 - A commit is cheap; losing work is expensive
 - Small commits make reviews easier, bisection faster, and rollbacks safer
-- Don't wait until everything is "perfect" — a messy commit history can be cleaned later with interactive rebase
+- Don't wait until everything is "perfect". A messy commit history can be cleaned later with interactive rebase
 - Prefer `git commit -m "wip: <description>"` over leaving work uncommitted for long stretches
 
 ### 2. Use `git stash` instead of discarding
 
-**When you need to clear or reset uncommitted work, never just delete it — stash it with an explanation.**
+When you need to clear or reset uncommitted work, never just delete it. Stash it with an explanation.
 
 - Use `git stash push -m "<reason>: <description>"` to preserve work and record _why_ it was stashed
 - The stash remains in Git history and can be recovered via `git stash list` or `git reflog`
 - This protects against mistakes, dead ends that turn out to be useful later, or context lost during interruptions
-- If you later decide the stashed work is truly worthless — only then drop it explicitly with `git stash drop <stash>`
+- If you later decide the stashed work is truly worthless, drop it explicitly with `git stash drop <stash>`
 - Explaining the stash in the message also helps future-you (or the next agent) understand what was happening
 
 Example:
@@ -43,29 +43,29 @@ git stash push -m "interrupted: switching to urgent bugfix PR #123"
 
 ### 3. Use worktrees for new work
 
-**Start new work in a fresh worktree rather than working directly on `main` or the current branch.**
+Start new work in a fresh worktree rather than working directly on `main` or the current branch.
 
 - Create a worktree for every distinct task or feature: `git worktree add -b feat/description ../worktrees/feat-description`
-- **Create worktrees outside the repository checkout**, as a sibling directory (e.g. `../worktrees/`) — never as a nested folder inside the repo. Nested worktrees show up as untracked noise in `git status`, get swept into builds, searches, and linters that walk the tree, and make the main repo's worktree management and cleanup harder
+- Create worktrees outside the repository checkout, as a sibling directory (e.g. `../worktrees/`), never as a nested folder inside the repo. Nested worktrees show up as untracked noise in `git status`, get swept into builds, searches, and linters that walk the tree, and make the main repo's worktree management and cleanup harder
 - Keeps `main` clean and available for quick reference, hotfixes, or parallel reviews
 - Eliminates risk of accidentally committing work-in-progress to the trunk
 - Makes it safe to run tests, builds, and linting in isolation without polluting the main checkout
-- When done, remove the worktree: `git worktree remove <path>` — the branch remains for PR/merge
+- When done, remove the worktree with `git worktree remove <path>`. The branch remains for PR/merge
 - If the project has a worktree management extension or script, prefer that over raw `git worktree` commands
 
 ### 4. Clean up history before sharing
 
-**Never merge or push to `origin` while `wip:` commits remain in the stack, unless the user explicitly says otherwise.**
+Never merge or push to `origin` while `wip:` commits remain in the stack, unless the user explicitly says otherwise.
 
-- WIP commits are for _local_ iteration only — they are checkpoints, not publication-ready units
+- WIP commits are for _local_ iteration only. They are checkpoints, not publication-ready units
 - Before pushing or opening a PR, restructure history so every commit is a logical, self-contained unit of work
-- Each commit should tell a clear story: what changed, why it changed, and ideally be independently buildable/testable
+- Each commit should say what changed and why, and should ideally build and test on its own
 - Squash related `wip:` commits using interactive rebase: `git rebase -i main`
 - Rename `wip:` commits to proper Conventional Commit messages that describe the final intent
-- If a commit cannot stand on its own (e.g. "wip: broken test"), squash it into the commit that makes it pass
+- If a commit does not build or test on its own (e.g. "wip: broken test"), squash it into the commit that makes it pass
 - Only ever push `wip:` commits to `origin` if the user explicitly requests it (e.g. "just push what I have")
 
-Example — cleaning up before a PR:
+Example: cleaning up before a PR
 
 ```bash
 # Check what's in the stack
@@ -83,22 +83,22 @@ git rebase -i main
 git push origin feat/widget-rendering
 ```
 
-See also [Core Principle #1: Commit early and often](#1-commit-early-and-often) — commit freely with `wip:` during development, but clean up before sharing.
+See also [Core Principle #1: Commit early and often](#1-commit-early-and-often). Commit freely with `wip:` during development, but clean up before sharing.
 
 ### 5. Stack related changes as stacked pull requests
 
-**When a unit of work splits into related, dependent changes, default to a stack of small pull requests instead of one giant PR or a branch that needs constant rebasing onto `main`.**
+When a unit of work splits into related, dependent changes, default to a stack of small pull requests instead of one giant PR or a branch that needs constant rebasing onto `main`.
 
 - GitHub natively supports stacked pull requests (public preview): each PR targets the layer below it, shows only its own diff, and displays a stack map showing where it fits in the whole change
-- When a lower layer merges, GitHub automatically rebases and retargets every PR above it — this removes the need to rebase onto `main` after every merge
-- Build and manage stacks from the terminal with the official `github/gh-stack` extension — see [Stacked pull requests](#stacked-pull-requests) for the command flow
+- When a lower layer merges, GitHub automatically rebases and retargets every PR above it. This removes the need to rebase onto `main` after every merge
+- Build and manage stacks from the terminal with the official `github/gh-stack` extension. See [Stacked pull requests](#stacked-pull-requests) for the command flow
 - [Core Principle #4: Clean up history before sharing](#4-clean-up-history-before-sharing) applies per layer: clean each branch's commits before `gh stack submit`
 - Squash remains the merge method: `gh stack merge --squash` lands a stack without violating a squash-only repo policy
 - Preview caveats: all branches in a stack must live in the same repository (no fork stacks), and merge queue support is still rolling out
 
 ## Capabilities
 
-### Branch Strategy
+### Branch strategy
 
 ```bash
 # Check current state
@@ -109,9 +109,9 @@ git status
 
 Recommend branching strategy based on project:
 
-- **Solo**: main + feature branches
-- **Team**: main + develop + feature/fix branches
-- **Release**: GitFlow (main/develop/release/hotfix)
+- Solo: main + feature branches
+- Team: main + develop + feature/fix branches
+- Release: GitFlow (main/develop/release/hotfix)
 
 ### Worktree-aware workflow
 
@@ -124,19 +124,19 @@ git rev-parse --git-common-dir
 git worktree list --porcelain
 ```
 
-**Prefer worktrees for all new work.** See [Core Principle #3: Use worktrees for new work](#3-use-worktrees-for-new-work).
+Prefer worktrees for all new work. See [Core Principle #3: Use worktrees for new work](#3-use-worktrees-for-new-work).
 
 If the oh-pi worktree extension is available, prefer:
 
-- `/worktree status` or `git rev-parse --show-toplevel` — show the current worktree and repo root
-- `/worktree list` or `git worktree list --porcelain` — show all repo worktrees
+- `/worktree status` or `git rev-parse --show-toplevel` shows the current worktree and repo root
+- `/worktree list` or `git worktree list --porcelain` shows all repo worktrees
 
 For pi-owned worktrees:
 
 - always record a human-readable purpose when creating one
 - preserve owner/session metadata if the tool supports it so cleanup decisions stay explainable
 - only clean up worktrees you own by default
-- do **not** clean external/manual worktrees unless the user explicitly asks
+- do not clean external or manual worktrees unless the user explicitly asks
 
 When finishing work in a worktree:
 
@@ -144,7 +144,7 @@ When finishing work in a worktree:
 2. Open a PR from the worktree branch
 3. Remove the worktree after merge: `git worktree remove <path>`
 
-### Commit Messages
+### Commit messages
 
 Follow Conventional Commits
 
@@ -175,15 +175,15 @@ Clean up before opening a PR:
 git rebase -i main  # squash related wip commits
 ```
 
-But **never leave work uncommitted for long** — stash or commit, don't let it sit dirty.
+But never leave work uncommitted for long. Stash or commit, don't let it sit dirty.
 
-### PR Workflow
+### PR workflow
 
-1. `git diff main --stat` — Review changes
+1. Review changes with `git diff main --stat`
 2. Generate PR title and description
 3. Suggest reviewers based on changed files (`git log --format='%an' -- <files>`)
 
-If the work splits into related, dependent changes, prefer a stack of PRs — see [Stacked pull requests](#stacked-pull-requests).
+If the work splits into related, dependent changes, prefer a stack of PRs. See [Stacked pull requests](#stacked-pull-requests).
 
 ### Stacked pull requests
 
@@ -208,12 +208,12 @@ gh stack merge --yes --squash              # land the stack with squash merges
 - `gh stack rebase` cascade-rebases the whole stack after edits; `--continue`/`--abort` behave like `git rebase`
 - Merging the top ready PR lands every unmerged layer below it in one operation; merging a lower layer leaves the PRs above it open, automatically rebased and retargeted
 - `gh stack merge` is all-or-nothing up to the chosen PR; branch protection rules still apply at merge time
-- `gh stack modify` opens an interactive TUI for reordering, folding, or dropping layers — avoid it in agent runs unless the user asks
+- `gh stack modify` opens an interactive TUI for reordering, folding, or dropping layers. Avoid it in agent runs unless the user asks
 - Use `gh stack link` when branches and PRs already exist but are not yet linked as a stack
 
 ### PR link in summaries
 
-When a PR has been opened, **always include the full GitHub PR URL** in any summary or status update you provide. This makes it easy for the user to click through to the PR directly.
+When a PR has been opened, always include the full GitHub PR URL in any summary or status update you provide. This makes it easy for the user to click through to the PR directly.
 
 Example summary format:
 
@@ -225,7 +225,7 @@ Use `gh pr view --json url --jq .url` to retrieve the URL if you do not already 
 
 ### Attaching images and screenshots with the GitHub CLI
 
-`gh` 2.99.0+ uploads images and videos directly when creating or editing PRs, issues, and comments — no browser round-trip:
+`gh` 2.99.0+ uploads images and videos directly when creating or editing PRs, issues, and comments, with no browser round-trip:
 
 ```bash
 gh pr create --title "..." --body "..." --attach './before.png#Before' --attach './after.png#After'
@@ -238,16 +238,16 @@ gh issue comment --attach ./regression.webm
 - A local path already referenced in the body (e.g. `![alt](./login.png)`) is rewritten in place to point at the uploaded asset
 - Formats: PNG, JPEG, GIF, WebP, SVG, MP4, MOV, WebM; 10 MB max for images, 10 MB video on free plans (100 MB on paid)
 
-**Hard rule — never upload secrets or personal images via `--attach`. This is absolute and has no exceptions.**
+**Never upload secrets or personal images via `--attach`.** This is absolute and has no exceptions.
 
-- Never attach images containing tokens, API keys, passwords, `.env` contents, SSH keys, or terminal output showing secret material — in this repo that includes any `msr`/`msload`/1Password output
+- Never attach images containing tokens, API keys, passwords, `.env` contents, SSH keys, or terminal output showing secret material. In this repo, that includes any `msr`/`msload`/1Password output
 - Never attach personal images: private photos, identity documents, other people's personal information, or screenshots exposing browser tabs, bookmarks, or account pages
-- Uploaded assets land on GitHub's CDN where **anyone with the URL can view them**, and they cannot be reliably deleted afterwards — treat every upload as permanent and public
-- Read the image before attaching it; redact or crop anything sensitive. If in doubt, do not upload it — describe it in text instead
+- Uploaded assets land on GitHub's CDN where anyone with the URL can view them, and they cannot be reliably deleted afterwards. Treat every upload as permanent and public
+- Read the image before attaching it; redact or crop anything sensitive. If in doubt, do not upload it. Describe it in text instead
 
 ### Non-interactive safety for agent-run Git/GitHub commands
 
-When **the agent** runs `git` or `gh`, avoid opening an interactive editor or prompt.
+When the agent runs `git` or `gh`, avoid opening an interactive editor or prompt.
 
 A lot of Git entrypoints use different editor config keys, so avoid surprises by disabling both:
 
@@ -276,14 +276,14 @@ GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true git -c core.editor=true -c sequence.edi
   ```
 - Only allow interactive editors/prompts when the user explicitly asks the agent to leave them enabled.
 
-### Conflict Resolution
+### Conflict resolution
 
-1. `git diff --name-only --diff-filter=U` — Find conflicted files
+1. Find conflicted files with `git diff --name-only --diff-filter=U`
 2. Read each conflicted file
 3. Understand both sides of the conflict
 4. Resolve with minimal changes preserving intent from both sides
 
-### Interactive Rebase
+### Interactive rebase
 
 Guide through `git rebase -i` for cleaning up history before PR.
 

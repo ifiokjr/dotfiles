@@ -1,6 +1,6 @@
-# Running Playwright Tests
+# Running Playwright tests
 
-To run Playwright tests, use the `npx playwright test` command, or a package manager script. To avoid opening the interactive html report, use `PLAYWRIGHT_HTML_OPEN=never` environment variable.
+To run Playwright tests, use the `npx playwright test` command or a package manager script. To avoid opening the interactive HTML report, set the `PLAYWRIGHT_HTML_OPEN=never` environment variable.
 
 ```bash
 # Run all tests
@@ -10,13 +10,13 @@ PLAYWRIGHT_HTML_OPEN=never npx playwright test
 PLAYWRIGHT_HTML_OPEN=never npm run special-test-command
 ```
 
-# Debugging Playwright Tests
+# Debugging Playwright tests
 
-To debug a failing Playwright test, run it with `--debug=cli` option. This command will pause the test at the start and print the debugging instructions.
+To debug a failing Playwright test, run it with the `--debug=cli` option. The command pauses the test at the start and prints the debugging instructions.
 
-**IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed. Make sure to stop the command after you have finished.
+Run the command in the background and check the output until "Debugging Instructions" is printed. Stop the command after you have finished.
 
-Once instructions containing a session name are printed, use `playwright-cli` to attach the session and explore the page.
+Once the output prints instructions containing a session name, use `playwright-cli` to attach to the session and explore the page.
 
 ```bash
 # Run the test
@@ -30,10 +30,10 @@ playwright-cli attach tw-abcdef
 ```
 
 Keep the test running in the background while you explore and look for a fix.
-The test is paused at the start, so you should step over or pause at a particular location
-where the problem is most likely to be.
+The test is paused at the start, so step forward or pause at the location where the problem
+is most likely to occur.
 
 Every action you perform with `playwright-cli` generates corresponding Playwright TypeScript code.
-This code appears in the output and can be copied directly into the test. Most of the time, a specific locator or an expectation should be updated, but it could also be a bug in the app. Use your judgement.
+This code appears in the output and can be copied directly into the test. Most of the time you need to update a specific locator or an expectation, but it could also be a bug in the app. Use your judgement.
 
-After fixing the test, stop the background test run. Rerun to check that test passes.
+After fixing the test, stop the background test run and rerun it to check that the test passes.

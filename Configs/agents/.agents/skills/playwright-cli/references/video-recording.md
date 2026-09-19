@@ -1,8 +1,8 @@
-# Video Recording
+# Video recording
 
 Capture browser automation sessions as video for debugging, documentation, or verification. Produces WebM (VP8/VP9 codec).
 
-## Basic Recording
+## Basic recording
 
 ```bash
 # Open browser first
@@ -27,9 +27,9 @@ playwright-cli fill e2 "test input"
 playwright-cli video-stop
 ```
 
-## Best Practices
+## Best practices
 
-### 1. Use Descriptive Filenames
+### 1. Use descriptive filenames
 
 ```bash
 # Include context in filename
@@ -37,23 +37,23 @@ playwright-cli video-start recordings/login-flow-2024-01-15.webm
 playwright-cli video-start recordings/checkout-test-run-42.webm
 ```
 
-### 2. Record entire hero scripts.
+### 2. Record entire hero scripts
 
-When recording a video for the user or as a proof of work, it is best to create a code snippet and execute it with run-code.
+When recording a video for the user or as proof of work, it is best to create a code snippet and execute it with run-code.
 It allows inserting appropriate pauses between the actions and annotating the video. There are new Playwright APIs for that.
 
-1) Perform scenario using CLI and take note of all locators and actions. You'll need those locators to request their bounding boxes for highlight.
-2) Create a file with the intended script for video (below). Use pressSequentially w/ delay for nice typing, make reasonable pauses.
+1) Perform the scenario using the CLI and take note of all locators and actions. You'll need those locators to request their bounding boxes for highlight.
+2) Create a file with the intended script for video (below). Use pressSequentially with delay for nice typing, and make reasonable pauses.
 3) Use playwright-cli run-code --filename your-script.js
 
-**Important**: Overlays are `pointer-events: none` — they do not interfere with page interactions. You can safely keep sticky overlays visible while clicking, filling, or performing any actions on the page.
+Overlays are `pointer-events: none`, so they do not interfere with page interactions. You can safely keep sticky overlays visible while clicking, filling, or performing any actions on the page.
 
 ```js
 async page => {
   await page.screencast.start({ path: 'video.webm', size: { width: 1280, height: 800 } });
   await page.goto('https://demo.playwright.dev/todomvc');
 
-  // Show a chapter card — blurs the page and shows a dialog.
+  // Show a chapter card. It blurs the page and shows a dialog.
   // Blocks until duration expires, then auto-removes.
   // Use this for simple use cases, but always feel free to hand-craft your own beautiful
   // overlay via await page.screencast.showOverlay().
@@ -117,18 +117,18 @@ async page => {
 }
 ```
 
-Embrace creativity, overlays are powerful.
+Overlays accept arbitrary HTML, so you can build any callout, label, or highlight the recording needs.
 
-### Overlay API Summary
+### Overlay API summary
 
-| Method | Use Case |
+| Method | Use case |
 |--------|----------|
-| `page.screencast.showChapter(title, { description?, duration?, styleSheet? })` | Full-screen chapter card with blurred backdrop — ideal for section transitions |
-| `page.screencast.showOverlay(html, { duration? })` | Custom HTML overlay — use for callouts, labels, highlights |
+| `page.screencast.showChapter(title, { description?, duration?, styleSheet? })` | Full-screen chapter card with blurred backdrop, ideal for section transitions |
+| `page.screencast.showOverlay(html, { duration? })` | Custom HTML overlay, use for callouts, labels, and highlights |
 | `disposable.dispose()` | Remove a sticky overlay added without duration |
 | `page.screencast.hideOverlays()` / `page.screencast.showOverlays()` | Temporarily hide/show all overlays |
 
-## Tracing vs Video
+## Tracing vs video
 
 | Feature | Video | Tracing |
 |---------|-------|---------|

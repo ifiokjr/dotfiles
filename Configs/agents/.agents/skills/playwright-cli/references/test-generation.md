@@ -1,13 +1,13 @@
-# Test Generation
+# Test generation
 
 Generate Playwright test code automatically as you interact with the browser.
 
-## How It Works
+## How it works
 
 Every action you perform with `playwright-cli` generates corresponding Playwright TypeScript code.
 This code appears in the output and can be copied directly into your test files.
 
-## Example Workflow
+## Example workflow
 
 ```bash
 # Start a session
@@ -17,7 +17,7 @@ playwright-cli open https://example.com/login
 playwright-cli snapshot
 # Output shows: e1 [textbox "Email"], e2 [textbox "Password"], e3 [button "Sign In"]
 
-# Fill form fields - generates code automatically
+# Fill form fields, which generates code automatically
 playwright-cli fill e1 "user@example.com"
 # Ran Playwright code:
 # await page.getByRole('textbox', { name: 'Email' }).fill('user@example.com');
@@ -31,7 +31,7 @@ playwright-cli click e3
 # await page.getByRole('button', { name: 'Sign In' }).click();
 ```
 
-## Building a Test File
+## Building a test file
 
 Collect the generated code into a Playwright test:
 
@@ -50,21 +50,21 @@ test('login flow', async ({ page }) => {
 });
 ```
 
-## Best Practices
+## Best practices
 
-### 1. Use Semantic Locators
+### 1. Use semantic locators
 
-The generated code uses role-based locators when possible, which are more resilient:
+The generated code uses role-based locators when possible, because they are more resilient:
 
 ```typescript
-// Generated (good - semantic)
+// Generated (good, semantic)
 await page.getByRole('button', { name: 'Submit' }).click();
 
-// Avoid (fragile - CSS selectors)
+// Avoid (fragile CSS selectors)
 await page.locator('#submit-btn').click();
 ```
 
-### 2. Explore Before Recording
+### 2. Explore before recording
 
 Take snapshots to understand the page structure before recording actions:
 
@@ -75,21 +75,21 @@ playwright-cli snapshot
 playwright-cli click e5
 ```
 
-### 3. Add Assertions Manually
+### 3. Add assertions manually
 
 Generated code captures actions but not assertions. Add expectations in your test using one of the recommended matchers:
 
-- `toBeVisible()` — element is rendered and visible
-- `toHaveText(text)` — element text content matches
-- `toHaveValue(value) / toBeEmpty()` — input/select value matches
-- `toBeChecked() / toBeUnchecked()` — checkbox state matches
-- `toMatchAriaSnapshot(snapshot)` — page (or locator) matches a partial accessibility snapshot
+- `toBeVisible()` checks that the element is rendered and visible.
+- `toHaveText(text)` checks that the element text content matches.
+- `toHaveValue(value) / toBeEmpty()` checks that the input or select value matches.
+- `toBeChecked() / toBeUnchecked()` checks that the checkbox state matches.
+- `toMatchAriaSnapshot(snapshot)` checks that the page or locator matches a partial accessibility snapshot.
 
 Use `playwright-cli generate-locator <target>` to produce the locator expression for the assertion, and the snapshot/eval commands to capture the expected value.
 
-When asserting text content, make sure that generated locator does not contain text from the element itself. `getByTestId()` or `getByLabel()` usually work well with asserting text. When locator is text-based, prefer `toBeVisible()` instead.
+When asserting text content, make sure the generated locator does not contain text from the element itself. `getByTestId()` or `getByLabel()` usually work well with asserting text. When the locator is text-based, prefer `toBeVisible()` instead.
 
-Snapshot to be matched does not have to contain all the information - only capture what's necessary for the assertion. You can use regular expressions for unstable values.
+The snapshot to be matched does not have to contain all the information. Capture only what is necessary for the assertion. You can use regular expressions for unstable values.
 
 ```bash
 # Get a stable locator for an element ref to use in the assertion

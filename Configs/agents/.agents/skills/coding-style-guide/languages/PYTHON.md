@@ -1,28 +1,28 @@
-# Python Style Guide - Visual Aesthetics
+# Python style guide: visual aesthetics
 
-This guide focuses on the visual presentation and layout of Python code—whitespace placement, comment positioning, and code organization for maximum readability. It does not cover which functions to use or language feature choices.
+This guide focuses on the visual presentation and layout of Python code: whitespace placement, comment positioning, and code organization for readability. It does not cover which functions to use or language feature choices.
 
-## Table of Contents
+## Table of contents
 
-1. [Whitespace and Visual Breathing Room](#whitespace-and-visual-breathing-room)
-2. [Early Returns and Flat Structure](#early-returns-and-flat-structure)
-3. [Variable Declaration and Grouping](#variable-declaration-and-grouping)
-4. [Comment Placement](#comment-placement)
-5. [Extraction Patterns](#extraction-patterns)
-6. [Documentation Aesthetics](#documentation-aesthetics)
-7. [Security and Performance Comments](#security-and-performance-comments)
+1. [Whitespace and visual breathing room](#whitespace-and-visual-breathing-room)
+2. [Early returns and flat structure](#early-returns-and-flat-structure)
+3. [Variable declaration and grouping](#variable-declaration-and-grouping)
+4. [Comment placement](#comment-placement)
+5. [Extraction patterns](#extraction-patterns)
+6. [Documentation aesthetics](#documentation-aesthetics)
+7. [Security and performance comments](#security-and-performance-comments)
 
 ---
 
-## Whitespace and Visual Breathing Room
+## Whitespace and visual breathing room
 
-### The Rule
+### The rule
 
 Blank lines are semantic. They separate concepts and give the reader time to process.
 
-### Where to Add Blank Lines
+### Where to add blank lines
 
-**1. Before control flow statements:**
+1. Before control flow statements.
 
 ```python
 # Good
@@ -37,7 +37,7 @@ if config.is_valid():
   process_config(config)
 ```
 
-**2. Between logical groups:**
+2. Between logical groups.
 
 ```python
 # Good: Three distinct groups separated by blank lines
@@ -56,7 +56,7 @@ def initialize_app():
   return App(services)
 ```
 
-**3. After complex variable declarations:**
+3. After complex variable declarations.
 
 ```python
 # Good: Breathing room after complex declaration
@@ -73,7 +73,7 @@ query = f"SELECT * FROM users WHERE id = {user_id} AND status = '{status}'"
 result = execute_query(query)
 ```
 
-**4. Before return statements (when there's prior logic):**
+4. Before return statements, when there is prior logic.
 
 ```python
 # Good
@@ -91,9 +91,9 @@ def calculate_total(items: list[Item]) -> float:
   return subtotal + tax
 ```
 
-### Grouping Related Code
+### Grouping related code
 
-Group related operations, then separate groups with blank lines:
+Group related operations, then separate the groups with blank lines:
 
 ```python
 # Good: Three clear groups
@@ -115,13 +115,13 @@ def process_order(order: Order) -> None:
 
 ---
 
-## Early Returns and Flat Structure
+## Early returns and flat structure
 
-### The Orange Flag: Deep Nesting
+### The orange flag: deep nesting
 
 Indentation is a code smell. If you see more than 2-3 levels of nesting, refactor.
 
-### Guard Clauses First
+### Guard clauses first
 
 Handle error cases and edge conditions at the start, then proceed with the main logic.
 
@@ -171,7 +171,7 @@ def process_payment(payment: Payment) -> Receipt:
   return charge_card(card, payment.amount)
 ```
 
-### Using Early Continue in Loops
+### Using early continue in loops
 
 ```python
 # ❌ Avoid: Deeply nested loop processing
@@ -211,9 +211,9 @@ def process_records(records: list[Record]) -> list[ProcessedRecord]:
 
 ---
 
-## Variable Declaration and Grouping
+## Variable declaration and grouping
 
-### Variables at the Top
+### Variables at the top
 
 Declare variables at the start of functions when their values don't depend on intermediate computations.
 
@@ -230,9 +230,9 @@ def handle_request(req: Request) -> Response:
   return process_request(req)
 ```
 
-### Declaration Proximity
+### Declaration proximity
 
-When a variable depends on prior computation, declare it near where it's used:
+When a variable depends on a prior computation, declare it near where it's used:
 
 ```python
 # Good: Declaration follows computation
@@ -249,11 +249,11 @@ def process_data(input: str) -> Data:
 
 ---
 
-## Comment Placement
+## Comment placement
 
-### Inline Comments
+### Inline comments
 
-Place inline comments on their own line above the code they describe, not at the end of lines:
+Place inline comments on their own line above the code they describe, not at the end of the line:
 
 ```python
 # Good
@@ -266,7 +266,7 @@ if not token.is_valid():  # Security check
   raise UnauthorizedError()
 ```
 
-### Section Comments
+### Section comments
 
 Use comments to mark sections of related code:
 
@@ -290,18 +290,18 @@ def initialize_server():
 
 ---
 
-## Extraction Patterns
+## Extraction patterns
 
-### When to Extract
+### When to extract
 
 Extract code into functions when:
 
 - The logic is nested more than 2-3 levels deep
-- The function body exceeds ~30-40 lines
+- The function body exceeds roughly 30-40 lines
 - A logical unit can be named clearly
 - The same pattern appears in multiple places
 
-### Naming Extracted Functions
+### Naming extracted functions
 
 Name extracted functions for what they do, not how:
 
@@ -325,9 +325,9 @@ def check_stuff(order: Order):
 
 ---
 
-## Documentation Aesthetics
+## Documentation aesthetics
 
-### Docstring Structure
+### Docstring structure
 
 ```python
 def my_function(x: int) -> int:
@@ -346,9 +346,9 @@ def my_function(x: int) -> int:
 
 ---
 
-## Security and Performance Comments
+## Security and performance comments
 
-### When to Comment
+### When to comment
 
 Always add comments when code exists for security or performance reasons:
 
@@ -379,11 +379,11 @@ Categories: `Security:`, `Performance:`, `Optimization:`
 
 ---
 
-## Formatter and Linter
+## Formatter and linter
 
-### Python-Specific Tools
+### Python-specific tools
 
-**Formatter**: `black` (or `ruff format`)
+Formatter: `black` (or `ruff format`)
 
 ```bash
 # Format specific files with black
@@ -396,7 +396,7 @@ black .
 ruff format src/main.py
 ```
 
-**Linter**: `ruff` (or `pylint`, `flake8`)
+Linter: `ruff` (or `pylint`, `flake8`)
 
 ```bash
 # Run ruff check with auto-fix first
@@ -409,12 +409,12 @@ ruff check .
 ruff check --select ALL .
 ```
 
-### Workflow After Editing Python Files
+### Workflow after editing Python files
 
-1. **Edit**: Make your changes
-2. **Format**: `black <files>` or `ruff format <files>`
-3. **Auto-fix**: `ruff check --fix .`
-4. **Check**: `ruff check .` - fix any remaining issues manually
-5. **Commit**: Only commit when ruff reports clean
+1. Edit: make your changes
+2. Format: `black <files>` or `ruff format <files>`
+3. Auto-fix: `ruff check --fix .`
+4. Check: `ruff check .`, then fix any remaining issues manually
+5. Commit: only commit when ruff reports clean
 
-**Note**: Always fix all linter warnings. If a warning shouldn't exist, disable it in `pyproject.toml` or setup.cfg with a comment explaining why.
+Note: always fix all linter warnings. If a warning shouldn't exist, disable it in `pyproject.toml` or setup.cfg with a comment explaining why.

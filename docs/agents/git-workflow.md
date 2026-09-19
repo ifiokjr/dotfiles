@@ -23,7 +23,7 @@
 - Keep `squash` as the merge method (`gh stack merge --squash`).
 - When a lower layer merges, GitHub automatically rebases and retargets the PRs above it.
 - Stacked PRs are in public preview: all branches must be in the same repository (no forks), and merge queue support is still rolling out.
-- Clean history per layer before `gh stack submit` — no `wip:` commits.
+- Clean history per layer before `gh stack submit`, with no `wip:` commits.
 
 ## Agent Branch Flow
 

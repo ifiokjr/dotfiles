@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/cursor/plugins",
 	"ref": "main",
-	"resolvedSha": "be432a96ed36e48d05f44bf375864355f62263f9",
+	"resolvedSha": "e31650eea443aaea1e84cc15d88c13f40080b275",
 	"skills": [
 		"principle-prove-it-works",
 		"principle-type-system-discipline",

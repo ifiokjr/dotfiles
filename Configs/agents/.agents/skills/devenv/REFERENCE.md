@@ -1,4 +1,4 @@
-# devenv Reference
+# devenv reference
 
 ## Recommended `devenv.nix` layout
 
@@ -113,9 +113,9 @@ Each script in the `scripts` block accepts:
 
 ## Key variables available in `exec`
 
-- `$DEVENV_ROOT` — project root directory
-- `$DEVENV_PROFILE` — path to the devenv profile (contains `bin/`)
-- `$PWD` — current working directory
+- `$DEVENV_ROOT` is the project root directory
+- `$DEVENV_PROFILE` is the path to the devenv profile (contains `bin/`)
+- `$PWD` is the current working directory
 
 ## `enterShell` best practices
 

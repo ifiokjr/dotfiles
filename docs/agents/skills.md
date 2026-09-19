@@ -11,8 +11,10 @@ Current dotfiles-managed skills:
 - `computer-use`: Path: `Configs/agents/.agents/skills/computer-use/SKILL.md`
 - `devenv`: Path: `Configs/agents/.agents/skills/devenv/SKILL.md`
 - `dotfiles`: Path: `Configs/agents/.agents/skills/dotfiles/SKILL.md`
+- `github`: Path: `Configs/agents/.agents/skills/github/SKILL.md`
 - `git-workflow`: Path: `Configs/agents/.agents/skills/git-workflow/SKILL.md`
 - `playwright-cli`: Path: `Configs/agents/.agents/skills/playwright-cli/SKILL.md`
+- `solana-audit`: Path: `Configs/agents/.agents/skills/solana-audit/SKILL.md`
 
 Managed P-Stack selection, in priority order:
 
@@ -57,15 +59,19 @@ This selection comes from [`leancodepl/patrol`](https://github.com/leancodepl/pa
 
 Managed package skill selections, one skill per package. Unlike the branch-tracked selections above, each package selection tracks the repository's latest GitHub release rather than the branch head, so skill content always matches a released package version (and the version Nix installs, since the Nix packages build release artifacts). Their manifests record the resolved release tag:
 
-1. `mdt`: Path: `Configs/agents/.agents/skills/mdt/SKILL.md` — from [`ifiokjr/mdt`](https://github.com/ifiokjr/mdt/tree/main/packages/m-d-t__skills/skills/mdt), tracked in `Configs/agents/.agents/skills/.mdt-source.json`
-2. `monochange`: Path: `Configs/agents/.agents/skills/monochange/SKILL.md` — from [`monochange/monochange`](https://github.com/monochange/monochange/tree/main/packages/monochange__skill), tracked in `Configs/agents/.agents/skills/.monochange-source.json`
-3. `pina`: Path: `Configs/agents/.agents/skills/pina/SKILL.md` — from [`pina-rs/pina`](https://github.com/pina-rs/pina/tree/main/packages/pina__skill), tracked in `Configs/agents/.agents/skills/.pina-source.json`
+1. `mdt`: Path: `Configs/agents/.agents/skills/mdt/SKILL.md`, from [`ifiokjr/mdt`](https://github.com/ifiokjr/mdt/tree/main/packages/m-d-t__skills/skills/mdt), tracked in `Configs/agents/.agents/skills/.mdt-source.json`
+2. `monochange`: Path: `Configs/agents/.agents/skills/monochange/SKILL.md`, from [`monochange/monochange`](https://github.com/monochange/monochange/tree/main/packages/monochange__skill), tracked in `Configs/agents/.agents/skills/.monochange-source.json`
+3. `pina`: Path: `Configs/agents/.agents/skills/pina/SKILL.md`, from [`pina-rs/pina`](https://github.com/pina-rs/pina/tree/main/packages/pina__skill), tracked in `Configs/agents/.agents/skills/.pina-source.json`
 
 The local `ui-integration-testing` skill translates behavior-first testing principles into shared strategy for Flutter, Patrol, Playwright, and other UI frameworks. Path: `Configs/agents/.agents/skills/ui-integration-testing/SKILL.md`.
 
 The locally authored `coding-style-guide` skill defines a code aesthetics and layout guide (whitespace placement, early returns, comment positioning, readability) with per-language guides for Rust, TypeScript, Python, and Dart. It is published standalone at [`ifiokjr/coding-style-guide`](https://github.com/ifiokjr/coding-style-guide); this copy is the canonical source. Path: `Configs/agents/.agents/skills/coding-style-guide/SKILL.md`.
 
-The locally authored `rive` skill covers authoring Rive animations and interactive graphics as text with the `rive` CLI — RML scenes, Luau scripts, WGSL shaders, state machines, and view models — including the render-and-look verification loop and the silent-failure classes that pass a clean build. The binary comes from `ifiokjr/nixpkgs` (`extra.rive-cli` in `home.nix`), which publishes prebuilt artifacts only for `aarch64-darwin` and `x86_64-linux`, so it is gated to those two systems. Path: `Configs/agents/.agents/skills/rive/SKILL.md`.
+The locally authored `rive` skill covers authoring Rive animations and interactive graphics as text with the `rive` CLI: RML scenes, Luau scripts, WGSL shaders, state machines, and view models. It includes the render-and-look verification loop and the silent-failure classes that pass a clean build. The binary comes from `ifiokjr/nixpkgs` (`extra.rive-cli` in `home.nix`), which publishes prebuilt artifacts only for `aarch64-darwin` and `x86_64-linux`, so it is gated to those two systems. Path: `Configs/agents/.agents/skills/rive/SKILL.md`.
+
+The locally authored `solana-audit` skill is a deep security audit workflow for Solana codebases. It covers the sealevel-attacks vulnerability taxonomy with detection heuristics and a ripgrep pack, EVM and cross-ecosystem vulnerability classes with an EVM to Solana mapping, the exploit history of Solana and the wider blockchain ecosystem with root causes, release and deployment and operations security (upgrade authority, multisig timelocks, verified builds, supply chain, incident response), an index of audited open-source Solana programs with links to their public audit reports, and a phased methodology with a tooling matrix and report template. It triggers on any security audit or review request for anything Solana-related, even when the codebase contains no on-chain program code. Path: `Configs/agents/.agents/skills/solana-audit/SKILL.md`.
+
+The locally authored `github` skill is an inventory of recent GitHub features, led by native stacked pull requests and file and video attachments through the `gh` CLI. It exists because model training data lags GitHub's release cadence, so the agent otherwise defaults to older workflows. Path: `Configs/agents/.agents/skills/github/SKILL.md`.
 
 `dot rebuild --update` refreshes all externally managed selections from their configured branches (or, for the package selections, their latest GitHub releases), updates their source manifests, and runs the `agents` setup hooks once so new or removed skill files are reflected under `~/.agents/skills`. `dot reload` runs the same hooks after a repository update. The Matt Pocock, Patrol, mdt, monochange, and pina selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly. Codex skips symlinked `SKILL.md` files when scanning, so the `agents` post hook links each managed skill directory into `~/.codex/skills`, pointing at the repo copy where the files are real.
 

@@ -3,7 +3,7 @@ name: devenv
 description: Use for every task in a project with devenv.nix, or whenever the user asks about devenv setup, scripts, shells, or processes.
 ---
 
-# devenv Skill
+# devenv skill
 
 ## Activation
 
@@ -26,20 +26,20 @@ devenv shell <script-name>
 
 ## Core rules
 
-1. **Prefer devenv scripts over raw commands.** When a `scripts` block exists in `devenv.nix`,
+1. Prefer devenv scripts over raw commands. When a `scripts` block exists in `devenv.nix`,
    always use the script name instead of the underlying command.
 
    ```bash
-   # ✅ Preferred
+   # Preferred
    devenv shell lint:all
    devenv shell test:all
 
-   # ❌ Avoid
+   # Avoid
    cargo clippy --workspace --all-features -- -D warnings
    pnpm test
    ```
 
-2. **Use `devenv shell <command>` when direct commands fail.** If `pnpm`, `cargo`, or other
+2. Use `devenv shell <command>` when direct commands fail. If `pnpm`, `cargo`, or other
    project tools are not on PATH, prefix with `devenv shell`:
 
    ```bash
@@ -47,10 +47,10 @@ devenv shell <script-name>
    devenv shell cargo build --workspace
    ```
 
-3. **Use `devenv test` to enter the shell** for interactive work or to verify the environment
+3. Use `devenv test` to enter the shell for interactive work or to verify the environment
    is correctly set up.
 
-4. **Check `devenv.nix` scripts before inventing commands.** Always read the `scripts` block to
+4. Check `devenv.nix` scripts before inventing commands. Always read the `scripts` block to
    find existing task names before running raw commands.
 
 ## Common patterns
@@ -98,19 +98,19 @@ use `devenv shell <script-name>`.
 
 The user's preferred `devenv.nix` layout uses colon-separated namespaced scripts:
 
-- `build:*` — build tasks
-- `test:*` — test tasks
-- `lint:*` — lint and check tasks
-- `fix:*` — autofix tasks
-- `install:*` — dependency installation tasks
-- `update:*` — update tasks
-- `docs:*` — documentation tasks
-- `coverage:*` — coverage tasks
-- `snapshot:*` — snapshot update/review tasks
-- `setup:*` — editor/tool setup tasks
-- `clean:*` — cleanup tasks
-- `deny:check` — security/license checks
-- `publish:check` — publication dry-run checks
+- `build:*` runs build tasks
+- `test:*` runs test tasks
+- `lint:*` runs lint and check tasks
+- `fix:*` runs autofix tasks
+- `install:*` runs dependency installation tasks
+- `update:*` runs update tasks
+- `docs:*` runs documentation tasks
+- `coverage:*` runs coverage tasks
+- `snapshot:*` runs snapshot update and review tasks
+- `setup:*` runs editor and tool setup tasks
+- `clean:*` runs cleanup tasks
+- `deny:check` runs security and license checks
+- `publish:check` runs publication dry-run checks
 
 ## See also
 
