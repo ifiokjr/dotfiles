@@ -31,7 +31,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@1b63ccb2112410e1ca7a2a493a886fa9a754f7bd # v3.22.4
+        uses: DeterminateSystems/flakehub-cache-action@83282a8aef353db1d659d3bacf4a28b6683de0b3 # v3.22.5
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
@@ -126,7 +126,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@1b63ccb2112410e1ca7a2a493a886fa9a754f7bd # v3.22.4
+        uses: DeterminateSystems/flakehub-cache-action@83282a8aef353db1d659d3bacf4a28b6683de0b3 # v3.22.5
         with:
           token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
