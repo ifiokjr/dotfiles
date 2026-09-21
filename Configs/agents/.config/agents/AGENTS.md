@@ -54,6 +54,16 @@ Your training data is probably older than the GitHub you are actually talking to
 - **The CLI uploads attachments.** `gh pr create`, `gh pr edit`, `gh pr comment`, `gh issue create`, `gh issue edit`, and `gh issue comment` all take `--attach <path>`, including videos. `./after.png#Alt text` sets alt text, and a local path already referenced in the body (`![alt](./shot.png)`) is rewritten to the uploaded asset. This removes the browser round trip for screenshots and video proof. Never attach secrets or personal images; uploads are public and permanent, and the rule in the `git-workflow` skill is absolute.
 - **Do not stop at these two.** GitHub ships changes constantly. Read `~/.agents/skills/github/SKILL.md` for the recent-feature inventory before assuming a workflow is unavailable.
 
+## Commit signing: never reconfigure my identity
+
+My commits are signed with my OpenPGP key, and I need them to keep showing as **Verified** on GitHub. Every change below is something an agent has done to "fix" a signing error, and each one silently breaks verification. **Never do any of them without my express permission:**
+
+- **Never disable or reconfigure commit signing.** Do not set `commit.gpgsign=false`, do not pass `--no-gpg-sign` or `-c commit.gpgsign=false`, and do not disable signing to get a commit through.
+- **Never change my signing identity or switch GPG to SSH signing.** Do not set `gpg.format=ssh`, do not point `user.signingkey` at an SSH key, and do not reach for `git -c gpg.format=ssh` as a workaround.
+- **Never override my global git config from a repository or worktree.** Do not write repo-local or `--worktree` values for `user.name`, `user.email`, `user.signingkey`, `gpg.format`, `gpg.program`, or `commit.gpgsign`. My global config is the source of truth; a repo-level override silently changes who my commits appear to come from and whether they verify.
+
+If signing fails, the fix is the environment, never the configuration. Retry with the gpg agent running, and check `git verify-commit <sha>` before pushing. A commit signed with a key GitHub does not recognize is published as **Unverified**, and GitHub does not retroactively re-verify it — so the mistake is permanent in that history. See the `git-workflow` skill for the specific errors and what each one actually means.
+
 ## House rules
 
 - Branch names use conventional commit prefixes: `feat/`, `fix/`, `test/`, `ci/`, `build/`, `chore/`, `refactor/`.
