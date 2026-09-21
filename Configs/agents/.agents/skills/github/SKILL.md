@@ -140,6 +140,15 @@ The repo's own conventions still apply and this skill does not override them:
 - Run `gh` non-interactively: set `GH_PROMPT_DISABLED=1` and pass all required fields explicitly.
 - Add the attribution line to issue comments and PR descriptions: created on behalf of Ifiok Jr. (`@ifiokjr`), including the model and thinking level.
 
+## Never break commit verification
+
+Commits are signed with the user's OpenPGP key and must keep showing as **Verified** on GitHub. This is the one setting agents have broken before, and the damage is permanent, so it outranks convenience. **Without the user's express permission, never:**
+
+- Disable signing (`commit.gpgsign=false`, `--no-gpg-sign`), and never switch `gpg.format` to `ssh` or point `user.signingkey` at an SSH key. GitHub verifies SSH signatures against SSH *signing* keys, so a key registered only for authentication produces commits marked `Unverified` with reason `unknown_key`.
+- Override the user's global git config from a repo or worktree (`user.name`, `user.email`, `user.signingkey`, `gpg.format`, `gpg.program`, `commit.gpgsign`).
+
+A signing failure is an environment problem. Retry with the gpg agent running, and check `git verify-commit <sha>` before pushing. GitHub stores verification state when a commit is pushed and does not retroactively re-verify, so a bad signature leaves a permanently Unverified commit — and commits pushed or merged directly to `main` keep your signature, while squash-merged PRs are re-signed by GitHub. The `git-workflow` skill lists each signing error and what it actually means.
+
 ## Reference
 
 `references/features-2026.md` lists every change found in the March to September 2026 window, with dates, preview status, and source URLs, including the Copilot, Issues, Projects, and platform changes summarized above but not detailed here.

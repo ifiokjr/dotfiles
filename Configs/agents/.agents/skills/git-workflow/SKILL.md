@@ -276,6 +276,27 @@ GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true git -c core.editor=true -c sequence.edi
   ```
 - Only allow interactive editors/prompts when the user explicitly asks the agent to leave them enabled.
 
+### Never reconfigure the user's signing identity
+
+Commits are signed with the user's OpenPGP key, and they must keep showing as **Verified** on GitHub. A signing error is an environment problem, never a reason to change configuration. **Without the user's express permission, never:**
+
+- Disable signing: no `commit.gpgsign=false`, no `--no-gpg-sign`, no `-c commit.gpgsign=false`.
+- Switch the format to SSH: no `gpg.format=ssh`, and never point `user.signingkey` at an SSH key.
+- Override the global config from a repo or worktree: no repo-local or `--worktree` values for `user.name`, `user.email`, `user.signingkey`, `gpg.format`, `gpg.program`, or `commit.gpgsign`.
+
+Worktrees and plain `git config` writes are the trap: with `extensions.worktreeConfig` enabled, a plain write inside a linked worktree lands in the **shared** `.git/config` and silently changes signing for every worktree of that repository, not just the one you are in.
+
+Read these errors correctly instead of changing the format:
+
+| Error | What it actually means |
+| --- | --- |
+| `Couldn't load public key <id>: No such file or directory?` | The format and key type disagree — `gpg.format=ssh` expects an SSH key, `openpgp` expects a GPG key id. Remove whichever override caused the mismatch rather than "fixing" the key. |
+| `No secret key` | gpg is reading a different keyring. `GNUPGHOME` must be `~/.gnupg`. |
+| `can't connect to the agent: IPC connect call failed` | The agent was not running. The next gpg call restarts it; retry the commit. |
+| `No passphrase given` | A non-interactive caller bypassed pinentry. Only in this case unlock the agent interactively once. |
+
+Before pushing, confirm the signature with `git verify-commit <sha>`. GitHub records verification state at push time and does not retroactively re-verify, so a commit signed with an unrecognized key stays **Unverified** in that history permanently. Commits that land through a squash-merged PR are re-signed by GitHub, but commits pushed or merged directly to `main` are published exactly as written.
+
 ### Conflict resolution
 
 1. Find conflicted files with `git diff --name-only --diff-filter=U`
