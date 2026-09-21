@@ -189,6 +189,7 @@ in
       extra.cargo-interactive-update
       extra.deno
       extra.monochange
+      extra.monostyle
       extra.pnpm
       extra.op # 1password
       extra.serverpod_cli
