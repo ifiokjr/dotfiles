@@ -1,6 +1,12 @@
 ---
 name: rive
-description: Author Rive animations and interactive graphics as text with the `rive` CLI: .rml scenes, Luau scripts, WGSL shaders, state machines, view models, data binding. Use when creating or editing a Rive project, when a repo has rive.yaml or .rml files, when the user mentions Rive, .riv/.rev files, state machines, keyframes, or asks for an animation, interactive graphic, or motion asset. Also use when rendering or verifying Rive output.
+description: >-
+  Author Rive animations and interactive graphics as text with the `rive` CLI:
+  .rml scenes, Luau scripts, WGSL shaders, state machines, view models, data
+  binding. Use when creating or editing a Rive project, when a repo has
+  rive.yaml or .rml files, when the user mentions Rive, .riv/.rev files, state
+  machines, keyframes, or asks for an animation, interactive graphic, or motion
+  asset. Also use when rendering or verifying Rive output.
 ---
 
 # Authoring Rive with the CLI
@@ -28,7 +34,7 @@ rive inspect . --summary               # what got built? any problems?
 rive . --screenshot --advance=1        # what does it look like?
 ```
 
-Then look at the PNG. `--screenshot` is the only check that has ever caught an appearance bug. `--verify` and `inspect` are structural hygiene, and both will pass a screen with an invisible shape, a collapsed icon, or text in the wrong place.
+Then look at the PNG. `--verify` and `inspect` are structural hygiene; both can pass an invisible shape, a collapsed icon, or text in the wrong place. CLI rendering checks authored appearance. When the asset ships inside an app, preview the compiled `.riv` there too: data binding, scale, compositing, pause, and lifecycle can differ from the CLI render.
 
 A clean verify/inspect is not evidence the work is correct. Read the output for what the request asked for. If it is missing or wrong, fix it and run the loop again.
 
@@ -39,7 +45,8 @@ A clean verify/inspect is not evidence the work is correct. Read the output for 
 | `--verify` | Does it compile, and would the `.riv` load? | Anything that only shows when the scene runs |
 | `--test` | Do the scripts behave? | Everything with no `Tests` script |
 | `inspect` | What is in the document? Are the wires connected? | Anything the exporter drops; anything visual |
-| `--screenshot` | Does it look right? | Nothing visual. This is the backstop |
+| `--screenshot` | Does this authored pose look right? | Other poses, host bindings, composition, and device rendering |
+| Host preview | Does the compiled asset behave in its actual surface? | Unvisited states and untested devices |
 
 Two traps worth internalizing:
 
@@ -78,6 +85,8 @@ md5 -q build/f0.png build/f20.png build/f45.png | sort -u | wc -l   # must be > 
 
 If those frames are identical, nothing is animating, whatever the keyframes say.
 
+Choose frames around anticipation, peak action, reversal, and recovery, including any brief pose the request names. Distinct frame hashes prove motion exists, not that the intended motion is present. A sampled loop once missed a one-eye wink; rendering its exact frame exposed a two-eye blink. Inspect the images at the size they will actually be seen.
+
 For a time series instead of individual frames, `--data-dump-every` emits JSON Lines. The output starts with a header and a frame-0 baseline, and then includes only what changed:
 
 ```bash
@@ -108,6 +117,20 @@ Prove responsiveness by shooting two viewports; a layout tree and a hand-positio
 rive . --screenshot=build/wide.png   --viewport=900x600
 rive . --screenshot=build/narrow.png --viewport=320x700
 ```
+
+## Derive motion from an existing rig
+
+When extending a character or reusable asset, keep its body, proportions, skin/trait bindings, and app-facing state-machine contract. Replace only the part that changes, such as the face or an accessory. A new drawing that merely resembles the character can diverge in the game when traits, actions, or scale change.
+
+If generating RML by grafting fragments, remap both object IDs and references into a disjoint range. Recheck the default state machine and view-model binding after replacing animation nodes. Inspect draw order in a render: the first sibling draws on top, so an effect intended to rise *behind* the body must live in the appropriate layer rather than floating over the face. See [object model](references/object-model.md) and [animation](references/animation.md) for the underlying syntax.
+
+Animate the expression through eyes, pupils, brows, and mouth first; use small body squash, held poses, asymmetric details, and eased secondary motion to give it weight. Choose the hold and recovery for the action rather than using linear motion everywhere. In an interactive app, acting should follow the authoritative state; it must not decide whether an input, collision, or reward occurred.
+
+## Check the generated asset in context
+
+For generated assets, rebuild from the authored source and compare the checked-in source and `.riv` with fresh output. A clean `inspect` on a stale generated scene can conceal a changed generator. Do not patch the compiled file to make a preview pass.
+
+Load the final `.riv` through the same runtime and data-binding path as the product. A preview that omits the host's bound view model may show default skin or accessory values and misrepresent the animation. For example, a Flutter preview needs `DataBind.auto()` when the game controller uses it. Check the actual display size, neighboring UI, light and dark surfaces where relevant, pause/resume, and reduced motion. A reduced-motion version should keep the meaningful static state visible. Dispose runtime loaders and controllers when the host surface leaves.
 
 ## Reference
 

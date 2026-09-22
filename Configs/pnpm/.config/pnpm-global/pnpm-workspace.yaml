@@ -1,6 +1,6 @@
 allowBuilds:
   "@google/genai": true
-  "@opencode-ai/cli": true
+  '@opencode/cli': true
   core-js: true
   esbuild: true
   keytar: true
@@ -24,3 +24,16 @@ minimumReleaseAgeExclude:
   - "@voidzero-dev/vite-plus-win32-arm64-msvc@0.3.1"
   - "@voidzero-dev/vite-plus-win32-x64-msvc@0.3.1"
   - vite-plus@0.3.1
+  - '@opencode/cli-darwin-arm64@2.0.12'
+  - '@opencode/cli-darwin-x64-baseline@2.0.12'
+  - '@opencode/cli-darwin-x64@2.0.12'
+  - '@opencode/cli-linux-arm64-musl@2.0.12'
+  - '@opencode/cli-linux-arm64@2.0.12'
+  - '@opencode/cli-linux-x64-baseline-musl@2.0.12'
+  - '@opencode/cli-linux-x64-baseline@2.0.12'
+  - '@opencode/cli-linux-x64-musl@2.0.12'
+  - '@opencode/cli-linux-x64@2.0.12'
+  - '@opencode/cli-windows-arm64@2.0.12'
+  - '@opencode/cli-windows-x64-baseline@2.0.12'
+  - '@opencode/cli-windows-x64@2.0.12'
+  - '@opencode/cli@2.0.12'

@@ -3,12 +3,11 @@
 	"type": "module",
 	"private": true,
 	"dependencies": {
-		"@earendil-works/pi-coding-agent": "0.85.1",
-		"@openai/codex": "0.154.0",
-		"@opencode-ai/cli": "0.0.0-beta-19271",
-		"@playwright/cli": "0.1.20",
+		"@earendil-works/pi-coding-agent": "0.86.1",
+		"@openai/codex": "0.155.1",
+		"@opencode/cli": "2.0.12",
+		"@playwright/cli": "0.1.21",
 		"ocx": "2.0.15",
-		"opencode-ai": "1.18.31",
-		"vite-plus": "0.3.2"
+		"vite-plus": "0.3.3"
 	}
 }
