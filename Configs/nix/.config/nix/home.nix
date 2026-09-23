@@ -225,11 +225,6 @@ in
 
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
-
-      # Nightly t3 CLI. Install this or `t3code`, never both — each provides
-      # `bin/t3`. The `t3-code` cask in darwin.nix ships only the desktop app,
-      # so it does not collide with either.
-      extra.t3code-nightly
     ]
     ++ lib.optionals riveSystemSupported [ extra.rive-cli ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin (
@@ -239,6 +234,15 @@ in
         # Ollama builds on Darwin (Metal) but currently fails in the Linux CI
         # sandbox due to missing Vulkan/CUDA runtime libraries.
         extra.ollama
+
+        # Nightly t3 CLI, for every macOS machine including lite ones: the
+        # headless minis are lite and are exactly where it is wanted. It is a
+        # ~190 MB CLI, not one of the GUI-heavy packages the lite gate exists
+        # to skip. Darwin-only by choice — Linux CI and the Docker image have
+        # no use for it. Install this or `t3code`, never both: each provides
+        # `bin/t3`. The `t3-code` cask in darwin.nix ships only the desktop
+        # app, so it collides with neither.
+        extra.t3code-nightly
       ]
       ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
