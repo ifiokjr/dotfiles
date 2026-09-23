@@ -66,25 +66,32 @@ migrate_monochange() {
 # The OpenCode config moved from config.json to opencode.json, because OpenCode
 # silently ignores config.json and ran with default permissions the whole time.
 # Tuckr only manages the files present in the group, so after the rename the old
-# symlink stays behind as a dangling link into the repo. OpenCode ignores it the
-# same way it ignored the real file, so this is tidiness rather than a fix, but a
-# broken symlink in a config directory is a trap for whatever reads it next.
-# Only a symlink into this repo is removed; a real config.json is left alone.
+# symlink stays behind as a dangling link into the checkout. OpenCode ignores it
+# the same way it ignored the real file, so this is tidiness rather than a fix,
+# but a broken symlink in a config directory is a trap for whatever reads it
+# next.
+#
+# Tuckr points links at its own location (`~/Library/Application Support/dotfiles`
+# on macOS, `~/.config/dotfiles` on Linux/BSD), which is not necessarily this
+# checkout, so matching on a root would miss the real link. Match on the target's
+# suffix instead: only a link to the file this group used to deploy is removed.
+# A real config.json belongs to the user and is left alone.
 remove_stale_opencode_config() {
 	local deployed_config="$HOME/.config/opencode/config.json"
-	local tuckr_root
-	tuckr_root="$(cd "$DOTFILES_ROOT/.." && pwd)"
+	local suffix="/Configs/agents/.config/opencode/config.json"
+	local target
 
 	if [ ! -L "$deployed_config" ]; then
 		return 0
 	fi
 
-	case "$(readlink "$deployed_config")" in
-	"$tuckr_root"/* | "$DOTFILES_ROOT"/*)
+	target="$(readlink "$deployed_config")"
+
+	# Strip a known suffix; an unchanged string means the link points elsewhere.
+	if [ "${target%"$suffix"}" != "$target" ]; then
 		rm -f "$deployed_config"
 		echo "Removed the superseded OpenCode config.json symlink"
-		;;
-	esac
+	fi
 }
 
 migrate_computer_use
