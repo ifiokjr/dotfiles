@@ -60,5 +60,40 @@ migrate_monochange() {
 	echo "Moved the previous monochange skills-CLI copy to $backup_monochange_dir"
 }
 
+# ---------------------------------------------------------------------------
+# Remove the superseded OpenCode config symlink
+# ---------------------------------------------------------------------------
+# The OpenCode config moved from config.json to opencode.json, because OpenCode
+# silently ignores config.json and ran with default permissions the whole time.
+# Tuckr only manages the files present in the group, so after the rename the old
+# symlink stays behind as a dangling link into the checkout. OpenCode ignores it
+# the same way it ignored the real file, so this is tidiness rather than a fix,
+# but a broken symlink in a config directory is a trap for whatever reads it
+# next.
+#
+# Tuckr points links at its own location (`~/Library/Application Support/dotfiles`
+# on macOS, `~/.config/dotfiles` on Linux/BSD), which is not necessarily this
+# checkout, so matching on a root would miss the real link. Match on the target's
+# suffix instead: only a link to the file this group used to deploy is removed.
+# A real config.json belongs to the user and is left alone.
+remove_stale_opencode_config() {
+	local deployed_config="$HOME/.config/opencode/config.json"
+	local suffix="/Configs/agents/.config/opencode/config.json"
+	local target
+
+	if [ ! -L "$deployed_config" ]; then
+		return 0
+	fi
+
+	target="$(readlink "$deployed_config")"
+
+	# Strip a known suffix; an unchanged string means the link points elsewhere.
+	if [ "${target%"$suffix"}" != "$target" ]; then
+		rm -f "$deployed_config"
+		echo "Removed the superseded OpenCode config.json symlink"
+	fi
+}
+
 migrate_computer_use
 migrate_monochange
+remove_stale_opencode_config
