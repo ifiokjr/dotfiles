@@ -271,3 +271,9 @@ zc() {
 [[ -n "$DOTFILES_DEBUG" ]] && printf '\e[34m→\e[0m zsh total: %0.0f ms\n' "$(( (EPOCHREALTIME - _zsh_start_ns) * 1000 ))"
 # Vite+ bin (https://viteplus.dev)
 [[ -f "$HOME/.vite-plus/env" ]] && . "$HOME/.vite-plus/env"
+
+## [Completion]
+## Completion scripts setup. Remove the following line to uninstall
+[[ -f /Users/ifiokjr/.config/.dart-cli-completion/zsh-config.zsh ]] && . /Users/ifiokjr/.config/.dart-cli-completion/zsh-config.zsh || true
+## [/Completion]
+

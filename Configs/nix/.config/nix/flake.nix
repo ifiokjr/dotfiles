@@ -287,6 +287,7 @@
                 inherit
                   username
                   ifiokjr-nixpkgs
+                  devenv
                   lite
                   isDesktop
                   alwaysOn

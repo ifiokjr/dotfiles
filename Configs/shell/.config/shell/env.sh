@@ -150,8 +150,15 @@ fi
 # ---------------------------------------------------------------------------
 # pnpm global shortcut
 # ---------------------------------------------------------------------------
-# pnpmg runs pnpm in the managed global project directory.
-pnpmg() { pnpm --dir "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global" "$@"; }
+# pnpmg runs pnpm against the Tuckr-managed global project, which lives in the
+# dotfiles repo ($HOME/.config/pnpm-global resolves there). It deliberately
+# avoids the runtime install directory at ${XDG_DATA_HOME:-$HOME/.local/share}/pnpm-global,
+# whose manifests are symlinks back to the repo: pnpm 12 refuses to write a
+# lockfile reached through a symlink (ERR_PNPM_LOCKFILE_WRITE_FILE), so
+# manifest edits (add/remove/update) must run where the lockfile is a real file.
+# Installing into the runtime directory stays with `pnpm:global:sync`, which
+# keeps generated node_modules out of the repo.
+pnpmg() { pnpm --dir "${XDG_CONFIG_HOME:-$HOME/.config}/pnpm-global" "$@"; }
 
 # ---------------------------------------------------------------------------
 # ZCode
@@ -163,6 +170,51 @@ if [ "$(uname -s)" = "Darwin" ] && [ -x "/Applications/ZCode.app/Contents/Resour
 		"/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs" "$@"
 	}
 fi
+
+# ---------------------------------------------------------------------------
+# Claude Desktop
+# ---------------------------------------------------------------------------
+# ccd opens a folder as a Claude Code session in Claude Desktop, the way
+# `code .` opens one in VS Code. The `claude://code/new` deep link is the only
+# reliable route: `open -na "Claude" --args <path>` drops its arguments because
+# Electron's single-instance lock swallows them (anthropics/claude-code#54614).
+# Desktop treats every link-supplied folder as untrusted and confirms it before
+# adopting it as the working directory, even for folders trusted earlier.
+#
+# Hand-rolled percent-encoding instead of `python3 -c 'urllib.parse.quote'`:
+# this file is sourced by non-interactive shells and on Linux, where python3 is
+# not guaranteed to exist. Only unreserved characters (RFC 3986) stay literal,
+# which matches Python's quote(safe="").
+_ccd_urlenc() (
+	LC_ALL=C
+	s="$1"
+	out=""
+	while [ -n "$s" ]; do
+		c="${s%"${s#?}"}"
+		s="${s#?}"
+		case "$c" in
+		[a-zA-Z0-9.~_-]) out="$out$c" ;;
+		*) out="$out$(printf '%%%02X' "'$c")" ;;
+		esac
+	done
+	printf '%s' "$out"
+)
+
+ccd() {
+	local dir opener
+	# Resolve through cd+pwd so a bad argument fails loudly instead of opening
+	# Desktop in whatever directory happened to be current.
+	dir="$(cd -- "${1:-.}" 2>/dev/null && pwd)" || {
+		printf 'ccd: not a directory: %s\n' "${1:-.}" >&2
+		return 1
+	}
+	if [ "$(uname -s)" = "Darwin" ]; then
+		opener=open
+	else
+		opener=xdg-open
+	fi
+	"$opener" "claude://code/new?folder=$(_ccd_urlenc "$dir")"
+}
 
 # FVM auto-switching (allow-gated)
 if [ -f "$HOME/.config/shell/fvm.sh" ]; then
