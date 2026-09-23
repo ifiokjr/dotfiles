@@ -54,14 +54,30 @@ Claude Code's user settings, deployed to `~/.claude/settings.json`:
 
 The canonical global agent instructions file. Every harness's global instruction file is a symlink to this file, so one edit updates all of them:
 
-| Harness      | Global Instructions Location   |
-| ------------ | ------------------------------ |
-| **Pi**       | `~/.pi/agent/AGENTS.md`        |
-| **Codex**    | `~/.codex/AGENTS.md`           |
-| **Zed**      | `~/.config/zed/AGENTS.md`      |
-| **OpenCode** | `~/.config/opencode/AGENTS.md` |
+| Harness         | Global Instructions Location   |
+| --------------- | ------------------------------ |
+| **Pi**          | `~/.pi/agent/AGENTS.md`        |
+| **Codex**       | `~/.codex/AGENTS.md`           |
+| **Zed**         | `~/.config/zed/AGENTS.md`      |
+| **OpenCode**    | `~/.config/opencode/AGENTS.md` |
+| **Claude Code** | `~/.claude/CLAUDE.md`          |
 
 Edit the canonical file only — the harness locations are symlinks to it.
+
+Claude Code is the one harness whose global file is not named `AGENTS.md`. It reads `AGENTS.md` for _project_ instructions, one found by walking up from the working directory, but at the _user_ level it reads `~/.claude/CLAUDE.md` and ignores `~/.claude/AGENTS.md`. Both were confirmed against Claude Code 2.1.280 by planting a token in each file and asking for it: a project `AGENTS.md` was read, `~/.claude/AGENTS.md` was not, and a symlinked `~/.claude/CLAUDE.md` was. The user-level and project-level files load together, so the shared instructions do not suppress a repository's own `AGENTS.md`.
+
+Reading a project `AGENTS.md` requires Claude Code v2.1.277 or later, and is skipped when a `CLAUDE.md` or `CLAUDE.local.md` exists in the working directory or above it, unless the `Project instructions` setting is changed to `claude-md-and-agents-md`.
+
+### Skills
+
+Managed skills live under `Configs/agents/.agents/skills/` and deploy to `~/.agents/skills/`. That shared path is read directly by OpenCode, Cursor, Gemini CLI, and Zed. Two harnesses do not read it and need links created by `Hooks/agents/post.sh`:
+
+- **Codex** skips symlinked `SKILL.md` files, so each managed skill directory is linked into `~/.codex/skills` pointing at the repo copy, where files are real.
+- **Claude Code** reads only `~/.claude/skills`, project `.claude/skills`, plugin skills, and directories passed with `--add-dir`. It does not read `~/.agents/skills`, confirmed on 2.1.280 by placing a probe skill there and finding it invisible while the same skill in `~/.claude/skills` was found. Each managed skill directory is linked into `~/.claude/skills` pointing at the deployed `~/.agents/skills` path, which covers externally synced skills as well as committed ones.
+
+The link step skips dotfiles such as `.mdt-source.json`, skips directories with no `SKILL.md`, and never replaces an existing entry, so a locally installed skill of the same name wins and Claude's own `synced` directory is untouched.
+
+A skill whose frontmatter sets `disable-model-invocation: true` is deliberately invisible to the model and can only be run as `/name`. That is expected for the 21 managed skills that use it, not a linking failure.
 
 The shared code-quality standard applies across projects and harnesses, including Codex. It requires idiomatic designs with explicit ownership, meaningful verification, root-cause fixes, and an honest account of remaining limits. Project-specific instructions add their own language and framework conventions.
 
