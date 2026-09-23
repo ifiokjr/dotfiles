@@ -225,6 +225,11 @@ in
 
       # Cross-platform packages from ifiokjr/nixpkgs
       extra.godot
+
+      # Nightly t3 CLI. Install this or `t3code`, never both — each provides
+      # `bin/t3`. The `t3-code` cask in darwin.nix ships only the desktop app,
+      # so it does not collide with either.
+      extra.t3code-nightly
     ]
     ++ lib.optionals riveSystemSupported [ extra.rive-cli ]
     ++ lib.optionals pkgs.stdenv.hostPlatform.isDarwin (
