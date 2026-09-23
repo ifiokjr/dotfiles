@@ -4,39 +4,51 @@ This directory centralizes configuration for all AI coding agents and tools.
 
 ## Supported Tools
 
-| Tool         | Config Location       | Description                                 |
-| ------------ | --------------------- | ------------------------------------------- |
-| **OpenCode** | `~/.config/opencode/` | Universal AI agent with multi-model support |
-| **Pi**       | `~/.pi/agent/`        | AI-powered development environment          |
-| **Codex**    | `~/.codex/`           | OpenAI's Codex CLI tool                     |
-| **Zed**      | `~/.config/zed/`      | AI-powered code editor with agent panel     |
+| Tool            | Config Location       | Description                                 |
+| --------------- | --------------------- | ------------------------------------------- |
+| **OpenCode**    | `~/.config/opencode/` | Universal AI agent with multi-model support |
+| **Claude Code** | `~/.claude/`          | Anthropic's terminal coding agent           |
+| **Pi**          | `~/.pi/agent/`        | AI-powered development environment          |
+| **Codex**       | `~/.codex/`           | OpenAI's Codex CLI tool                     |
+| **Zed**         | `~/.config/zed/`      | AI-powered code editor with agent panel     |
 
 ## Configuration Files
 
 ### `agents.env.sh`
 
-Environment variables that control agent behavior across all tools. OpenCode exposes no environment variable for permission prompts or trusted directories, so its settings live in `opencode/config.json` instead of here.
+Environment variables that control agent behavior across all tools. OpenCode exposes no environment variable for permission prompts or trusted directories, so its settings live in `opencode/opencode.json` instead of here.
 
-### `opencode/config.json`
+### `opencode/opencode.json`
 
-OpenCode 1 configuration, used by the `opencode` command:
+OpenCode configuration, used by the `opencode` command:
 
 - Global `permission` rules, with `"*"` set to `allow` for unrestricted access
-- `external_directory` allowances covering the trusted directory list
+- `external_directory` set to `"*": "allow"`, which is what actually governs file and shell access outside the working directory
 - Default model selection
+
+The file must be named `opencode.json`. An earlier revision used `config.json`, which OpenCode silently ignores: `opencode debug config` reports only the config directories in that case, so every permission in it was inert and sessions ran on the default ask-based rules. Keep the name `opencode.json`.
 
 OpenCode validates this file strictly and rejects unknown keys, so every key must exist in the [config schema](https://opencode.ai/config.json).
 
 ### `opencode-v2/opencode.json`
 
-OpenCode 2 preview configuration, used by the `opencode2` command:
+Secondary OpenCode configuration, used by the `opencode2` command:
 
 - `permissions` as an ordered array of `{ action, resource, effect }` rules
 - Default model selection
 
-OpenCode 1 and OpenCode 2 use mutually exclusive permission formats. V1 reads the `permission` map from `~/.config/opencode/config.json`, while V2 reads a `permissions` array from an `opencode.json` in its config directory, and V1 refuses to start when it encounters V2's key. Both versions scan the same default config directory, so V2 gets a separate directory here and the `opencode2` wrapper in the shell configs sets `OPENCODE_CONFIG_DIR` to point at it. Keep the two config directories separate, and do not add an `opencode.json` to `~/.config/opencode/`, or OpenCode 1 stops starting.
+Both configs are read by the same OpenCode binary and both accept the singular `permission` map, so this directory is no longer required to keep the two versions apart. It is kept because the `opencode2` wrapper still points `OPENCODE_CONFIG_DIR` here, and the array form is the shape the newer `permissions` key takes.
 
-There is no published schema for the V2 format, so this file omits `$schema` — pointing it at the V1 schema would flag `permissions` as invalid.
+There is no published schema for the array form, so this file omits `$schema` — pointing it at the map schema would flag `permissions` as invalid.
+
+### `claude/settings.json`
+
+Claude Code's user settings, deployed to `~/.claude/settings.json`:
+
+- `permissions.defaultMode` set to `bypassPermissions`, so sessions skip permission prompts instead of stopping to ask
+- `skipDangerousModePermissionPrompt`, which suppresses the one-time dialog that otherwise has to be accepted before the mode takes effect
+
+`bypassPermissions` is honored only from user or managed settings. A project `.claude/settings.json` that sets it is ignored, so this must stay at the user level. Claude Code reads this file without rewriting it, which is what makes a symlinked copy safe here.
 
 ### `AGENTS.md`
 
@@ -65,7 +77,7 @@ The shared code-quality standard applies across projects and harnesses, includin
 
 1. Runtime environment variables (highest)
 2. `~/.config/agents/agents.env.sh`
-3. Tool-specific config files (e.g., `~/.config/opencode/config.json`)
+3. Tool-specific config files (e.g., `~/.config/opencode/opencode.json`)
 4. Default behavior (lowest)
 
 ## OpenCode Integration

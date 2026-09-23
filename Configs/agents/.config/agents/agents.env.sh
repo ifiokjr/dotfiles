@@ -8,7 +8,14 @@
 # ---------------------------------------------------------------------------
 # OpenCode reads permissions only from its own config file. There is no env var
 # for skipping prompts or trusting directories, so permissions and trusted paths
-# live in ~/.config/opencode/config.json.
+# live in ~/.config/opencode/opencode.json.
+
+# ---------------------------------------------------------------------------
+# Claude Code Configuration
+# ---------------------------------------------------------------------------
+# Claude Code reads permissions only from settings.json. There is no documented
+# env var that sets the default permission mode, so it lives in
+# ~/.claude/settings.json under permissions.defaultMode.
 
 # ---------------------------------------------------------------------------
 # Pi Agent Configuration
