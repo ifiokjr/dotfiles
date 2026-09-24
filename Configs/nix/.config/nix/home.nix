@@ -192,7 +192,7 @@ in
       extra.monostyle
       extra.pnpm
       extra.op # 1password
-      extra.serverpod_cli
+      extra.serverpod_cli-4
       extra.surfpool
 
       # Fonts

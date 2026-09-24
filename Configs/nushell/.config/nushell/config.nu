@@ -149,6 +149,33 @@ def zc [...paths: string] {
         ^open $"zcode://workspace/open?path=($encoded)"
     }
 }
+# ccd: open a folder as a Claude Code session in Claude Desktop, the way
+# `code .` opens one in VS Code. The `claude://code/new` deep link is the only
+# reliable route: `open -na "Claude" --args <path>` drops its arguments because
+# Electron's single-instance lock swallows them (anthropics/claude-code#54614).
+# Desktop treats every link-supplied folder as untrusted and confirms it before
+# adopting it as the working directory, even for folders trusted earlier.
+def ccd [path: string = "."] {
+    # Keep the logical path the user typed; expand symlinks only for the
+    # type check, since /tmp and /var are symlinks on macOS.
+    let dir = $path | path expand --no-symlink
+    if ($dir | path expand | path type) != "dir" {
+        error make {msg: $"ccd: not a directory: ($path)"}
+    }
+    # `url encode` escapes RFC 3986 unreserved characters (-, _, ~) that the
+    # POSIX implementations in shell/env.sh leave literal. Decoding is
+    # unaffected either way; normalizing here keeps the two shells' output
+    # identical for the same folder.
+    let encoded = ($dir
+        | url encode
+        | str replace -a "/" "%2F"
+        | str replace -a ":" "%3A"
+        | str replace -a "%2D" "-"
+        | str replace -a "%5F" "_"
+        | str replace -a "%7E" "~")
+    let opener = if $nu.os-info.name == "macos" { "open" } else { "xdg-open" }
+    ^$opener $"claude://code/new?folder=($encoded)"
+}
 # opencode2 runs the OpenCode 2 preview against its own config directory.
 # OpenCode 1 and V2 need mutually exclusive permission shapes: V1 takes the
 # "permission" map and refuses to start when it finds the "permissions" rule
@@ -193,7 +220,13 @@ alias cw = cargo watch -x run
 # pnpm
 alias p = pnpm
 alias pu = pnpm update -g -iL
-alias pnpmg = pnpm --dir ~/.local/share/pnpm-global
+# pnpmg targets the Tuckr-managed global project in the dotfiles repo, not the
+# runtime install directory at ~/.local/share/pnpm-global. That runtime directory
+# symlinks its manifests back to the repo, and pnpm 12 refuses to write a
+# lockfile reached through a symlink (ERR_PNPM_LOCKFILE_WRITE_FILE), so
+# add/remove/update must run where the lockfile is a real file. Use
+# `pnpm:global:sync` to install into the runtime directory.
+alias pnpmg = pnpm --dir $"($env.XDG_CONFIG_HOME? | default ($env.HOME | path join '.config'))/pnpm-global"
 # alias pi = pnpm install
 # alias pd = pnpm dev
 # alias pb = pnpm build
