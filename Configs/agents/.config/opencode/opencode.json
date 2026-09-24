@@ -3,8 +3,7 @@
 	"permission": {
 		"*": "allow",
 		"external_directory": {
-			"/Users/ifiokjr/Developer/**": "allow",
-			"/tmp/**": "allow"
+			"*": "allow"
 		}
 	},
 	"model": "ollama-cloud/kimi-k2.7-code"

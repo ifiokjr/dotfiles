@@ -156,7 +156,7 @@ $env.PATH = (
 # OpenCode
 # ---------------------------------------------------------------------------
 # OpenCode reads permissions only from its own config file, so nothing is set
-# here; see ~/.config/opencode/config.json.
+# here; see ~/.config/opencode/opencode.json.
 # ---------------------------------------------------------------------------
 # Directory stack (like zsh auto_pushd)
 # ---------------------------------------------------------------------------

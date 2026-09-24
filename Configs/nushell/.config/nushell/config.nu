@@ -177,11 +177,10 @@ def ccd [path: string = "."] {
     ^$opener $"claude://code/new?folder=($encoded)"
 }
 # opencode2 runs the OpenCode 2 preview against its own config directory.
-# OpenCode 1 and V2 need mutually exclusive permission config: V1 reads the
-# "permission" map in config.json, V2 reads a "permissions" rule array from
-# opencode.json. V1 refuses to start when it finds V2's key, and V2 ignores a
-# config file placed inside the directory it already scans, so V2 gets its own
-# directory. Keep the two config directories separate.
+# OpenCode 1 and V2 need mutually exclusive permission shapes: V1 takes the
+# "permission" map and refuses to start when it finds the "permissions" rule
+# array, which is V2's shape. The shared config uses the map form that both
+# accept; this wrapper points V2 at its own directory so it can carry the array.
 def --wrapped opencode2 [...rest: string] {
     with-env { OPENCODE_CONFIG_DIR: $"($env.HOME)/.config/opencode-v2" } { ^opencode2 ...$rest }
 }
