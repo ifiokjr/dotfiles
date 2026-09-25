@@ -113,18 +113,10 @@
               meta = prev.starship.meta;
             };
 
-          # vfkit 0.6.3 currently crashes Darwin cctools `ld` while linking on
-          # macOS 26 / clang-wrapper 21.1.8. Podman also supports krunkit on
-          # Darwin, so mark vfkit unavailable and rebuild podman with krunkit
-          # only until vfkit or cctools is fixed upstream.
-          vfkit = prev.vfkit.overrideAttrs (old: {
-            meta = old.meta // {
-              platforms = [ ];
-            };
-          });
-          podman = prev.podman.override {
-            vfkit = final.vfkit;
-          };
+          # vfkit is used as-is: the pinned nixpkgs has vfkit 0.6.3 and krunkit
+          # prebuilt on cache.nixos.org, so the local cctools `ld` crash on
+          # macOS 26 (which an earlier override worked around) never runs.
+          # Hiding vfkit left podman unable to start applehv machines.
 
           # direnv's GNUmakefile unconditionally enables `-linkmode=external`
           # on Darwin, but nixpkgs builds direnv with `CGO_ENABLED=0`.
