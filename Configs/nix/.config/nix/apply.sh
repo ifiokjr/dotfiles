@@ -41,15 +41,6 @@ print_warn "This script is deprecated. Please use 'dot rebuild' instead."
 print_info "Running rebuild..."
 echo ""
 
-# Increase file descriptor limit for Nix builds
-ulimit -n 10240
-
-# Use darwin-rebuild directly with the explicit #default configuration
-if sudo darwin-rebuild switch --flake "$SCRIPT_DIR#default"; then
-	print_info "Configuration applied successfully!"
-	print_info "Both system (darwin) and user (home-manager) configurations have been updated."
-	print_info "You may need to restart your shell for some changes to take effect."
-else
-	print_error "Failed to apply configuration"
-	exit 1
-fi
+# `dot rebuild` passes --impure and NIX_USER_CONFIG_DIR, which the flake needs to
+# read the gitignored machine.nix; a bare `darwin-rebuild switch` cannot see it.
+exec "$HOME/.local/bin/dot" rebuild "$@"
