@@ -25,7 +25,7 @@ pina completions --help
 pina profile --help
 pina deploy --help
 pina migrations --help
-pina codama generate --help
+pina generate --help
 ```
 
 Use `pina docs` to list bundled terminal topics. Custom topics can be supplied through `PINA_TEMPLATES_DIR` when a project maintains its own operational guidance.
@@ -140,20 +140,21 @@ Do not describe an export as one transaction. Preserve the complete upstream `[T
 
 ## Repository-wide client generation
 
-Use the legacy Codama surface when a repository intentionally generates clients for several example programs in one command:
+`pina generate` generates the clients for one project, discovered through its `pina.toml`. To generate a whole repository, run it once per project:
 
 ```sh
-pina codama generate --examples-dir ./programs --idls-dir ./idls \
-  --rust-out ./clients/rust --js-out ./clients/js --dart-out ./clients/dart
+for project in ./programs/*/; do
+  pina generate --project "$project"
+done
 ```
 
-Use repeatable `--example` filters for a focused run. Generated roots may be replaced; never store hand-written code inside them.
+Output locations come from each project's `[clients]` table, so a repository controls per-language roots in configuration rather than on the command line. Generated roots may be replaced; never store hand-written code inside them.
 
 Pina's generated clients preserve discriminator-first layouts and PinaPod boundary checks. Compact client codecs enforce declared capacity at both encode and decode boundaries. If a repository uses a custom renderer command, keep that command as the source of truth.
 
 ## Migration-aware generated clients
 
-Generated code reads the checked-in `migrations/manifest.json`, so run `pina migrations make` before regenerating clients and never hand-edit a generated file. For every opted-in contract the Rust, TypeScript, and Dart clients emit:
+Generated code reads the checked-in `migrations/manifest.json`, so run `pina migrations create` before regenerating clients and never hand-edit a generated file. For every opted-in contract the Rust, TypeScript, and Dart clients emit:
 
 - `<Account>MIGRATION_VERSION` (Dart `stateMigrationVersion`) — the schema version this client was generated from. Encoders stamp it into the envelope automatically; callers never pass a version. Decoders enforce it and reject other versions with a stale/future distinction: `getPinaPodMigrationVersionDecoder` in TypeScript, `StateVersionError::{Stale, Future}` in Rust, and the generated Dart equivalent. A stale split tells the caller to migrate the account on chain and retry; a future split tells the caller to upgrade the client.
 - `<account>NeedsMigration(bytes)` (Rust `state_needs_migration`) — a cheap envelope check that returns true only when the bytes name this account's discriminator and carry a version older than the client's schema. Foreign discriminators and future versions return false; the decoder explains those when the account is decoded.
