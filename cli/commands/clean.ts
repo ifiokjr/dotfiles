@@ -5,9 +5,10 @@
  * directories, and runs store garbage collection (nh). Dry-run by default;
  * pass --apply to delete.
  *
- * `--when-low <GB>` gates the whole run on free disk space so a scheduler
- * (launchd agent / systemd timer) can call `clean --apply --auto --when-low`
- * periodically without doing work while the disk still has room.
+ * It only ever runs when invoked. An hourly scheduler used to call it whenever
+ * free space ran low, and wiping ~/.gradle/caches under a live Gradle daemon
+ * or ~/.pub-cache out from under globally activated Dart tools broke builds
+ * mid-session, so nothing schedules it any more.
  */
 
 import { Command } from "@cliffy/command";
@@ -22,16 +23,11 @@ import {
 } from "../lib/config.ts";
 
 const HOME = Deno.env.get("HOME") ?? "/tmp";
-const GIBIBYTE = 1024 * 1024 * 1024;
 
 interface CleanOptions {
 	apply?: boolean;
 	days?: number;
 	only?: string[];
-	/** Monitor mode: conservative defaults, no Trash emptying. */
-	auto?: boolean;
-	/** Only run when fewer than this many GiB are free (launchd/systemd). */
-	whenLow?: number;
 	/** Keep cargo target dirs of projects compiled within the last N days. */
 	cargoKeepDays?: number;
 }
@@ -217,15 +213,11 @@ export function isSudoRemovablePath(path: string, home: string): boolean {
  * inside the user's own cache. Their parent directories are root-owned and not
  * writable, so unlinking fails with EPERM and `Deno.remove` aborts partway
  * through the tree: the cache never goes away and every `dot clean` reports
- * the same error. Retrying the whole tree under sudo clears it.
- *
- * `unattended` passes `-n` so the scheduled `--auto` run can never block on a
- * password prompt. Returns true when sudo was required.
+ * the same error. Retrying the whole tree under sudo clears it, prompting for
+ * a password if sudo has no cached credentials. Returns true when sudo was
+ * required.
  */
-export async function removeCachePath(
-	path: string,
-	unattended: boolean,
-): Promise<boolean> {
+export async function removeCachePath(path: string): Promise<boolean> {
 	// A trailing slash would make `rm -rf` follow a symlink into its target.
 	const target = path.replace(/\/+$/, "");
 	try {
@@ -237,10 +229,7 @@ export async function removeCachePath(
 		printWarning(
 			`${target} contains root-owned files; retrying with sudo…`,
 		);
-		const args = ["sudo"];
-		if (unattended) args.push("-n");
-		args.push("rm", "-rf", target);
-		const { success } = await runCommand(args);
+		const { success } = await runCommand(["sudo", "rm", "-rf", target]);
 		if (!success || (await pathExists(target))) throw error;
 		return true;
 	}
@@ -367,7 +356,7 @@ async function cleanSessions(
 	return freed;
 }
 
-async function cleanCaches(apply: boolean, auto: boolean): Promise<number> {
+async function cleanCaches(apply: boolean): Promise<number> {
 	let freed = 0;
 
 	const clonesDir = await chromeCloneDir();
@@ -405,7 +394,7 @@ async function cleanCaches(apply: boolean, auto: boolean): Promise<number> {
 		if (bytes === null || bytes === 0) continue;
 		if (apply) {
 			try {
-				const privileged = await removeCachePath(target.path, auto);
+				const privileged = await removeCachePath(target.path);
 				printInfo(
 					`${target.label}: removed ${fmtBytes(bytes)}${viaSudo(privileged)}`,
 				);
@@ -436,7 +425,7 @@ async function cleanCaches(apply: boolean, auto: boolean): Promise<number> {
 			if (bytes !== null && bytes > 0) {
 				if (apply) {
 					try {
-						const privileged = await removeCachePath(storeRoot, auto);
+						const privileged = await removeCachePath(storeRoot);
 						printInfo(
 							`pnpm store: removed ${fmtBytes(bytes)}${viaSudo(privileged)}`,
 						);
@@ -755,56 +744,24 @@ export const cleanCommand = new Command()
 		{ collect: true },
 	)
 	.option(
-		"--auto",
-		"Monitor mode: keep cargo targets built today and never touch the Trash (used by the launchd/systemd scheduler)",
-	)
-	.option(
-		"--when-low <gib:number>",
-		"Only run when fewer than this many GiB are free (exit early otherwise)",
-	)
-	.option(
 		"--cargo-keep-days <days:number>",
-		"Keep cargo target dirs of projects built within the last N days (0 = clean all; --auto defaults to 1)",
+		"Keep cargo target dirs of projects built within the last N days (0 = clean all)",
 	)
 	.action(async (options: CleanOptions) => {
 		const apply = options.apply ?? false;
 		const days = options.days ?? 30;
-		const auto = options.auto ?? false;
-		const cargoKeepDays = options.cargoKeepDays ??
-			(auto ? 1 : 0);
+		const cargoKeepDays = options.cargoKeepDays ?? 0;
 		const only = new Set(options.only ?? []);
 		const wants = (category: string) => only.size === 0 || only.has(category);
-		// Auto mode skips the Trash unless it is the explicitly requested
-		// category — an unattended scheduler must not empty the user's Trash.
-		const wantsTrash = wants("trash") &&
-			(only.has("trash") || !auto);
 
 		printHeader(
 			`Cleaning disk space${
 				apply ? "" : " (dry run — pass --apply to delete)"
-			}${auto ? " [auto]" : ""}`,
+			}`,
 		);
 
 		const free = await freeBytes();
 		if (free !== null) printInfo(`Disk space free: ${fmtBytes(free)}`);
-		if (options.whenLow !== undefined) {
-			if (free === null) {
-				printWarning("Could not determine free space; ignoring --when-low");
-			} else if (free >= options.whenLow * GIBIBYTE) {
-				printSuccess(
-					`${
-						fmtBytes(free)
-					} free is at or above the ${options.whenLow} GB threshold — nothing to do`,
-				);
-				return;
-			} else {
-				printWarning(
-					`${
-						fmtBytes(free)
-					} free is below the ${options.whenLow} GB threshold — cleaning`,
-				);
-			}
-		}
 
 		let freed = 0;
 		if (wants("sessions")) {
@@ -813,7 +770,7 @@ export const cleanCommand = new Command()
 		}
 		if (wants("caches")) {
 			printInfo("Regenerable caches:");
-			freed += await cleanCaches(apply, auto);
+			freed += await cleanCaches(apply);
 		}
 		if (wants("cargo")) {
 			freed += await cleanCargoTargets(apply, cargoKeepDays);
@@ -825,7 +782,7 @@ export const cleanCommand = new Command()
 			printInfo("Rust toolchains (keeping stable + newest nightly):");
 			freed += await cleanRustup(apply);
 		}
-		if (wantsTrash) {
+		if (wants("trash")) {
 			freed += await cleanTrash(apply);
 		}
 

@@ -156,7 +156,7 @@ Deno.test("removeCachePath removes a user-owned cache without sudo", async () =>
 	const dir = await Deno.makeTempDir({ prefix: "clean-plain-" });
 	await Deno.writeTextFile(`${dir}/payload`, "x");
 
-	assertEquals(await removeCachePath(dir, false), false);
+	assertEquals(await removeCachePath(dir), false);
 	assertEquals(await pathExists(dir), false);
 });
 
@@ -166,31 +166,11 @@ Deno.test("removeCachePath retries with sudo for root-owned entries", async () =
 	const locked = await makeLockedCache(dir);
 	try {
 		await withFakeSudo(emulatedRootRm, async (logPath) => {
-			assertEquals(await removeCachePath(dir, false), true);
+			assertEquals(await removeCachePath(dir), true);
 			assertEquals(await pathExists(dir), false);
-			// Interactive: sudo may prompt, so no -n.
 			assertEquals(
 				(await Deno.readTextFile(logPath)).trim(),
 				`rm -rf ${dir}`,
-			);
-		});
-	} finally {
-		await unlockAndRemove(dir, locked);
-	}
-});
-
-Deno.test("removeCachePath never prompts when unattended", async () => {
-	const home = Deno.env.get("HOME") ?? "/tmp";
-	const dir = await Deno.makeTempDir({ dir: home, prefix: ".clean-probe-" });
-	const locked = await makeLockedCache(dir);
-	try {
-		await withFakeSudo(emulatedRootRm, async (logPath) => {
-			assertEquals(await removeCachePath(dir, true), true);
-			assertEquals(await pathExists(dir), false);
-			// The scheduled --auto run must never sit on a password prompt.
-			assertEquals(
-				(await Deno.readTextFile(logPath)).trim(),
-				`-n rm -rf ${dir}`,
 			);
 		});
 	} finally {
@@ -207,7 +187,7 @@ Deno.test("removeCachePath reports the denial when sudo fails", async () => {
 		// original permission error so it can print the manual command.
 		await withFakeSudo(() => "#!/bin/sh\nexit 1\n", async () => {
 			await assertRejects(
-				() => removeCachePath(dir, true),
+				() => removeCachePath(dir),
 				Deno.errors.PermissionDenied,
 			);
 			assertEquals(await pathExists(dir), true);
@@ -225,7 +205,7 @@ Deno.test("removeCachePath never escalates outside HOME", async () => {
 	try {
 		await withFakeSudo(emulatedRootRm, async (logPath) => {
 			await assertRejects(
-				() => removeCachePath(dir, false),
+				() => removeCachePath(dir),
 				Deno.errors.PermissionDenied,
 			);
 			assertEquals(await pathExists(logPath), false);
