@@ -35,8 +35,8 @@
 		"default_profile": "write",
 		"default_model": {
 			"effort": "max",
-			"provider": "openai-subscribed",
-			"model": "gpt-5.6-luna",
+			"provider": "opencode",
+			"model": "go/space-bunny-free",
 			"enable_thinking": true
 		},
 		"favorite_models": [
