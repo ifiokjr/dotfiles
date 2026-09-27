@@ -1,5 +1,6 @@
 import {
 	installManagedSkillsFromCheckout,
+	type ManagedSkillOptions,
 	type ManagedSkillSource,
 	syncManagedSkills,
 	verifyManagedSkillDeployment,
@@ -43,11 +44,13 @@ export const PSTACK_SKILLS = PSTACK_SOURCE.skills.map((skill) => skill.name);
 export async function verifyPstackSkillDeployment(
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
 	return await verifyManagedSkillDeployment(
 		PSTACK_SOURCE,
 		dotfilesDir,
 		homeDir,
+		opts,
 	);
 }
 

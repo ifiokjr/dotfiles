@@ -6,8 +6,138 @@ set -euo pipefail
 
 echo "Setting up AI agents configuration..."
 
-DOTFILES_ROOT="$(cd "$(pwd)/../.." && pwd)"
+# Resolve the repo from this script's own location (Hooks/agents/post.sh) rather
+# than from the working directory. Tuckr runs hooks with the repo root as the
+# working directory while a manual run from this directory would differ, and the
+# earlier `$(pwd)/../..` form resolved to the home directory's parent under
+# Tuckr, silently pointing every path below at the wrong place.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MANAGED_SKILLS_DIR="$DOTFILES_ROOT/Configs/agents/.agents/skills"
+CODEX_SKILLS_DIR="$HOME/.codex/skills"
+CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
+DEPLOYED_SKILLS_DIR="$HOME/.agents/skills"
+PI_SKILLS_DIR="$HOME/.pi/agent/skills"
+
+# ---------------------------------------------------------------------------
+# Disabled skill collections
+# ---------------------------------------------------------------------------
+# `dot skills disable` writes the resolved skill names to .disabled-skills
+# beside the other managed-skill metadata. Skills named there stay in the repo
+# but are kept out of every harness directory below, including the deployed
+# ~/.agents/skills tree that Tuckr itself populates. Reading a plain list rather
+# than the TOML intent file keeps this hook free of a TOML parser.
+
+DISABLED_SKILLS_LIST="$MANAGED_SKILLS_DIR/.disabled-skills"
+
+# True when a skill name appears in the disabled list.
+#
+# A missing list means nothing is disabled, which is the correct reading for a
+# repo that never used the toggle. When the managed skills directory itself is
+# missing the path is wrong rather than empty, and saying so beats silently
+# deciding that every disabled skill is actually enabled.
+skill_is_disabled() {
+	local name="$1" line
+	if [ ! -d "$MANAGED_SKILLS_DIR" ]; then
+		echo "Cannot resolve the managed skills directory: $MANAGED_SKILLS_DIR" >&2
+		exit 1
+	fi
+	[ -f "$DISABLED_SKILLS_LIST" ] || return 1
+	while IFS= read -r line; do
+		[ "$line" = "$name" ] && return 0
+	done <"$DISABLED_SKILLS_LIST"
+	return 1
+}
+
+# Remove a disabled skill's entry from a harness directory.
+#
+# Removal is driven only by the explicit disabled list, never inferred from link
+# state: an earlier version also pruned directories whose links had gone
+# dangling, and that deleted healthy skills whenever it ran mid-deploy, before
+# Tuckr had finished repointing their links.
+#
+# Even listed names are removed only when the entry proves it came from this
+# repo, so a locally installed skill that happens to share a name survives. A
+# Tuckr-deployed skill is a real directory holding per-file symlinks into the
+# managed roots, which is what the ownership check looks for.
+remove_disabled_skill_links() {
+	local skills_dir="$1" entry name
+	[ -d "$skills_dir" ] || return 0
+	[ -f "$DISABLED_SKILLS_LIST" ] || return 0
+	for entry in "$skills_dir"/*; do
+		[ -e "$entry" ] || [ -L "$entry" ] || continue
+		name="$(basename "$entry")"
+		skill_is_disabled "$name" || continue
+		if ! entry_is_managed_skill "$entry"; then
+			echo "Skipped disabled skill $name in $skills_dir: not dotfiles-managed"
+			continue
+		fi
+		rm -rf "$entry"
+		echo "Disabled skill $name removed from $skills_dir"
+	done
+}
+
+# True when a harness entry points at this repo's managed skills.
+#
+# Tuckr points its links at its own checkout location, which is a symlink to
+# this repo and not necessarily the path this hook sees, so a literal prefix
+# match against the managed roots misses real deployments. Match on the
+# repo-specific path suffix instead, the same way the OpenCode cleanup in
+# pre.sh does.
+entry_is_managed_skill() {
+	local entry="$1" target inner
+	if [ -L "$entry" ]; then
+		target="$(readlink "$entry")"
+		case "$target" in
+		*/Configs/agents/.agents/skills/* | */Configs/agents/.pi/agent/skills/*)
+			return 0
+			;;
+		*) return 1 ;;
+		esac
+	fi
+	[ -d "$entry" ] || return 1
+	# A real directory is only ours when it contains links into the managed
+	# roots; a locally installed skill holds real files instead.
+	while IFS= read -r inner; do
+		target="$(readlink "$inner")"
+		case "$target" in
+		*/Configs/agents/.agents/skills/* | */Configs/agents/.pi/agent/skills/*)
+			return 0
+			;;
+		esac
+	done < <(find "$entry" -type l)
+	return 1
+}
+
+# ---------------------------------------------------------------------------
+# Stale-link cleanup
+# ---------------------------------------------------------------------------
+# The link loops below never replace an existing entry, so a locally installed
+# skill of the same name wins. The cost is that removing a managed skill leaves
+# its harness link behind as a dangling symlink. This removes only that residue:
+# a link is deleted only when it points into the managed skills root and its
+# target is gone.
+
+prune_stale_links() {
+	local link_dir="$1" managed_root="$2" entry target
+	[ -d "$link_dir" ] || return 0
+	for entry in "$link_dir"/*; do
+		[ -L "$entry" ] || continue
+		target="$(readlink "$entry")"
+		case "$target" in
+		"$managed_root"/*) ;;
+		*) continue ;;
+		esac
+		if [ ! -e "$entry" ]; then
+			rm -f "$entry"
+			echo "Pruned stale $(basename "$entry") link from $link_dir"
+		fi
+	done
+}
+
+# Drop disabled skills from the deployed tree before the link loops below run,
+# so nothing re-links them and the Claude mirror never sees them.
+remove_disabled_skill_links "$DEPLOYED_SKILLS_DIR"
 
 # ---------------------------------------------------------------------------
 # Expose dotfiles-managed skills to Codex
@@ -24,6 +154,10 @@ if [ -d "$MANAGED_SKILLS_DIR" ] && [ -d "$CODEX_SKILLS_DIR" ]; then
 			continue
 		fi
 		skill_name="$(basename "$skill_dir")"
+		# This loop reads the repo, where disabled skills still have their files.
+		if skill_is_disabled "$skill_name"; then
+			continue
+		fi
 		target="$CODEX_SKILLS_DIR/$skill_name"
 		if [ -e "$target" ] || [ -L "$target" ]; then
 			continue
@@ -31,6 +165,7 @@ if [ -d "$MANAGED_SKILLS_DIR" ] && [ -d "$CODEX_SKILLS_DIR" ]; then
 		ln -s "${skill_dir%/}" "$target"
 		echo "Linked $skill_name into Codex skills"
 	done
+	prune_stale_links "$CODEX_SKILLS_DIR" "$MANAGED_SKILLS_DIR"
 fi
 
 # ---------------------------------------------------------------------------
@@ -51,7 +186,6 @@ fi
 # account-synced skills, is left untouched, and an existing entry is never
 # replaced so a locally installed skill of the same name wins.
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
-DEPLOYED_SKILLS_DIR="$HOME/.agents/skills"
 if [ -d "$DEPLOYED_SKILLS_DIR" ] && [ -d "$CLAUDE_SKILLS_DIR" ]; then
 	for skill_dir in "$DEPLOYED_SKILLS_DIR"/*/; do
 		skill_name="$(basename "$skill_dir")"
@@ -63,6 +197,11 @@ if [ -d "$DEPLOYED_SKILLS_DIR" ] && [ -d "$CLAUDE_SKILLS_DIR" ]; then
 		if [ ! -f "$skill_dir/SKILL.md" ]; then
 			continue
 		fi
+		# Disabled skills are cleared from the deployed tree above, but Tuckr
+		# re-links them during its own deploy, so check again here.
+		if skill_is_disabled "$skill_name"; then
+			continue
+		fi
 		target="$CLAUDE_SKILLS_DIR/$skill_name"
 		if [ -e "$target" ] || [ -L "$target" ]; then
 			continue
@@ -70,7 +209,21 @@ if [ -d "$DEPLOYED_SKILLS_DIR" ] && [ -d "$CLAUDE_SKILLS_DIR" ]; then
 		ln -s "${skill_dir%/}" "$target"
 		echo "Linked $skill_name into Claude skills"
 	done
+	prune_stale_links "$CLAUDE_SKILLS_DIR" "$DEPLOYED_SKILLS_DIR"
 fi
+
+# ---------------------------------------------------------------------------
+# Final check: disabled skills must not survive this deploy
+# ---------------------------------------------------------------------------
+# The loops above skip disabled skills, but Tuckr deploys the ~/.agents/skills
+# tree itself and knows nothing about the toggle, so its per-file links are
+# re-created on every run. Re-strip after everything else has finished, which
+# makes this hook the last writer and keeps `dot skills` results stable
+# regardless of when Tuckr last ran.
+remove_disabled_skill_links "$DEPLOYED_SKILLS_DIR"
+remove_disabled_skill_links "$CODEX_SKILLS_DIR"
+remove_disabled_skill_links "$CLAUDE_SKILLS_DIR"
+remove_disabled_skill_links "$PI_SKILLS_DIR"
 
 # ---------------------------------------------------------------------------
 # Seed the OpenCode credential store with the Z.AI (GLM) key

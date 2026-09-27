@@ -24,6 +24,7 @@ Commands:
   reload                 - Reload tuckr configuration groups (non-destructive, re-applies symlinks)                                           
   doctor                 - Run preflight checks without changing the machine                                                                  
   groups                 - Manage configuration groups — list, inspect, deploy, and undeploy                                                  
+  skills                 - Turn managed skill collections on and off                                                                          
   machine                - Manage machine.nix — inspect and modify system configuration                                                       
   nix                    - Manage nix configuration directly                                                                                  
   env                    - Manage environment configuration and secrets                                                                       

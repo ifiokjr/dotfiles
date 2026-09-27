@@ -1,5 +1,6 @@
 import {
 	installManagedSkillsFromCheckout,
+	type ManagedSkillOptions,
 	type ManagedSkillSource,
 	syncManagedSkills,
 	verifyManagedSkillDeployment,
@@ -42,11 +43,13 @@ export const MATT_POCOCK_SKILLS = MATT_POCOCK_SOURCE.skills.map((skill) =>
 export async function verifyMattPocockSkillDeployment(
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
 	return await verifyManagedSkillDeployment(
 		MATT_POCOCK_SOURCE,
 		dotfilesDir,
 		homeDir,
+		opts,
 	);
 }
 

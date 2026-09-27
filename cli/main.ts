@@ -19,6 +19,7 @@ import { reloadCommand } from "./commands/reload.ts";
 import { resetCommand } from "./commands/reset.ts";
 import { selfCommand } from "./commands/self.ts";
 import { setupCommand } from "./commands/setup.ts";
+import { skillsCommand } from "./commands/skills.ts";
 import { uninstallCommand } from "./commands/uninstall.ts";
 import { versionCommand } from "./commands/version.ts";
 
@@ -37,6 +38,7 @@ await new Command()
 	.command("reload", reloadCommand)
 	.command("doctor", doctorCommand)
 	.command("groups", groupsCommand)
+	.command("skills", skillsCommand)
 	.command("machine", machineCommand)
 	.command("nix", nixCommand)
 	.command("env", envCommand)

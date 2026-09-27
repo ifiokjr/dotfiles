@@ -1,5 +1,6 @@
 import {
 	installManagedSkillsFromCheckout,
+	type ManagedSkillOptions,
 	type ManagedSkillSource,
 	syncManagedSkills,
 	verifyManagedSkillDeployment,
@@ -31,11 +32,13 @@ export const MONOCHANGE_SKILLS = MONOCHANGE_SOURCE.skills.map((skill) =>
 export async function verifyMonochangeSkillDeployment(
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
 	return await verifyManagedSkillDeployment(
 		MONOCHANGE_SOURCE,
 		dotfilesDir,
 		homeDir,
+		opts,
 	);
 }
 

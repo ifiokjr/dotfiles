@@ -56,6 +56,11 @@ import {
 	syncPstackSkills,
 	verifyPstackSkillDeployment,
 } from "../lib/pstack.ts";
+import {
+	disabledSkillNames,
+	readSkillSelections,
+	writeSkillSelections,
+} from "../lib/skill_selections.ts";
 import { installDotfilesCli } from "./self.ts";
 
 interface RebuildOptions {
@@ -821,6 +826,24 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		Deno.exit(1);
 	}
 
+	// Collections the user toggled off still sync (so their files stay current
+	// in the repo) but are not expected in the deployed harness directories.
+	const selections = await readSkillSelections(context.dotfilesDir);
+	const skipSkills = disabledSkillNames(selections);
+
+	if (selections.disabledCollections.length > 0) {
+		printInfo(
+			`Disabled skill collections (not deployed): ${
+				selections.disabledCollections.join(", ")
+			}`,
+		);
+	}
+
+	// Regenerate the derived hook list so it reflects this sync. When upstream
+	// adds or removes a skill from a disabled collection, the deploy hook needs
+	// the updated names or the new skill would leak into the harness dirs.
+	await writeSkillSelections(context.dotfilesDir, selections);
+
 	printInfo("Updating managed external agent skills");
 
 	try {
@@ -883,27 +906,30 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		Deno.exit(1);
 	}
 	const deploymentIssues = [
-		...(await verifyPstackSkillDeployment(context.dotfilesDir, homeDir)).map(
-			(issue) => `P-Stack: ${issue}`,
-		),
-		...(await verifyMdtSkillDeployment(context.dotfilesDir, homeDir)).map(
-			(issue) => `mdt: ${issue}`,
-		),
+		...(await verifyPstackSkillDeployment(context.dotfilesDir, homeDir, {
+			skipSkills,
+		})).map((issue) => `P-Stack: ${issue}`),
+		...(await verifyMdtSkillDeployment(context.dotfilesDir, homeDir, {
+			skipSkills,
+		})).map((issue) => `mdt: ${issue}`),
 		...(await verifyMattPocockSkillDeployment(
 			context.dotfilesDir,
 			homeDir,
+			{ skipSkills },
 		)).map((issue) => `Matt Pocock: ${issue}`),
 		...(await verifyMonochangeSkillDeployment(
 			context.dotfilesDir,
 			homeDir,
+			{ skipSkills },
 		)).map((issue) => `monochange: ${issue}`),
 		...(await verifyPatrolSkillDeployment(
 			context.dotfilesDir,
 			homeDir,
+			{ skipSkills },
 		)).map((issue) => `Patrol: ${issue}`),
-		...(await verifyPinaSkillDeployment(context.dotfilesDir, homeDir)).map(
-			(issue) => `pina: ${issue}`,
-		),
+		...(await verifyPinaSkillDeployment(context.dotfilesDir, homeDir, {
+			skipSkills,
+		})).map((issue) => `pina: ${issue}`),
 	];
 	if (deploymentIssues.length > 0) {
 		for (const issue of deploymentIssues) {

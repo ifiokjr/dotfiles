@@ -79,6 +79,26 @@ The managed `computer-use` skill is a small bridge to the client under `~/.codex
 
 Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before any source is updated, and deployment verification checks every external source file through its configured shared and compatibility paths.
 
+### Turning Collections Off
+
+Any collection can be switched off without deleting it, so you can compare how your agents behave with and without it:
+
+```bash
+dot skills list                    # every collection and its state
+dot skills disable poteto          # stop deploying the P-Stack skills
+dot skills enable poteto           # deploy them again
+dot skills status                  # list the skill names currently stripped
+dot skills apply                   # re-read skills.toml after editing it by hand
+```
+
+Two files record this. `Configs/agents/.config/agents/skills.toml` holds the intent (which collections are off) and is the only file you should edit. `Configs/agents/.agents/skills/.disabled-skills` is derived from it and lists the resolved skill names, one per line, for the deploy hook to read.
+
+The `poteto` and `matt-pocock` collections are currently disabled, which is why their skills do not appear in an agent's skill list even though the files are present in the repo.
+
+Disabling leaves the files in the repository, so `dot rebuild --update` keeps refreshing them from upstream, and strips the skills out of every harness directory instead: `~/.agents/skills`, `~/.codex/skills`, `~/.claude/skills`, and `~/.pi/agent/skills`. Because nothing is deleted, re-enabling restores the same content offline and needs no network round trip. The tracked Pi compatibility links under `Configs/agents/.pi/agent/skills` are removed and recreated along with the toggle, so a disabled collection leaves no dead links behind.
+
+The `agents` post hook does the stripping, and it runs on ordinary `tuckr` deploys as well as `dot rebuild`, so the setting survives a plain redeploy rather than only holding until the next one. Removal is driven only by the explicit disabled list: the hook never infers that a skill is unwanted from its link state, and it deletes an entry only after confirming the entry points into this repo's managed roots. A locally installed skill that happens to share a name with a disabled one is therefore left alone.
+
 ### Coexistence Boundaries
 
 The selected collections have no skill-name collisions. Related skills are intentionally separated by workflow:
