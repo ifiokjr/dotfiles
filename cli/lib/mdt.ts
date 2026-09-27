@@ -1,5 +1,6 @@
 import {
 	installManagedSkillsFromCheckout,
+	type ManagedSkillOptions,
 	type ManagedSkillSource,
 	syncManagedSkills,
 	verifyManagedSkillDeployment,
@@ -29,8 +30,14 @@ export const MDT_SKILLS = MDT_SOURCE.skills.map((skill) => skill.name);
 export async function verifyMdtSkillDeployment(
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
-	return await verifyManagedSkillDeployment(MDT_SOURCE, dotfilesDir, homeDir);
+	return await verifyManagedSkillDeployment(
+		MDT_SOURCE,
+		dotfilesDir,
+		homeDir,
+		opts,
+	);
 }
 
 /** Fetch the selected mdt skill and install it into the repository. */

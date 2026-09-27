@@ -1,5 +1,6 @@
 import {
 	installManagedSkillsFromCheckout,
+	type ManagedSkillOptions,
 	type ManagedSkillSource,
 	syncManagedSkills,
 	verifyManagedSkillDeployment,
@@ -29,8 +30,14 @@ export const PINA_SKILLS = PINA_SOURCE.skills.map((skill) => skill.name);
 export async function verifyPinaSkillDeployment(
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
-	return await verifyManagedSkillDeployment(PINA_SOURCE, dotfilesDir, homeDir);
+	return await verifyManagedSkillDeployment(
+		PINA_SOURCE,
+		dotfilesDir,
+		homeDir,
+		opts,
+	);
 }
 
 /** Fetch the selected pina skill and install it into the repository. */

@@ -1,0 +1,15 @@
+# Managed skill collections that stay out of the agent skill directories.
+#
+# A disabled collection keeps its files in the repository, so `dot rebuild
+# --update` still refreshes it, but its skills are stripped from the deployed
+# harness directories. Nothing is deleted, so re-enabling restores it exactly.
+#
+# Prefer the CLI, which rewrites this file and redeploys for you:
+#   dot skills list
+#   dot skills disable <collection>
+#   dot skills enable <collection>
+#
+# Hand-edit the list below, then run `dot skills apply`.
+#
+# Valid collection ids: poteto, matt-pocock, patrol, mdt, monochange, pina
+disabled_collections = ["matt-pocock", "poteto"]

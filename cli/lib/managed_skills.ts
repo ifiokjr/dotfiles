@@ -51,6 +51,16 @@ export interface ManagedSkillSyncResult {
 	skillCount: number;
 }
 
+/**
+ * Skills to leave alone because their collection is toggled off.
+ *
+ * A disabled skill stays in the repository but is stripped from the deployed
+ * harness links, so verification must not expect it at the deployed path.
+ */
+export interface ManagedSkillOptions {
+	skipSkills?: ReadonlySet<string>;
+}
+
 /** Find duplicate target names before two external sources can overwrite each other. */
 export function findManagedSkillConflicts(
 	sources: readonly ManagedSkillSource[],
@@ -79,6 +89,7 @@ export async function verifyManagedSkillDeployment(
 	source: ManagedSkillSource,
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
 	const managedRoot = managedSkillRoot(dotfilesDir);
 	const issues: string[] = [];
@@ -92,6 +103,10 @@ export async function verifyManagedSkillDeployment(
 
 	for (const deploymentRoot of deploymentRoots) {
 		for (const skill of source.skills) {
+			// A disabled collection is deliberately not deployed, so its absence
+			// from the harness roots is expected rather than a failure.
+			if (opts.skipSkills?.has(skill.name)) continue;
+
 			const sourceRoot = resolve(managedRoot, skill.name);
 			const deployedSkillRoot = resolve(deploymentRoot.path, skill.name);
 

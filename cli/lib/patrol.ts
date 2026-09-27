@@ -1,5 +1,6 @@
 import {
 	installManagedSkillsFromCheckout,
+	type ManagedSkillOptions,
 	type ManagedSkillSource,
 	syncManagedSkills,
 	verifyManagedSkillDeployment,
@@ -26,11 +27,13 @@ export const PATROL_SKILLS = PATROL_SOURCE.skills.map((skill) => skill.name);
 export async function verifyPatrolSkillDeployment(
 	dotfilesDir: string,
 	homeDir: string,
+	opts: ManagedSkillOptions = {},
 ): Promise<string[]> {
 	return await verifyManagedSkillDeployment(
 		PATROL_SOURCE,
 		dotfilesDir,
 		homeDir,
+		opts,
 	);
 }
 
