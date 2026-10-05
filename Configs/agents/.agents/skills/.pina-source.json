@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/pina-rs/pina",
-	"ref": "v0.21.0",
-	"resolvedSha": "9c9130ef6beab8efffcd4e516fd9c5673765fb71",
+	"ref": "v0.23.0",
+	"resolvedSha": "01f7f8370d54d9071b29b2385edae677cba07c91",
 	"skills": [
 		"pina"
 	],
