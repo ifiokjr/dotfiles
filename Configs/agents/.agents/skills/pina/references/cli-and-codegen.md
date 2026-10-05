@@ -17,10 +17,13 @@ pina idl publish --help
 pina docs --help
 pina init --help
 pina lint --help
+pina locks --help
+pina map --help
 pina test --help
 pina dev --help
 pina keys --help
 pina doctor --help
+pina explain --help
 pina completions --help
 pina profile --help
 pina deploy --help
@@ -32,7 +35,7 @@ Use `pina docs` to list bundled terminal topics. Custom topics can be supplied t
 
 ## Daily project workflow
 
-Run project-aware commands from the program directory or any descendant. Pina uses the nearest ancestor `pina.toml`; an existing unambiguous Cargo package also works without configuration.
+Run project-aware commands from the program directory or any descendant. Pina uses the nearest ancestor `pina.toml`; an existing unambiguous Cargo package also works without configuration. `pina idl` is the exception: it reads the crate at `--path` (default `.`) without discovery, so run it from the crate root or pass `--path`.
 
 ```sh
 pina lint
@@ -63,6 +66,29 @@ Generation defaults to `mode = "auto"`: it initializes an empty target, then upd
 
 Generate the same crate from an external Codama or Anchor IDL with `pina cpi --idl <FILE> --output <DIR>`. Codama IDLs stay native; raw Anchor IDLs are normalized through `@codama/nodes-from-anchor` first.
 
+TypeScript, Dart, `cli-ts`, and `cli-dart` generation runs the version-pinned Codama renderers through `npx` (falling back to `pnpm dlx`), so a project needs no local `node_modules`, but the first run needs registry access. Rust, CPI, and `cli-rust` crates inherit their dependencies from an enclosing workspace's `[workspace.dependencies]` when one declares `pina`. Otherwise, a freshly scaffolded client manifest names concrete, tested version requirements and declares its own empty `[workspace]`, so it builds on its own. An existing client manifest is yours and is never rewritten.
+
+The IDL follows the migration policy recorded in `migrations/manifest.json`, the same one the macros expand against, so the program and its clients agree on every envelope. Without a manifest there is no policy, so nothing carries a version byte; record the baseline with `pina migrations create --auto true` before generating clients you intend to keep, because adding the policy later changes their wire format.
+
+## Compute unit budgets
+
+Priority fees are charged per requested compute unit, so clients should request a limit close to what the transaction uses. Record what each instruction costs, then regenerate:
+
+```sh
+pina test --record-compute-units
+pina generate
+```
+
+`pina test --record-compute-units` runs the complete Surfpool suite (it conflicts with `--unit` and `--filter`) and writes `compute-units.json` beside the program's `Cargo.toml`: the most compute units each instruction consumed in a successful simulation, keyed by IDL name, plus the SHA-256 of the measured build. Failed transactions never count. An instruction no successful test sent is left out and named in a warning; send it through `ProgramTest::send`, `send_instruction`, `send_with_signers`, or `send_transaction` in a passing test to measure it. Commit the file with the clients it produced.
+
+IDL generation attaches each measurement as a `pinaComputeUnits` plugin with `{ "measured": n, "limit": m }`, where `limit = round_up_to_100(measured × (100 + margin_percent) / 100) + 300`. `[compute_units] margin_percent` in `pina.toml` defaults to `20`; the 300 units cover `SetComputeUnitLimit` and `SetComputeUnitPrice` (150 each). Generators copy the limit and never recompute it:
+
+- Rust: `<NAME>_MEASURED_COMPUTE_UNITS`, `<NAME>_COMPUTE_UNIT_LIMIT`, and `set_compute_unit_limit_instruction(units)`.
+- TypeScript and Dart: the same constants and `get<Program>ComputeUnitLimit(instructions)`, which sums the program's instructions and returns no limit when one is unmeasured. Pass the result to `setTransactionMessageComputeUnitLimit`. The sum is conservative and ignores other programs' instructions.
+- CLIs: every command requests its instruction's limit; `--compute-unit-limit <UNITS>` overrides it and `--simulate` prints consumption against the limit requested.
+
+Re-record after changing the program. `pina generate` warns when `target/deploy/<library-name>.so` differs from the recorded build, and fails when `compute-units.json` names an instruction the program no longer declares; re-record or delete the stale entry. `pina build`, `pina idl`, and `pina test` warn about stale entries and ignore them, and the recording run never reads the file it replaces.
+
 ## Project diagnostics and identity
 
 Use the versioned diagnostic report before changing a project:
@@ -74,7 +100,30 @@ pina keys show --json
 
 `doctor --json` keeps stdout valid JSON and returns a failing exit status when required project or SBF prerequisites are unavailable. Its tool requirements follow the clients selected in `pina.toml`.
 
+When a transaction fails with a bare code such as `InvalidAccountData`, ask Pina which check produced it instead of guessing:
+
+```sh
+pina explain <SIGNATURE> --json
+pina explain --transaction-file ./failed.json --json
+```
+
+The report names the failing instruction, decodes the error (built-in, `PinaProgramError`, or the program's `#[error]` variant), and ranks candidate field rules with their `path:line`. Trust a candidate by its `confidence`: `confirmed` is proven by the transaction's flags, account counts, or keys; `checked_against_current_state` reads state that may have changed after the transaction; `possible` needs runtime values such as PDA seeds or argument values. The default network is localnet, so pass `--network` or `--rpc-url` for other clusters. A transaction rejected by preflight never lands and cannot be explained by signature; use the logs from simulation, or send with preflight disabled on a test validator.
+
 Treat program identity changes as security-sensitive. `pina keys sync` validates an existing Ed25519 keypair and updates exactly one parsed `declare_id!`. `pina keys new` creates a local identity; only `pina keys new --force` may rotate an existing one. Never copy or print keypair bytes. On platforms where Pina cannot guarantee private permissions, generate the keypair with trusted platform tooling and then run `pina keys sync --keypair <path>`.
+
+## Write-lock contention
+
+Check which instructions can never run in parallel before a state layout hardens:
+
+```sh
+pina locks
+pina locks --json
+pina locks --deny-hotspots
+```
+
+A writable PDA whose seeds are all constants has one address, so every instruction that writes it serializes all of its traffic across the cluster. `pina locks` lists these hotspots with their derived addresses, writers, and readers, then an instruction conflict matrix (`●` always, `◐` may, `·` none). Fix a hotspot by sharding the PDA with a variable seed, moving hot fields into per-user accounts, or declaring accounts an instruction only reads as read-only. Accept an intentional singleton, such as an admin configuration, by listing its name in `[locks] allow` in `pina.toml`; an entry that names no hotspot fails the command. `--deny-hotspots` exits with status 1 on any hotspot that is not allowed.
+
+`pina map` renders the same analysis as one self-contained HTML page (default `<target>/pina/map.html`; stdout is only the path, so `open "$(pina map)"` works) for a human to explore: a lock chart of instructions against accounts, hotspot plates, conflict tracing, and per-instruction and per-account detail. Agents should read `pina map --json` or `pina locks --json` rather than the HTML.
 
 ## Deterministic build artifacts
 
@@ -158,10 +207,19 @@ Generated code reads the checked-in `migrations/manifest.json`, so run `pina mig
 
 - `<Account>MIGRATION_VERSION` (Dart `stateMigrationVersion`) — the schema version this client was generated from. Encoders stamp it into the envelope automatically; callers never pass a version. Decoders enforce it and reject other versions with a stale/future distinction: `getPinaPodMigrationVersionDecoder` in TypeScript, `StateVersionError::{Stale, Future}` in Rust, and the generated Dart equivalent. A stale split tells the caller to migrate the account on chain and retry; a future split tells the caller to upgrade the client.
 - `<account>NeedsMigration(bytes)` (Rust `state_needs_migration`) — a cheap envelope check that returns true only when the bytes name this account's discriminator and carry a version older than the client's schema. Foreign discriminators and future versions return false; the decoder explains those when the account is decoded.
-- `Migrate` — the reserved framework instruction composer (TypeScript and Dart `getMigrateInstruction`, Rust `Migrate::new().instruction()`). Every migratable slot is optional: omitted slots become program-address placeholders and trailing omitted slots are dropped, so a client sends only the accounts that need migrating. Intended flow: check `needsMigration`, send `Migrate`, then retry the original instruction.
-- Event log decoders — `parse<Program>EventsFromLogs(logs)` plus per-event `parse<Event>FromLog` and `normalize<Event>`. A migration-aware event projects historical bytes into the current shape when the manifest proves the adjacent transition is automatic, and reports the `sourceVersion` that actually wrote the log plus whether a projection ran (`wasMigrated`). Manual, unknown, and future versions fail closed with the reason instead of misreading. The Rust event module mirrors this with `try_from_bytes` (stale/future distinction) and `project_from_bytes`, which returns a `Projected<Event>` exposing `source_version()`.
+- `Migrate` — the reserved framework instruction composer (TypeScript and Dart `getMigrateInstruction`, Rust `Migrate::new().instruction()`). Slots 0 and 1 are always sent: the payer (the program-address placeholder when omitted) and the system program, which defaults to `11111111111111111111111111111111` because the program rejects anything else there. Every migratable slot is optional: omitted slots become program-address placeholders and trailing omitted migratable slots are dropped, so a client sends only the accounts that need migrating. Intended flow: check `needsMigration`, send `Migrate`, then retry the original instruction.
+- Event log decoders — `parse<Program>EventsFromLogs(logs, programAddress?)` plus per-event `parse<Event>FromLog` and `decode<Event>` (for example `decodeValueChangedEventEvent` and `decodeValueChangedEventV0Event`, the names the Dart clients use too). Pass the complete, ordered log messages of one transaction to the program-level parser: it follows the runtime's `Program <address> invoke [n]` and `success`/`failed` frames and decodes a data line only while this program (or the `programAddress` you pass for another deployment) is the innermost invoked program. Any program can write a `Program data:` line with your discriminator, including one your program invokes through CPI, so the per-event `parse<Event>FromLog` helpers, which cannot attribute a line, are only for bytes already known to come from your program. A `Log truncated` transaction loses frames, so treat its events as incomplete. A versioned event is decoded, never converted: each earlier version is its own generated event, `<Event>V<n>` (for example `valueChangedEventV0`), with that version's codec, and the program-level parser routes every record by discriminator and version. A version no generated event describes throws (`event "valueChangedEvent" log carries migration version N, which this client cannot decode; regenerate it`) instead of being misread. Decoded records carry only their version's fields — no `sourceVersion`, no `wasMigrated`, no zero-filled fields. The Rust event module has no program-level parser: each version's `try_from_bytes` separates a stale record from a future one and names the event generated for the other version.
 
 The one-call `migrateIfNeeded` RPC helper is designed in ADR 0008 but not generated; compose the check, `Migrate`, and retry explicitly.
+
+## Using generated clients safely
+
+Generated decoders parse bytes; they do not establish where those bytes came from. When an agent writes code on top of a client, it has to add the checks the client cannot make:
+
+- **Check the owner before trusting decoded account data.** TypeScript, Dart, and Rust account decoders and CPI-crate `parse`/`matches` helpers check the discriminator (and the version envelope) only. An attacker-owned account can carry the same leading bytes. Off chain, compare the fetched account's owner with the program address before using the decoded state, or fetch a PDA through `fetch<Account>FromSeeds`, which derives the address. On chain, `assert_owner(&callee::ID)` the `AccountView` before parsing another program's state with its CPI crate.
+- **Do not treat client decoding as validation.** On-chain `try_from_bytes` requires an exact length; TypeScript decoders accept trailing bytes, and no client enforces the program's `#[pina(validate(...))]` rules on event or account values. Validate values that matter where they are consumed.
+- **Trust the IDL's writable flags only as far as the program declares them.** The IDL marks an account writable when its field is `&mut`, when the program calls `assert_writable` or declares `#[pina(validate(writable))]`, or when it is the payer, `from`, or `to` of a Pina account-creation, allocation, or transfer builder. Any other path that moves an account's lamports must still declare writability explicitly. Otherwise every client sends the account read-only, and the transaction fails with a privilege escalation whenever that account is not also the fee payer, and always through CPI.
+- **Read CPI size constants carefully.** A CPI crate drops IDL fields its renderer cannot express, so compare `LEN`/`MAX_LEN` with the program's own `SIZE` before sizing an allocation from them.
 
 ## Static SBF profiling
 
@@ -174,6 +232,19 @@ pina profile ./target/deploy/counter_program.so --json --output ./profile.json
 ```
 
 When the path is omitted, Pina discovers `<cargo-target>/deploy/<library-name>.so`. The report is a static estimate, not a validator execution trace. Use it for deterministic comparisons and investigate material changes in context. Output files are written atomically and cannot alias the input binary through hardlinks or linked paths.
+
+## Trace-driven CU profiling
+
+To find where an instruction's compute units actually go, trace the project's Mollusk tests:
+
+```sh
+pina profile trace
+pina profile trace --filter increment --instruction increment
+pina profile trace --json > trace.json
+pina profile trace --folded > stacks.folded
+```
+
+The program's `mollusk-svm` dev-dependency must enable `features = ["register-tracing"]`; when no trace is recorded, the error prints the exact line to add. Tests must load the program by name so `SBF_OUT_DIR` can point at the traced build. Every executed SBF instruction costs 1 CU; syscalls are listed by name and call site but their runtime charges are not included. Read the hottest lines and inclusive function costs before changing code, and treat a "debug information changed code generation" warning as a sign that counts are approximate for the deployed build. `--trace-dir <target>/pina/trace/traces` re-analyzes the last run without rebuilding.
 
 # Verified deployments
 
@@ -197,6 +268,22 @@ Use `pina verify record --export [AUTHORITY] --output verification.tx` when anot
 
 `pina verify submit --program-id <ADDRESS> --uploader <ADDRESS>` submits an existing record to the official mainnet remote verifier. `pina verify status --program-id <ADDRESS>` is the corresponding read-only mainnet status query. Never place credentials in an RPC URL; the URL is necessarily visible in child-process arguments.
 
+## Rehearse an upgrade
+
+Before upgrading a deployed program, replay its recent traffic against the candidate:
+
+```sh
+pina rehearse --network devnet --build
+pina rehearse --network mainnet --limit 100 --json > rehearsal.json
+pina rehearse --rpc-url http://127.0.0.1:8899 --signature <SIGNATURE>
+```
+
+Pina fetches the program's recent transactions read-only, forks the same endpoint with Surfpool, and profiles every signed transaction against the deployed program and then the candidate on one frozen snapshot. Statuses are `unchanged`, `cu_changed` (informational), `state_changed`, `outcome_changed`, and `skipped`. A transaction that fails identically in both runs is skipped as `failed_in_both`: its state moved on and it says nothing about the upgrade. Different errors in both runs are an outcome change, because error codes are part of the program's contract.
+
+Exit code `2` means behaviour changed: inspect each `state_changed` account diff (fields are decoded from the IR) and each `outcome_changed` log excerpt before deploying. Use `--allow-changes` only for reviewed, intended changes. Exit code `3` means no transaction could be compared, so the upgrade is unverified: rehearse more or newer traffic rather than treating it as a pass. Exit code `1` is an operational failure, including any failed RPC request, a program that is not deployed, and a candidate the runtime refuses to load, which an upgrade would also reject. Requests are never retried, so do not loop the command against a rate-limited endpoint.
+
+To gate the deployment itself, add `--rehearse` to `pina deploy` instead of running the two commands separately. It rehearses the exact artifact the plan pins (checked against the plan's SHA-256), against the cluster the deployment targets, after the plan prints and before the confirmation prompt. Exit code `2` (behaviour changed) and `3` (nothing compared, or the program is not deployed yet) stop the deployment before anything is sent; `1` is an operational failure. `--allow-rehearsal-changes` accepts reviewed changes but never a rehearsal that compared nothing, and `--rehearse-limit <N>` sets how many recent transactions replay (default 25). With `--dry-run --json`, the plan gains a `rehearsal` key holding the `pina rehearse --json` report. Deploy a program's first version without `--rehearse`: there is nothing deployed to rehearse against.
+
 ## Safe deployment
 
 Plan deployments before permitting a write:
@@ -210,4 +297,6 @@ pina deploy --cluster devnet \
 
 The cluster is always explicit. Pina never inherits a Solana CLI target or wallet, and deploy never creates a program identity. Conventional artifacts are `<cargo-target>/deploy/<library-name>.so` and `<cargo-target>/deploy/<library-name>-keypair.json`; override either path only when the plan requires it. Review the program ID and complete argument vector in the plan. Keep keypairs below 4 KiB and owner-private; on Unix use mode `0600`, while Windows ACLs must be restricted with operating-system tooling.
 
-Remote execution requires an interactive `deploy` confirmation or `--yes`. Named mainnet and custom remote endpoints also require `--allow-mainnet`. Custom URL user information, queries, and fragments are rejected, but accepted hosts and paths remain visible in plan output and process listings. Never put a secret anywhere in the URL; prefer a named cluster. Use `--build` when the canonical artifact must be refreshed before the final plan. Deployment requires the external Agave `solana` executable on `PATH`.
+The plan prints the paths you passed, but the deploy program receives private owner-only copies (`<tmp>/pina-deploy-*/payer.json` and so on) that Pina re-verifies against the plan before running it. `--remote-command` replaces `solana program deploy` with `sh -c <command>` and passes those copies through `PINA_DEPLOY_*` environment variables, never on the command line.
+
+Remote execution requires an interactive `deploy` confirmation or `--yes`. Named mainnet and custom remote endpoints also require `--allow-mainnet`. A loopback URL (`localhost`, `127.0.0.1`, `[::1]`) skips confirmation and records no publication receipt. Pina cannot tell a local validator from an SSH tunnel or proxy to a live cluster on a loopback port, so never deploy to a forwarded remote cluster through a loopback URL; use its real URL instead. Non-loopback deploys record a publication receipt that freezes the deployed migration versions; `--record-publication` opts a loopback deploy into the same lifecycle. Custom URL user information, queries, and fragments are rejected, but accepted hosts and paths remain visible in plan output and process listings. Never put a secret anywhere in the URL; prefer a named cluster. Use `--build` when the canonical artifact must be refreshed before the final plan. Deployment requires the external Agave `solana` executable on `PATH`.
