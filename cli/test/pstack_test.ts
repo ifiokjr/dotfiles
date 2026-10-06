@@ -4,10 +4,19 @@ import { join } from "@std/path";
 import {
 	installPstackSkillsFromCheckout,
 	PSTACK_SKILLS,
+	PSTACK_SOURCE,
 	verifyPstackSkillDeployment,
 } from "../lib/pstack.ts";
 
 const TEST_SHA = "0123456789abcdef0123456789abcdef01234567";
+
+Deno.test("P-Stack mirrors the whole upstream skills directory", () => {
+	// Discovery is what keeps every skill Poteto ships arriving with
+	// `dot rebuild --update`; the static list is only the pre-sync seed.
+	assertEquals(PSTACK_SOURCE.skillsDirectory, "pstack/skills");
+	assertEquals(new Set(PSTACK_SKILLS).size, PSTACK_SKILLS.length);
+	assertEquals(PSTACK_SKILLS, [...PSTACK_SKILLS].toSorted());
+});
 
 Deno.test("P-Stack sync replaces the managed skill set and records its source", async () => {
 	const tempDir = await Deno.makeTempDir({ prefix: "pstack-test-" });

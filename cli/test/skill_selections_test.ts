@@ -25,31 +25,75 @@ Deno.test("collection ids are unique and cover every managed source", () => {
 	assertEquals(ids, [...SKILL_COLLECTION_IDS]);
 });
 
-Deno.test("collection ids resolve to their source skill names", () => {
-	assertEquals(
-		skillNamesForCollection("poteto"),
-		PSTACK_SOURCE.skills.map((skill) => skill.name),
-	);
-	assertEquals(
-		skillNamesForCollection("matt-pocock"),
-		MATT_POCOCK_SOURCE.skills.map((skill) => skill.name),
-	);
-	assertEquals(skillNamesForCollection("nope"), []);
+Deno.test("collection ids resolve to their source skill names", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "skill-sel-names-" });
+
+	try {
+		// The temp dir holds no manifests, so the static lists answer.
+		assertEquals(
+			await skillNamesForCollection("poteto", tempDir),
+			PSTACK_SOURCE.skills.map((skill) => skill.name),
+		);
+		assertEquals(
+			await skillNamesForCollection("matt-pocock", tempDir),
+			MATT_POCOCK_SOURCE.skills.map((skill) => skill.name),
+		);
+		assertEquals(await skillNamesForCollection("nope", tempDir), []);
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
 });
 
-Deno.test("resolveDisabledSkills unions and sorts, ignoring duplicates", () => {
-	assertEquals(resolveDisabledSkills([]), []);
+Deno.test("a discovery collection reads its skills from the manifest", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "skill-sel-manifest-" });
+	const managedRoot = join(tempDir, "Configs", "agents", ".agents", "skills");
 
-	const poteto = resolveDisabledSkills(["poteto", "poteto"]);
-	assertEquals(poteto, resolveDisabledSkills(["poteto"]));
-	assertEquals(poteto.length, PSTACK_SOURCE.skills.length);
-	assertEquals(poteto, [...poteto].toSorted());
+	try {
+		await Deno.mkdir(managedRoot, { recursive: true });
+		await Deno.writeTextFile(
+			join(managedRoot, ".pstack-source.json"),
+			JSON.stringify({
+				repository: "https://github.com/cursor/plugins",
+				ref: "main",
+				resolvedSha: "a".repeat(40),
+				skills: ["how", "why"],
+				version: 1,
+			}),
+		);
 
-	const both = resolveDisabledSkills(["poteto", "matt-pocock"]);
-	assertEquals(
-		both.length,
-		PSTACK_SOURCE.skills.length + MATT_POCOCK_SOURCE.skills.length,
-	);
+		// The manifest is what every sync rewrites, so it — not the static
+		// snapshot in pstack.ts — records what a discovery collection tracks.
+		assertEquals(await skillNamesForCollection("poteto", tempDir), [
+			"how",
+			"why",
+		]);
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
+});
+
+Deno.test("resolveDisabledSkills unions and sorts, ignoring duplicates", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "skill-sel-resolve-" });
+
+	try {
+		assertEquals(await resolveDisabledSkills([], tempDir), []);
+
+		const poteto = await resolveDisabledSkills(["poteto", "poteto"], tempDir);
+		assertEquals(poteto, await resolveDisabledSkills(["poteto"], tempDir));
+		assertEquals(poteto.length, PSTACK_SOURCE.skills.length);
+		assertEquals(poteto, [...poteto].toSorted());
+
+		const both = await resolveDisabledSkills(
+			["poteto", "matt-pocock"],
+			tempDir,
+		);
+		assertEquals(
+			both.length,
+			PSTACK_SOURCE.skills.length + MATT_POCOCK_SOURCE.skills.length,
+		);
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
 });
 
 Deno.test("unknown collection ids are rejected", () => {
@@ -76,7 +120,7 @@ Deno.test("a missing config file means everything is enabled", async () => {
 	try {
 		const config = await readSkillSelections(tempDir);
 		assertEquals(config.disabledCollections, []);
-		assertEquals([...disabledSkillNames(config)], []);
+		assertEquals([...await disabledSkillNames(config, tempDir)], []);
 	} finally {
 		await Deno.remove(tempDir, { recursive: true });
 	}
@@ -93,7 +137,7 @@ Deno.test("writeSkillSelections round-trips through disk", async () => {
 		const config = await readSkillSelections(tempDir);
 		assertEquals(config.disabledCollections, ["matt-pocock", "poteto"]);
 
-		const disabled = disabledSkillNames(config);
+		const disabled = await disabledSkillNames(config, tempDir);
 		assertEquals(disabled.has("unslop"), true);
 		assertEquals(disabled.has("diagnosing-bugs"), true);
 		// A skill outside the disabled collections stays enabled.
@@ -146,18 +190,27 @@ Deno.test("an empty disabled list renders only the header", () => {
 	}
 });
 
-Deno.test("listSkillSelections reports the toggle state per collection", () => {
-	const states = listSkillSelections({ disabledCollections: ["patrol"] });
+Deno.test("listSkillSelections reports the toggle state per collection", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "skill-sel-list-" });
 
-	assertEquals(states.length, SKILL_COLLECTIONS.length);
-	assertEquals(
-		states.filter((state) => !state.enabled).map((state) => state.id),
-		["patrol"],
-	);
-	assertEquals(
-		states.find((state) => state.id === "patrol")?.skills,
-		["patrol-setup", "patrol-write-test"],
-	);
+	try {
+		const states = await listSkillSelections(
+			{ disabledCollections: ["patrol"] },
+			tempDir,
+		);
+
+		assertEquals(states.length, SKILL_COLLECTIONS.length);
+		assertEquals(
+			states.filter((state) => !state.enabled).map((state) => state.id),
+			["patrol"],
+		);
+		assertEquals(
+			states.find((state) => state.id === "patrol")?.skills,
+			["patrol-setup", "patrol-write-test"],
+		);
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
 });
 
 Deno.test("isCollectionDisabled reflects the config", () => {

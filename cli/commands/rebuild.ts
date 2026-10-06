@@ -829,7 +829,6 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 	// Collections the user toggled off still sync (so their files stay current
 	// in the repo) but are not expected in the deployed harness directories.
 	const selections = await readSkillSelections(context.dotfilesDir);
-	const skipSkills = disabledSkillNames(selections);
 
 	if (selections.disabledCollections.length > 0) {
 		printInfo(
@@ -838,11 +837,6 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 			}`,
 		);
 	}
-
-	// Regenerate the derived hook list so it reflects this sync. When upstream
-	// adds or removes a skill from a disabled collection, the deploy hook needs
-	// the updated names or the new skill would leak into the harness dirs.
-	await writeSkillSelections(context.dotfilesDir, selections);
 
 	printInfo("Updating managed external agent skills");
 
@@ -893,6 +887,18 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		printError(`Managed agent skill update failed: ${message}`);
 		Deno.exit(1);
 	}
+
+	// Regenerate the derived hook list after the syncs so it records what
+	// upstream ships now: when a collection gains or loses a skill, the deploy
+	// hook needs the updated names or a new skill would leak into the harness
+	// dirs and a removed one would keep its links. Reading the manifests here
+	// (rather than the static lists) is what makes a discovery collection safe
+	// to disable while upstream keeps adding skills.
+	await writeSkillSelections(context.dotfilesDir, selections);
+	const skipSkills = await disabledSkillNames(
+		selections,
+		context.dotfilesDir,
+	);
 
 	printInfo("Deploying updated agent skill symlinks");
 	const deployment = await runCommand(["tuckr", "set", "agents"], {

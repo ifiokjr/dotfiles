@@ -16,30 +16,7 @@ Current dotfiles-managed skills:
 - `playwright-cli`: Path: `Configs/agents/.agents/skills/playwright-cli/SKILL.md`
 - `solana-audit`: Path: `Configs/agents/.agents/skills/solana-audit/SKILL.md`
 
-Managed P-Stack selection, in priority order:
-
-1. `principle-prove-it-works`: Path: `Configs/agents/.agents/skills/principle-prove-it-works/SKILL.md`
-2. `principle-type-system-discipline`: Path: `Configs/agents/.agents/skills/principle-type-system-discipline/SKILL.md`
-3. `principle-fix-root-causes`: Path: `Configs/agents/.agents/skills/principle-fix-root-causes/SKILL.md`
-4. `blast-radius`: Path: `Configs/agents/.agents/skills/blast-radius/SKILL.md`
-5. `how`: Path: `Configs/agents/.agents/skills/how/SKILL.md`
-6. `principle-laziness-protocol`: Path: `Configs/agents/.agents/skills/principle-laziness-protocol/SKILL.md`
-7. `recall`: Path: `Configs/agents/.agents/skills/recall/SKILL.md`
-8. `principle-boundary-discipline`: Path: `Configs/agents/.agents/skills/principle-boundary-discipline/SKILL.md`
-9. `technical-writing`: Path: `Configs/agents/.agents/skills/technical-writing/SKILL.md`
-10. `unslop`: Path: `Configs/agents/.agents/skills/unslop/SKILL.md`
-11. `architect`: Path: `Configs/agents/.agents/skills/architect/SKILL.md`
-12. `principle-model-the-domain`: Path: `Configs/agents/.agents/skills/principle-model-the-domain/SKILL.md`
-13. `principle-minimize-reader-load`: Path: `Configs/agents/.agents/skills/principle-minimize-reader-load/SKILL.md`
-14. `principle-sequence-verifiable-units`: Path: `Configs/agents/.agents/skills/principle-sequence-verifiable-units/SKILL.md`
-15. `principle-subtract-before-you-add`: Path: `Configs/agents/.agents/skills/principle-subtract-before-you-add/SKILL.md`
-16. `interrogate`: Path: `Configs/agents/.agents/skills/interrogate/SKILL.md`
-17. `why`: Path: `Configs/agents/.agents/skills/why/SKILL.md`
-18. `create-verification-skill`: Path: `Configs/agents/.agents/skills/create-verification-skill/SKILL.md`
-19. `show-me-your-work`: Path: `Configs/agents/.agents/skills/show-me-your-work/SKILL.md`
-20. `principle-make-operations-idempotent`: Path: `Configs/agents/.agents/skills/principle-make-operations-idempotent/SKILL.md`
-
-The P-Stack selection comes from [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills). Its resolved source commit and exact directory list live in `Configs/agents/.agents/skills/.pstack-source.json`.
+Managed P-Stack mirror: every skill in [`cursor/plugins`](https://github.com/cursor/plugins/tree/main/pstack/skills)'s `pstack/skills` directory, one directory per skill under `Configs/agents/.agents/skills/<skill-name>`. The collection is a discovery source rather than a pinned list: each sync enumerates the upstream skills directory and installs everything that holds a `SKILL.md`, so skills Poteto adds arrive with the next update and skills she removes are dropped. The resolved source commit and the exact skill list each sync installed live in `Configs/agents/.agents/skills/.pstack-source.json`, which is the authoritative record of what the mirror tracks; a discovered name that would collide with a locally authored skill or another collection's directory stops the update instead of replacing it.
 
 Managed Matt Pocock selection, in priority order:
 
@@ -73,7 +50,7 @@ The locally authored `solana-audit` skill is a deep security audit workflow for 
 
 The locally authored `github` skill is an inventory of recent GitHub features, led by native stacked pull requests and file and video attachments through the `gh` CLI. It exists because model training data lags GitHub's release cadence, so the agent otherwise defaults to older workflows. Path: `Configs/agents/.agents/skills/github/SKILL.md`.
 
-`dot rebuild --update` refreshes all externally managed selections from their configured branches (or, for the package selections, their latest GitHub releases), updates their source manifests, and runs the `agents` setup hooks once so new or removed skill files are reflected under `~/.agents/skills`. `dot reload` runs the same hooks after a repository update. The Matt Pocock, Patrol, mdt, monochange, and pina selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly. Two harnesses do not, and the `agents` post hook creates directory links for them: Codex skips symlinked `SKILL.md` files when scanning, so each managed skill directory is linked into `~/.codex/skills` pointing at the repo copy where the files are real, and Claude Code reads only `~/.claude/skills`, project `.claude/skills`, plugins, and `--add-dir` directories, so each managed skill directory is linked into `~/.claude/skills` pointing at the deployed copy under `~/.agents/skills`. Linking Claude at the deployed path rather than the repo covers externally synced selections, which are not committed here. Both link steps never replace an existing entry, so a locally installed skill of the same name wins.
+`dot rebuild --update` refreshes all externally managed selections from their configured branches (or, for the package selections, their latest GitHub releases), updates their source manifests, and runs the `agents` setup hooks once so new or removed skill files are reflected under `~/.agents/skills`. For the discovery-driven P-Stack mirror, an update also picks up skills upstream added since the last sync and drops skills upstream removed, then regenerates the derived disabled-skill list from the fresh manifests so the deploy hook strips the right names even for a disabled collection. `dot reload` runs the same hooks after a repository update. The Matt Pocock, Patrol, mdt, monochange, and pina selections also have tracked compatibility links under `Configs/agents/.pi/agent/skills`, which expose the same files to Pi without duplicating them. Cursor, Gemini CLI, OpenCode, and Zed consume the shared path directly. Two harnesses do not, and the `agents` post hook creates directory links for them: Codex skips symlinked `SKILL.md` files when scanning, so each managed skill directory is linked into `~/.codex/skills` pointing at the repo copy where the files are real, and Claude Code reads only `~/.claude/skills`, project `.claude/skills`, plugins, and `--add-dir` directories, so each managed skill directory is linked into `~/.claude/skills` pointing at the deployed copy under `~/.agents/skills`. Linking Claude at the deployed path rather than the repo covers externally synced selections, which are not committed here. Both link steps never replace an existing entry, so a locally installed skill of the same name wins.
 
 The managed `computer-use` skill is a small bridge to the client under `~/.codex/computer-use`. Codex updates that app bundle with the installed Codex version, so every configured harness uses the current client without storing the signed macOS application in git. The first `agents` setup preserves an older Codex-exported copy as `~/.agents/computer-use-codex-export` before Tuckr installs the bridge. The first `agents` setup likewise preserves an older `skills add -g` copy of monochange as `~/.agents/monochange-skills-cli-export` before Tuckr installs the managed skill.
 
@@ -93,7 +70,7 @@ dot skills apply                   # re-read skills.toml after editing it by han
 
 Two files record this. `Configs/agents/.config/agents/skills.toml` holds the intent (which collections are off) and is the only file you should edit. `Configs/agents/.agents/skills/.disabled-skills` is derived from it and lists the resolved skill names, one per line, for the deploy hook to read.
 
-The `poteto` and `matt-pocock` collections are currently disabled, which is why their skills do not appear in an agent's skill list even though the files are present in the repo.
+The `matt-pocock` collection is currently disabled, which is why its skills do not appear in an agent's skill list even though the files are present in the repo.
 
 Disabling leaves the files in the repository, so `dot rebuild --update` keeps refreshing them from upstream, and strips the skills out of every harness directory instead: `~/.agents/skills`, `~/.codex/skills`, `~/.claude/skills`, and `~/.pi/agent/skills`. Because nothing is deleted, re-enabling restores the same content offline and needs no network round trip. The tracked Pi compatibility links under `Configs/agents/.pi/agent/skills` are removed and recreated along with the toggle, so a disabled collection leaves no dead links behind.
 

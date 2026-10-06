@@ -104,7 +104,7 @@ export const skillsCommand = new Command()
 
 				printHeader("Managed skill collections");
 
-				for (const state of listSkillSelections(config)) {
+				for (const state of await listSkillSelections(config, dotfilesDir)) {
 					const status = state.enabled ? "enabled " : "disabled";
 					const count = `${state.skills.length} skill(s)`;
 					console.log(
@@ -209,8 +209,9 @@ export const skillsCommand = new Command()
 				console.log("");
 
 				printHeader("Skills stripped from the agent directories");
-				const disabledSkills = resolveDisabledSkills(
+				const disabledSkills = await resolveDisabledSkills(
 					config.disabledCollections,
+					dotfilesDir,
 				);
 
 				if (disabledSkills.length === 0) {

@@ -19,6 +19,19 @@ export interface ManagedSkillSource {
 	repository: string;
 	ref: string;
 	skills: readonly ManagedSkillSpec[];
+	/**
+	 * Directory inside the checkout that holds one skill per child directory.
+	 *
+	 * When set, a sync discovers the skills that directory actually contains
+	 * instead of trusting the static `skills` list, so the collection mirrors
+	 * upstream: skills added there are picked up by the next `dot rebuild
+	 * --update` and skills removed there are dropped. The static list remains
+	 * the seed for a checkout that has never synced; after a successful sync
+	 * the manifest is authoritative, and this source's `skills` is updated in
+	 * place so conflict checks and deployment verification in the same process
+	 * cover the discovered set.
+	 */
+	skillsDirectory?: string;
 	tempPrefix: string;
 	transactionLabel: string;
 	userAgent: string;
@@ -49,6 +62,8 @@ export interface ManagedSkillSyncResult {
 	resolvedRef: string;
 	resolvedSha: string;
 	skillCount: number;
+	/** Skill names the sync installed, sorted. */
+	skills: readonly string[];
 }
 
 /**
@@ -155,22 +170,163 @@ export async function syncManagedSkills(
 		await Deno.mkdir(checkoutDir, { recursive: true });
 		await downloadArchive(source, resolved.sha, archivePath);
 		await extractArchive(source, archivePath, checkoutDir);
+
+		const skills = source.skillsDirectory
+			? await discoverSkills(source, checkoutDir, dotfilesDir)
+			: source.skills;
+
+		// Read before the install rewrites the manifest: the names it recorded
+		// before this sync are what tells a discovery source which skills
+		// upstream retired.
+		const retired = source.skillsDirectory
+			? await retiredSkillNames(source, dotfilesDir, skills)
+			: [];
+
 		await installManagedSkillsFromCheckout(
-			source,
+			{ ...source, skills },
 			checkoutDir,
 			dotfilesDir,
 			resolved.sha,
 			resolved.ref,
 		);
+
+		if (source.skillsDirectory) {
+			const managedRoot = managedSkillRoot(dotfilesDir);
+
+			for (const name of retired) {
+				await removeManagedPath(managedRoot, resolve(managedRoot, name));
+			}
+
+			// Conflict checks and deployment verification read the source's skill
+			// list, so point it at what upstream actually ships and they cover
+			// skills upstream added since the static list was written.
+			source.skills = skills;
+		}
+
+		return {
+			resolvedRef: resolved.ref,
+			resolvedSha: resolved.sha,
+			skillCount: skills.length,
+			skills: skills.map((skill) => skill.name),
+		};
 	} finally {
 		await Deno.remove(tempDir, { recursive: true }).catch(() => undefined);
 	}
+}
 
-	return {
-		resolvedRef: resolved.ref,
-		resolvedSha: resolved.sha,
-		skillCount: source.skills.length,
-	};
+/**
+ * Enumerate the skills a discovery source ships in its checkout.
+ *
+ * A child directory of `skillsDirectory` counts as a skill when it holds a
+ * SKILL.md — the same rule the Claude deploy hook uses to skip non-skills —
+ * so a stray assets directory upstream cannot fail every future update. The
+ * names are sorted so the manifest stays stable across runs.
+ *
+ * The managed skills root is shared with locally authored skills and the
+ * other collections, so a discovered name that collides with an existing
+ * directory this source does not own fails loudly instead of replacing it.
+ * Ownership is the union of the source's manifest and its static list: the
+ * manifest covers skills upstream added since the static snapshot was
+ * written, and the static list covers a checkout whose manifest is missing.
+ */
+async function discoverSkills(
+	source: ManagedSkillSource,
+	checkoutDir: string,
+	dotfilesDir: string,
+): Promise<readonly ManagedSkillSpec[]> {
+	const root = resolve(checkoutDir, source.skillsDirectory!);
+
+	if (!(await exists(root, { isDirectory: true }))) {
+		throw new Error(
+			`${source.displayName} checkout is missing its skills directory: ${source.skillsDirectory}`,
+		);
+	}
+
+	const owned = new Set([
+		...(await manifestSkillNames(source, dotfilesDir)),
+		...source.skills.map((skill) => skill.name),
+	]);
+	const managedRoot = managedSkillRoot(dotfilesDir);
+	const specs: ManagedSkillSpec[] = [];
+
+	for await (const entry of Deno.readDir(root)) {
+		if (!entry.isDirectory) continue;
+
+		const skillDir = resolve(root, entry.name);
+
+		if (!(await exists(join(skillDir, "SKILL.md"), { isFile: true }))) {
+			continue;
+		}
+
+		if (
+			!owned.has(entry.name) && await exists(resolve(managedRoot, entry.name))
+		) {
+			throw new Error(
+				`${source.displayName} ships a skill named ${entry.name}, but the managed skills root already holds a directory of that name this source does not own; resolve the collision before updating`,
+			);
+		}
+
+		specs.push({
+			name: entry.name,
+			sourcePath: `${source.skillsDirectory}/${entry.name}`,
+		});
+	}
+
+	if (specs.length === 0 && owned.size > 0) {
+		throw new Error(
+			`${source.displayName} sync found no skills under ${source.skillsDirectory}; refusing to empty the managed collection in case upstream moved its skills directory`,
+		);
+	}
+
+	return specs.toSorted((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Skills the source previously installed that this checkout no longer ships.
+ *
+ * This is what makes a discovery source a mirror rather than an accumulator:
+ * its managed set equals upstream's skill list. Only names recorded in the
+ * source's own manifest are eligible, so locally authored skills and the
+ * other collections are never touched.
+ */
+async function retiredSkillNames(
+	source: ManagedSkillSource,
+	dotfilesDir: string,
+	discovered: readonly ManagedSkillSpec[],
+): Promise<readonly string[]> {
+	const keep = new Set(discovered.map((skill) => skill.name));
+
+	return (await manifestSkillNames(source, dotfilesDir)).filter((name) =>
+		!keep.has(name)
+	);
+}
+
+/**
+ * Skill names recorded in the source's manifest, or an empty list.
+ *
+ * A missing or unreadable manifest is not an error: callers use the result to
+ * widen ownership or prune retired skills, and a checkout that has never
+ * synced simply has nothing recorded yet.
+ */
+export async function manifestSkillNames(
+	source: ManagedSkillSource,
+	dotfilesDir: string,
+): Promise<readonly string[]> {
+	try {
+		const manifest = JSON.parse(
+			await Deno.readTextFile(
+				join(managedSkillRoot(dotfilesDir), source.manifestFile),
+			),
+		) as { skills?: unknown };
+
+		return Array.isArray(manifest.skills)
+			? manifest.skills.filter((name): name is string =>
+				typeof name === "string"
+			)
+			: [];
+	} catch {
+		return [];
+	}
 }
 
 /**
@@ -258,7 +414,8 @@ export async function installManagedSkillsFromCheckout(
 	}
 }
 
-function managedSkillRoot(dotfilesDir: string): string {
+/** The managed skills root, within a dotfiles checkout. */
+export function managedSkillRoot(dotfilesDir: string): string {
 	return resolve(
 		dotfilesDir,
 		"Configs",
