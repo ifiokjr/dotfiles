@@ -5,7 +5,7 @@ Scaffold and inspect the workspace:
 ```bash
 monochange init
 monochange step validate
-monochange step discover --format json
+monochange discover --format json
 ```
 
 A minimal config for two npm packages. Every `lockfile_commands` entry is a table with a `command` field, because monochange rejects a bare string:
@@ -32,9 +32,11 @@ lockfile_commands = [
 Create release intent, then preview the plan:
 
 ```bash
-monochange step create-change-file --package @acme/api --bump minor --reason "Add webhook filters"
+monochange create --package @acme/api --bump minor --reason "Add webhook filters"
 monochange step validate
-monochange step prepare-release --dry-run --format json
+monochange preview --format json
 ```
+
+`monochange create` runs `monochange step create-change-file`, and `monochange preview` runs `monochange step prepare-release --dry-run`.
 
 The preview prints every planned version, changelog entry, and file write without touching the tree.

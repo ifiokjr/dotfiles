@@ -18,7 +18,7 @@ If `monochange run change` is not configured, use the step command directly:
 monochange step create-change-file --package @acme/api --bump minor --reason "Add webhook delivery filters"
 ```
 
-Always run `monochange step validate` after creating or editing changesets.
+Always run `monochange step validate` after creating or editing changesets. It checks configuration and target resolution but does not check changelog streams; run a release preview before release to catch audience-stream conflicts (see [Audience streams](#audience-streams)).
 
 The configured command may expose more inputs than the portable step command, such as `--type`, `--caused-by`, or repository-specific defaults. Check `monochange help change` or the `[cli.change]` table before relying on a flag name.
 
@@ -123,7 +123,7 @@ Previews now recover without repeating completed work, so users return to their 
 
 The first file belongs in the default/developer stream and names the affected implementation contract. The second belongs in the user stream and describes only the visible outcome. Do not combine the audiences in one body or duplicate the same prose across both files.
 
-Run `monochange step validate` after authoring. It rejects a file whose target types cross streams. Then run `monochange step prepare-release --dry-run --format json` and inspect each changelog object's `output`, `stream`, `owner_id`, and `path`; those fields are the audit trail for where each note will be published.
+Run `monochange step validate` after authoring to check configuration and target resolution, then run a release preview with `monochange preview --format json` (or `monochange prepare --dry-run --format json`, or `monochange step prepare-release --dry-run --format json`). The preview is what rejects a file whose target types cross streams: it fails with exit 1 and `changeset targets resolve to multiple changelog streams: <streams>; split the changes into one file per stream`. `monochange step validate` and `monochange check` both pass for a mixed-stream file, so never use them as the stream check. Then inspect each changelog object's `output`, `stream`, `owner_id`, and `path`; those fields are the audit trail for where each note will be published.
 
 ## Preparing and using stream-specific release notes
 
@@ -132,7 +132,7 @@ Use this sequence whenever a repository has audience streams:
 1. Read `[changelog.types]`, `[changelog.streams]`, and `[changelog.outputs]` in `monochange.toml`. The type selects the stream; the output selects the renderer, target, and eventual destination.
 2. Choose the type from release policy, not from writing style. For example, a configured `native` type can require a major/native release while `app_feature` can identify a minor patch-deliverable feature.
 3. Write one changeset file per audience. Keep developer detail in the default stream and user-visible outcomes in the user stream. If both audiences need the change, create two files.
-4. Run `monochange step validate`, then preview the complete release with `monochange step prepare-release --dry-run --format json`.
+4. Run `monochange step validate` for configuration and target errors, then preview the complete release with `monochange preview --format json` (or `monochange step prepare-release --dry-run --format json`). The preview is the step that rejects a file whose targets cross streams.
 5. Render the exact artifact that reviewers or automation need with `monochange notes`.
 
 ```bash
@@ -231,6 +231,6 @@ Before adding a new changeset:
 3. Target package ids unless a configured group is the real release owner.
 4. Keep unrelated changes in separate files.
 5. Combine packages only when the release note would be the same.
-6. Validate with `monochange step validate`, `monochange step diagnose-changesets --format json`, or `monochange step diagnose-changesets --format json`.
+6. Validate with `monochange step validate`, `monochange check`, or `monochange diagnose --format json`, then preview the release plan with `monochange preview` to catch cross-stream files.
 
 Delete or rewrite stale changesets when the code they describe is reverted before release. Merge near-duplicate changesets when several packages changed for the same outward behavior, but keep unrelated features separate even if they touched the same package.

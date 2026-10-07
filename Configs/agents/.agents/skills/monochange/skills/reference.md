@@ -17,8 +17,8 @@ Release records and prerelease state under `.monochange/` are committed release 
 monochange help
 monochange step validate
 monochange check
-monochange step config
-monochange step discover --format json
+monochange config
+monochange discover --format json
 ```
 
 If a repository defines user workflows, `monochange help` will show them under user-defined commands. The monochange repo defines `change`, `publish-check`, and `release`; those are configuration-defined, not universal built-ins.
@@ -27,16 +27,14 @@ If a repository defines user workflows, `monochange help` will show them under u
 
 ```bash
 monochange step validate
-monochange step discover --format json
-monochange step diagnose-changesets --format json
-monochange step prepare-release --dry-run --format json
+monochange discover --format json
+monochange diagnose --format json
+monochange preview --format json
 ```
 
-If configured aliases exist, users may prefer:
+The short commands are aliases for `monochange step discover`, `monochange step diagnose-changesets`, and `monochange step prepare-release --dry-run`; see [commands.md](commands.md#top-level-step-aliases). If the repository defines a configured release workflow, prefer it for local maintainer flows:
 
 ```bash
-monochange step discover --format json
-monochange step diagnose-changesets --format json
 monochange run release --dry-run --format json
 monochange run release --dry-run --diff
 ```
@@ -59,13 +57,13 @@ Do not skip review before commit, tag, provider-release, or package-publish step
 Current built-in package publishing is release-record oriented:
 
 ```bash
-monochange step publish-readiness --from HEAD --output readiness.json
-monochange step placeholder-publish
+monochange publish readiness --from HEAD --output readiness.json
+monochange publish placeholder
 monochange step plan-publish-rate-limits --readiness readiness.json --format json
-monochange step publish-packages --output publish-result.json
+monochange publish packages --output publish-result.json
 ```
 
-`monochange step publish-readiness`, `monochange step placeholder-publish`, `monochange step plan-publish-rate-limits`, and `monochange step publish-packages` are built in. Repositories may define shorter workflow aliases such as `monochange run publish-plan` or `monochange run publish`, but those names are not universal.
+`monochange publish readiness`, `monochange publish placeholder`, and `monochange publish packages` are short forms of `monochange step publish-readiness`, `monochange step placeholder-publish`, and `monochange step publish-packages`. `monochange step plan-publish-rate-limits` has no short form, and all four steps are built in. Repositories may define shorter workflow aliases such as `monochange run publish-plan` or `monochange run publish`, but those names are not universal.
 
 Use `mode = "external"` for private/custom registries or when existing CI handles package publication.
 

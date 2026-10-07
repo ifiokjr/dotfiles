@@ -2,7 +2,27 @@
 # Skills listed here are stripped from the agent skill directories by
 # Hooks/agents/post.sh. Edit the TOML file instead of this one.
 
+architect
+blast-radius
+create-verification-skill
 diagnosing-bugs
 handoff
+how
+interrogate
+principle-boundary-discipline
+principle-fix-root-causes
+principle-laziness-protocol
+principle-make-operations-idempotent
+principle-minimize-reader-load
+principle-model-the-domain
+principle-prove-it-works
+principle-sequence-verifiable-units
+principle-subtract-before-you-add
+principle-type-system-discipline
+recall
 research
+show-me-your-work
+technical-writing
+unslop
+why
 writing-for-agents
