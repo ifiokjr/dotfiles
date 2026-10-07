@@ -17,6 +17,7 @@ import {
 	resolveDotfilesDir,
 	runCommand,
 } from "../lib/config.ts";
+import { repairAgentSkillDeployment } from "../lib/managed_skills.ts";
 import {
 	isCollectionDisabled,
 	listSkillSelections,
@@ -73,9 +74,27 @@ async function writeConfig(
  */
 async function redeployAgentSkills(dotfilesDir: string) {
 	printInfo("Redeploying the agents group");
-	const deployment = await runCommand(["tuckr", "set", "agents"], {
-		cwd: dotfilesDir,
-	});
+
+	// Same repair as `dot rebuild` runs before its deploy: tuckr's linker skips
+	// existing destinations, so links left dangling by a skill that moved inside
+	// the repo would keep the group from converging on every toggle.
+	const homeDir = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE");
+	if (homeDir) {
+		const prunedLinks = await repairAgentSkillDeployment(homeDir);
+		if (prunedLinks.length > 0) {
+			printInfo(`Pruned ${prunedLinks.length} stale managed skill link(s)`);
+		}
+	}
+
+	// --only-files makes tuckr create missing parent directories, which its
+	// default mode does not, so the link pass never fails on a freshly synced
+	// skill or on the directories the post hook strips for disabled skills.
+	const deployment = await runCommand(
+		["tuckr", "set", "--only-files", "agents"],
+		{
+			cwd: dotfilesDir,
+		},
+	);
 
 	if (!deployment.success) {
 		printError(

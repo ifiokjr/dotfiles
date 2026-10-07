@@ -99,6 +99,85 @@ export function findManagedSkillConflicts(
 	return [...conflicts].toSorted();
 }
 
+/**
+ * Remove deployed links that point into the dotfiles checkout but no longer
+ * resolve, and return their paths.
+ *
+ * Tuckr's linker is deliberately conservative: a destination that exists is
+ * skipped and a dangling symlink only produces a failed symlink call, so
+ * deployed state stops converging whenever the repository moves a managed
+ * skill — the old per-file links dangle, and deployment verification reports
+ * them "missing" on every run. Pruning the broken ones before
+ * `tuckr set --only-files` runs lets that pass recreate them at the current
+ * location; the same pass also cleans up links left dangling by a file a
+ * source retired.
+ *
+ * A link is removed only when it is a symlink into this checkout's agents
+ * group whose target is gone, so user-installed skills, real files, and
+ * intact deployments are never touched.
+ */
+export async function repairAgentSkillDeployment(
+	homeDir: string,
+): Promise<string[]> {
+	const pruned: string[] = [];
+
+	for (const root of deployedSkillRoots(homeDir)) {
+		if (!(await exists(root))) continue;
+		await pruneDanglingLinksIn(root, pruned);
+	}
+
+	return pruned;
+}
+
+/** The harness skill roots tuckr populates for the agents group. */
+function deployedSkillRoots(homeDir: string): string[] {
+	return [
+		resolve(homeDir, ".agents", "skills"),
+		resolve(homeDir, ".pi", "agent", "skills"),
+	];
+}
+
+/** True when a link target points into this checkout's agents group. */
+function isCheckoutLinkTarget(target: string): boolean {
+	return target.includes(
+		`${separator()}Configs${separator()}agents${separator()}`,
+	);
+}
+
+/** Recursively remove dangling links that point into this checkout. */
+async function pruneDanglingLinksIn(dir: string, pruned: string[]) {
+	for await (const entry of Deno.readDir(dir)) {
+		const path = resolve(dir, entry.name);
+
+		// Symlinks are checked before directories: readDir reports a
+		// symlink-to-directory as both, and its contents must not be visited —
+		// they belong to wherever the link resolves.
+		if (entry.isSymlink) {
+			const target = await Deno.readLink(path);
+
+			if (!isCheckoutLinkTarget(target)) continue;
+			if (await linkResolves(path)) continue;
+
+			await Deno.remove(path);
+			pruned.push(path);
+			continue;
+		}
+
+		if (entry.isDirectory) {
+			await pruneDanglingLinksIn(path, pruned);
+		}
+	}
+}
+
+async function linkResolves(path: string): Promise<boolean> {
+	try {
+		await Deno.realPath(path);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 /** Confirm every managed source file resolves through the shared skill path. */
 export async function verifyManagedSkillDeployment(
 	source: ManagedSkillSource,

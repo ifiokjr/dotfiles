@@ -25,7 +25,10 @@ import {
 	resolveNixConfigDir,
 	runCommand,
 } from "../lib/config.ts";
-import { findManagedSkillConflicts } from "../lib/managed_skills.ts";
+import {
+	findManagedSkillConflicts,
+	repairAgentSkillDeployment,
+} from "../lib/managed_skills.ts";
 import {
 	MATT_POCOCK_SOURCE,
 	syncMattPocockSkills,
@@ -901,16 +904,33 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 	);
 
 	printInfo("Deploying updated agent skill symlinks");
-	const deployment = await runCommand(["tuckr", "set", "agents"], {
-		cwd: context.dotfilesDir,
-	});
 	const homeDir = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE");
 	if (!homeDir) {
-		printError(
-			"Managed skill deployment verification failed: home directory is unknown",
-		);
+		printError("Managed skill deployment failed: home directory is unknown");
 		Deno.exit(1);
 	}
+
+	// Tuckr's linker skips existing destinations, so a managed skill that moved
+	// inside the repo leaves its old deployed links dangling forever and the
+	// verification below would report them "missing" on every run. Prune them
+	// first so the deploy recreates them at the current location.
+	const prunedLinks = await repairAgentSkillDeployment(homeDir);
+	if (prunedLinks.length > 0) {
+		printInfo(
+			`Pruned ${prunedLinks.length} stale managed skill link(s)`,
+		);
+	}
+
+	// --only-files makes tuckr create missing parent directories, which its
+	// default mode does not: a freshly synced skill's new subdirectories and
+	// the stripped directories of disabled skills would otherwise fail the
+	// whole link pass with per-file errors.
+	const deployment = await runCommand(
+		["tuckr", "set", "--only-files", "agents"],
+		{
+			cwd: context.dotfilesDir,
+		},
+	);
 	const deploymentIssues = [
 		...(await verifyPstackSkillDeployment(context.dotfilesDir, homeDir, {
 			skipSkills,

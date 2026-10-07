@@ -56,6 +56,8 @@ The managed `computer-use` skill is a small bridge to the client under `~/.codex
 
 Each source update is atomic: an incomplete download or missing `SKILL.md` leaves that installed selection unchanged. A sync failure stops the update instead of silently continuing with stale skills. Duplicate target names across the selections are rejected before any source is updated, and deployment verification checks every external source file through its configured shared and compatibility paths.
 
+Tuckr's linker never replaces an existing link, so before it runs the deploy prunes dangling links that point into the checkout — otherwise a skill that moves inside the repository would leave its old per-file links broken and failing verification on every update. The deploy passes `--only-files` so tuckr also creates missing parent directories, which its default mode does not; without it a freshly synced skill's new subdirectories or a disabled skill's stripped directories would fail the link pass with per-file errors.
+
 ### Turning Collections Off
 
 Any collection can be switched off without deleting it, so you can compare how your agents behave with and without it:
