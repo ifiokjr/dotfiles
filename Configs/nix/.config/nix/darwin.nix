@@ -209,7 +209,7 @@
         "claude" # Claude desktop app — AI assistant usable via screen sharing
         "ghostty" # Terminal emulator — needed even in lite mode on desktop machines
         "google-chrome" # Browser for web-based checks in CI workflows
-        "t3-code" # T3 Code desktop app — AI coding editor for the lite fleet
+        "t3-code@nightly" # T3 Code desktop app (nightly) — AI coding editor for the lite fleet; app-only cask, so it does not collide with the t3code-nightly CLI's bin/t3
       ];
 
     # Xcode has no Homebrew cask (Apple distributes it only through the App
