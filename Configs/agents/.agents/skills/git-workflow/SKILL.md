@@ -50,7 +50,10 @@ Start new work in a fresh worktree rather than working directly on `main` or the
 - Keeps `main` clean and available for quick reference, hotfixes, or parallel reviews
 - Eliminates risk of accidentally committing work-in-progress to the trunk
 - Makes it safe to run tests, builds, and linting in isolation without polluting the main checkout
-- When done, remove the worktree with `git worktree remove <path>`. The branch remains for PR/merge
+- Until the work merges, the worktree and its branch stay: the open PR needs both
+- Once the branch merges into `main`, clean up the worktree and the branch together. This is the standing default, not a question to ask. See [Worktree-aware workflow](#worktree-aware-workflow) for the exact command flow
+- Keep a worktree or its branch alive past the merge only when the user explicitly says so. The user will state when a worktree should live long; silence means clean it up
+- Measure the worktree with `du -sh <path>` before removing it, and report the number whenever the project is Rust or the worktree exceeds 10 MB. A Rust worktree's `target/` directory routinely holds multiple GB per worktree (`du -sh <path>/target` breaks it out), so merged Rust worktrees left to linger pile up hundreds of GB of dead build artifacts within days
 - If the project has a worktree management extension or script, prefer that over raw `git worktree` commands
 
 ### 4. Clean up history before sharing
@@ -142,7 +145,15 @@ When finishing work in a worktree:
 
 1. Push the branch: `git push origin <branch>`
 2. Open a PR from the worktree branch
-3. Remove the worktree after merge: `git worktree remove <path>`
+3. Once the PR merges into `main`, confirm the merge before deleting anything: `gh pr view --json state --jq .state` must report `MERGED`. A squash-merged branch is not an ancestor of `main`, so `git branch -d` refuses it by design; with the PR state confirming the content landed, `git branch -D` is the correct tool. Deleting on the assumption of a merge risks discarding commits that never reached `main`
+4. Then clean up the worktree and the branch together, unless the user explicitly asked to keep either:
+
+   ```bash
+   du -sh <path>               # measure first; always for Rust projects and any worktree over 10 MB
+   git worktree remove <path>  # before the branch delete: a checked-out branch cannot be deleted
+   git branch -D <branch>      # -d when git can verify the merge, -D after a squash merge
+   git fetch --prune           # drop the remote-tracking ref the deleted remote branch left behind
+   ```
 
 ### Commit messages
 
