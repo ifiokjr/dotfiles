@@ -37,3 +37,4 @@ minimumReleaseAgeExclude:
   - "@opencode/cli-windows-x64-baseline@2.0.12"
   - "@opencode/cli-windows-x64@2.0.12"
   - "@opencode/cli@2.0.12"
+  - netlify-cli@27.12.0
