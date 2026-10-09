@@ -88,6 +88,9 @@ in
       # headless/CPU-only variant or the dependency issue is resolved.
       # extra.ollama
       python3
+      # wrangler is the Cloudflare Workers/Pages CLI; cloudflared above only
+      # covers tunnels.
+      wrangler
       extra.knope
       extra.mdt
       rustup
