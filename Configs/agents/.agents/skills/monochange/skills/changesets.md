@@ -18,7 +18,7 @@ If `monochange run change` is not configured, use the step command directly:
 monochange step create-change-file --package @acme/api --bump minor --reason "Add webhook delivery filters"
 ```
 
-Always run `monochange step validate` after creating or editing changesets.
+Always run `monochange step validate` after creating or editing changesets. It checks configuration and target resolution but does not check changelog streams; run a release preview before release to catch audience-stream conflicts (see [Audience streams](#audience-streams)).
 
 The configured command may expose more inputs than the portable step command, such as `--type`, `--caused-by`, or repository-specific defaults. Check `monochange help change` or the `[cli.change]` table before relying on a flag name.
 
@@ -99,11 +99,25 @@ Both the API response and the UI retry flow now keep the same filter state.
 
 Every changeset file resolves to exactly one changelog stream. Types without an explicit stream use the built-in `default` stream. Repositories can route types such as `app_feature` to a custom `user` stream in `monochange.toml`.
 
-All targets in one file must resolve to the same stream. When the same implementation needs both developer and user notes, write two changesets with audience-appropriate wording:
+<!-- {=changesetAudienceRules} -->
+
+Read the stream and type descriptions in `[changelog.streams]` and `[changelog.types]`, then inspect destinations in `[changelog.outputs]` in `monochange.toml` before choosing a type. The type selects the stream. The package id identifies what changed; it does not select the audience. An application can use both developer and product streams.
+
+- Use the default/developer stream for API contracts, deployment, CI, credentials, migrations, and internal maintenance that only developers or operators need to know about. For example, an app's deployment-key validation can use `app: fix` when `fix` belongs to `default`.
+- Use a product stream for outcomes people experience while using the app, such as staying signed in after a reload or connecting a repository. For example, `app: website_fix` selects product notes only when that type is configured with `stream = "website"`.
+- Write two changesets for the same package when both audiences need an entry. Explain the operational contract in one and the visible outcome in the other. A developer-only change needs no product entry; do not invent a user benefit to fill that stream.
+
+Every target in one changeset file must resolve to the same stream. Within that audience, choose a type whose configured bump matches the release policy. Stream and bump are separate decisions; a native-binary requirement still applies even when the note is developer-facing.
+
+Ensure each intended stream has an output for the package. A package with `changelog = false` has no implicit default output. Check whether a group retains its developer notes; otherwise configure a named developer output. Run `monochange step validate`, preview with `monochange preview --format json`, and inspect each artifact's `output`, `stream`, `owner_id`, and `path`. Render each intended output with `monochange notes --output <id> [--target <id>]`. The preview checks stream consistency; it cannot determine the audience of prose. Review the rendered notes for audience fit.
+
+<!-- {/changesetAudienceRules} -->
+
+When the same implementation needs both developer and user notes, the same app package can appear in two files with different types:
 
 ```md
 ---
-core: fix
+app: fix
 ---
 
 # Preserve decoded preview state in `PreviewController.retry`
@@ -123,16 +137,16 @@ Previews now recover without repeating completed work, so users return to their 
 
 The first file belongs in the default/developer stream and names the affected implementation contract. The second belongs in the user stream and describes only the visible outcome. Do not combine the audiences in one body or duplicate the same prose across both files.
 
-Run `monochange step validate` after authoring. It rejects a file whose target types cross streams. Then run `monochange step prepare-release --dry-run --format json` and inspect each changelog object's `output`, `stream`, `owner_id`, and `path`; those fields are the audit trail for where each note will be published.
+Run `monochange step validate` after authoring to check configuration and target resolution, then run a release preview with `monochange preview --format json` (or `monochange prepare --dry-run --format json`, or `monochange step prepare-release --dry-run --format json`). The preview is what rejects a file whose target types cross streams: it fails with exit 1 and `changeset targets resolve to multiple changelog streams: <streams>; split the changes into one file per stream`. `monochange step validate` and `monochange check` both pass for a mixed-stream file, so never use them as the stream check. Then inspect each changelog object's `output`, `stream`, `owner_id`, and `path`; those fields are the audit trail for where each note will be published.
 
 ## Preparing and using stream-specific release notes
 
 Use this sequence whenever a repository has audience streams:
 
 1. Read `[changelog.types]`, `[changelog.streams]`, and `[changelog.outputs]` in `monochange.toml`. The type selects the stream; the output selects the renderer, target, and eventual destination.
-2. Choose the type from release policy, not from writing style. For example, a configured `native` type can require a major/native release while `app_feature` can identify a minor patch-deliverable feature.
-3. Write one changeset file per audience. Keep developer detail in the default stream and user-visible outcomes in the user stream. If both audiences need the change, create two files.
-4. Run `monochange step validate`, then preview the complete release with `monochange step prepare-release --dry-run --format json`.
+2. Choose the intended reader from the actual change, then select a type in that audience's stream with the required release bump. For example, a configured `native` type can require a major/native release while `app_feature` can identify a minor patch-deliverable feature. An app's deployment-only fix can still use a default-stream type.
+3. Write one changeset file per audience that needs the change. Keep developer detail in the default stream and user-visible outcomes in the product stream. If both audiences need the change, create two files, even for the same package.
+4. Run `monochange step validate` for configuration and target errors, then preview the complete release with `monochange preview --format json` (or `monochange step prepare-release --dry-run --format json`). The preview is the step that rejects a file whose targets cross streams.
 5. Render the exact artifact that reviewers or automation need with `monochange notes`.
 
 ```bash
@@ -231,6 +245,6 @@ Before adding a new changeset:
 3. Target package ids unless a configured group is the real release owner.
 4. Keep unrelated changes in separate files.
 5. Combine packages only when the release note would be the same.
-6. Validate with `monochange step validate`, `monochange step diagnose-changesets --format json`, or `monochange step diagnose-changesets --format json`.
+6. Validate with `monochange step validate`, `monochange check`, or `monochange diagnose --format json`, then preview the release plan with `monochange preview` to catch cross-stream files.
 
 Delete or rewrite stale changesets when the code they describe is reverted before release. Merge near-duplicate changesets when several packages changed for the same outward behavior, but keep unrelated features separate even if they touched the same package.

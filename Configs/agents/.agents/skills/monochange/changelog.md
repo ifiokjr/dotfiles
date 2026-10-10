@@ -9,6 +9,193 @@
 - Replaced obsolete examples with current `monochange.toml`, changeset, release-preview, and publishing workflow examples.
 - Added the release-aware change-classification workflow, including confidence, completeness, comparison baselines, cargo-semver-checks follow-up, and changeset validation.
 
+## [0.18.0](https://github.com/monochange/monochange/releases/tag/v0.18.0) (2026-10-08)
+
+### 🐛 Fixed
+
+#### Add npm staged publishing with `publish.flow`
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #764](https://github.com/monochange/monochange/pull/764)
+
+npm packages can now defer the moment a release goes live. Set `flow = "staged"` and release publishes run `npm stage publish` instead of `npm publish`, so a version waits in the npm staging queue until a maintainer approves it with 2FA (`npm stage approve <stage-id>` or the Staged Packages tab on npmjs.com). Staging needs no 2FA, so CI stays unattended while every release gains a human approval gate.
+
+```toml
+# Before: every release publish goes live immediately.
+[ecosystems.npm.publish]
+trusted_publishing = true
+
+# After: CI stages token-free; a maintainer approves each release with 2FA.
+[ecosystems.npm.publish]
+trusted_publishing = true
+flow = "staged"
+
+# Opt a single package back into immediate publishes.
+[package.legacy.publish]
+flow = "direct"
+```
+
+Details:
+
+- `flow` accepts `"direct"` (default, current behavior) or `"staged"` on `[ecosystems.npm.publish]` and `[package.<id>.publish]`; package values override ecosystem defaults like every other publish option. Other ecosystems reject `"staged"` at config load.
+- Staged publishing composes with trusted publishing: the trusted-publisher workflow stages through OIDC and approval requires interactive 2FA that CI cannot supply. This survives a compromised CI context, which a direct trusted publish does not.
+- Successful staged publishes report a `staged` status (not `published`) with a `staged` summary count, and publish resume treats them as complete. Staged versions are invisible to the registry version probe, so re-running before approval stages again instead of skipping.
+- Placeholder publishing always stays direct, matching the existing rule that placeholder publishing ignores publish modes; a placeholder must register the package immediately.
+- Requires npm CLI 11.15+ and Node 22.14+; pnpm workspaces stage through `pnpm stage publish` (pnpm 11.3+).
+- Release records now carry `flow` on each package publication target, so the release decision stays auditable. Older release records without the field parse as `direct`. The release-record and config schema contracts advance to schema version `0.10` with a no-op migration edge from `0.9` (the optional field defaults to `direct`); the published `v0.9` schema assets stay frozen.
+
+#### Choose release-note streams by audience for every package type
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #762](https://github.com/monochange/monochange/pull/762)
+
+Generated release-agent instructions and the bundled skill now require agents to read configured stream and type descriptions and inspect output destinations before writing changesets. Application packages can use developer types for deployment or CI changes and product types for visible behavior. Agents create separate notes for the same package only when both audiences need them, then preview and render each output for review.
+
+Use `monochange subagents <target> --force` to refresh an existing generated agent definition. Review local edits before replacing it. Inspect each audience with `monochange notes --output <id> --target <package>`; notes with a selected stream still need human or agent review of their prose.
+
+The website now retains operational notes in `app/developer-changelog.md` instead of putting them in its public feed. Its implicit default changelog remains disabled. A named default-stream output retains those entries alongside the existing website outputs:
+
+```toml
+[changelog.outputs.website_developer]
+stream = "default"
+targets = ["monochange_app"]
+path = "app/developer-changelog.md"
+format = "keep_a_changelog"
+mode = "append"
+```
+
+## [0.17.1](https://github.com/monochange/monochange/releases/tag/v0.17.1) (2026-10-07)
+
+### Changed
+
+- **No package-specific changes were recorded; `@monochange/skill` was updated to 0.17.1 as part of group `main`.**
+
+## [0.17.0](https://github.com/monochange/monochange/releases/tag/v0.17.0) (2026-10-06)
+
+### Changed
+
+#### No package-specific changes were recorded; `@monochange/skill` was updated to 0.17.0 as part of group `main`.
+
+## [0.16.0](https://github.com/monochange/monochange/releases/tag/v0.16.0) (2026-09-30)
+
+### 🐛 Fixed
+
+#### Guide agents through verified adoption and release workflows
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #738](https://github.com/monochange/monochange/pull/738)
+
+The skill now distinguishes built-in commands from configured workflows, explains incremental package ownership and discovery filters, and documents the supported version-file, prerelease, stream, and release-note options. Agents can follow existing authorization through local preparation without repeatedly asking for permission.
+
+For a repository with no custom workflows, use `monochange create`, `monochange preview`, and `monochange prepare`; `monochange run <name>` requires a matching `[cli.<name>]` configuration. Poetry guidance uses the current `poetry lock` command, and Deno guidance covers JSONC manifests.
+
+The updated guidance is verified through CLI contracts and agent tasks across all six supported ecosystems.
+
+#### Keep classification reports specific to the pull request
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #743](https://github.com/monochange/monochange/pull/743)
+
+- The report records the commits it compared in the new top-level `base_commit` and `head_commit` fields. Match `head_commit` with the pull request head to confirm a saved report is current; a changed `base_commit` shows the base branch moved since the report was built.
+- Markdown and text reports list only findings the pull request produced under each package. A finding whose `comparisons` contain only `release` and `release_to_default` now appears under "Unreleased changes already on `<base>` (not part of this pull request)" and no longer counts toward the package's findings. The JSON `findings` array is unchanged, because the release floor still needs that evidence.
+- `--base` is documented as the pull request's base branch. Pass it for a stacked pull request so the classifier does not attribute the parent branch's changes to the child:
+
+```bash
+monochange change classify --base origin/feature/parent --head "$PR_HEAD_SHA" --format json
+```
+
+The classification report contract advances to `schema_version` `0.4` with a frozen `classification.v0.4.schema.json`. The change is additive: readers of `0.3` reports keep working.
+
+#### Name release-record replays and format-specific default release titles
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #736](https://github.com/monochange/monochange/pull/736) · _Related issues:_ [#725](https://github.com/monochange/monochange/issues/725)
+
+Provider releases (GitHub, GitLab, Gitea, Forgejo) published from a committed release record fell back to the bare tag name (`v0.22.0`) for the release title, because the record carried no rendered title and the manifest built from it blanked `rendered_title`. Release records now persist the title rendered at prepare time, and `build_release_manifest_from_record` replays it; records from schema v0.8 and earlier synthesize the built-in default title for the target's version format, dated from the record's `created_at`, instead of degrading to the tag name.
+
+The built-in release title defaults are now format-specific:
+
+- primary versioning renders `v{{ version }} ({{ date }})` — one release axis, so the title carries the tag-style version with the date;
+- namespaced versioning renders `{{ id }} v{{ version }} ({{ date }})` — the owner is named because a workspace releases several axes at once.
+
+Repositories that prefer another shape can set it explicitly on a package, a group, or workspace-wide:
+
+```toml
+[defaults]
+release_title = "{{ id }} {{ version }} ({{ date }})"
+```
+
+`ReleaseRecordTarget` gains `rendered_title` and `rendered_changelog_title` (optional, empty-string defaults), which is a breaking change for struct literals; deserialize and serialize round-trips of existing records are unchanged. The release-record artifact schema advances to v0.9 with a no-op migration edge, so v0.8 records migrate unchanged.
+
+The agent skill's configuration topic now documents the release title templates — the defaults per version format, the available variables, precedence, and the record replay — and `@monochange/skill` republishes that guidance.
+
+- **Document the reorganized monochange command line.** The skill's command reference now explains that `[cli.<name>]` workflows also run as `monochange <name>` (with `monochange run <name>` still preferred in scripts), that bare `monochange versions` is a read-only check, the global `--verbose` flag, and that usage errors exit with status `2` while `--progress-format json` reports failures as a `diagnostic` event. _Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #741](https://github.com/monochange/monochange/pull/741)
+
+## [0.15.0](https://github.com/monochange/monochange/releases/tag/v0.15.0) (2026-09-28)
+
+### 🐛 Fixed
+
+#### Scope the classified bump to the pull request
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #730](https://github.com/monochange/monochange/pull/730) · _Closed issues:_ [#706](https://github.com/monochange/monochange/issues/706)
+
+- `decision.pull_request_changes` reports whether this contribution touches the package. When it is `false`, every finding came from the `release` or `releaseToDefault` interval, so `decision.proposed_changeset_bump` and `decision.enforceable_minimum` are `none`, `decision.review_required` is `false`, and the accumulated change appears only in `decision.release_floor` and `decision.release_impact`. The net candidate and the local working tree set the flag; the release comparisons never do.
+- A pending changeset for a package the pull request does not modify still reports `action: review` with the summary `the pull request does not change this package; the pending changeset intent needs review`, because a changeset can intentionally describe a consumer-facing effect implemented in another package. It no longer escalates the bump or the review verdict for work an earlier merge introduced.
+- The Cargo analyzer classifies a pure append to a public `const`/`static` whose declared type is `&[T]`, `[T; N]`, or `Vec<T>` and whose initializer is a literal as `additive`/`minor` with high confidence, matching `cargo semver-checks`. A removal, a reorder, an element edit, a changed element type, or a non-literal initializer stays conservative.
+
+```json
+{
+	"compatibility_impact": "compatible",
+	"release_impact": "breaking",
+	"pull_request_changes": false,
+	"proposed_changeset_bump": "none",
+	"release_floor": "major",
+	"review_required": false
+}
+```
+
+The classification report contract advances to `schema_version` `0.3` (`SCHEMA_VERSION` regenerated with a frozen `classification.v0.3.schema.json`; the shipped v0.1 and v0.2 assets are untouched, and the schemas reference page lists the new asset). `decision.pull_request_changes` is new, and `decision.proposed_changeset_bump`, `decision.enforceable_minimum`, and `decision.review_required` can be lower for a package this pull request does not touch.
+
+No configuration change is required. Re-run `monochange change classify` to pick up the pull-request-scoped verdict.
+
+#### Add `publish` to the skill's generated command inventory
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #722](https://github.com/monochange/monochange/pull/722)
+
+The generated command inventory in `commands.md` now lists the built-in `publish` command, so an assistant following the skill sees `monochange publish packages`, `monochange publish readiness`, and `monochange publish placeholder` alongside the existing `monochange step *` entries.
+
+The `next` and `next-versions` commands are aliases rather than distinct clap command literals, so they follow the same rule as the other top-level step aliases and stay out of this literal inventory.
+
+#### Serve the agent skill from the binary without the `skills` CLI
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #732](https://github.com/monochange/monochange/pull/732)
+
+`monochange skill` no longer shells out to `npx`, `pnpm dlx`, or `bunx`. The skill bundle is embedded in the binary, so the command works offline and without Node tooling:
+
+- `monochange skill` lists every bundled topic with its install path and description.
+- `monochange skill read <topic>` prints one document verbatim to stdout, with no terminal rendering or added framing.
+- `monochange skill install --dir <dir> [--force]` writes `SKILL.md` and every reference into an agent runtime skill directory and refuses to replace an existing skill unless `--force` is passed.
+
+The forwarded-argument surface (`monochange skill --list`, `-a`, `-y`, and the other `skills add` flags) and the `MONOCHANGE_SKILL_SOURCE` and `MONOCHANGE_SKILL_RUNNER` environment variables are removed. `crates/monochange/skill/` is a committed copy of `packages/monochange__skill`, kept in sync by `scripts/docs/sync-skill.mjs` and verified by `docs:check`.
+
+Migration: replace the forwarded-argument invocation with an explicit install directory, or read individual topics:
+
+```bash
+# Before
+monochange skill -a pi -y
+
+# After
+monochange skill install --dir ~/.claude/skills/monochange
+monochange skill read configuration
+```
+
+#### Fix verified factual errors in the monochange agent skill
+
+_Owner:_ [@ifiokjr](https://github.com/ifiokjr) · _Review:_ [PR #732](https://github.com/monochange/monochange/pull/732)
+
+The bundled skill (`packages/monochange__skill`, served by `monochange skill read`) taught several commands and fields that do not match the current binary. Each fix was reproduced against the debug binary before editing:
+
+- **`monochange versions`**: the skill now documents the supported subcommands. `monochange versions list` is a read-only inventory (`--format text|json|json-min`), and `monochange versions sync` rewrites internal dependency constraints (`--dry-run`, `--format`, `--strategy default|exact|caret|compatible`). `--strategy` belongs to `sync` only. Bare `monochange versions` is deprecated and prints a warning, so skill examples no longer use it.
+- **Cross-stream changesets**: `monochange step validate` and `monochange check` both pass for a file that mixes `default`-stream and `user`-stream targets; only a release plan command rejects it. The skill now names `monochange preview` (or `monochange prepare --dry-run` / `monochange step prepare-release --dry-run`) and states the observed failure: exit 1 with `changeset targets resolve to multiple changelog streams: <streams>; split the changes into one file per stream`.
+- **Compatibility field**: replaced the stale `compatibilityEvidence` name. The release plan exposes `compatibility_evidence`, and the classification report's verdict is `decision.compatibility_impact`.
+- **Top-level command surface**: `commands.md` and `SKILL.md` now document the short built-ins (`create`, `discover`, `config`, `preview`, `prepare`, `affected`, `diagnose`, `next`, `next-versions`, `publish packages|readiness|placeholder`, `versions list|sync`) with the step each one runs, the preferred order (configured workflow, then short built-in, then `monochange step <name>`), and the steps that remain step-only (`validate`, `commit-release`, `tag-release`, and others). The generated inventory keeps owning the clap-literal and step-name sections.
+- **Python and Go version writing**: configuring a `python` package does not rewrite its own `[project].version` unless a `versioned_files` entry lists `version` in `fields`. Without it, `monochange prepare` plans the version and rewrites internal constraints but leaves the manifest stale. Go modules carry no version field; `go` packages resolve their baseline from release tags, so `tag = true` plus `initial_version` is required and no `versioned_files` entry can write a module version.
+
 ## [0.14.0](https://github.com/monochange/monochange/releases/tag/v0.14.0) (2026-09-19)
 
 ### 🐛 Fixed

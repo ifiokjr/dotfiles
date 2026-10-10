@@ -173,6 +173,7 @@
         "podman-desktop"
         "react-native-debugger"
         "reactotron"
+        "robloxstudio"
         "t3-code"
         "visual-studio-code"
         "zed@preview"

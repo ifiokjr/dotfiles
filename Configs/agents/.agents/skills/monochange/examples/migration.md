@@ -44,7 +44,7 @@ Validate the result:
 ```bash
 monochange step validate
 monochange check
-monochange step discover --format json
+monochange discover --format json
 ```
 
 `step validate` checks package, group, and `versioned_files` rules. `check` adds the manifest lint rules configured under `[lints]`.

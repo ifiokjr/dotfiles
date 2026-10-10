@@ -20,7 +20,10 @@
 import { exists } from "@std/fs";
 import { dirname, join, relative } from "@std/path";
 import { parse as parseToml, stringify as stringifyToml } from "@std/toml";
-import type { ManagedSkillSource } from "./managed_skills.ts";
+import {
+	type ManagedSkillSource,
+	manifestSkillNames,
+} from "./managed_skills.ts";
 import { MATT_POCOCK_SOURCE } from "./matt_pocock.ts";
 import { MDT_SOURCE } from "./mdt.ts";
 import { MONOCHANGE_SOURCE } from "./monochange.ts";
@@ -94,20 +97,39 @@ export interface SkillSelectionState {
 	skills: readonly string[];
 }
 
-/** Skill names owned by one collection, in declaration order. */
-export function skillNamesForCollection(id: string): readonly string[] {
+/** Skill names one collection currently tracks, in declaration order. */
+export async function skillNamesForCollection(
+	id: string,
+	dotfilesDir: string,
+): Promise<readonly string[]> {
 	const collection = SKILL_COLLECTIONS.find((entry) => entry.id === id);
-	return collection?.source.skills.map((skill) => skill.name) ?? [];
+
+	if (!collection) return [];
+
+	// A discovery source mirrors upstream, so its manifest — rewritten by every
+	// sync — is authoritative. The static list is the fallback for a checkout
+	// that has never synced or lost its manifest.
+	if (collection.source.skillsDirectory) {
+		const discovered = await manifestSkillNames(
+			collection.source,
+			dotfilesDir,
+		);
+
+		if (discovered.length > 0) return discovered;
+	}
+
+	return collection.source.skills.map((skill) => skill.name);
 }
 
 /** Resolve collection ids to the skill names they contribute, sorted. */
-export function resolveDisabledSkills(
+export async function resolveDisabledSkills(
 	collectionIds: readonly string[],
-): string[] {
+	dotfilesDir: string,
+): Promise<string[]> {
 	const names = new Set<string>();
 
 	for (const id of collectionIds) {
-		for (const name of skillNamesForCollection(id)) {
+		for (const name of await skillNamesForCollection(id, dotfilesDir)) {
 			names.add(name);
 		}
 	}
@@ -221,15 +243,18 @@ export function renderDisabledSkillsList(
 }
 
 /** Report every collection with its current toggle state. */
-export function listSkillSelections(
+export async function listSkillSelections(
 	config: SkillSelectionConfig,
-): SkillSelectionState[] {
-	return SKILL_COLLECTIONS.map((collection) => ({
-		id: collection.id,
-		summary: collection.summary,
-		enabled: !isCollectionDisabled(config, collection.id),
-		skills: collection.source.skills.map((skill) => skill.name),
-	}));
+	dotfilesDir: string,
+): Promise<SkillSelectionState[]> {
+	return await Promise.all(
+		SKILL_COLLECTIONS.map(async (collection) => ({
+			id: collection.id,
+			summary: collection.summary,
+			enabled: !isCollectionDisabled(config, collection.id),
+			skills: [...await skillNamesForCollection(collection.id, dotfilesDir)],
+		})),
+	);
 }
 
 export function isCollectionDisabled(
@@ -252,7 +277,10 @@ export async function writeSkillSelections(
 	dotfilesDir: string,
 	config: SkillSelectionConfig,
 ) {
-	const disabledSkills = resolveDisabledSkills(config.disabledCollections);
+	const disabledSkills = await resolveDisabledSkills(
+		config.disabledCollections,
+		dotfilesDir,
+	);
 	const intentPath = join(dotfilesDir, SKILL_SELECTIONS_RELATIVE);
 	const listPath = join(dotfilesDir, DISABLED_SKILLS_LIST_RELATIVE);
 
@@ -280,21 +308,22 @@ async function reconcileCompatibilityLinks(
 	dotfilesDir: string,
 	config: SkillSelectionConfig,
 ) {
-	const disabled = new Set(resolveDisabledSkills(config.disabledCollections));
+	const disabled = new Set(
+		await resolveDisabledSkills(config.disabledCollections, dotfilesDir),
+	);
 
 	for (const collection of SKILL_COLLECTIONS) {
 		for (const root of collection.source.compatibilityRoots ?? []) {
-			for (const skill of collection.source.skills) {
-				const linkPath = join(
+			for (
+				const name of await skillNamesForCollection(
+					collection.id,
 					dotfilesDir,
-					"Configs",
-					"agents",
-					root,
-					skill.name,
-				);
+				)
+			) {
+				const linkPath = join(dotfilesDir, "Configs", "agents", root, name);
 				const isLink = await isSymlink(linkPath);
 
-				if (disabled.has(skill.name)) {
+				if (disabled.has(name)) {
 					if (isLink) await Deno.remove(linkPath);
 					continue;
 				}
@@ -306,7 +335,7 @@ async function reconcileCompatibilityLinks(
 
 				await Deno.mkdir(dirname(linkPath), { recursive: true });
 				await Deno.symlink(
-					relative(dirname(linkPath), activeSkillPath(dotfilesDir, skill.name)),
+					relative(dirname(linkPath), activeSkillPath(dotfilesDir, name)),
 					linkPath,
 				);
 			}
@@ -343,10 +372,13 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 /** Skill names the deploy hook should keep out of the harness directories. */
-export function disabledSkillNames(
+export async function disabledSkillNames(
 	config: SkillSelectionConfig,
-): ReadonlySet<string> {
-	return new Set(resolveDisabledSkills(config.disabledCollections));
+	dotfilesDir: string,
+): Promise<ReadonlySet<string>> {
+	return new Set(
+		await resolveDisabledSkills(config.disabledCollections, dotfilesDir),
+	);
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
