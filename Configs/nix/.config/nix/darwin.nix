@@ -205,9 +205,22 @@
       ]
       ++ lib.optionals (isDesktop && lite) [
         # Essential desktop apps for lite macOS machines
+        "chatgpt" # ChatGPT desktop app — AI assistant usable via screen sharing
+        "claude" # Claude desktop app — AI assistant usable via screen sharing
         "ghostty" # Terminal emulator — needed even in lite mode on desktop machines
         "google-chrome" # Browser for web-based checks in CI workflows
+        "t3-code@nightly" # T3 Code desktop app (nightly) — AI coding editor for the lite fleet; app-only cask, so it does not collide with the t3code-nightly CLI's bin/t3
       ];
+
+    # Xcode has no Homebrew cask (Apple distributes it only through the App
+    # Store), so lite desktop machines get it declaratively via `mas`. Each
+    # machine must be signed into the App Store first — `mas install` cannot
+    # authenticate, and brew bundle fails activation on unsigned-in machines.
+    # The `xcodes` CLI in environment.systemPackages remains the tool for
+    # pinning non-latest Xcode versions on any machine.
+    masApps = lib.optionalAttrs (isDesktop && lite) {
+      Xcode = 497799835;
+    };
   };
 
   # Enable the Tailscale background service automatically via launchd.
