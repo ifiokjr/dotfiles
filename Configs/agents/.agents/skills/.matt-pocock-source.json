@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/mattpocock/skills",
 	"ref": "main",
-	"resolvedSha": "dd400c3ad65e57c06f05e832e0aac92c7992f34d",
+	"resolvedSha": "49dd158d1076134a641b33efb035946536778336",
 	"skills": [
 		"diagnosing-bugs",
 		"writing-for-agents",
