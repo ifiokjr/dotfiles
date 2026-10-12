@@ -204,6 +204,29 @@
             };
         };
 
+      # Determinate Nix 3.23+ emits the EvaluateFlakeDerivationOutput activity
+      # (type 10113), which nix-output-monitor 2.2.0 cannot parse: every JSON
+      # message produces a
+      # `ParseNixJSONMessageError ... invalid activity type: 10113` line and
+      # floods `dot rebuild` output. Swap in a nom patched with the upstream fix
+      # (maralorn/nix-output-monitor#321), which maps unknown activity types to
+      # Unknown, so nh keeps its progress UI. Version-gated so a nixpkgs nom
+      # bump quietly drops the workaround instead of failing the rebuild on a
+      # stale patch; remove it once the bumped nom carries the fix.
+      nomWorkaroundOverlay = final: prev: {
+        nh =
+          if prev.nix-output-monitor.version == "2.2.0" then
+            prev.nh.override {
+              nix-output-monitor = prev.nix-output-monitor.overrideAttrs (old: {
+                patches = (old.patches or [ ]) ++ [
+                  ./patches/nix-output-monitor-unknown-activity-types.patch
+                ];
+              });
+            }
+          else
+            prev.nh;
+      };
+
       # Overlay consulted by `dot rebuild`'s auto-recovery: when an upstream
       # package's test suite fails in the sandboxed Nix build (e.g. setuid /
       # permission tests that can't pass as non-root `nixbld`), the rebuild
@@ -272,6 +295,7 @@
               nixpkgs.overlays = [
                 darwinWorkaroundsOverlay
                 disableChecksOverlay
+                nomWorkaroundOverlay
               ];
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
@@ -313,6 +337,7 @@
             overlays = [
               darwinWorkaroundsOverlay
               disableChecksOverlay
+              nomWorkaroundOverlay
             ];
           };
           # Automatically determine home directory based on system
@@ -444,6 +469,7 @@
             overlays = [
               darwinWorkaroundsOverlay
               disableChecksOverlay
+              nomWorkaroundOverlay
             ];
           };
         in
@@ -462,6 +488,7 @@
             overlays = [
               darwinWorkaroundsOverlay
               disableChecksOverlay
+              nomWorkaroundOverlay
             ];
           };
         in
