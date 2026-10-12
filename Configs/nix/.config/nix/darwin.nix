@@ -213,6 +213,10 @@
 
   # Enable the Tailscale background service automatically via launchd.
   services.tailscale.enable = true;
+  # nix-darwin's daemon only sets RunAtLoad, so an exited tailscaled stays down
+  # until the next boot; for an always-on machine reached only over Tailscale,
+  # that means it is unreachable. KeepAlive makes launchd restart it.
+  launchd.daemons.tailscaled.serviceConfig.KeepAlive = true;
   # Client-side routing (exit nodes, subnet routers) works out of the box on macOS.
   # The `useRoutingFeatures` option only exists in the NixOS tailscale module
   # (it sets IP forwarding and reverse-path filtering, which are Linux-only).
@@ -531,12 +535,15 @@
   # Prints a warning if the running macOS version is below the minimum.
   # Security patches are critical — running an outdated macOS version leaves
   # the system vulnerable. Set minimumVersion to the oldest supported release.
-  system.activationScripts.minimumMacOSVersion.text =
+  #
+  # nix-darwin only runs a fixed set of activation script names (preActivation,
+  # postActivation, and its own phases); a custom name such as
+  # `minimumMacOSVersion` is silently ignored, so this hooks preActivation.
+  system.activationScripts.preActivation.text =
     let
       minimumVersion = "26.5"; # macOS 26.5+
     in
     ''
-      #!/bin/sh
       CURRENT=$(/usr/bin/sw_vers -productVersion)
       MAJOR=$(echo "$CURRENT" | cut -d. -f1)
       MINOR=$(echo "$CURRENT" | cut -d. -f2)
@@ -559,6 +566,7 @@
   # • Computer sleep  → never (system stays fully awake)
   # • Display sleep   → 10 min (saves power, triggers screensaver)
   # • Hard disk sleep  → never
+  # • Power loss       → restart automatically when power returns
   # • Screensaver      → enabled with password lock after 5 s grace
   #   (uses the default macOS screensaver — Aerial on supported machines)
   #
@@ -566,13 +574,18 @@
   # that module uses `systemsetup`, which doesn't persist settings across
   # reboots on Apple Silicon. Similarly, system.defaults.screensaver has
   # known reliability issues (nix-darwin #908, #1207).
-  system.activationScripts.alwaysOn =
+  #
+  # This must hook postActivation: nix-darwin ignores custom activation script
+  # names, which is why an earlier `activationScripts.alwaysOn` never ran and
+  # self-hosted runners kept dropping offline while the machines slept.
+  system.activationScripts.postActivation.text =
     lib.optionalString (alwaysOn && pkgs.stdenv.hostPlatform.isDarwin)
       ''
         echo "==> Configuring always-on power management (pmset)..."
-        /usr/sbin/pmset -a sleep 0 displaysleep 10 disksleep 0
+        /usr/bin/pmset -a sleep 0 displaysleep 10 disksleep 0 autorestart 1
         echo "==> Enabling screensaver password lock..."
-        /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
-        /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
+        # Activation runs as root; write the user's per-host preferences.
+        /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
+        /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
       '';
 }
