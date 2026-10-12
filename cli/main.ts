@@ -22,6 +22,7 @@ import { setupCommand } from "./commands/setup.ts";
 import { skillsCommand } from "./commands/skills.ts";
 import { uninstallCommand } from "./commands/uninstall.ts";
 import { versionCommand } from "./commands/version.ts";
+import { worktreesCommand } from "./commands/worktrees.ts";
 
 export const VERSION = "0.1.0";
 
@@ -33,6 +34,7 @@ await new Command()
 			"Run 'dotfiles help <command>' for detailed usage of any subcommand.",
 	)
 	.command("clean", cleanCommand)
+	.command("worktrees", worktreesCommand)
 	.command("setup", setupCommand)
 	.command("rebuild", rebuildCommand)
 	.command("reload", reloadCommand)

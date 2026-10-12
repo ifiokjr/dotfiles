@@ -1,9 +1,14 @@
 /**
  * `dotfiles clean` — reclaim disk space
  *
- * Deletes stale AI session transcripts, regenerable caches, Rust target
+ * Deletes stale AI session transcripts, regenerable caches, git-ignored build
+ * artifacts in dormant projects (node_modules, build, Pods, …), Rust target
  * directories, and runs store garbage collection (nh). Dry-run by default;
  * pass --apply to delete.
+ *
+ * Stale git worktrees are deliberately NOT part of this command —
+ * `dotfiles worktrees` handles them separately, because deleting a worktree
+ * loses uncommitted work rather than something regenerable.
  *
  * It only ever runs when invoked. An hourly scheduler used to call it whenever
  * free space ran low, and wiping ~/.gradle/caches under a live Gradle daemon
@@ -21,6 +26,13 @@ import {
 	printWarning,
 	runCommand,
 } from "../lib/config.ts";
+import {
+	type ArtifactHit,
+	developerRoot,
+	duBytes,
+	pathExists,
+	planStaleArtifacts,
+} from "../lib/devscan.ts";
 
 const HOME = Deno.env.get("HOME") ?? "/tmp";
 
@@ -30,6 +42,8 @@ interface CleanOptions {
 	only?: string[];
 	/** Keep cargo target dirs of projects compiled within the last N days. */
 	cargoKeepDays?: number;
+	/** Keep build artifacts of projects whose source changed in the last N days. */
+	projectsKeepDays?: number;
 }
 
 interface Target {
@@ -49,26 +63,6 @@ export function fmtBytes(bytes: number): string {
 		unit++;
 	}
 	return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unit]}`;
-}
-
-/** du -sk, returning bytes or null when the path is missing. */
-async function duBytes(path: string): Promise<number | null> {
-	const { success, stdout } = await runCommand(["du", "-sk", path], {
-		stdout: "piped",
-	});
-	if (!success || !stdout) return null;
-	const kb = Number.parseInt(stdout.split("\t")[0], 10);
-	return Number.isFinite(kb) ? kb * 1024 : null;
-}
-
-/** Whether a path exists; verifies that a privileged removal really landed. */
-async function pathExists(path: string): Promise<boolean> {
-	try {
-		await Deno.lstat(path);
-		return true;
-	} catch {
-		return false;
-	}
 }
 
 /** Parse the "Available" 1K-blocks column of `df -k` output. */
@@ -510,6 +504,77 @@ async function cleanCargoTargets(
 	return 0;
 }
 
+/**
+ * Delete regenerable build artifacts (node_modules, build, Pods, .dart_tool, …)
+ * from dormant projects under ~/Developer.
+ *
+ * A project counts as active — and every artifact in it is kept — when its
+ * source (anything that is not an artifact dir or `.git`) changed within the
+ * last `keepDays` days. Within dormant projects only git-ignored directories
+ * are deleted, so a committed `build/` survives; `dist` output is never
+ * touched by design. Rust `target/` is left to the cargo category.
+ */
+async function cleanProjects(
+	apply: boolean,
+	keepDays: number,
+): Promise<number> {
+	const root = developerRoot();
+	if (!(await pathExists(root))) {
+		printInfo(`No ~/Developer; skipping project build artifacts`);
+		return 0;
+	}
+	if (!(await commandExists("git"))) {
+		printWarning("git not found; skipping project build artifacts");
+		return 0;
+	}
+
+	const cutoff = keepDays > 0
+		? Date.now() - keepDays * 24 * 60 * 60 * 1000
+		: Number.POSITIVE_INFINITY;
+	const plan = await planStaleArtifacts(root, cutoff);
+	if (plan.keptActive > 0) {
+		printInfo(
+			`${plan.keptActive} artifact dirs kept in projects touched within the last ${keepDays} days`,
+		);
+	}
+	if (plan.stale.length === 0) {
+		printInfo("No stale project artifacts");
+		return 0;
+	}
+
+	const sized: { hit: ArtifactHit; bytes: number }[] = [];
+	for (const hit of plan.stale) {
+		sized.push({ hit, bytes: (await duBytes(hit.path)) ?? 0 });
+	}
+	sized.sort((a, b) => b.bytes - a.bytes);
+
+	if (!apply) {
+		for (const { hit, bytes } of sized) {
+			printInfo(`  ${hit.path} — ${fmtBytes(bytes)}`);
+		}
+		return sized.reduce((total, { bytes }) => total + bytes, 0);
+	}
+
+	let freed = 0;
+	for (const { hit, bytes } of sized) {
+		try {
+			const privileged = await removeCachePath(hit.path);
+			printInfo(
+				`${hit.name} removed (${fmtBytes(bytes)}): ${hit.path}${
+					viaSudo(privileged)
+				}`,
+			);
+			freed += bytes;
+		} catch (error) {
+			printError(`Failed to remove ${hit.path}: ${error}`);
+			printInfo(
+				`Clear it with \`sudo rm -rf "${hit.path}"\` once sudo is available`,
+			);
+		}
+	}
+	return freed;
+}
+
 async function cleanNix(apply: boolean): Promise<number> {
 	if (!(await commandExists("nix-collect-garbage"))) {
 		printWarning(
@@ -703,8 +768,8 @@ function printManualReviewTargets(): void {
 			"uninstall unused games in Steam",
 		],
 		[
-			"~/Developer — build artifacts (target, node_modules, dist, .next)",
-			"`dot clean --only cargo --apply` handles target/; remove node_modules per project and reinstall when needed",
+			"~/Developer — build output that is deliberately kept",
+			"`dot clean --only projects --apply` removes node_modules/build/Pods in dormant projects; `dist` folders stay — prune those per project when unwanted",
 		],
 		[
 			"~/.codex/thread_history_1.sqlite + logs_2.sqlite — Codex chat DBs",
@@ -730,7 +795,7 @@ function printSummary(freed: number, apply: boolean): void {
 
 export const cleanCommand = new Command()
 	.description(
-		"Reclaim disk space: stale AI session transcripts, regenerable caches, Rust target dirs, nix GC. Dry-run by default.",
+		"Reclaim disk space: stale AI session transcripts, regenerable caches, project build artifacts (node_modules, build, Pods, …), Rust target dirs, nix GC. Dry-run by default.",
 	)
 	.option("--apply", "Actually delete files (default is a dry-run report)")
 	.option(
@@ -740,17 +805,23 @@ export const cleanCommand = new Command()
 	)
 	.option(
 		"--only <category:string>",
-		"Limit to a category: sessions, caches, cargo, nix, rustup, trash (repeatable)",
+		"Limit to a category: sessions, caches, cargo, projects, nix, rustup, trash (repeatable)",
 		{ collect: true },
 	)
 	.option(
 		"--cargo-keep-days <days:number>",
 		"Keep cargo target dirs of projects built within the last N days (0 = clean all)",
 	)
+	.option(
+		"--projects-keep-days <days:number>",
+		"Keep project build artifacts whose source changed within the last N days (0 = clean all)",
+		{ default: 30 },
+	)
 	.action(async (options: CleanOptions) => {
 		const apply = options.apply ?? false;
 		const days = options.days ?? 30;
 		const cargoKeepDays = options.cargoKeepDays ?? 0;
+		const projectsKeepDays = options.projectsKeepDays ?? 30;
 		const only = new Set(options.only ?? []);
 		const wants = (category: string) => only.size === 0 || only.has(category);
 
@@ -774,6 +845,12 @@ export const cleanCommand = new Command()
 		}
 		if (wants("cargo")) {
 			freed += await cleanCargoTargets(apply, cargoKeepDays);
+		}
+		if (wants("projects")) {
+			printInfo(
+				`Project build artifacts under ~/Developer (keeping projects touched in the last ${projectsKeepDays} days):`,
+			);
+			freed += await cleanProjects(apply, projectsKeepDays);
 		}
 		if (wants("nix")) {
 			freed += await cleanNix(apply);

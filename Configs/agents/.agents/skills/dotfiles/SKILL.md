@@ -106,7 +106,8 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | `dot setup` | Install Nix, clone the repo, and deploy groups |
 | `dot rebuild` | Rebuild system config (nix-darwin switch or home-manager switch) |
 | `dot reload` | Re-deploy Tuckr symlinks without rebuilding Nix or changing the tracked `flake.lock` |
-| `dot clean` | Reclaim disk space by deleting stale AI session history and regenerable caches (dry-run by default, `--apply` to delete) |
+| `dot clean` | Reclaim disk space by deleting stale AI session history, regenerable caches, and git-ignored build artifacts (`node_modules`, `build`, `Pods`, `.dart_tool`, …) in projects under `~/Developer` untouched for 30 days (dry-run by default, `--apply` to delete) |
+| `dot worktrees` | Remove stale git worktrees under `~/Developer` with no commits and no file changes in the last 30 days (dry-run by default, `--apply` to delete, `--force` for uncommitted changes; branches are left alone) |
 | `dot doctor` | Run preflight checks without changing the machine |
 | `dot groups` | List, deploy, and undeploy config groups |
 | `dot machine` | Inspect/modify `machine.nix` (hostname, lite mode, presets) |
