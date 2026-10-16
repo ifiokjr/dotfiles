@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/cursor/plugins",
 	"ref": "main",
-	"resolvedSha": "1b6d44ff26d4e242f4e8f68c391e6d2f7ca16def",
+	"resolvedSha": "f713f14203cd6420cec13cd7c55c32d598dbab68",
 	"skills": [
 		"architect",
 		"arena",
@@ -13,6 +13,7 @@
 		"create-verification-skill",
 		"figure-it-out",
 		"how",
+		"in-your-own-words",
 		"interrogate",
 		"ketchup",
 		"maintain-verification-skill",
@@ -47,6 +48,7 @@
 		"recall",
 		"reflect",
 		"setup-pstack",
+		"sharpen",
 		"show-me-your-work",
 		"swarm",
 		"tdd",
