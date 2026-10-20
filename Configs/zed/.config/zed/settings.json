@@ -23,7 +23,9 @@
 						"max_output_tokens": 128000,
 						"capabilities": {
 							"tools": true,
-							"images": false
+							"images": false,
+							"parallel_tool_calls": true,
+							"prompt_cache_key": false
 						}
 					},
 					{
@@ -33,7 +35,9 @@
 						"max_output_tokens": 128000,
 						"capabilities": {
 							"tools": true,
-							"images": true
+							"images": true,
+							"parallel_tool_calls": true,
+							"prompt_cache_key": false
 						}
 					},
 					{
@@ -43,7 +47,9 @@
 						"max_output_tokens": 128000,
 						"capabilities": {
 							"tools": true,
-							"images": false
+							"images": false,
+							"parallel_tool_calls": true,
+							"prompt_cache_key": false
 						}
 					}
 				]
