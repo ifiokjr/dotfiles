@@ -1,0 +1,9 @@
+{
+	"repository": "https://www.npmjs.com/package/@slopperday/skill",
+	"ref": "0.1.7",
+	"resolvedSha": "78cff8d27a011d5be128e7772ccff6606c06eab4",
+	"skills": [
+		"slopper"
+	],
+	"version": 1
+}

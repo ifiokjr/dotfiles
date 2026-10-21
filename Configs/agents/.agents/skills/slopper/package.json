@@ -1,0 +1,23 @@
+{
+  "name": "@slopperday/skill",
+  "version": "0.1.7",
+  "description": "Agent skill for slopper.day: ship a slop every day with the slopper CLI.",
+  "keywords": [
+    "agent",
+    "skill",
+    "slopper"
+  ],
+  "homepage": "https://slopper.day",
+  "license": "UNLICENSED",
+  "files": [
+    "SKILL.md"
+  ],
+  "type": "module",
+  "exports": {
+    "./SKILL.md": "./SKILL.md",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
