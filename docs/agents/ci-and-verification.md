@@ -31,3 +31,5 @@ Convenience script:
 ```bash
 nu Configs/scripts/.local/bin/ci_check
 ```
+
+<!-- ci probe: baseline check of ubuntu runners, 2026-10-22; safe to close after checks -->
