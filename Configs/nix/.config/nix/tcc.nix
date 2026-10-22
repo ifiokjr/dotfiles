@@ -163,12 +163,6 @@ in
           "accessibility"
         ];
 
-        # Media capture / streaming.
-        "com.obsproject.obs-studio" = [
-          "screen-recording"
-          "camera"
-          "microphone"
-        ];
         "com.reincubate.macos.cam" = [
           "camera"
         ];
@@ -196,6 +190,17 @@ in
       TCC_DB="/Library/Application Support/com.apple.TCC/TCC.db"
       NOW="$(date +%s)"
 
+      # Bundle-identifier existence check: Spotlight first (fast), then
+      # LaunchServices for machines where Spotlight has not indexed yet.
+      # Defined before the grant script below, which calls it per client.
+      app_installed() {
+        local bundle_id="$1"
+        if [[ -n "$(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '$bundle_id'" 2>/dev/null | head -n 1)" ]]; then
+          return 0
+        fi
+        /usr/bin/osascript -e "id of application id \"$bundle_id\"" >/dev/null 2>&1
+      }
+
       # Skip gracefully when the terminal lacks Full Disk Access: even root
       # cannot read or write the TCC database without it. Structured as
       # if/else (never `exit`) so the surrounding activation is unaffected.
@@ -207,21 +212,6 @@ in
         /usr/bin/launchctl stop com.apple.tccd 2>/dev/null || true
         echo "==> TCC: permissions granted"
       fi
-
-      # Bundle-identifier existence check: Spotlight first (fast), then
-      # LaunchServices for machines where Spotlight has not indexed yet.
-      app_installed() {
-        local bundle_id="$1"
-        if [[ -n "$(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '$bundle_id'" 2>/dev/null | head -n 1)" ]]; then
-          return 0
-        fi
-        /usr/bin/osascript -e "id of application id \"$bundle_id\"" >/dev/null 2>&1
-      }
-
-      ${grantScript}
-      # Restart tccd so new grants are picked up immediately
-      /usr/bin/launchctl stop com.apple.tccd 2>/dev/null || true
-      echo "==> TCC: permissions granted"
     '';
   };
 }

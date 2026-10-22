@@ -447,12 +447,42 @@ install_nix() {
     # visible through the tee pipeline.
     local nix_install_log
     nix_install_log="$(mktemp)"
+
+    # The installer self-elevates to root, so it is pinned to the immutable
+    # GitHub release asset for a tag and verified against its SHA-256 before
+    # execution; the unpinned install.determinate.systems/nix URL serves
+    # whatever the redirector points at today. To bump: update the tag, then
+    # recompute the hash from the release asset (byte-identical to the tag URL
+    # served by install.determinate.systems). Env overrides exist for testing.
+    local nix_installer_url="${NIX_INSTALLER_URL:-https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.3/nix-installer.sh}"
+    local nix_installer_sha256="${NIX_INSTALLER_SHA256:-1327a1e60d38beff4fbc43736d764c6590d4a6f47d01d12fe064450350cd5a06}"
+
+    local nix_installer_script
+    nix_installer_script="$(mktemp)"
+    print_info "Downloading Determinate Nix installer (pinned, sha256-verified)..."
+    if ! curl -fsSL -o "$nix_installer_script" "$nix_installer_url"; then
+        print_error "Failed to download the pinned Nix installer from $nix_installer_url"
+        rm -f "$nix_installer_script" "$nix_install_log"
+        exit 1
+    fi
+    local installer_actual_sha
+    if command -v sha256sum >/dev/null 2>&1; then
+        installer_actual_sha="$(sha256sum "$nix_installer_script" | awk '{print $1}')"
+    else
+        installer_actual_sha="$(shasum -a 256 "$nix_installer_script" | awk '{print $1}')"
+    fi
+    if [ "$installer_actual_sha" != "$nix_installer_sha256" ]; then
+        print_error "Nix installer checksum mismatch: expected $nix_installer_sha256, got $installer_actual_sha"
+        rm -f "$nix_installer_script" "$nix_install_log"
+        exit 1
+    fi
+
     set -o pipefail
-    if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}" 2>&1 | tee "$nix_install_log"; then
+    if ! sh "$nix_installer_script" "${nix_install_args[@]}" 2>&1 | tee "$nix_install_log"; then
         set +o pipefail
         print_error "Failed to install Nix"
         print_nix_volume_mount_hint "$nix_install_log"
-        rm -f "$nix_install_log"
+        rm -f "$nix_installer_script" "$nix_install_log"
         exit 1
     fi
     set +o pipefail
@@ -484,11 +514,11 @@ install_nix() {
             fi
 
             set -o pipefail
-            if ! curl -fsSL https://install.determinate.systems/nix | sh -s -- "${nix_install_args[@]}" 2>&1 | tee "$nix_install_log"; then
+            if ! sh "$nix_installer_script" "${nix_install_args[@]}" 2>&1 | tee "$nix_install_log"; then
                 set +o pipefail
                 print_error "Failed to install Nix on second attempt"
                 print_nix_volume_mount_hint "$nix_install_log"
-                rm -f "$nix_install_log"
+                rm -f "$nix_installer_script" "$nix_install_log"
                 exit 1
             fi
             set +o pipefail
@@ -509,7 +539,7 @@ install_nix() {
         fi
     fi
 
-    rm -f "$nix_install_log"
+    rm -f "$nix_installer_script" "$nix_install_log"
 
     # Configure GitHub access token if available to avoid API rate limits when
     # fetching nixpkgs. GitHub Actions provides GITHUB_TOKEN automatically.
@@ -517,7 +547,10 @@ install_nix() {
         local nix_conf_dir="$HOME/.config/nix"
         mkdir -p "$nix_conf_dir"
         if ! grep -q "access-tokens" "$nix_conf_dir/nix.conf" 2>/dev/null; then
-            echo "access-tokens = github.com=$GITHUB_TOKEN" >> "$nix_conf_dir/nix.conf"
+            # 600: the file holds a live token; default umask would leave it
+            # 644. Subshell (not a brace group) so the restrictive umask
+            # cannot leak into the rest of the script.
+            ( umask 177; echo "access-tokens = github.com=$GITHUB_TOKEN" >> "$nix_conf_dir/nix.conf" )
             print_info "Configured GitHub access token for nix"
         fi
     fi
@@ -845,6 +878,23 @@ clone_dotfiles() {
         print_error "Failed to clone dotfiles repository"
         exit 1
     fi
+
+    # The cloned tree is executed (deployment hooks, this very script on
+    # re-entry), so surface exactly which commit was fetched. Set
+    # DOTFILES_REF=<tag-or-sha> to pin the install to a reviewed revision;
+    # without it the default branch HEAD is used and shown here for the record.
+    local cloned_rev
+    cloned_rev="$("$git_bin" -C "$DOTFILES_DIR" rev-parse HEAD)"
+    if [ -n "${DOTFILES_REF:-}" ]; then
+        if ! "$git_bin" -C "$DOTFILES_DIR" checkout --quiet "$DOTFILES_REF"; then
+            print_error "Failed to check out pinned DOTFILES_REF=$DOTFILES_REF"
+            exit 1
+        fi
+        cloned_rev="$("$git_bin" -C "$DOTFILES_DIR" rev-parse HEAD)"
+        print_info "Checked out pinned DOTFILES_REF=$DOTFILES_REF"
+    fi
+    print_info "Cloned revision: $cloned_rev"
+    print_info "Review it at: $DOTFILES_REPO/commit/$cloned_rev"
 
     print_success "Dotfiles cloned successfully"
 }

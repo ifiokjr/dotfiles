@@ -1,6 +1,8 @@
 #!/usr/bin/env nu
-# Run codex with bypassed approvals and sandbox.
+# Run codex in the workspace-write sandbox with on-request approvals. Do not
+# widen this to the sandbox-bypass flag: bypassing approvals turns prompt
+# injection in any opened file into unsandboxed code execution.
 
 def main [...args: string] {
-    ^codex --dangerously-bypass-approvals-and-sandbox ...$args
+    ^codex --sandbox workspace-write --ask-for-approval on-request ...$args
 }

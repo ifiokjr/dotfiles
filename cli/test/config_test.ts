@@ -45,14 +45,18 @@ Deno.test("resolveDotfilesDir honors DOTFILES_DIR", async () => {
 	}
 });
 
-Deno.test("resolveDotfilesDir walks up from cwd", async () => {
+Deno.test("resolveDotfilesDir walks up from cwd as last resort", async () => {
 	const previousEnv = Deno.env.get("DOTFILES_DIR");
+	const previousHome = Deno.env.get("HOME");
 	const previousCwd = Deno.cwd();
 	const tempDir = await Deno.makeTempDir();
 	const nestedDir = join(tempDir, "a/b/c");
 
 	try {
+		// Isolate HOME so no deployed checkout (~/.config/nix) or default
+		// clone location intercepts before the cwd walk-up runs.
 		Deno.env.delete("DOTFILES_DIR");
+		Deno.env.set("HOME", await Deno.makeTempDir());
 		await Deno.mkdir(join(tempDir, "Configs"));
 		await Deno.writeTextFile(join(tempDir, "setup"), "#!/usr/bin/env bash\n");
 		await Deno.mkdir(nestedDir, { recursive: true });
@@ -70,8 +74,75 @@ Deno.test("resolveDotfilesDir walks up from cwd", async () => {
 		} else {
 			Deno.env.set("DOTFILES_DIR", previousEnv);
 		}
+		if (previousHome !== undefined) {
+			Deno.env.set("HOME", previousHome);
+		}
 
 		await Deno.remove(tempDir, { recursive: true });
+	}
+});
+
+Deno.test("resolveDotfilesDir prefers the deployed checkout over a cwd lookalike", async () => {
+	// Security regression test: commands execute scripts from the resolved
+	// repo, so a directory containing Configs/ + setup under cwd must never
+	// win over the checkout the machine actually builds from (~/.config/nix
+	// symlinks) — otherwise an untrusted clone would have its scripts run by
+	// `dot setup` / `dot nix` on any deployed machine.
+	const previousEnv = Deno.env.get("DOTFILES_DIR");
+	const previousHome = Deno.env.get("HOME");
+	const previousCwd = Deno.cwd();
+
+	const fakeHome = await Deno.makeTempDir({ prefix: "dot-deployed-home-" });
+	const deployedRepo = await Deno.makeTempDir({ prefix: "dot-deployed-repo-" });
+	const untrustedRepo = await Deno.makeTempDir({ prefix: "dot-untrusted-" });
+
+	try {
+		Deno.env.delete("DOTFILES_DIR");
+		Deno.env.set("HOME", fakeHome);
+
+		// Deployed checkout: real repo with markers, reachable via a
+		// flake.nix symlink inside ~/.config/nix (tuckr's per-file layout).
+		await Deno.mkdir(join(deployedRepo, "Configs"), { recursive: true });
+		await Deno.writeTextFile(
+			join(deployedRepo, "setup"),
+			"#!/usr/bin/env bash\n",
+		);
+		const deployedNix = join(deployedRepo, "Configs/nix/.config/nix");
+		await Deno.mkdir(deployedNix, { recursive: true });
+		await Deno.mkdir(join(fakeHome, ".config/nix"), { recursive: true });
+		await Deno.symlink(
+			join(deployedNix, "flake.nix"),
+			join(fakeHome, ".config/nix/flake.nix"),
+		);
+		await Deno.writeTextFile(join(deployedNix, "flake.nix"), "{ }\n");
+
+		// Untrusted lookalike: cwd inside a different repo-shaped tree.
+		await Deno.mkdir(join(untrustedRepo, "Configs"));
+		await Deno.writeTextFile(
+			join(untrustedRepo, "setup"),
+			"#!/usr/bin/env bash\n",
+		);
+		const nested = join(untrustedRepo, "a/b/c");
+		await Deno.mkdir(nested, { recursive: true });
+		Deno.chdir(nested);
+
+		assertEquals(
+			await Deno.realPath(await resolveDotfilesDir()),
+			await Deno.realPath(deployedRepo),
+		);
+	} finally {
+		Deno.chdir(previousCwd);
+		if (previousEnv === undefined) {
+			Deno.env.delete("DOTFILES_DIR");
+		} else {
+			Deno.env.set("DOTFILES_DIR", previousEnv);
+		}
+		if (previousHome !== undefined) {
+			Deno.env.set("HOME", previousHome);
+		}
+		await Deno.remove(fakeHome, { recursive: true });
+		await Deno.remove(deployedRepo, { recursive: true });
+		await Deno.remove(untrustedRepo, { recursive: true });
 	}
 });
 

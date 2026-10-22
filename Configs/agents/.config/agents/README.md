@@ -83,11 +83,18 @@ The shared code-quality standard applies across projects and harnesses, includin
 
 ## Security Considerations
 
-**WARNING**: The current configuration allows all AI agents full access to your filesystem and shell commands without confirmation prompts. This is intentional for development speed but be aware:
+Agents run with per-use approval prompts for shell commands, network access, and
+writes outside the working tree. This is deliberate: prompt injection in any file
+an agent reads would otherwise become silent code execution on your machines.
 
-- Only use these settings on trusted, local development machines
+- File edits inside the working tree stay auto-approved to keep development fast
+- Only widen these settings (for example `bypassPermissions` in Claude Code,
+  `"*": "allow"` in OpenCode, `allow_unsandboxed` in Zed, or the Codex
+  sandbox-bypass flag) on machines you accept as expendable, never on
+  machines that hold credentials or fleet access
 - Review any generated code before committing
-- Keep API keys in Monosecret + 1Password and run tools through `msr --reason "<why>" <command>` when they need secrets
+- Keep API keys in Monosecret + 1Password and run tools through
+  `msr --reason "<why>" <command>` when they need secrets
 
 ## Environment Variable Precedence
 

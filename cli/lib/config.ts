@@ -8,11 +8,14 @@
 import { ensureDir, exists } from "@std/fs";
 import { dirname, join } from "@std/path";
 
-/** Well-known default location for the dotfiles repo. */
-export const DEFAULT_DOTFILES_DIR = join(
-	Deno.env.get("HOME") ?? "~",
-	"Developer/.dotfiles",
-);
+/**
+ * Well-known default location for the dotfiles repo. Evaluated lazily (HOME
+ * at call time) so tests can isolate resolution by pointing HOME at a temp
+ * directory.
+ */
+export function defaultDotfilesDir(): string {
+	return join(Deno.env.get("HOME") ?? "~", "Developer/.dotfiles");
+}
 
 /** Detect the current platform. */
 export type Platform = "macos" | "linux" | "windows" | "bsd";
@@ -49,13 +52,31 @@ export function nixSystem(): string {
 
 /** Resolve the dotfiles repository directory. */
 export async function resolveDotfilesDir(): Promise<string> {
-	// 1. DOTFILES_DIR env var (highest priority)
+	// 1. DOTFILES_DIR env var (highest priority — explicit user intent)
 	const envDir = Deno.env.get("DOTFILES_DIR");
 	if (envDir && await exists(envDir, { isDirectory: true })) {
 		return envDir;
 	}
 
-	// 2. Walk up from cwd looking for a marker
+	// 2. The deployed checkout, implied by ~/.config/nix symlinks. Commands
+	//    execute scripts from the resolved repo (apply.sh, setup, hooks), so a
+	//    cwd walk-up must never win over the checkout the machine actually
+	//    builds from — otherwise any untrusted clone containing Configs/ and
+	//    setup would have its scripts executed by `dot setup`/`dot nix`.
+	const deployedDir = await resolveDeployedDotfilesDir();
+	if (deployedDir) {
+		return deployedDir;
+	}
+
+	// 3. Default location (the conventional dev clone)
+	const defaultDir = defaultDotfilesDir();
+	if (await exists(defaultDir, { isDirectory: true })) {
+		return defaultDir;
+	}
+
+	// 4. Walk up from cwd looking for a marker — last resort, used by the
+	//    bootstrap flow that runs `setup` from inside a fresh clone before
+	//    anything is deployed.
 	let dir = Deno.cwd();
 	for (let i = 0; i < 20; i++) {
 		if (
@@ -67,11 +88,6 @@ export async function resolveDotfilesDir(): Promise<string> {
 		const parent = dirname(dir);
 		if (parent === dir) break;
 		dir = parent;
-	}
-
-	// 3. Default location
-	if (await exists(DEFAULT_DOTFILES_DIR, { isDirectory: true })) {
-		return DEFAULT_DOTFILES_DIR;
 	}
 
 	throw new Error(
@@ -521,6 +537,45 @@ export async function runCommand(
 		? new TextDecoder().decode(status.stdout)
 		: undefined;
 	return { code: status.code, stdout, success: status.success };
+}
+
+/**
+ * Resolve a command name to its absolute path via the login shell's PATH.
+ * Used before invoking user-installed binaries under `sudo`, whose
+ * secure_path only covers root-owned directories: the absolute path keeps
+ * those invocations working without re-opening PATH-based lookup to shims.
+ * Returns the bare name when resolution fails so callers degrade gracefully.
+ */
+export async function resolveCommandPath(name: string): Promise<string> {
+	const result = await new Deno.Command("bash", {
+		args: ["-lc", `command -v ${name}`],
+		stdout: "piped",
+		stderr: "null",
+	}).output();
+	if (!result.success) return name;
+	const path = new TextDecoder().decode(result.stdout).trim();
+	return path.split("\n")[0] || name;
+}
+
+/**
+ * Env override for commands whose binaries run under `sudo`. sudo resolves
+ * the target binary through the caller's PATH, and prependBootstrapPath()
+ * places $HOME-relative (user-writable) directories first — a shim planted
+ * in ~/.local/bin would otherwise execute as root on the next rebuild.
+ * Restrict root-invoked lookups to root-owned bin directories only.
+ */
+export function privilegedPathEnv(): Record<string, string> {
+	return {
+		PATH: [
+			"/run/current-system/sw/bin",
+			"/nix/var/nix/profiles/default/bin",
+			"/usr/local/bin",
+			"/usr/bin",
+			"/bin",
+			"/usr/sbin",
+			"/sbin",
+		].join(":"),
+	};
 }
 
 /** Format a command for display (for dry-run output). */

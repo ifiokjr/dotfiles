@@ -64,7 +64,14 @@ function ageDirAndContents(path: string): void {
 	Deno.utimeSync(path, old, old);
 	for (const entry of Deno.readDirSync(path)) {
 		const child = `${path}/${entry.name}`;
-		Deno.utimeSync(child, old, old);
+		try {
+			Deno.utimeSync(child, old, old);
+		} catch (error) {
+			// Git runs background maintenance (gc/maintenance) after repo
+			// init and can delete lock files between the readDir and the
+			// utime; a vanished helper path is not a test failure.
+			if (!(error instanceof Deno.errors.NotFound)) throw error;
+		}
 		if (entry.isDirectory) ageDirAndContents(child);
 	}
 }

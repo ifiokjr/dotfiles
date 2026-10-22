@@ -475,6 +475,24 @@
         in
         {
           ci-nushell = pkgs.nushell;
+          # CI lint tools as one env so ci.yml installs them from this flake's
+          # locked nixpkgs instead of fetching a github:NixOS/nixpkgs/<rev>
+          # tarball, which GitHub's API serves unreliably for lock revisions.
+          ci-lint-tools = pkgs.buildEnv {
+            name = "ci-lint-tools";
+            paths = with pkgs; [
+              shellcheck
+              dprint
+              nushell
+              shfmt
+              nixfmt
+              kdlfmt
+              nufmt
+              taplo
+              racket
+            ];
+          };
+          ci-gitleaks = pkgs.gitleaks;
         }
       );
 

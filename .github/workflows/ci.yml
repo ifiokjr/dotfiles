@@ -30,17 +30,11 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
-        continue-on-error: true
-
       - name: 📦 install lint tools
         run: |
-          nix profile add nixpkgs#shellcheck nixpkgs#dprint nixpkgs#nushell \
-            nixpkgs#shfmt nixpkgs#nixfmt nixpkgs#kdlfmt nixpkgs#nufmt nixpkgs#taplo \
-            nixpkgs#racket
+          # Installed from this repo's flake so tool versions track the
+          # reviewed flake.lock instead of the moving nixpkgs-unstable channel.
+          nix profile add ./Configs/nix/.config/nix#ci-lint-tools
           # Add nix profile to GITHUB_PATH for subsequent steps
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
           # Force install newer pretty-expressive to override the one bundled with racket
@@ -56,7 +50,8 @@ jobs:
             Hooks/nix/post.sh Hooks/nushell/post.sh Hooks/pnpm/post.sh \
             Configs/shell/.config/shell/env.sh Configs/bash/.bashrc \
             Configs/scripts/.local/bin/setup:dotfiles Configs/scripts/.local/bin/uninstall:dotfiles Configs/scripts/.local/bin/reset:dotfiles \
-            Configs/scripts/.local/bin/refresh-nu-vendor-autoloads tests/setup-uninstall-reset-test.sh
+            Configs/scripts/.local/bin/refresh-nu-vendor-autoloads tests/setup-uninstall-reset-test.sh \
+            tests/security-audit.sh .githooks/pre-push Configs/scripts/.local/bin/setup:runner
 
       - name: 🔍 validate nushell scripts (nu-check)
         run: |
@@ -125,12 +120,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
-        continue-on-error: true
-
       - name: 📦 install nushell
         run: |
           # The flake lives under Configs/nix/.config/nix, not the repo root.
@@ -180,6 +169,36 @@ jobs:
           persist-credentials: false
 
       - name: 🦌 run zizmor
+        # No failure-threshold input exists in this action version;
+        # fail-severity was silently ignored. Findings surface as SARIF
+        # annotations (security tab); config issues fail CI via
+        # tests/security-audit.sh instead.
         uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
+
+  security-audit:
+    name: security regression audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 📥 checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          fail-severity: high
+          persist-credentials: false
+
+      - name: 🔧 install nix
+        uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📦 install security tools
+        run: |
+          # From this repo's flake: same locked nixpkgs as everything else.
+          nix profile add ./Configs/nix/.config/nix#ci-gitleaks
+          echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
+
+      - name: 🛡️ run security regression audit
+        run: tests/security-audit.sh
+
+      - name: 🧪 adversarial self-test (every detector must catch its violation)
+        run: tests/security-audit.sh --self-test
