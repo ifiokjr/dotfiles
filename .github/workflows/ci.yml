@@ -38,19 +38,9 @@ jobs:
 
       - name: 📦 install lint tools
         run: |
-          # Pin to the flake.lock nixpkgs revision so tool versions track the
-          # reviewed lockfile instead of the moving nixpkgs-unstable channel.
-          NIXPKGS_REV="$(jq -r '.nodes.nixpkgs.locked.rev' Configs/nix/.config/nix/flake.lock)"
-          nix profile add \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#shellcheck" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#dprint" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#nushell" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#shfmt" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#nixfmt" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#kdlfmt" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#nufmt" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#taplo" \
-            "github:NixOS/nixpkgs/$NIXPKGS_REV#racket"
+          # Installed from this repo's flake so tool versions track the
+          # reviewed flake.lock instead of the moving nixpkgs-unstable channel.
+          nix profile add ./Configs/nix/.config/nix#ci-lint-tools
           # Add nix profile to GITHUB_PATH for subsequent steps
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
           # Force install newer pretty-expressive to override the one bundled with racket
@@ -219,9 +209,8 @@ jobs:
 
       - name: 📦 install security tools
         run: |
-          # Pin to the flake.lock nixpkgs revision (same rationale as lint job).
-          NIXPKGS_REV="$(jq -r '.nodes.nixpkgs.locked.rev' Configs/nix/.config/nix/flake.lock)"
-          nix profile add "github:NixOS/nixpkgs/$NIXPKGS_REV#gitleaks"
+          # From this repo's flake: same locked nixpkgs as everything else.
+          nix profile add ./Configs/nix/.config/nix#ci-gitleaks
           echo "$HOME/.nix-profile/bin" >> "$GITHUB_PATH"
 
       - name: 🛡️ run security regression audit
