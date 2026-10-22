@@ -18,6 +18,8 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     permissions:
+      id-token: write # FlakeHub cache OIDC authentication
+      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -31,9 +33,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
+        # Authenticates to FlakeHub via the job's OIDC token (id-token
+        # grant above); the token: input was never accepted by this version.
         uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 📦 install lint tools
@@ -110,6 +112,8 @@ jobs:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     permissions:
+      id-token: write # FlakeHub cache OIDC authentication
+      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     strategy:
       fail-fast: false
@@ -127,9 +131,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
+        # Authenticates to FlakeHub via the job's OIDC token (id-token
+        # grant above); the token: input was never accepted by this version.
         uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 📦 install nushell
@@ -181,14 +185,18 @@ jobs:
           persist-credentials: false
 
       - name: 🦌 run zizmor
+        # No failure-threshold input exists in this action version;
+        # fail-severity was silently ignored. Findings surface as SARIF
+        # annotations (security tab); config issues fail CI via
+        # tests/security-audit.sh instead.
         uses: zizmorcore/zizmor-action@5f14fd08f7cf1cb1609c1e344975f152c7ee938d # v0.5.6
-        with:
-          fail-severity: high
 
   security-audit:
     name: security regression audit
     runs-on: ubuntu-latest
     permissions:
+      id-token: write # FlakeHub cache OIDC authentication
+      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -202,9 +210,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
+        # Authenticates to FlakeHub via the job's OIDC token (id-token
+        # grant above); the token: input was never accepted by this version.
         uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 📦 install security tools

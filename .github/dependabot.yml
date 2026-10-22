@@ -12,3 +12,8 @@ updates:
       include: scope
     labels:
       - dependencies
+    # Wait 7 days after a release before proposing a bump: brand-new action
+    # tags are the supply-chain window where a compromised or yanked release
+    # does the most damage, and every bump lands as a reviewable SHA diff.
+    cooldown:
+      default-days: 7

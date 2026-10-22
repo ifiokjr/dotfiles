@@ -109,6 +109,7 @@ jobs:
     name: remote installer smoke test
     runs-on: ubuntu-latest
     permissions:
+      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -122,9 +123,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
+        # Authenticates to FlakeHub via the job's OIDC token (id-token
+        # grant above); the token: input was never accepted by this version.
         uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 🧪 run remote installer smoke test
@@ -138,6 +139,8 @@ jobs:
     name: setup script (ubuntu-latest)
     runs-on: ubuntu-latest
     permissions:
+      id-token: write # FlakeHub cache OIDC authentication
+      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -151,9 +154,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
+        # Authenticates to FlakeHub via the job's OIDC token (id-token
+        # grant above); the token: input was never accepted by this version.
         uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 🧪 run setup script
@@ -177,6 +180,8 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     permissions:
+      id-token: write # FlakeHub cache OIDC authentication
+      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -199,9 +204,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🔧 set up nix cache
+        # Authenticates to FlakeHub via the job's OIDC token (id-token
+        # grant above); the token: input was never accepted by this version.
         uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
         continue-on-error: true
 
       - name: 🧪 run setup script (minimal, no nix rebuild)
