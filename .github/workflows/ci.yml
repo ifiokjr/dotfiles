@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write # FlakeHub cache OIDC authentication
-      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -113,7 +112,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write # FlakeHub cache OIDC authentication
-      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     strategy:
       fail-fast: false
@@ -195,7 +193,6 @@ jobs:
     name: security regression audit
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # FlakeHub cache OIDC authentication
       id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
