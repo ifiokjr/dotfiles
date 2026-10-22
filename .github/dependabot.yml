@@ -1,0 +1,14 @@
+# Keep the SHA-pinned GitHub Actions in .github/workflows fresh: zizmor and
+# tests/security-audit.sh verify pinning, but nothing else proposes updates,
+# so stale pins would otherwise persist until manually reviewed.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    labels:
+      - dependencies
