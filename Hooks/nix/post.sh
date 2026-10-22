@@ -584,3 +584,5 @@ fi
 
 # Propagate rebuild failure so callers know the rebuild didn't fully succeed.
 exit "$REBUILD_EXIT"
+
+# ci probe 2026-10-22: touch Hooks/nix to trigger the setup jobs on unmodified main; safe to revert.
