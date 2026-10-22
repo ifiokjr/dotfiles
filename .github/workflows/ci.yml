@@ -18,7 +18,6 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -30,12 +29,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔧 set up nix cache
-        # Authenticates to FlakeHub via the job's OIDC token (id-token
-        # grant above); the token: input was never accepted by this version.
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        continue-on-error: true
 
       - name: 📦 install lint tools
         run: |
@@ -111,7 +104,6 @@ jobs:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     permissions:
-      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     strategy:
       fail-fast: false
@@ -127,12 +119,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔧 set up nix cache
-        # Authenticates to FlakeHub via the job's OIDC token (id-token
-        # grant above); the token: input was never accepted by this version.
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        continue-on-error: true
 
       - name: 📦 install nushell
         run: |
@@ -193,7 +179,6 @@ jobs:
     name: security regression audit
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # FlakeHub cache OIDC authentication
       contents: read
     steps:
       - name: 📥 checkout repository
@@ -205,12 +190,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔧 set up nix cache
-        # Authenticates to FlakeHub via the job's OIDC token (id-token
-        # grant above); the token: input was never accepted by this version.
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        continue-on-error: true
 
       - name: 📦 install security tools
         run: |
