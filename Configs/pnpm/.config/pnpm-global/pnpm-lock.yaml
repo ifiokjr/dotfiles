@@ -15,8 +15,8 @@ importers:
         specifier: 0.163.0
         version: 0.163.0
       '@opencode/cli':
-        specifier: 2.1.0
-        version: 2.1.0
+        specifier: 2.1.1
+        version: 2.1.1
       '@playwright/cli':
         specifier: 0.1.22
         version: 0.1.22
@@ -223,68 +223,68 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@opencode/cli-darwin-arm64@2.1.0':
-    resolution: {integrity: sha512-1y6xEQuV+1Ins3gMSebg+eQsQF3ViLl426kgauwr4xWEcTLgpxpT690PIO9s0b0LAoRB9WlcH+kl0fK4SoUvmw==}
+  '@opencode/cli-darwin-arm64@2.1.1':
+    resolution: {integrity: sha512-Leq0p8zH5syoSLpEDo9rakmLzI6biLoDQYcjL0i+OIux4GRSs/1LBvZtcKdxpCLmhl7jUN1MdEL/7s6nRFj7GA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@opencode/cli-darwin-x64-baseline@2.1.0':
-    resolution: {integrity: sha512-a3QYR/jFeNweWBS6a7aebZJDjkWL3lTMn6Kr4DfEUhQklfOM9lcgUAc180dpvc1EvlyKicVDxEnj5EfSTs9uaQ==}
+  '@opencode/cli-darwin-x64-baseline@2.1.1':
+    resolution: {integrity: sha512-5S11yDyxeXDnuFeDaC76zNdI7KNrplOkWj84Cc9AvSXc6jXrJOBSiF0rkYXHr2AZg/isCIni3OspwcrYp4rnKg==}
     cpu: [x64]
     os: [darwin]
 
-  '@opencode/cli-darwin-x64@2.1.0':
-    resolution: {integrity: sha512-rD+BKmmhJjIIRy09MkfweV0e38IW6/LyOTI/n2UMv+ZbqX9ys57foy/Srf9DrXOjkXv3TMvBk9GyqrIo3p/QxQ==}
+  '@opencode/cli-darwin-x64@2.1.1':
+    resolution: {integrity: sha512-hnVlib2TgF2Ewj+/66lLBIrEmnseZu1NzYwxkKAU8/Mw6dC3dQjhUcqH/osmoJEcNSP4K13KYz9Ltn/oY/Vqww==}
     cpu: [x64]
     os: [darwin]
 
-  '@opencode/cli-linux-arm64-musl@2.1.0':
-    resolution: {integrity: sha512-4mMsB8DCx4HNs/rm+psncWTogpa4vLGjAkKDYHfLHYzD0TgsyHRyj2TgJDWb/u1cgQYqsdbcnEXyRVMrEqeVhA==}
+  '@opencode/cli-linux-arm64-musl@2.1.1':
+    resolution: {integrity: sha512-MUHKdA/DXUR9H8rgKyEf3jrivSQFGnC3qt2KrP7viAxOhpcBXnmghbIRge4KZxc2F1Ejvz/XmMRbvjSx2Qw4rg==}
     cpu: [arm64]
     os: [linux]
 
-  '@opencode/cli-linux-arm64@2.1.0':
-    resolution: {integrity: sha512-bYp2n7rU2nhyFrc0A5WUL47gweU9j8xZk8fyp82BQBDmjgf5pbpg3G4R9IOaHDmMDMlzjl/+EC8eozM4DWkExw==}
+  '@opencode/cli-linux-arm64@2.1.1':
+    resolution: {integrity: sha512-+v8jCh1HT6iH2uCIYTTaYv+xqE1aEWM0XOjnsi2/1jz6GringoxBTz1lmfUmPY+R570LSyEjc9LVW6DBrHbAyQ==}
     cpu: [arm64]
     os: [linux]
 
-  '@opencode/cli-linux-x64-baseline-musl@2.1.0':
-    resolution: {integrity: sha512-kmSz6XEsG05rWA7XRuiiECz9JwmOhVLnBdAP8quRcC0/i7+RFEDPmCzFy/zizJh5Isu1I2xqbenHwriE7cwC2A==}
+  '@opencode/cli-linux-x64-baseline-musl@2.1.1':
+    resolution: {integrity: sha512-Si3i41/8SbbhDfbytHrnLoKD4mwXD8RJ+4VByFyfxUn+P5j63zNNtw/07uS+juCQCbBp/5r/m9IY08KxzCIaSg==}
     cpu: [x64]
     os: [linux]
 
-  '@opencode/cli-linux-x64-baseline@2.1.0':
-    resolution: {integrity: sha512-f239F2J8S+K6Pf6UaUfZNmH1NbAvz3iQZeBr6szHS+CwDlolIFPNvy04fny0cfCBWrpjsbTAeLe6S2g0LewkRw==}
+  '@opencode/cli-linux-x64-baseline@2.1.1':
+    resolution: {integrity: sha512-bjeSTtPwpHHKoUq1dy4/NaOIXJ2ej3elwp9tVF2cEfBodRnhtFj3AIYte2TDoPEF6+dGrlOkoPCt3j+/tgYk2Q==}
     cpu: [x64]
     os: [linux]
 
-  '@opencode/cli-linux-x64-musl@2.1.0':
-    resolution: {integrity: sha512-3KBCR/nvT8T8J3+/7OllXW/rSXm96lCMLnBGcMJ6FlkibxXnI3bHnsOoYjKEZ+M/72nn+dRjrctnCyIlgcp3Lg==}
+  '@opencode/cli-linux-x64-musl@2.1.1':
+    resolution: {integrity: sha512-yjBIHj3COUhvM3QLfYWJfhBtEP/vfDLNUXOWWYK8Tz5qd0QAfZojAuvZDrHulIxXnLSHEnu9j2y/1SVWl3DkZw==}
     cpu: [x64]
     os: [linux]
 
-  '@opencode/cli-linux-x64@2.1.0':
-    resolution: {integrity: sha512-mNe1Br71C+9QZS9KYhs4soFuuKoG6A6bGI3xsdcBQRK8Nc494CDGnncUPNGLeEUp9zzpMwBMB27dmetXIkwZ6w==}
+  '@opencode/cli-linux-x64@2.1.1':
+    resolution: {integrity: sha512-95RGRs0xMqzBuSj85pvXc7MQxokXHBBc3Ng1/I0EH83bq7sYrKKFw1FTXI7je6bZQjB+8q79bzUOoG1j0A192w==}
     cpu: [x64]
     os: [linux]
 
-  '@opencode/cli-windows-arm64@2.1.0':
-    resolution: {integrity: sha512-T7cfkzFhwrz7YWByh3Y1ZbgoOFRIdW1UUqQOO96oaU6uOzaTxyq+U9o7EARfbkKllDj6bvWWm3+ebv1Jk1c5Iw==}
+  '@opencode/cli-windows-arm64@2.1.1':
+    resolution: {integrity: sha512-+DT0cl5fD0/ot0kQOtNK1Wn9LoszlzITcohSFhHFrX1QU0w2cGLMDRWtnAbx58rqP2U54O+s4KrOTetI4PTrQg==}
     cpu: [arm64]
     os: [win32]
 
-  '@opencode/cli-windows-x64-baseline@2.1.0':
-    resolution: {integrity: sha512-0mw1D8AaFEO1QxBkIUNIsE3KHY/JWky3Ad38BKfYdLDs7YhSZFGTaXkCGaPsNsquEcKdrpyggddOdPKjZsvN9Q==}
+  '@opencode/cli-windows-x64-baseline@2.1.1':
+    resolution: {integrity: sha512-SwUOslHF//YlHP51/K1vShv1ZMtdimZVKPoMduxP9N5dV1PWijv4tlqh6HE5TEdtlRdRfkoMlkUbcr2bGYa9KA==}
     cpu: [x64]
     os: [win32]
 
-  '@opencode/cli-windows-x64@2.1.0':
-    resolution: {integrity: sha512-F8VXxBLq8qL1KPvXVFAgtN4zwVJ3jKQxpqhgZaqSFczGDidSthdhtbFQUX85xsilId2EGtY1fXVCeB9rTydhNA==}
+  '@opencode/cli-windows-x64@2.1.1':
+    resolution: {integrity: sha512-Obv+I7QFX06p376Lub2OBH2XNg+3wyyolf+Bq917LW8/vt2oSNWYOWYstDNJRzq81JFMbxZ9oo95EcBab/wv+w==}
     cpu: [x64]
     os: [win32]
 
-  '@opencode/cli@2.1.0':
-    resolution: {integrity: sha512-rEZIA1ftK8UarRvS8fcJ2c+Mb0CrbsyiQOFh48m/hPJ19ys8s2VlXbOYDWSoxVb69h80B9uhcumgCp+BVKwSJA==}
+  '@opencode/cli@2.1.1':
+    resolution: {integrity: sha512-B+FFz2XceohsO2VIFFW5xY+fF+jba5vymPD7bsOzmcyOUw0nINsO+37+afcHxj04gAwP4koK3DSngc0/Q8gq7w==}
     cpu: [arm64, x64]
     os: [darwin, linux, win32]
     hasBin: true
@@ -612,8 +612,8 @@ packages:
   '@silvia-odwyer/photon-node@0.3.4':
     resolution: {integrity: sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==}
 
-  '@smithy/core@3.36.0':
-    resolution: {integrity: sha512-3hJiwG1F5t1SoXqp/yOCmYXziyx7ZVqF63S5W6YU201e/qwVaHPex+E/3vvyY9a3ORq/b+BydeNZpP2saQ9X2g==}
+  '@smithy/core@3.36.1':
+    resolution: {integrity: sha512-WC5W1Jrsfxu1y6LeqXMie7N14qmcdafij/Haye4feVlyMMXLGpYxBeOX6Ee1iRJbDzGG5LVman8U1rrt9MYFHA==}
     engines: {node: '>=18.0.0'}
 
   '@smithy/credential-provider-imds@4.5.2':
@@ -1634,7 +1634,7 @@ snapshots:
       '@aws-sdk/middleware-websocket': 3.972.57
       '@aws-sdk/token-providers': 3.1127.0
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/node-http-handler': 4.12.1
       '@smithy/types': 4.19.0
@@ -1645,7 +1645,7 @@ snapshots:
       '@aws-sdk/types': 3.974.6
       '@aws-sdk/xml-builder': 3.972.41
       '@aws/lambda-invoke-store': 0.3.0
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/signature-v4': 5.7.4
       '@smithy/types': 4.19.0
       bowser: 2.14.1
@@ -1655,7 +1655,7 @@ snapshots:
     dependencies:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1663,7 +1663,7 @@ snapshots:
     dependencies:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/node-http-handler': 4.12.1
       '@smithy/types': 4.19.0
@@ -1680,7 +1680,7 @@ snapshots:
       '@aws-sdk/credential-provider-web-identity': 3.972.81
       '@aws-sdk/nested-clients': 3.997.49
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/credential-provider-imds': 4.5.2
       '@smithy/types': 4.19.0
       tslib: 2.8.1
@@ -1690,7 +1690,7 @@ snapshots:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/nested-clients': 3.997.49
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1703,7 +1703,7 @@ snapshots:
       '@aws-sdk/credential-provider-sso': 3.973.19
       '@aws-sdk/credential-provider-web-identity': 3.972.81
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/credential-provider-imds': 4.5.2
       '@smithy/types': 4.19.0
       tslib: 2.8.1
@@ -1712,7 +1712,7 @@ snapshots:
     dependencies:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1722,7 +1722,7 @@ snapshots:
       '@aws-sdk/nested-clients': 3.997.49
       '@aws-sdk/token-providers': 3.1153.0
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1731,21 +1731,21 @@ snapshots:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/nested-clients': 3.997.49
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
   '@aws-sdk/eventstream-handler-node@3.972.37':
     dependencies:
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
   '@aws-sdk/middleware-eventstream@3.972.32':
     dependencies:
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1753,7 +1753,7 @@ snapshots:
     dependencies:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/signature-v4': 5.7.4
       '@smithy/types': 4.19.0
@@ -1764,7 +1764,7 @@ snapshots:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/signature-v4-multi-region': 3.996.48
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/fetch-http-handler': 5.8.0
       '@smithy/node-http-handler': 4.12.1
       '@smithy/types': 4.19.0
@@ -1782,7 +1782,7 @@ snapshots:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/nested-clients': 3.997.49
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1791,7 +1791,7 @@ snapshots:
       '@aws-sdk/core': 3.978.4
       '@aws-sdk/nested-clients': 3.997.49
       '@aws-sdk/types': 3.974.6
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
@@ -1959,56 +1959,56 @@ snapshots:
   '@openai/codex@0.163.0-win32-x64':
     optional: true
 
-  '@opencode/cli-darwin-arm64@2.1.0':
+  '@opencode/cli-darwin-arm64@2.1.1':
     optional: true
 
-  '@opencode/cli-darwin-x64-baseline@2.1.0':
+  '@opencode/cli-darwin-x64-baseline@2.1.1':
     optional: true
 
-  '@opencode/cli-darwin-x64@2.1.0':
+  '@opencode/cli-darwin-x64@2.1.1':
     optional: true
 
-  '@opencode/cli-linux-arm64-musl@2.1.0':
+  '@opencode/cli-linux-arm64-musl@2.1.1':
     optional: true
 
-  '@opencode/cli-linux-arm64@2.1.0':
+  '@opencode/cli-linux-arm64@2.1.1':
     optional: true
 
-  '@opencode/cli-linux-x64-baseline-musl@2.1.0':
+  '@opencode/cli-linux-x64-baseline-musl@2.1.1':
     optional: true
 
-  '@opencode/cli-linux-x64-baseline@2.1.0':
+  '@opencode/cli-linux-x64-baseline@2.1.1':
     optional: true
 
-  '@opencode/cli-linux-x64-musl@2.1.0':
+  '@opencode/cli-linux-x64-musl@2.1.1':
     optional: true
 
-  '@opencode/cli-linux-x64@2.1.0':
+  '@opencode/cli-linux-x64@2.1.1':
     optional: true
 
-  '@opencode/cli-windows-arm64@2.1.0':
+  '@opencode/cli-windows-arm64@2.1.1':
     optional: true
 
-  '@opencode/cli-windows-x64-baseline@2.1.0':
+  '@opencode/cli-windows-x64-baseline@2.1.1':
     optional: true
 
-  '@opencode/cli-windows-x64@2.1.0':
+  '@opencode/cli-windows-x64@2.1.1':
     optional: true
 
-  '@opencode/cli@2.1.0':
+  '@opencode/cli@2.1.1':
     optionalDependencies:
-      '@opencode/cli-darwin-arm64': 2.1.0
-      '@opencode/cli-darwin-x64': 2.1.0
-      '@opencode/cli-darwin-x64-baseline': 2.1.0
-      '@opencode/cli-linux-arm64': 2.1.0
-      '@opencode/cli-linux-arm64-musl': 2.1.0
-      '@opencode/cli-linux-x64': 2.1.0
-      '@opencode/cli-linux-x64-baseline': 2.1.0
-      '@opencode/cli-linux-x64-baseline-musl': 2.1.0
-      '@opencode/cli-linux-x64-musl': 2.1.0
-      '@opencode/cli-windows-arm64': 2.1.0
-      '@opencode/cli-windows-x64': 2.1.0
-      '@opencode/cli-windows-x64-baseline': 2.1.0
+      '@opencode/cli-darwin-arm64': 2.1.1
+      '@opencode/cli-darwin-x64': 2.1.1
+      '@opencode/cli-darwin-x64-baseline': 2.1.1
+      '@opencode/cli-linux-arm64': 2.1.1
+      '@opencode/cli-linux-arm64-musl': 2.1.1
+      '@opencode/cli-linux-x64': 2.1.1
+      '@opencode/cli-linux-x64-baseline': 2.1.1
+      '@opencode/cli-linux-x64-baseline-musl': 2.1.1
+      '@opencode/cli-linux-x64-musl': 2.1.1
+      '@opencode/cli-windows-arm64': 2.1.1
+      '@opencode/cli-windows-x64': 2.1.1
+      '@opencode/cli-windows-x64-baseline': 2.1.1
 
   '@oxc-project/runtime@0.154.0': {}
 
@@ -2177,32 +2177,32 @@ snapshots:
 
   '@silvia-odwyer/photon-node@0.3.4': {}
 
-  '@smithy/core@3.36.0':
+  '@smithy/core@3.36.1':
     dependencies:
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
   '@smithy/credential-provider-imds@4.5.2':
     dependencies:
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
   '@smithy/fetch-http-handler@5.8.0':
     dependencies:
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
   '@smithy/node-http-handler@4.12.1':
     dependencies:
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
   '@smithy/signature-v4@5.7.4':
     dependencies:
-      '@smithy/core': 3.36.0
+      '@smithy/core': 3.36.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
