@@ -3,6 +3,13 @@
   "permissions": {
     "defaultMode": "bypassPermissions"
   },
+  "env": {
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_ERROR_REPORTING": "1"
+  },
+  "attribution": {
+    "commit": ""
+  },
   "skipDangerousModePermissionPrompt": true,
   "skipWorkflowUsageWarning": true,
   "theme": "dark",
