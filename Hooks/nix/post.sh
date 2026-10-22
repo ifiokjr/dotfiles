@@ -68,9 +68,18 @@ ensure_darwin_sudo_session() {
 	local sudoers_extra="/etc/sudoers.d/10-nix-darwin-extra-config"
 	if [ ! -f "$sudoers_extra" ] || ! sudo grep -q "timestamp_type=global" "$sudoers_extra" 2>/dev/null; then
 		echo "==> Bootstrapping global sudo timestamps..."
-		printf '%s\n' 'Defaults timestamp_type=global' 'Defaults timestamp_timeout=15' | sudo tee -a "$sudoers_extra" >/dev/null
-		sudo chmod 0440 "$sudoers_extra"
-		echo "Added timestamp_type=global and timestamp_timeout=15 to sudoers"
+		# Validate with visudo and install atomically: a malformed fragment
+		# appended directly to /etc/sudoers.d can lock out sudo entirely.
+		local sudoers_tmp
+		sudoers_tmp="$(mktemp)"
+		printf '%s\n' 'Defaults timestamp_type=global' 'Defaults timestamp_timeout=15' >"$sudoers_tmp"
+		if sudo visudo -cf "$sudoers_tmp" >/dev/null 2>&1; then
+			sudo install -m 0440 -o root -g root "$sudoers_tmp" "$sudoers_extra"
+			echo "Added timestamp_type=global and timestamp_timeout=15 to sudoers"
+		else
+			echo "Warning: sudoers fragment failed visudo validation; not installed"
+		fi
+		rm -f "$sudoers_tmp"
 	fi
 
 	# Refresh the sudo ticket after any sudoers changes so Homebrew subprocesses
@@ -176,6 +185,13 @@ resolve_flake_dir() {
 
 NIX_FLAKE_DIR="$(resolve_flake_dir)"
 echo "Nix link directory: $NIX_LINK_DIR"
+# The flake dir is derived from a symlink target under $HOME and is
+# interpolated into single-quoted command strings below; refuse values
+# containing characters that could break out of that quoting.
+if printf '%s' "$NIX_FLAKE_DIR" | grep -qE "[\"'\\\\\`\$;(){}<>|&]"; then
+	echo "ERROR: resolved flake directory '$NIX_FLAKE_DIR' contains shell metacharacters; refusing to rebuild"
+	exit 1
+fi
 echo "Nix flake directory: $NIX_FLAKE_DIR"
 
 MACHINE_NIX="$NIX_LINK_DIR/machine.nix"
@@ -203,13 +219,15 @@ if [ -n "$NIX_GH_TOKEN" ]; then
 	USER_NIX_CONF="$NIX_LINK_DIR/nix.conf"
 	mkdir -p "$NIX_LINK_DIR"
 	if [ ! -f "$USER_NIX_CONF" ] || ! grep -q "access-tokens" "$USER_NIX_CONF"; then
-		echo "access-tokens = github.com=$NIX_GH_TOKEN" >>"$USER_NIX_CONF"
+		# umask 177 keeps the live token out of group/world-readable nix.conf.
+		{ umask 177; echo "access-tokens = github.com=$NIX_GH_TOKEN" >>"$USER_NIX_CONF"; }
 		echo "Configured GitHub access token in user nix.conf"
 	fi
 	# Also configure in system nix.conf so sudo operations (nh darwin switch) can
 	# access the token. sudo changes the user context, so the user nix.conf isn't read.
+	# The write runs under root's restrictive umask for the same reason as above.
 	if [ -d /etc/nix ] && ! sudo grep -q "access-tokens" /etc/nix/nix.conf 2>/dev/null; then
-		echo "access-tokens = github.com=$NIX_GH_TOKEN" | sudo tee -a /etc/nix/nix.conf >/dev/null
+		printf 'access-tokens = github.com=%s\n' "$NIX_GH_TOKEN" | sudo sh -c 'umask 177; cat >>/etc/nix/nix.conf'
 		echo "Configured GitHub access token in system nix.conf"
 	fi
 else
@@ -348,6 +366,20 @@ fi
 
 if [ -z "$CFG_USERNAME" ] || [ -z "$CFG_SYSTEM" ]; then
 	echo "ERROR: Failed to read username or system from machine.nix"
+	exit 1
+fi
+
+# Both values are interpolated into the rebuild command strings below (and the
+# username also names the home-manager configuration), so anything outside
+# these strict shapes aborts the rebuild: a quote planted in machine.nix would
+# otherwise break out of the single-quoted contexts in those strings, which run
+# under sudo on root-only-Nix Linux.
+if ! printf '%s' "$CFG_USERNAME" | grep -Eq '^[a-z_][a-z0-9_-]{0,31}$'; then
+	echo "ERROR: machine.nix username '$CFG_USERNAME' contains unexpected characters (expected a lowercase unix account name)"
+	exit 1
+fi
+if ! printf '%s' "$CFG_SYSTEM" | grep -Eq '^(aarch64|x86_64)-(darwin|linux)$'; then
+	echo "ERROR: machine.nix system '$CFG_SYSTEM' is not a supported nix platform string"
 	exit 1
 fi
 
@@ -570,15 +602,25 @@ fi
 if [ -n "${TAILSCALE_AUTHKEY:-}" ] && [ "$REBUILD_EXIT" -eq 0 ]; then
 	if ! command -v tailscale >/dev/null 2>&1; then
 		echo "    Warning: TAILSCALE_AUTHKEY set but tailscale was not installed by the rebuild"
-	elif sudo tailscale status >/dev/null 2>&1; then
-		echo "    Tailscale already connected"
 	else
-		echo "==> Joining the tailnet with a pre-auth key (Tailscale SSH enabled)..."
-		if sudo tailscale up --authkey "$TAILSCALE_AUTHKEY" --ssh >/dev/null 2>&1; then
-			echo "    Joined the tailnet"
+		# Resolve the absolute path while the user PATH is still available:
+		# sudo's secure_path (darwin.nix) only covers root-owned bin dirs, and
+		# the tailscale CLI is a home-manager package in the per-user profile.
+		TS_BIN="$(command -v tailscale)"
+		if sudo "$TS_BIN" status >/dev/null 2>&1; then
+			echo "    Tailscale already connected"
 		else
-			echo "    Warning: Tailscale auto-join failed; run 'sudo tailscale up' manually"
+			echo "==> Joining the tailnet with a pre-auth key (Tailscale SSH enabled)..."
+			# The key travels via environment, not argv: `ps` exposes argument
+			# lists to every local user for the lifetime of the call, while a
+			# root process environment is not readable that way.
+			if sudo env TAILSCALE_AUTHKEY="$TAILSCALE_AUTHKEY" "$TS_BIN" up --ssh >/dev/null 2>&1; then
+				echo "    Joined the tailnet"
+			else
+				echo "    Warning: Tailscale auto-join failed; run 'sudo tailscale up' manually"
+			fi
 		fi
+		unset TS_BIN
 	fi
 fi
 
