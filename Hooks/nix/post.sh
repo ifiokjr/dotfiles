@@ -219,8 +219,12 @@ if [ -n "$NIX_GH_TOKEN" ]; then
 	USER_NIX_CONF="$NIX_LINK_DIR/nix.conf"
 	mkdir -p "$NIX_LINK_DIR"
 	if [ ! -f "$USER_NIX_CONF" ] || ! grep -q "access-tokens" "$USER_NIX_CONF"; then
-		# umask 177 keeps the live token out of group/world-readable nix.conf.
-		{ umask 177; echo "access-tokens = github.com=$NIX_GH_TOKEN" >>"$USER_NIX_CONF"; }
+		# Subshell (never a { } block): umask 177 keeps the live token out of
+		# group/world-readable nix.conf, but a brace group would leak it into
+		# the rest of this script — the home-manager activation below would
+		# then run mkdir -p with no execute bit on intermediate directories
+		# and fail with EACCES.
+		( umask 177; echo "access-tokens = github.com=$NIX_GH_TOKEN" >>"$USER_NIX_CONF" )
 		echo "Configured GitHub access token in user nix.conf"
 	fi
 	# Also configure in system nix.conf so sudo operations (nh darwin switch) can

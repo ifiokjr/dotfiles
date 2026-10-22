@@ -547,8 +547,10 @@ install_nix() {
         local nix_conf_dir="$HOME/.config/nix"
         mkdir -p "$nix_conf_dir"
         if ! grep -q "access-tokens" "$nix_conf_dir/nix.conf" 2>/dev/null; then
-            # 600: the file holds a live token; default umask would leave it 644.
-            { umask 177; echo "access-tokens = github.com=$GITHUB_TOKEN" >> "$nix_conf_dir/nix.conf"; }
+            # 600: the file holds a live token; default umask would leave it
+            # 644. Subshell (not a brace group) so the restrictive umask
+            # cannot leak into the rest of the script.
+            ( umask 177; echo "access-tokens = github.com=$GITHUB_TOKEN" >> "$nix_conf_dir/nix.conf" )
             print_info "Configured GitHub access token for nix"
         fi
     fi

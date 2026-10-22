@@ -441,11 +441,23 @@ check_token_files_restricted() {
 		echo "   setup writes nix.conf without umask 177" >&2
 		return 1
 	fi
+	# The umask must be scoped to a subshell: a { } brace group runs in the
+	# current shell, and a leaked umask 177 makes later mkdir -p intermediates
+	# mode 600 (no execute) — home-manager activation then dies with EACCES
+	# (caught live in CI on 2026-10-22).
+	local f
+	for f in "$1/Hooks/nix/post.sh" "$1/setup"; do
+		if grep -Eq '\{[[:space:]]*umask' "$f"; then
+			echo "   $f uses a brace-group umask (leaks into the script)" >&2
+			return 1
+		fi
+	done
 	return 0
 }
 mutate_token_files_restricted() {
-	sed -i.bak 's/{ umask 177; echo "access-tokens/echo "access-tokens/' \
+	sed -i.bak 's/( umask 177; echo "access-tokens/{ umask 177; echo "access-tokens/' \
 		"$1/Hooks/nix/post.sh" "$1/setup"
+	sed -i.bak 's/nix.conf" )/nix.conf"; }/' "$1/Hooks/nix/post.sh" "$1/setup"
 }
 
 reg authkey_not_in_argv
