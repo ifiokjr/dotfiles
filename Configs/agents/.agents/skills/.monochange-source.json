@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/monochange/monochange",
-	"ref": "v0.18.0",
-	"resolvedSha": "62d1504b931a4885dc4248d3ea1ef4a19ef61dac",
+	"ref": "v0.20.1",
+	"resolvedSha": "b5f6e4d62a39caaa3af0a87f442912e3f602ca4c",
 	"skills": [
 		"monochange"
 	],

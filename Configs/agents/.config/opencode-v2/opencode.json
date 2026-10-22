@@ -1,5 +1,7 @@
 {
 	"model": "ollama-cloud/kimi-k2.7-code",
+	"share": "disabled",
+	"autoupdate": false,
 	"permissions": [
 		{ "action": "*", "resource": "*", "effect": "allow" }
 	]

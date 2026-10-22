@@ -27,7 +27,9 @@
 # OpenAI/Codex Configuration
 # ---------------------------------------------------------------------------
 # API keys are managed by Monosecret + 1Password; use msr --reason "<why>" <command> for lazy injection.
-# Codex config typically at ~/.codex/config.json
+# Codex config is the machine-local ~/.codex/config.toml (Codex rewrites it, so it
+# cannot be symlinked from the repo). It carries [analytics] enabled = false to
+# disable the default Statsig metrics exporter; reapply that on a fresh machine.
 
 # ---------------------------------------------------------------------------
 # Z.AI (GLM) for OpenCode

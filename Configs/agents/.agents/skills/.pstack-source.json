@@ -1,7 +1,7 @@
 {
 	"repository": "https://github.com/cursor/plugins",
 	"ref": "main",
-	"resolvedSha": "f713f14203cd6420cec13cd7c55c32d598dbab68",
+	"resolvedSha": "f2bad5225cb2d4f5e58b45aa36be89d16a558c13",
 	"skills": [
 		"architect",
 		"arena",
@@ -10,12 +10,14 @@
 		"blast-radius",
 		"bro",
 		"correct",
+		"create-formal-verification-skill",
 		"create-verification-skill",
 		"figure-it-out",
 		"how",
 		"in-your-own-words",
 		"interrogate",
 		"ketchup",
+		"maintain-formal-verification-skill",
 		"maintain-verification-skill",
 		"make-bot-ui",
 		"no-comments",

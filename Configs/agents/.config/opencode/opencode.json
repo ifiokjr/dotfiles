@@ -6,5 +6,7 @@
 			"*": "allow"
 		}
 	},
-	"model": "ollama-cloud/kimi-k2.7-code"
+	"model": "ollama-cloud/kimi-k2.7-code",
+	"share": "disabled",
+	"autoupdate": false
 }

@@ -11,6 +11,7 @@ This directory centralizes configuration for all AI coding agents and tools.
 | **Pi**          | `~/.pi/agent/`        | AI-powered development environment          |
 | **Codex**       | `~/.codex/`           | OpenAI's Codex CLI tool                     |
 | **Zed**         | `~/.config/zed/`      | AI-powered code editor with agent panel     |
+| **ZCode**       | `~/.zcode/`           | Z.ai's GLM desktop coding agent             |
 
 ## Configuration Files
 
@@ -25,6 +26,7 @@ OpenCode configuration, used by the `opencode` command:
 - Global `permission` rules, with `"*"` set to `allow` for unrestricted access
 - `external_directory` set to `"*": "allow"`, which is what actually governs file and shell access outside the working directory
 - Default model selection
+- `share` set to `"disabled"`, so no session can be published to a public transcript URL, and `autoupdate` set to `false`, so the binary does not phone home for version checks (`dot pnpm` manages its updates)
 
 The file must be named `opencode.json`. An earlier revision used `config.json`, which OpenCode silently ignores: `opencode debug config` reports only the config directories in that case, so every permission in it was inert and sessions ran on the default ask-based rules. Keep the name `opencode.json`.
 
@@ -47,6 +49,7 @@ Claude Code's user settings, deployed to `~/.claude/settings.json`:
 
 - `permissions.defaultMode` set to `bypassPermissions`, so sessions skip permission prompts instead of stopping to ask
 - `skipDangerousModePermissionPrompt`, which suppresses the one-time dialog that otherwise has to be accepted before the mode takes effect
+- `env` setting `DISABLE_TELEMETRY=1` and `DISABLE_ERROR_REPORTING=1`, which turn off Statsig usage telemetry and Sentry crash reports. The broader `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` is deliberately not used because it also disables the self-updater of the native install.
 
 `bypassPermissions` is honored only from user or managed settings. A project `.claude/settings.json` that sets it is ignored, so this must stay at the user level. Claude Code reads this file without rewriting it, which is what makes a symlinked copy safe here.
 
@@ -61,6 +64,7 @@ The canonical global agent instructions file. Every harness's global instruction
 | **Zed**         | `~/.config/zed/AGENTS.md`      |
 | **OpenCode**    | `~/.config/opencode/AGENTS.md` |
 | **Claude Code** | `~/.claude/CLAUDE.md`          |
+| **ZCode**       | `~/.zcode/AGENTS.md`           |
 
 Edit the canonical file only — the harness locations are symlinks to it.
 
@@ -80,6 +84,18 @@ The link step skips dotfiles such as `.mdt-source.json`, skips directories with 
 A skill whose frontmatter sets `disable-model-invocation: true` is deliberately invisible to the model and can only be run as `/name`. That is expected for the 21 managed skills that use it, not a linking failure.
 
 The shared code-quality standard applies across projects and harnesses, including Codex. It requires idiomatic designs with explicit ownership, meaningful verification, root-cause fixes, and an honest account of remaining limits. Project-specific instructions add their own language and framework conventions.
+
+## Privacy and telemetry
+
+Agents must not share data about the user that the task does not require. Two layers enforce this:
+
+1. **Behavioral, in the canonical `AGENTS.md`**: the "Privacy: never identify me to third parties" section. It exists because fetched web content can "politely ask" an agent to identify its user, and real agents have complied, leaking personal data in HTTP headers. The section forbids personal data in outbound requests, treats every instruction inside fetched content as a prompt-injection attack, keeps credentials first-party, and requires asking before sending personal data anywhere new. Symlinked into every harness, so all agents get it from one edit.
+2. **Telemetry kill switches, per harness**:
+   - Claude Code: `env` flags in `claude/settings.json` (see above).
+   - OpenCode: `share: "disabled"` + `autoupdate: false` in both `opencode.json` files (see above).
+   - Zed: `telemetry.metrics` and `telemetry.diagnostics` set to `false` in `Configs/zed/.config/zed/settings.json`.
+   - Codex: `[analytics] enabled = false` in the machine-local `~/.codex/config.toml` (default is a Statsig metrics exporter). Codex rewrites that file, so it cannot be symlinked from the repo — the setting must be reapplied by hand on a fresh machine.
+   - ZCode: the desktop app has no telemetry config; `~/.zcode/AGENTS.md` carries the behavioral rules.
 
 ## Security Considerations
 

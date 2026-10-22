@@ -78,18 +78,20 @@
           # cctools ld 1010.6 crashes while linking Starship 1.26.0 from source
           # on macOS 26, even without cargo-auditable metadata. Use Starship's
           # hash-pinned official Darwin binary until cctools is fixed upstream.
+          # The hashes are bound to `prev.starship.version`, so every nixpkgs
+          # bump of starship requires re-pinning via `nix store prefetch-file`.
           starship =
             let
               release =
                 if prev.stdenv.hostPlatform.isAarch64 then
                   {
                     target = "aarch64-apple-darwin";
-                    hash = "sha256-xAsnsR9YBBHgaPL6bBvngwo4fAvEepTR038ysFTFNh0=";
+                    hash = "sha256-U2LajLKSj5jzzg/9ppfPD43nAIHbAA2uMW1tOkBPbPA=";
                   }
                 else
                   {
                     target = "x86_64-apple-darwin";
-                    hash = "sha256-VUj0BqS29WlZA73qg/d85H7BLIwOYtq9MxItjxM+Qgc=";
+                    hash = "sha256-NE5NOHh+Cqht1SKuVGLm+22hInaR+Bp5/+1ICkVjzLM=";
                   };
             in
             prev.stdenvNoCC.mkDerivation {
