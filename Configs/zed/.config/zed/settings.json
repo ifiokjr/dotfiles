@@ -7,6 +7,10 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+	"telemetry": {
+		"diagnostics": false,
+		"metrics": false
+	},
 	"diff_view_style": "unified",
 	"language_models": {
 		"ollama": {
@@ -79,7 +83,7 @@
 		"default_model": {
 			"effort": "max",
 			"provider": "opencode",
-			"model": "go/space-bunny",
+			"model": "go/beam-free",
 			"enable_thinking": true
 		},
 		"favorite_models": [
