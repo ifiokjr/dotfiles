@@ -170,7 +170,7 @@ Deno.test("removeCachePath retries with sudo for root-owned entries", async () =
 			assertEquals(await pathExists(dir), false);
 			assertEquals(
 				(await Deno.readTextFile(logPath)).trim(),
-				`rm -rf ${dir}`,
+				`/bin/rm -rf ${dir}`,
 			);
 		});
 	} finally {

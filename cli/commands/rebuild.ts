@@ -19,6 +19,8 @@ import {
 	printSuccess,
 	printWarning,
 	refreshShellIntegrations,
+	privilegedPathEnv,
+	resolveCommandPath,
 	resolveDeployedDotfilesDir,
 	resolveDotfilesDir,
 	resolveMachineConfigPath,
@@ -677,7 +679,12 @@ async function maybeInstallOsUpdates(opts: RebuildOptions) {
 	}
 
 	printInfo("Installing macOS software updates (this may take a while)");
-	await runCommand(["sudo", "softwareupdate", "--install", "--all"]);
+	// Absolute path + sanitized PATH: sudo resolves bare names through the
+	// caller's PATH, where user-writable ~/.local/bin is prepended.
+	await runCommand(
+		["sudo", "/usr/sbin/softwareupdate", "--install", "--all"],
+		{ env: privilegedPathEnv() },
+	);
 }
 
 interface DeterminateVersions {
@@ -773,8 +780,11 @@ async function maybeUpgradeDeterminateNix(opts: RebuildOptions) {
 
 	printInfo("Upgrading Determinate Nix (this may take a while)");
 	// sudo is already cached by ensureSudoSession on macOS; on Linux this may
-	// prompt once for the password.
-	const upgrade = await runCommand(["sudo", "determinate-nixd", "upgrade"]);
+	// prompt once for the password. Sanitized PATH keeps the privileged
+	// lookup inside root-owned bin directories.
+	const upgrade = await runCommand(["sudo", "determinate-nixd", "upgrade"], {
+		env: privilegedPathEnv(),
+	});
 	if (upgrade.success) {
 		printSuccess(`Determinate Nix upgraded to ${versions.latest}`);
 	} else {
@@ -1359,7 +1369,10 @@ function extractFailedPackageNames(log: string): string[] {
 
 async function nhCommand(args: string[]): Promise<string[]> {
 	if (await commandSucceeds(["bash", "-lc", "command -v nh"])) {
-		return ["nh", ...args];
+		// Absolute path: rebuilds run `sudo nh` on root-only-Nix Linux, and
+		// sudo resolves bare names through the caller's PATH where
+		// user-writable bin directories are prepended.
+		return [await resolveCommandPath("nh"), ...args];
 	}
 
 	printInfo("nh not found, using nix run nixpkgs#nh for first-time setup");
