@@ -10,9 +10,11 @@ export interface ManagedSkillSource {
 	/**
 	 * Where to track the source. "branch" (the default) follows the head of
 	 * `ref`; "release" follows the repository's latest full GitHub release,
-	 * so skill content always matches a released package version.
+	 * so skill content always matches a released package version; "npm"
+	 * follows the npm dist-tag `ref` of the package named by `repository`,
+	 * which reaches skills whose GitHub repository is private.
 	 */
-	channel?: "branch" | "release";
+	channel?: "branch" | "release" | "npm";
 	compatibilityRoots?: readonly string[];
 	displayName: string;
 	manifestFile: string;
@@ -46,8 +48,22 @@ interface ManagedSkillManifest {
 }
 
 interface ResolvedSource {
+	archive: SourceArchive;
 	ref: string;
 	sha: string;
+}
+
+/** The gzipped tarball holding a resolved source. */
+interface SourceArchive {
+	/** Subresource Integrity string the download must match, when known. */
+	integrity?: string;
+	/**
+	 * Leading directories to drop on extraction. GitHub wraps a checkout in a
+	 * `<repo>-<sha>/` directory with no meaning; an npm tarball's `package/`
+	 * root is kept, so npm skill paths read as they do in the tarball.
+	 */
+	stripComponents: 0 | 1;
+	url: string;
 }
 
 interface StagedSkill {
@@ -247,8 +263,8 @@ export async function syncManagedSkills(
 
 	try {
 		await Deno.mkdir(checkoutDir, { recursive: true });
-		await downloadArchive(source, resolved.sha, archivePath);
-		await extractArchive(source, archivePath, checkoutDir);
+		await downloadArchive(source, resolved.archive, archivePath);
+		await extractArchive(source, resolved.archive, archivePath, checkoutDir);
 
 		const skills = source.skillsDirectory
 			? await discoverSkills(source, checkoutDir, dotfilesDir)
@@ -525,12 +541,80 @@ async function restoreStagedSkills(
 async function resolveSource(
 	source: ManagedSkillSource,
 ): Promise<ResolvedSource> {
+	if (source.channel === "npm") return await resolveNpmPackage(source);
+
 	const ref = source.channel === "release"
 		? await resolveLatestRelease(source)
 		: source.ref;
 	const sha = await resolveSourceSha(source, ref);
 
-	return { ref, sha };
+	return {
+		archive: {
+			stripComponents: 1,
+			url: `https://codeload.github.com/${source.repository}/tar.gz/${sha}`,
+		},
+		ref,
+		sha,
+	};
+}
+
+/**
+ * Resolve an npm dist-tag to the version it points at, its tarball, and the
+ * commit it was published from.
+ *
+ * npm records that commit as `gitHead` when the package is published from a
+ * git checkout, so the manifest stays pinned to a commit like every other
+ * source. A version without one is refused rather than recorded unpinned.
+ */
+async function resolveNpmPackage(
+	source: ManagedSkillSource,
+): Promise<ResolvedSource> {
+	const response = await fetch(
+		`https://registry.npmjs.org/${source.repository}/${source.ref}`,
+		{
+			headers: {
+				Accept: "application/json",
+				"User-Agent": source.userAgent,
+			},
+		},
+	);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to resolve ${source.displayName} ${source.repository}@${source.ref}: HTTP ${response.status}`,
+		);
+	}
+
+	const payload: unknown = await response.json();
+	const dist = isObject(payload) ? payload.dist : undefined;
+
+	if (
+		!isObject(payload) || typeof payload.version !== "string" ||
+		!isObject(dist) || typeof dist.tarball !== "string" ||
+		typeof dist.integrity !== "string"
+	) {
+		throw new Error(
+			`npm returned an invalid ${source.displayName} package response`,
+		);
+	}
+
+	if (typeof payload.gitHead !== "string") {
+		throw new Error(
+			`${source.displayName} ${source.repository}@${payload.version} records no gitHead commit`,
+		);
+	}
+
+	assertCommitSha(source, payload.gitHead);
+
+	return {
+		archive: {
+			integrity: dist.integrity,
+			stripComponents: 0,
+			url: dist.tarball,
+		},
+		ref: payload.version,
+		sha: payload.gitHead,
+	};
 }
 
 /** Resolve the repository's latest full GitHub release to its tag name. */
@@ -602,13 +686,12 @@ async function resolveSourceSha(
 
 async function downloadArchive(
 	source: ManagedSkillSource,
-	resolvedSha: string,
+	archive: SourceArchive,
 	archivePath: string,
 ) {
-	const response = await fetch(
-		`https://codeload.github.com/${source.repository}/tar.gz/${resolvedSha}`,
-		{ headers: { "User-Agent": source.userAgent } },
-	);
+	const response = await fetch(archive.url, {
+		headers: { "User-Agent": source.userAgent },
+	});
 
 	if (!response.ok) {
 		throw new Error(
@@ -616,14 +699,42 @@ async function downloadArchive(
 		);
 	}
 
-	await Deno.writeFile(
-		archivePath,
-		new Uint8Array(await response.arrayBuffer()),
-	);
+	const bytes = new Uint8Array(await response.arrayBuffer());
+
+	if (archive.integrity) {
+		await assertIntegrity(source, bytes, archive.integrity);
+	}
+
+	await Deno.writeFile(archivePath, bytes);
+}
+
+/** Check downloaded bytes against a `sha512-<base64>` integrity string. */
+async function assertIntegrity(
+	source: ManagedSkillSource,
+	bytes: Uint8Array<ArrayBuffer>,
+	integrity: string,
+) {
+	const expected = integrity.match(/^sha512-([A-Za-z0-9+/]+={0,2})$/)?.[1];
+
+	if (!expected) {
+		throw new Error(
+			`Unsupported ${source.displayName} integrity: ${integrity}`,
+		);
+	}
+
+	const digest = new Uint8Array(await crypto.subtle.digest("SHA-512", bytes));
+	const actual = btoa(String.fromCharCode(...digest));
+
+	if (actual !== expected) {
+		throw new Error(
+			`${source.displayName} download does not match its published integrity`,
+		);
+	}
 }
 
 async function extractArchive(
 	source: ManagedSkillSource,
+	archive: SourceArchive,
 	archivePath: string,
 	checkoutDir: string,
 ) {
@@ -631,7 +742,7 @@ async function extractArchive(
 		args: [
 			"-xzf",
 			archivePath,
-			"--strip-components=1",
+			`--strip-components=${archive.stripComponents}`,
 			"-C",
 			checkoutDir,
 		],
@@ -653,10 +764,12 @@ async function writeManifest(
 	source: ManagedSkillSource,
 	managedRoot: string,
 	transactionId: string,
-	resolved: ResolvedSource,
+	resolved: Pick<ResolvedSource, "ref" | "sha">,
 ) {
 	const manifest: ManagedSkillManifest = {
-		repository: `https://github.com/${source.repository}`,
+		repository: source.channel === "npm"
+			? `https://www.npmjs.com/package/${source.repository}`
+			: `https://github.com/${source.repository}`,
 		ref: resolved.ref,
 		resolvedSha: resolved.sha,
 		skills: source.skills.map((skill) => skill.name),
