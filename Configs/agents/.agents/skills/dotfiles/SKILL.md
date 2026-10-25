@@ -145,7 +145,7 @@ Rebuild flags: `--update` (update flake inputs, plus a Determinate Nix update ch
 | `de` | `devenv up` |
 | `g` | `git` |
 | `p` | `pnpm` |
-| `co` | `codex --dangerously-bypass-approvals-and-sandbox` |
+| `co` | `codex --sandbox workspace-write --ask-for-approval on-request` |
 | `oc` | `opencode` |
 
 ### Docker (Podman)

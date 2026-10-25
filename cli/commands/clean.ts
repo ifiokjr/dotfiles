@@ -24,6 +24,7 @@ import {
 	printInfo,
 	printSuccess,
 	printWarning,
+	resolveCommandPath,
 	runCommand,
 } from "../lib/config.ts";
 import {
@@ -223,7 +224,10 @@ export async function removeCachePath(path: string): Promise<boolean> {
 		printWarning(
 			`${target} contains root-owned files; retrying with sudo…`,
 		);
-		const { success } = await runCommand(["sudo", "rm", "-rf", target]);
+		// Absolute rm: with secure_path in sudoers (darwin.nix) and sanitized
+		// privileged PATHs elsewhere, a bare name must not resolve through
+		// user-writable bin directories for the root-invoked binary.
+		const { success } = await runCommand(["sudo", "/bin/rm", "-rf", target]);
 		if (!success || (await pathExists(target))) throw error;
 		return true;
 	}
@@ -600,7 +604,15 @@ async function cleanNix(apply: boolean): Promise<number> {
 			}
 			// Opportunistic: also clean system generations when sudo happens to be
 			// cached (e.g. right after a rebuild). Fails silently otherwise.
-			const system = await runCommand(["sudo", "-n", "nh", "clean", "all"]);
+			// Absolute nh: with secure_path in sudoers (darwin.nix), a bare name
+			// would no longer resolve to the user-profile install.
+			const system = await runCommand([
+				"sudo",
+				"-n",
+				await resolveCommandPath("nh"),
+				"clean",
+				"all",
+			]);
 			if (system.success) {
 				printSuccess("Nix system profiles garbage collected");
 			} else {

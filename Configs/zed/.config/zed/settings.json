@@ -75,9 +75,9 @@
 	"helix_mode": true,
 	"agent": {
 		"sandbox_permissions": {
-			"allow_all_hosts": true,
-			"allow_fs_write_all": true,
-			"allow_unsandboxed": true
+			"allow_all_hosts": false,
+			"allow_fs_write_all": false,
+			"allow_unsandboxed": false
 		},
 		"default_profile": "write",
 		"default_model": {
@@ -122,23 +122,13 @@
 		],
 		"model_parameters": [],
 		"tool_permissions": {
-			"default": "allow",
+			"default": "ask",
 			"tools": {
 				"search_web": {
-					"default": "allow",
-					"always_allow": [
-						{
-							"pattern": ".*"
-						}
-					]
+					"default": "ask"
 				},
 				"terminal": {
-					"default": "allow",
-					"always_allow": [
-						{
-							"pattern": ".*"
-						}
-					]
+					"default": "ask"
 				}
 			}
 		}
@@ -151,7 +141,7 @@
 		}
 	},
 	"session": {
-		"trust_all_worktrees": true
+		"trust_all_worktrees": false
 	},
 	"cli_default_open_behavior": "existing_window",
 	"ui_font_size": 16,

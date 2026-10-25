@@ -121,12 +121,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
-        continue-on-error: true
-
       - name: 🧪 run remote installer smoke test
         run: tests/remote-installer-smoke.sh "$GITHUB_WORKSPACE"
         env:
@@ -149,12 +143,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
-        continue-on-error: true
 
       - name: 🧪 run setup script
         run: ./setup --skip-nix --no-confirm --lite
@@ -197,12 +185,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🔧 set up nix cache
-        uses: DeterminateSystems/flakehub-cache-action@4d48cd3cda2f381a3006ff800e1c1ca0c9809159 # v3.21.1
-        with:
-          token: ${{ secrets.FLAKEHUB_API_TOKEN }}
-        continue-on-error: true
 
       - name: 🧪 run setup script (minimal, no nix rebuild)
         run: ./setup --skip-nix --no-confirm --lite --groups scripts,bash,direnv,dprint,shell,zellij,zsh,nushell,helix

@@ -54,7 +54,6 @@ in
       cargo-clean-recursive
       cargo-sweep
       cargo-update
-      cloudflared
       # devenv from its own flake: the nixpkgs build currently links an
       # outdated libghostty-vt, which breaks `devenv shell`'s terminal UI
       # (cachix/devenv#3183).
@@ -175,13 +174,11 @@ in
       postgresql17Packages.pgvector
       protobuf
       scooter
-      sshpass
       sqld
       tailscale
       tealdeer
       tuckr
       uv
-      vncdo
       zlib
 
       # Custom packages from ifiokjr/nixpkgs

@@ -60,7 +60,10 @@ fi
 # Editors
 alias vim='nvim'
 alias n='nvim'
-alias co='codex --dangerously-bypass-approvals-and-sandbox'
+# Codex in the workspace-write sandbox with on-request approvals. Do not
+# widen this to the sandbox-bypass flag: bypassing approvals turns prompt
+# injection in any opened file into unsandboxed code execution.
+alias co='codex --sandbox workspace-write --ask-for-approval on-request'
 alias oc='opencode'
 
 # General

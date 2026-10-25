@@ -11,6 +11,15 @@ zero_sha="0000000000000000000000000000000000000000"
 failed=0
 checked=0
 
+# .gitleaks.toml allowlists Configs/nix/.config/nix/nix.conf (it holds a live
+# GitHub access token and is gitignored). Gitleaks applies path allowlists in
+# every mode, so a force-added copy of that file would be invisible to the
+# scans below — refuse the push instead if the path ever becomes tracked.
+if git ls-files --error-unmatch "Configs/nix/.config/nix/nix.conf" >/dev/null 2>&1; then
+	echo "Configs/nix/.config/nix/nix.conf is tracked but allowlisted in .gitleaks.toml; push blocked. Remove the file from the index." >&2
+	failed=1
+fi
+
 while read -r local_ref local_sha remote_ref remote_sha; do
 	if [ -z "${local_ref:-}" ]; then
 		continue

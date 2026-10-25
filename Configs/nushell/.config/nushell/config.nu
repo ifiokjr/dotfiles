@@ -202,7 +202,9 @@ alias zj = zellij
 alias lg = lazygit
 alias cl = clear
 alias pinentry = pinentry-mac
-alias co = codex --dangerously-bypass-approvals-and-sandbox
+# Codex in the workspace-write sandbox with on-request approvals; see the
+# warning in .zshrc before widening these flags.
+alias co = codex --sandbox workspace-write --ask-for-approval on-request
 alias oc = opencode
 alias g = git
 alias md = mkdir

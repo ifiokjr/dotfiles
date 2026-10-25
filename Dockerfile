@@ -1,6 +1,10 @@
 # syntax=docker/dockerfile:1.12
 
-FROM ubuntu:24.04
+# Digest-pinned to the ubuntu:24.04 manifest list (multi-arch): a floating tag
+# silently repoints whenever the publisher pushes. This image is test-only
+# (ephemeral CI sandbox with a NOPASSWD test user); never reuse it as a base
+# for anything long-lived.
+FROM ubuntu:24.04@sha256:68ee22004a9109b44973313b02ff7b1de250f1de0f5ecb628d73f579aaff33ac
 
 # Install minimal dependencies
 RUN apt-get update && apt-get install -y curl xz-utils git sudo && rm -rf /var/lib/apt/lists/*
