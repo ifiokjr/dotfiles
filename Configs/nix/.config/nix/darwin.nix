@@ -235,6 +235,26 @@
     enableStealthMode = true;
   };
 
+  # Pin the Ollama server to loopback. The Ollama app's "Expose Ollama to the
+  # network" toggle makes `ollama serve` bind 0.0.0.0:11434 with no
+  # authentication, reachable from the LAN and the tailnet. OLLAMA_HOST in the
+  # GUI session environment overrides that toggle, and this agent re-applies
+  # it at every login so the pin survives app updates and setting changes. To
+  # share this machine's models with tailnet peers deliberately, replace
+  # 127.0.0.1 with this machine's Tailscale IP — never leave it unauthenticated
+  # on the LAN.
+  launchd.agents.ollama-loopback-pin = lib.mkIf isDesktop {
+    script = ''
+      /bin/launchctl setenv OLLAMA_HOST 127.0.0.1
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      KeepAlive = false;
+      StandardOutPath = "/tmp/ollama-loopback-pin.log";
+      StandardErrorPath = "/tmp/ollama-loopback-pin.log";
+    };
+  };
+
   # Auto-start the podman VM on login for all desktop Macs.
   # `podman machine start` is idempotent — exits cleanly if already running.
   # Uses `script` instead of `ProgramArguments` so nix-darwin wraps it with
