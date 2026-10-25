@@ -13,6 +13,8 @@ This repository is a cross-platform, Tuckr-managed dotfiles repository that depl
   - `nix flake check ./Configs/nix/.config/nix --impure --no-build` (when Nix files change)
   - `dot rebuild` (when Nix config or packages change)
   - `docker build -t dotfiles-test .` (when Nix config or packages change for Linux confidence)
+  - `tests/security-audit.sh` (security regression suite; `--self-test` proves every detector still catches its violation — run both when touching agent permissions, sudo/hooks, installers, or CI)
+- Security regression rules: do not reintroduce agent approval bypasses (`bypassPermissions`, wildcard allow-all, `--dangerously-bypass-approvals-and-sandbox`), unpinned remote installers, or unvalidated sudoers writes; `tests/security-audit.sh` fails CI on any of these. When intentionally changing a guarded behavior, update the matching check and mutation in the same PR.
 - Formatting/style rule: if any line(s) are commented out, include an explanation comment explaining why they are disabled.
 - Secret handling: this repo uses the dotfiles-specific Monosecret + 1Password workflow. Secrets are not ambient; use `msr --reason "<why>" <command>` for lazy injection or `msload --reason "<why>"` only when a shell session intentionally needs all secrets. See `Configs/agents/.agents/skills/dotfiles/SKILL.md` (deployed to `~/.agents/skills/dotfiles/SKILL.md`).
 - Git workflow requirements:

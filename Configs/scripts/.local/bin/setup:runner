@@ -146,15 +146,31 @@ if [ -x "$RUNNER_DIR/config.sh" ] && [ "$(cat "$RUNNER_DIR/.version" 2>/dev/null
 else
 	tarball="actions-runner-${runner_os}-${runner_arch}-${RUNNER_VERSION}.tar.gz"
 	url="https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/${tarball}"
-	tmp_tar="$(mktemp -u)/${tarball}"
-	mkdir -p "$(dirname "$tmp_tar")"
+
+	# The runner becomes a persistent launchd service, so verify the tarball
+	# against the SHA-256 digest GitHub's API attests for the release asset
+	# before extracting it. Fail closed: no published digest means there is
+	# nothing to verify against and the install is refused.
+	asset_json="$(curl -fsSL "https://api.github.com/repos/actions/runner/releases/tags/v${RUNNER_VERSION}")"
+	expected_digest="$(printf '%s' "$asset_json" | jq -r --arg t "$tarball" '.assets[] | select(.name == $t) | .digest' 2>/dev/null || true)"
+	case "$expected_digest" in
+	sha256:*) expected_sha="${expected_digest#sha256:}" ;;
+	*) die "No sha256 digest published for $tarball; refusing to install an unverified runner" ;;
+	esac
+
+	# mktemp -d (never the unreserved -u form): the name is reserved, so no
+	# other local user can pre-create or symlink it while the download runs.
+	tmp_dir="$(mktemp -d)"
+	tmp_tar="$tmp_dir/$tarball"
 	info "Downloading actions/runner v${RUNNER_VERSION} (${runner_os}-${runner_arch})..."
 	curl -fL --retry 3 -o "$tmp_tar" "$url"
+	actual_sha="$(shasum -a 256 "$tmp_tar" | awk '{print $1}')"
+	[ "$actual_sha" = "$expected_sha" ] || die "Runner tarball checksum mismatch for $tarball (expected $expected_sha, got $actual_sha)"
 	mkdir -p "$RUNNER_DIR"
 	tar -xzf "$tmp_tar" -C "$RUNNER_DIR"
 	printf '%s' "$RUNNER_VERSION" >"$RUNNER_DIR/.version"
-	rm -rf "$(dirname "$tmp_tar")"
-	ok "Runner v${RUNNER_VERSION} extracted to $RUNNER_DIR"
+	rm -rf "$tmp_dir"
+	ok "Runner v${RUNNER_VERSION} checksum-verified and extracted to $RUNNER_DIR"
 fi
 
 cd "$RUNNER_DIR"

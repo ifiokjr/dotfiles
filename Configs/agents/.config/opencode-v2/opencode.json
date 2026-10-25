@@ -3,6 +3,6 @@
 	"share": "disabled",
 	"autoupdate": false,
 	"permissions": [
-		{ "action": "*", "resource": "*", "effect": "allow" }
+		{ "action": "*", "resource": "*", "effect": "ask" }
 	]
 }

@@ -58,12 +58,17 @@ export const nixCommand = new Command()
 					.description("Remove a package from the nix profile")
 					.arguments("<package:string>")
 					.action(async (_opts, pkg: string) => {
+						// Escape regex metacharacters: a raw `.*${pkg}.*` treats
+						// an empty or `.`-containing argument as a broader
+						// pattern than intended and can wipe extra profile
+						// entries.
+						const escaped = pkg.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 						const { code, success } = await runCommand([
 							"nix",
 							"profile",
 							"remove",
 							"--regex",
-							`.*${pkg}.*`,
+							`.*${escaped}.*`,
 						]);
 						if (!success) {
 							printError(`Failed to remove ${pkg} (exit code ${code})`);

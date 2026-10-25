@@ -193,7 +193,10 @@ fi
 # Editors
 alias vim='nvim'
 alias n='nvim'
-alias co='codex --dangerously-bypass-approvals-and-sandbox'
+# Codex in the workspace-write sandbox with on-request approvals. Do not
+# widen this to the sandbox-bypass flag: bypassing approvals turns prompt
+# injection in any opened file into unsandboxed code execution.
+alias co='codex --sandbox workspace-write --ask-for-approval on-request'
 
 # General
 alias cl='clear'
@@ -274,6 +277,6 @@ zc() {
 
 ## [Completion]
 ## Completion scripts setup. Remove the following line to uninstall
-[[ -f /Users/ifiokjr/.config/.dart-cli-completion/zsh-config.zsh ]] && . /Users/ifiokjr/.config/.dart-cli-completion/zsh-config.zsh || true
+[[ -f "$HOME/.config/.dart-cli-completion/zsh-config.zsh" ]] && . "$HOME/.config/.dart-cli-completion/zsh-config.zsh" || true
 ## [/Completion]
 

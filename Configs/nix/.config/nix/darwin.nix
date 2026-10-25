@@ -162,7 +162,6 @@
         # Development
         "android-ndk"
         "android-studio"
-        "charles"
         "claude-code@latest"
         "cursor"
         "db-browser-for-sqlite"
@@ -181,7 +180,6 @@
         # Media & Graphics
         "blackhole-16ch"
         "blender"
-        "obs"
         "vlc"
 
         # Utilities
@@ -191,8 +189,6 @@
         "google-drive"
         "gpg-suite"
         "ledger-wallet"
-        "nordvpn"
-        "qbittorrent"
         "raycast"
         "the-unarchiver"
         "vysor"
@@ -220,6 +216,24 @@
   # Client-side routing (exit nodes, subnet routers) works out of the box on macOS.
   # The `useRoutingFeatures` option only exists in the NixOS tailscale module
   # (it sets IP forwarding and reverse-path filtering, which are Linux-only).
+
+  # Application firewall: block unsolicited inbound connections per app while
+  # leaving outbound traffic untouched, so normal internet access and package
+  # updates keep working. Stealth mode additionally drops unsolicited probes
+  # (ICMP/port scans) instead of answering them.
+  #
+  # blockAllIncoming deliberately stays off: it would also kill peer traffic
+  # that arrives over the Tailscale interface and any relayed LAN service.
+  # tailscaled itself is unsigned (Nix-built), so the signed-software
+  # allowances below do not cover it — postActivation allowlists it explicitly,
+  # otherwise this machine would silently drop all inbound tailnet traffic.
+  networking.applicationFirewall = {
+    enable = true;
+    blockAllIncoming = false;
+    allowSigned = true;
+    allowSignedApp = true;
+    enableStealthMode = true;
+  };
 
   # Auto-start the podman VM on login for all desktop Macs.
   # `podman machine start` is idempotent — exits cleanly if already running.
@@ -270,9 +284,17 @@
   # is the correct setting for this use case.
   # `timestamp_timeout` is set to 15 minutes so a single authentication
   # covers the nix-darwin rebuild without prompting again.
+  # `secure_path` makes sudo resolve every privileged binary from root-owned
+  # directories only. Without it, sudo inherits the caller's PATH, where
+  # user-writable directories (~/.local/bin, ~/.nix-profile/bin) are prepended
+  # by the shell and `dot rebuild` — a shim planted there by anything running
+  # as this user would execute as root on the next rebuild or clean.
+  # macOS ships no distro secure_path default, so it is set explicitly. Keep
+  # this list in sync with privilegedPathEnv() in cli/lib/config.ts.
   security.sudo.extraConfig = ''
     Defaults timestamp_type=global
     Defaults timestamp_timeout=15
+    Defaults secure_path="/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
   ''
   + lib.optionalString unattendedSudo ''
     # Passwordless sudo so this machine can be administered unattended over
@@ -587,5 +609,12 @@
         # Activation runs as root; write the user's per-host preferences.
         /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
         /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
-      '';
+      ''
+    + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+      echo "==> Allowing tailscaled through the application firewall..."
+      _tailscaled="${pkgs.tailscale}/bin/tailscaled"
+      /usr/libexec/ApplicationFirewall/socketfilterfw --add "$_tailscaled" >/dev/null 2>&1 || true
+      /usr/libexec/ApplicationFirewall/socketfilterfw --unblock "$_tailscaled" >/dev/null 2>&1 || true
+      unset _tailscaled
+    '';
 }

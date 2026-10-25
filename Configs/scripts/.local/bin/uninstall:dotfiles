@@ -326,6 +326,13 @@ remove_dotfiles_dir() {
 	print_header "Removing dotfiles repository"
 
 	if [ -d "$DOTFILES_DIR" ]; then
+		# A mispointed --cwd (empty string, typo, or a directory that merely
+		# exists) must never be rm -rf'd: require the dotfiles repo markers
+		# before offering deletion.
+		if [ ! -f "$DOTFILES_DIR/setup" ] || [ ! -d "$DOTFILES_DIR/Configs" ] || [ ! -d "$DOTFILES_DIR/lib/setup" ]; then
+			print_error "Refusing to remove $DOTFILES_DIR: it does not look like the dotfiles repository (missing setup, Configs/, or lib/setup)"
+			exit 1
+		fi
 		if confirm "Remove dotfiles repository at $DOTFILES_DIR?"; then
 			print_info "Removing: $DOTFILES_DIR"
 			rm -rf "$DOTFILES_DIR"
