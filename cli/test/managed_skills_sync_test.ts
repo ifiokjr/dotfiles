@@ -550,3 +550,191 @@ Deno.test("discovery sync fails loudly when upstream ships no skills", async () 
 		await Deno.remove(tempDir, { recursive: true });
 	}
 });
+
+const NPM_SOURCE: ManagedSkillSource = {
+	channel: "npm",
+	displayName: "Demo",
+	manifestFile: ".demo-source.json",
+	repository: "@example/demo-skill",
+	ref: "latest",
+	skills: [{ name: "greet", sourcePath: "package" }],
+	tempPrefix: "demo-test-",
+	transactionLabel: "demo",
+	userAgent: "dotfiles-cli-test",
+};
+
+const TEST_TARBALL =
+	"https://registry.npmjs.org/@example/demo-skill/-/demo-skill-1.2.3.tgz";
+
+/** Pack a skill the way npm does: every file under a `package/` root. */
+async function writeNpmTarball(tempDir: string): Promise<string> {
+	const packDir = join(tempDir, "pack");
+	const skillDir = join(packDir, "package");
+	await Deno.mkdir(skillDir, { recursive: true });
+	await Deno.writeTextFile(
+		join(skillDir, "SKILL.md"),
+		"---\nname: greet\ndescription: test\n---\n",
+	);
+
+	const archivePath = join(tempDir, "package.tgz");
+	const output = await new Deno.Command("tar", {
+		args: ["-czf", archivePath, "-C", packDir, "package"],
+		stdout: "null",
+		stderr: "null",
+	}).output();
+	assertEquals(output.success, true);
+
+	return archivePath;
+}
+
+async function sha512Integrity(path: string): Promise<string> {
+	const digest = new Uint8Array(
+		await crypto.subtle.digest("SHA-512", await Deno.readFile(path)),
+	);
+
+	return `sha512-${btoa(String.fromCharCode(...digest))}`;
+}
+
+/** Mock the npm registry so `latest` resolves to 1.2.3 and its tarball. */
+function withMockedNpmFetch(
+	archivePath: string,
+	version: Record<string, unknown>,
+): () => void {
+	const originalFetch = globalThis.fetch;
+
+	globalThis.fetch = ((input: URL | RequestInfo, _init?: RequestInit) => {
+		const url = String(input instanceof Request ? input.url : input);
+
+		if (url === "https://registry.npmjs.org/@example/demo-skill/latest") {
+			return Promise.resolve(
+				new Response(JSON.stringify(version), { status: 200 }),
+			);
+		}
+
+		if (url === TEST_TARBALL) {
+			return Promise.resolve(
+				new Response(Deno.readFileSync(archivePath), { status: 200 }),
+			);
+		}
+
+		return Promise.reject(new Error(`unexpected fetch: ${url}`));
+	}) as typeof fetch;
+
+	return () => {
+		globalThis.fetch = originalFetch;
+	};
+}
+
+Deno.test("npm-channel sync installs the dist-tag's version pinned to its gitHead", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "managed-sync-test-" });
+	const dotfilesDir = join(tempDir, "dotfiles");
+	const managedRoot = join(
+		dotfilesDir,
+		"Configs",
+		"agents",
+		".agents",
+		"skills",
+	);
+
+	try {
+		const archivePath = await writeNpmTarball(tempDir);
+		const restoreFetch = withMockedNpmFetch(archivePath, {
+			version: "1.2.3",
+			gitHead: TEST_SHA,
+			dist: {
+				integrity: await sha512Integrity(archivePath),
+				tarball: TEST_TARBALL,
+			},
+		});
+
+		try {
+			const result = await syncManagedSkills(NPM_SOURCE, dotfilesDir);
+
+			assertEquals(result, {
+				resolvedRef: "1.2.3",
+				resolvedSha: TEST_SHA,
+				skillCount: 1,
+				skills: ["greet"],
+			});
+			assertEquals(
+				await exists(join(managedRoot, "greet", "SKILL.md"), {
+					isFile: true,
+				}),
+				true,
+			);
+
+			const manifest = JSON.parse(
+				await Deno.readTextFile(join(managedRoot, ".demo-source.json")),
+			) as { repository: string; ref: string; resolvedSha: string };
+			assertEquals(
+				manifest.repository,
+				"https://www.npmjs.com/package/@example/demo-skill",
+			);
+			assertEquals(manifest.ref, "1.2.3");
+			assertEquals(manifest.resolvedSha, TEST_SHA);
+		} finally {
+			restoreFetch();
+		}
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
+});
+
+Deno.test("npm-channel sync rejects a tarball that fails its integrity check", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "managed-sync-test-" });
+	const dotfilesDir = join(tempDir, "dotfiles");
+
+	try {
+		const archivePath = await writeNpmTarball(tempDir);
+		const restoreFetch = withMockedNpmFetch(archivePath, {
+			version: "1.2.3",
+			gitHead: TEST_SHA,
+			dist: { integrity: `sha512-${"A".repeat(86)}==`, tarball: TEST_TARBALL },
+		});
+
+		try {
+			await assertRejects(
+				() => syncManagedSkills(NPM_SOURCE, dotfilesDir),
+				Error,
+				"does not match its published integrity",
+			);
+			assertEquals(
+				await exists(
+					join(dotfilesDir, "Configs", "agents", ".agents", "skills", "greet"),
+				),
+				false,
+			);
+		} finally {
+			restoreFetch();
+		}
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
+});
+
+Deno.test("npm-channel sync refuses a version published without a gitHead", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "managed-sync-test-" });
+
+	try {
+		const archivePath = await writeNpmTarball(tempDir);
+		const restoreFetch = withMockedNpmFetch(archivePath, {
+			version: "1.2.3",
+			dist: {
+				integrity: await sha512Integrity(archivePath),
+				tarball: TEST_TARBALL,
+			},
+		});
+
+		try {
+			await assertRejects(
+				() => syncManagedSkills(NPM_SOURCE, join(tempDir, "dotfiles")),
+				Error,
+				"@example/demo-skill@1.2.3 records no gitHead commit",
+			);
+		} finally {
+			restoreFetch();
+		}
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
+});

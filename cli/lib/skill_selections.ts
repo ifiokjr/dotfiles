@@ -30,6 +30,7 @@ import { MONOCHANGE_SOURCE } from "./monochange.ts";
 import { PATROL_SOURCE } from "./patrol.ts";
 import { PINA_SOURCE } from "./pina.ts";
 import { PSTACK_SOURCE } from "./pstack.ts";
+import { SLOPPER_SOURCE } from "./slopper.ts";
 
 /** User-editable intent, deployed to `~/.config/agents/skills.toml`. */
 export const SKILL_SELECTIONS_RELATIVE =
@@ -79,6 +80,11 @@ export const SKILL_COLLECTIONS: readonly SkillCollection[] = [
 		source: MONOCHANGE_SOURCE,
 	},
 	{ id: "pina", summary: "pina Solana program framework", source: PINA_SOURCE },
+	{
+		id: "slopper",
+		summary: "Slopper (slopper.day) launches",
+		source: SLOPPER_SOURCE,
+	},
 ];
 
 export const SKILL_COLLECTION_IDS: readonly string[] = SKILL_COLLECTIONS.map(

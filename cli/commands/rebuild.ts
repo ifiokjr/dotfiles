@@ -66,6 +66,11 @@ import {
 	readSkillSelections,
 	writeSkillSelections,
 } from "../lib/skill_selections.ts";
+import {
+	SLOPPER_SOURCE,
+	syncSlopperSkills,
+	verifySlopperSkillDeployment,
+} from "../lib/slopper.ts";
 import { installDotfilesCli } from "./self.ts";
 
 interface RebuildOptions {
@@ -829,6 +834,7 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		MONOCHANGE_SOURCE,
 		PATROL_SOURCE,
 		PINA_SOURCE,
+		SLOPPER_SOURCE,
 	];
 	const conflicts = findManagedSkillConflicts(sources);
 
@@ -893,6 +899,13 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		printSuccess(
 			`Updated ${pina.skillCount} pina skill at ${pina.resolvedRef} (${
 				pina.resolvedSha.slice(0, 12)
+			})`,
+		);
+
+		const slopper = await syncSlopperSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${slopper.skillCount} Slopper skill at ${slopper.resolvedRef} (${
+				slopper.resolvedSha.slice(0, 12)
 			})`,
 		);
 	} catch (error) {
@@ -966,6 +979,9 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		...(await verifyPinaSkillDeployment(context.dotfilesDir, homeDir, {
 			skipSkills,
 		})).map((issue) => `pina: ${issue}`),
+		...(await verifySlopperSkillDeployment(context.dotfilesDir, homeDir, {
+			skipSkills,
+		})).map((issue) => `Slopper: ${issue}`),
 	];
 	if (deploymentIssues.length > 0) {
 		for (const issue of deploymentIssues) {
