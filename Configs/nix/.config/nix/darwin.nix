@@ -222,7 +222,7 @@ in
         # the overlap with the lite and full lists above.
         "claude" # Claude desktop app
         "claude-code@latest" # Claude Code CLI, installed as `claude`
-        "opencode-desktop" # OpenCode desktop app; also ships the matching opencode-cli
+        "opencode-desktop" # OpenCode desktop app; the opencode CLI comes from the pnpm group
         "t3-code" # T3 Code desktop app; CLI comes from extra.t3code in home.nix
         "zcode" # ZCode desktop app; also ships the bundled zcode CLI
       ]

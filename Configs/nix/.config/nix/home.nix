@@ -24,9 +24,11 @@ let
     pkgs.stdenv.hostPlatform.system == "aarch64-darwin"
     || pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 
-  # The agent-apps preset installs OpenCode and ZCode, whose CLIs ship inside
-  # their app bundles. Wrappers make those CLIs available to any process with
-  # ~/.local/bin on PATH, including non-interactive agent runs.
+  # The agent-apps preset installs ZCode, whose CLI ships inside the app
+  # bundle. The wrapper makes it available to any process with ~/.local/bin on
+  # PATH, including non-interactive agent runs. OpenCode's CLI is deliberately
+  # not wrapped here: the pnpm group already manages `@opencode/cli` globally,
+  # and a second install would just be another version to drift.
   agentApps = builtins.elem "agent-apps" presets;
 in
 {
@@ -277,21 +279,8 @@ in
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
   home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    # App-bundled CLIs. Both desktop apps ship their own CLI, so pointing at the
-    # bundled binary keeps each CLI in lockstep with the app instead of adding a
-    # second, drifting install.
-    ".local/bin/opencode" = lib.mkIf agentApps {
-      executable = true;
-      text = ''
-        #!/bin/sh
-        cli="/Applications/OpenCode.app/Contents/Resources/opencode-cli"
-        if [ ! -x "$cli" ]; then
-          echo "opencode: $cli is missing; install the OpenCode app (agent-apps preset)" >&2
-          exit 127
-        fi
-        exec "$cli" "$@"
-      '';
-    };
+    # ZCode ships its CLI inside the app bundle, so point at the bundled binary
+    # instead of adding a second install to keep the two in lockstep.
     ".local/bin/zcode" = lib.mkIf agentApps {
       executable = true;
       text = ''
