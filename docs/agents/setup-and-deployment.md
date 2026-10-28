@@ -91,7 +91,31 @@ Configs are symlinked, so editing either the repo file or the deployed path upda
 
 ## Remote Rebuilds
 
-Headless fleet machines can opt in to passwordless sudo with `unattendedSudo = true` in `machine.nix` (a per-machine flag, intentionally independent of `lite`). With the flag set, machines can be rebuilt unattended over the tailnet without a TTY for the sudo password:
+Headless fleet machines can opt in to passwordless sudo with `unattendedSudo = true` in `machine.nix` (a per-machine flag, intentionally independent of `lite`). With the flag set, machines can be rebuilt unattended without a TTY for the sudo password.
+
+On macOS, submit the rebuild to launchd when connecting through Tailscale SSH. Activation restarts Tailscale and can terminate the SSH session and its descendants, including `nohup` jobs, before activation finishes. A launchd job survives that restart. Keep the machine's user logged in:
+
+```bash
+ssh <host> /bin/sh <<'REMOTE'
+set -eu
+umask 077
+mkdir -p "$HOME/.local/state/dotfiles"
+job="$HOME/.local/state/dotfiles/rebuild.plist"
+plutil -create xml1 "$job"
+plutil -insert Label -string org.dotfiles.rebuild "$job"
+plutil -insert ProgramArguments -json '["/bin/sh","-lc","exec \"$HOME/.local/bin/dot\" rebuild --latest"]' "$job"
+plutil -insert RunAtLoad -bool YES "$job"
+plutil -insert KeepAlive -bool NO "$job"
+plutil -insert WorkingDirectory -string "$HOME" "$job"
+plutil -insert StandardOutPath -string "$HOME/.local/state/dotfiles/rebuild.log" "$job"
+plutil -insert StandardErrorPath -string "$HOME/.local/state/dotfiles/rebuild.log" "$job"
+launchctl bootstrap "gui/$(id -u)" "$job"
+REMOTE
+```
+
+Reconnect and inspect `launchctl print gui/$(id -u)/org.dotfiles.rebuild` and `~/.local/state/dotfiles/rebuild.log`. A finished job has no `pid`; check its `last exit code` and log. Unload the finished job with `launchctl bootout gui/$(id -u)/org.dotfiles.rebuild` before submitting another rebuild under that label.
+
+On Linux, a direct SSH rebuild remains available:
 
 ```bash
 ssh <host> 'dot rebuild --latest'

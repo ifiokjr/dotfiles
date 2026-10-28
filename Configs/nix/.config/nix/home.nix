@@ -16,6 +16,33 @@ let
   extraPackages = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
   extra = extraPackages;
 
+  # Keep the CLI current while the package input catches up with this stable
+  # release. Newer upstream package versions take over automatically.
+  t3codeStable =
+    if lib.versionAtLeast extra.t3code.version "0.1.3" then
+      extra.t3code
+    else
+      extra.t3code.override {
+        overrideVersion = "0.1.3";
+        t3codeHashes = {
+          "darwin-arm64" = "sha256-In99eeC4rvBQokMOQtlRAyZu+Kf3Iv6/6aKMstJmtHc=";
+        };
+      };
+
+  # Consumer VPNs can intercept Tailscale's IPv4 range and MagicDNS. Resolve
+  # the peer locally and use its IPv6 address without requiring a TUN route.
+  tailscaleSshProxy = pkgs.writeShellScript "tailscale-ssh-proxy" ''
+    set -euo pipefail
+    address="$(${pkgs.tailscale}/bin/tailscale status --json | ${pkgs.jq}/bin/jq -er --arg host "$1" '
+      [.Peer[]
+        | select((.DNSName | rtrimstr(".")) == ($host | rtrimstr(".")))
+        | .TailscaleIPs[]
+        | select(contains(":"))]
+      | first // error("No Tailscale IPv6 address for SSH host")
+    ')"
+    exec ${pkgs.tailscale}/bin/tailscale nc "$address" "$2"
+  '';
+
   # rive-cli is a vendor binary published only for macOS arm64 and Linux
   # x86_64, so it is unavailable on the repo's other supported targets
   # (aarch64-linux, x86_64-darwin), where the package throws
@@ -249,7 +276,7 @@ in
         # no use for it. Install this or `t3code-nightly`, never both: each
         # provides `bin/t3`. The `t3-code` cask in darwin.nix ships only the
         # desktop app, so it collides with neither.
-        extra.t3code
+        t3codeStable
       ]
       ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
@@ -298,13 +325,13 @@ in
       force = true;
       text = ''
         # IronClaw Mac Minis via Tailscale SSH.
-        # ProxyCommand avoids depending on the local Tailscale TUN interface, which
-        # can be disabled in some macOS/client states while `tailscale nc` still works.
+        # Resolve peers through the daemon so MagicDNS and consumer VPN IPv4
+        # routing cannot prevent SSH from reaching an otherwise online machine.
         Host mini01
             HostName mini01-1.tailbfc6bf.ts.net
             HostKeyAlias mini01-1.tailbfc6bf.ts.net
             User mini01
-            ProxyCommand tailscale nc %h %p
+            ProxyCommand ${tailscaleSshProxy} %h %p
             UserKnownHostsFile ~/.ssh/known_hosts.tailscale
             StrictHostKeyChecking accept-new
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
@@ -313,7 +340,7 @@ in
             HostName mini02-1.tailbfc6bf.ts.net
             HostKeyAlias mini02-1.tailbfc6bf.ts.net
             User mini02
-            ProxyCommand tailscale nc %h %p
+            ProxyCommand ${tailscaleSshProxy} %h %p
             UserKnownHostsFile ~/.ssh/known_hosts.tailscale
             StrictHostKeyChecking accept-new
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
@@ -322,7 +349,7 @@ in
             HostName mini03-1.tailbfc6bf.ts.net
             HostKeyAlias mini03-1.tailbfc6bf.ts.net
             User mini03
-            ProxyCommand tailscale nc %h %p
+            ProxyCommand ${tailscaleSshProxy} %h %p
             UserKnownHostsFile ~/.ssh/known_hosts.tailscale
             StrictHostKeyChecking accept-new
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
