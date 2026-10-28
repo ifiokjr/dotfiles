@@ -49,6 +49,19 @@ cd ~/path/to/dotfiles
 
 The setup script prints a human-readable execution plan before deployment so users can see the target repo path, Nix/bootstrap expectations, group order, and hook-bearing groups ahead of time. It also supports discovery commands such as `./setup --list-groups` and `./setup --explain-group pnpm`. After a successful run, setup prints a short verification summary covering key tools, representative symlinks, and the Tuckr path, and writes `~/.local/state/dotfiles/setup-report.json`. If a run fails, setup records the last phase in `~/.local/state/dotfiles/setup-phase` so `--resume`, `--from`, and `--only` can be used intentionally.
 
+## Machine Presets
+
+Machine presets are per-machine feature sets stored in `machine.nix`. They are separate from the setup presets above and independent of `lite`, so a CLI-focused machine can opt into exactly the tools its job needs.
+
+- `agent-apps`: installs the AI coding agent suite — Claude (desktop app plus the `claude` CLI), OpenCode (desktop app plus its bundled CLI), T3 Code (desktop app; the `t3` CLI comes from Nix), and ZCode (desktop app plus its bundled CLI). Intended for fleet machines that run agents, where `lite` still keeps the GUI-heavy personal apps off.
+
+```bash
+dot machine add-preset agent-apps
+dot rebuild --add-preset agent-apps   # set the preset and rebuild in one pass
+```
+
+The Nix side reads the preset list on every evaluation; removing it with `dot machine remove-preset agent-apps` makes the next rebuild drop the preset-specific casks.
+
 ## Manual Setup
 
 ```bash

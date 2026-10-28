@@ -8,12 +8,19 @@
   isDesktop ? false,
   alwaysOn ? false,
   unattendedSudo ? false,
+  presets ? [ ],
   homebrew-core,
   homebrew-cask,
   homebrew-bundle,
   ...
 }:
 
+let
+  # Machine presets are opt-in feature sets stored in machine.nix. They stay
+  # independent of `lite`: lite keeps GUI-heavy personal apps off small
+  # machines, while these presets add the tools a machine's job requires.
+  agentApps = builtins.elem "agent-apps" presets;
+in
 {
   imports = [
     ./tcc.nix
@@ -142,7 +149,7 @@
         "--verbose"
       ];
     };
-    casks =
+    casks = lib.unique (
       lib.optionals (!lite) [
         # Productivity & Communication
         "1password"
@@ -207,7 +214,19 @@
         "ghostty" # Terminal emulator — needed even in lite mode on desktop machines
         "google-chrome" # Browser for web-based checks in CI workflows
         "t3-code" # T3 Code desktop app (stable) — AI coding editor for the lite fleet; app-only cask, so it does not collide with the t3code CLI's bin/t3
-      ];
+      ]
+      ++ lib.optionals agentApps [
+        # AI coding agent suite — desktop apps plus their CLIs. Kept out of the
+        # lite list because lite is about skipping GUI-heavy personal apps, not
+        # about limiting what a fleet machine can run. `lib.unique` collapses
+        # the overlap with the lite and full lists above.
+        "claude" # Claude desktop app
+        "claude-code@latest" # Claude Code CLI, installed as `claude`
+        "opencode-desktop" # OpenCode desktop app; also ships the matching opencode-cli
+        "t3-code" # T3 Code desktop app; CLI comes from extra.t3code in home.nix
+        "zcode" # ZCode desktop app; also ships the bundled zcode CLI
+      ]
+    );
 
     # Xcode has no Homebrew cask (Apple distributes it only through the App
     # Store), so lite desktop machines get it declaratively via `mas`. Each

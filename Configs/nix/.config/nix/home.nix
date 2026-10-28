@@ -23,6 +23,11 @@ let
   riveSystemSupported =
     pkgs.stdenv.hostPlatform.system == "aarch64-darwin"
     || pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+
+  # The agent-apps preset installs OpenCode and ZCode, whose CLIs ship inside
+  # their app bundles. Wrappers make those CLIs available to any process with
+  # ~/.local/bin on PATH, including non-interactive agent runs.
+  agentApps = builtins.elem "agent-apps" presets;
 in
 {
   # Home Manager configuration for nix-darwin integration
@@ -272,6 +277,34 @@ in
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
   home.file = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+    # App-bundled CLIs. Both desktop apps ship their own CLI, so pointing at the
+    # bundled binary keeps each CLI in lockstep with the app instead of adding a
+    # second, drifting install.
+    ".local/bin/opencode" = lib.mkIf agentApps {
+      executable = true;
+      text = ''
+        #!/bin/sh
+        cli="/Applications/OpenCode.app/Contents/Resources/opencode-cli"
+        if [ ! -x "$cli" ]; then
+          echo "opencode: $cli is missing; install the OpenCode app (agent-apps preset)" >&2
+          exit 127
+        fi
+        exec "$cli" "$@"
+      '';
+    };
+    ".local/bin/zcode" = lib.mkIf agentApps {
+      executable = true;
+      text = ''
+        #!/bin/sh
+        cli="/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs"
+        if [ ! -x "$cli" ]; then
+          echo "zcode: $cli is missing; install the ZCode app (agent-apps preset)" >&2
+          exit 127
+        fi
+        exec "$cli" "$@"
+      '';
+    };
+
     ".ssh/config" = {
       force = true;
       text = ''

@@ -275,6 +275,7 @@
           isDesktop ? false,
           alwaysOn ? false,
           unattendedSudo ? false,
+          presets ? [ ],
         }:
         let
           pkgs = nixpkgs.legacyPackages.${system};
@@ -293,6 +294,7 @@
                   isDesktop
                   alwaysOn
                   unattendedSudo
+                  presets
                   ifiokjr-nixpkgs
                   homebrew-core
                   homebrew-cask
@@ -319,6 +321,7 @@
                   isDesktop
                   alwaysOn
                   unattendedSudo
+                  presets
                   ;
               };
               home-manager.users.${username} = {
@@ -339,6 +342,7 @@
           isDesktop ? false,
           alwaysOn ? false,
           unattendedSudo ? false,
+          presets ? [ ],
           homeDirectory ? null,
         }:
         let
@@ -371,6 +375,7 @@
               isDesktop
               alwaysOn
               unattendedSudo
+              presets
               ;
           };
           modules = [
@@ -452,6 +457,7 @@
           isDesktop = machineConfig.isDesktop or false;
           alwaysOn = machineConfig.alwaysOn or false;
           unattendedSudo = machineConfig.unattendedSudo or false;
+          presets = machineConfig.presets or [ ];
         };
 
       # Standalone home-manager configuration (for Linux or non-Darwin use)
@@ -468,6 +474,7 @@
             isDesktop = machineConfig.isDesktop or false;
             alwaysOn = machineConfig.alwaysOn or false;
             unattendedSudo = machineConfig.unattendedSudo or false;
+            presets = machineConfig.presets or [ ];
           };
         };
 
