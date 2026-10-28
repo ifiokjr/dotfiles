@@ -18,6 +18,16 @@
     # `terminal error: invalid value` (cachix/devenv#3183).
     devenv.url = "github:cachix/devenv";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    # nix-homebrew pins its own brew-src input to a fixed Homebrew release,
+    # but the taps above advance daily and can adopt cask DSL changes newer
+    # than that release (e.g. `zap :not_required`), which aborts every
+    # activation with "invalid 'zap' stanza". Track Homebrew directly so
+    # `dot rebuild --update` moves the parser and the taps together.
+    brew-src = {
+      url = "github:Homebrew/brew/main";
+      flake = false;
+    };
+    nix-homebrew.inputs.brew-src.follows = "brew-src";
     # Declarative tap management
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -42,6 +52,7 @@
       ifiokjr-nixpkgs,
       devenv,
       nix-homebrew,
+      brew-src,
       homebrew-core,
       homebrew-cask,
       homebrew-bundle,
