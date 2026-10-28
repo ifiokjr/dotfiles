@@ -7,7 +7,7 @@ Deno.test("sudoKeepaliveScript refreshes sudo for the rebuild process", () => {
 	// Keeps running while the rebuild process exists...
 	assertEquals(script.startsWith("while kill -0 4242"), true);
 	// ...refreshes non-interactively so it can never prompt in the background...
-	assertEquals(script.includes("sudo -nv"), true);
+	assertEquals(script.includes("sudo -n true"), true);
 	// ...and sleeps between refreshes.
 	assertEquals(script.includes("sleep 5"), true);
 });
