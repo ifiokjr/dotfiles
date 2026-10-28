@@ -16,6 +16,19 @@ let
   extraPackages = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
   extra = extraPackages;
 
+  # Keep the CLI current while the package input catches up with this stable
+  # release. Newer upstream package versions take over automatically.
+  t3codeStable =
+    if lib.versionAtLeast extra.t3code.version "0.1.3" then
+      extra.t3code
+    else
+      extra.t3code.override {
+        overrideVersion = "0.1.3";
+        t3codeHashes = {
+          "darwin-arm64" = "sha256-In99eeC4rvBQokMOQtlRAyZu+Kf3Iv6/6aKMstJmtHc=";
+        };
+      };
+
   # Consumer VPNs can intercept Tailscale's IPv4 range and MagicDNS. Resolve
   # the peer locally and use its IPv6 address without requiring a TUN route.
   tailscaleSshProxy = pkgs.writeShellScript "tailscale-ssh-proxy" ''
@@ -256,7 +269,7 @@ in
         # no use for it. Install this or `t3code-nightly`, never both: each
         # provides `bin/t3`. The `t3-code` cask in darwin.nix ships only the
         # desktop app, so it collides with neither.
-        extra.t3code
+        t3codeStable
       ]
       ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
