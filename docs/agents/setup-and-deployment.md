@@ -85,16 +85,22 @@ On macOS, submit the rebuild to launchd when connecting through Tailscale SSH. A
 ```bash
 ssh <host> /bin/sh <<'REMOTE'
 set -eu
-export PATH="$HOME/.local/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/usr/bin:/bin:$PATH"
+umask 077
 mkdir -p "$HOME/.local/state/dotfiles"
-launchctl submit -l org.dotfiles.rebuild \
-  -o "$HOME/.local/state/dotfiles/rebuild.log" \
-  -e "$HOME/.local/state/dotfiles/rebuild.log" \
-  -- "$(command -v nu)" -l -c 'exec ~/.local/bin/dot rebuild --latest'
+job="$HOME/.local/state/dotfiles/rebuild.plist"
+plutil -create xml1 "$job"
+plutil -insert Label -string org.dotfiles.rebuild "$job"
+plutil -insert ProgramArguments -json '["/bin/sh","-lc","exec \"$HOME/.local/bin/dot\" rebuild --latest"]' "$job"
+plutil -insert RunAtLoad -bool YES "$job"
+plutil -insert KeepAlive -bool NO "$job"
+plutil -insert WorkingDirectory -string "$HOME" "$job"
+plutil -insert StandardOutPath -string "$HOME/.local/state/dotfiles/rebuild.log" "$job"
+plutil -insert StandardErrorPath -string "$HOME/.local/state/dotfiles/rebuild.log" "$job"
+launchctl bootstrap "gui/$(id -u)" "$job"
 REMOTE
 ```
 
-Reconnect and inspect `launchctl list org.dotfiles.rebuild` and `~/.local/state/dotfiles/rebuild.log`. A finished job has no `PID`; check its `LastExitStatus` and log. Remove the finished job with `launchctl remove org.dotfiles.rebuild` before submitting another rebuild under that label.
+Reconnect and inspect `launchctl print gui/$(id -u)/org.dotfiles.rebuild` and `~/.local/state/dotfiles/rebuild.log`. A finished job has no `pid`; check its `last exit code` and log. Unload the finished job with `launchctl bootout gui/$(id -u)/org.dotfiles.rebuild` before submitting another rebuild under that label.
 
 On Linux, a direct SSH rebuild remains available:
 
