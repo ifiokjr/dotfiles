@@ -610,7 +610,7 @@ const SUDO_KEEPALIVE_INTERVAL_SECONDS = 5;
  * never hang in the background waiting for input.
  */
 export function sudoKeepaliveScript(pid: number): string {
-	return `while kill -0 ${pid} 2>/dev/null && sudo -nv 2>/dev/null; do sleep ${SUDO_KEEPALIVE_INTERVAL_SECONDS}; done`;
+	return `while kill -0 ${pid} 2>/dev/null && sudo -n true 2>/dev/null; do sleep ${SUDO_KEEPALIVE_INTERVAL_SECONDS}; done`;
 }
 
 /**
@@ -638,9 +638,21 @@ export function sudoKeepaliveScript(pid: number): string {
 async function ensureSudoSession(): Promise<Deno.ChildProcess | null> {
 	if (Deno.build.os !== "darwin") return null;
 
-	if (await commandSucceeds(["sudo", "-nv"])) {
-		printInfo("sudo credentials already cached");
+	// Test actual privilege instead of only the cached timestamp. With
+	// `NOPASSWD: ALL` (unattendedSudo), `sudo -nv` reports "a password is
+	// required" even though `sudo -n true` succeeds; testing -nv sent headless
+	// rebuilds into an interactive prompt that hangs when stdin is not a TTY.
+	if (await commandSucceeds(["sudo", "-n", "true"])) {
+		printInfo("sudo access already available");
 	} else {
+		if (!Deno.stdin.isTerminal()) {
+			printError("sudo needs a password but stdin is not a terminal");
+			printInfo(
+				"Enable `unattendedSudo = true` in machine.nix for headless machines, or run the rebuild with a TTY.",
+			);
+			Deno.exit(1);
+		}
+
 		printInfo(
 			"Authenticating sudo (one password prompt for the whole rebuild)",
 		);
