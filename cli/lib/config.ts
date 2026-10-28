@@ -501,6 +501,53 @@ export async function findExecutable(name: string): Promise<string | null> {
 	}
 }
 
+/**
+ * Candidate locations for the Deno binary that compiles this CLI.
+ *
+ * `dot` is itself compiled, so it cannot use Deno's own APIs to find Deno.
+ * Mandatory PATH lookup is unreliable in the places this runs: a non-login SSH
+ * session does not read the user's shell profile, and nix-darwin puts user
+ * packages under /etc/profiles/per-user instead of any of Nix's stable
+ * symlinks. Listing the known install roots keeps `dot self install` and the
+ * post-rebuild recompile working without a login shell.
+ */
+export function denoCandidatePaths(
+	home: string,
+	user: string,
+	denoInstall?: string,
+): string[] {
+	return [
+		denoInstall ? `${denoInstall}/bin/deno` : "",
+		`${home}/.deno/bin/deno`,
+		`${home}/.nix-profile/bin/deno`,
+		user ? `/etc/profiles/per-user/${user}/bin/deno` : "",
+		`${home}/.local/state/nix/profiles/home-manager/home-path/bin/deno`,
+		"/run/current-system/sw/bin/deno",
+		"/nix/var/nix/profiles/default/bin/deno",
+		"/opt/homebrew/bin/deno",
+		"/usr/local/bin/deno",
+	].filter((path) => path.length > 0);
+}
+
+/** Locate the Deno binary used to compile the CLI, or null when absent. */
+export async function resolveDenoBinary(): Promise<string | null> {
+	const candidates = denoCandidatePaths(
+		Deno.env.get("HOME") ?? "",
+		Deno.env.get("USER") ?? "",
+		Deno.env.get("DENO_INSTALL"),
+	);
+
+	for (const candidate of candidates) {
+		try {
+			if ((await Deno.stat(candidate)).isFile) return candidate;
+		} catch {
+			// Not installed here; try the next known location.
+		}
+	}
+
+	return await findExecutable("deno");
+}
+
 /** Check if a command is available on PATH. */
 export async function commandExists(name: string): Promise<boolean> {
 	try {

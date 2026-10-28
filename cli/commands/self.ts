@@ -13,6 +13,7 @@ import {
 	printInfo,
 	printSuccess,
 	printWarning,
+	resolveDenoBinary,
 	resolveDotCliBinary,
 	resolveDotfilesDir,
 	runCommand,
@@ -46,8 +47,17 @@ export async function installDotfilesCli(opts: InstallDotfilesCliOptions = {}) {
 	printHeader("Installing dotfiles CLI");
 	printInfo("Compiling dotfiles binary from current source tree");
 
+	const deno = await resolveDenoBinary();
+	if (!deno) {
+		printError("deno not found; cannot compile the dotfiles CLI");
+		printInfo(
+			"Install Deno (it is part of the home packages) or re-run with its bin directory on PATH.",
+		);
+		Deno.exit(1);
+	}
+
 	const compile = await runCommand([
-		"deno",
+		deno,
 		"compile",
 		"--allow-all",
 		"--output",
