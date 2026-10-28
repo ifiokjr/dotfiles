@@ -78,7 +78,25 @@ Configs are symlinked, so editing either the repo file or the deployed path upda
 
 ## Remote Rebuilds
 
-Headless fleet machines can opt in to passwordless sudo with `unattendedSudo = true` in `machine.nix` (a per-machine flag, intentionally independent of `lite`). With the flag set, machines can be rebuilt unattended over the tailnet without a TTY for the sudo password:
+Headless fleet machines can opt in to passwordless sudo with `unattendedSudo = true` in `machine.nix` (a per-machine flag, intentionally independent of `lite`). With the flag set, machines can be rebuilt unattended without a TTY for the sudo password.
+
+On macOS, submit the rebuild to launchd when connecting through Tailscale SSH. Activation restarts Tailscale and can terminate the SSH session and its descendants, including `nohup` jobs, before activation finishes. A launchd job survives that restart. Keep the machine's user logged in:
+
+```bash
+ssh <host> /bin/sh <<'REMOTE'
+set -eu
+export PATH="$HOME/.local/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/usr/bin:/bin:$PATH"
+mkdir -p "$HOME/.local/state/dotfiles"
+launchctl submit -l org.dotfiles.rebuild \
+  -o "$HOME/.local/state/dotfiles/rebuild.log" \
+  -e "$HOME/.local/state/dotfiles/rebuild.log" \
+  -- "$(command -v nu)" -l -c 'exec ~/.local/bin/dot rebuild --latest'
+REMOTE
+```
+
+Reconnect and inspect `launchctl list org.dotfiles.rebuild` and `~/.local/state/dotfiles/rebuild.log`. A finished job has no `PID`; check its `LastExitStatus` and log. Remove the finished job with `launchctl remove org.dotfiles.rebuild` before submitting another rebuild under that label.
+
+On Linux, a direct SSH rebuild remains available:
 
 ```bash
 ssh <host> 'dot rebuild --latest'
