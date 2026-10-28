@@ -53,7 +53,7 @@ The setup script prints a human-readable execution plan before deployment so use
 
 Machine presets are per-machine feature sets stored in `machine.nix`. They are separate from the setup presets above and independent of `lite`, so a CLI-focused machine can opt into exactly the tools its job needs.
 
-- `agent-apps`: installs the AI coding agent suite — Claude (desktop app plus the `claude` CLI), OpenCode (desktop app plus its bundled CLI), T3 Code (desktop app; the `t3` CLI comes from Nix), and ZCode (desktop app plus its bundled CLI). Intended for fleet machines that run agents, where `lite` still keeps the GUI-heavy personal apps off.
+- `agent-apps`: installs the AI coding agent suite — Claude (desktop app plus the `claude` CLI), OpenCode (desktop app; the `opencode` CLI comes from the pnpm group), T3 Code (desktop app; the `t3` CLI comes from Nix), and ZCode (desktop app plus its bundled CLI). Intended for fleet machines that run agents, where `lite` still keeps the GUI-heavy personal apps off.
 
 ```bash
 dot machine add-preset agent-apps
