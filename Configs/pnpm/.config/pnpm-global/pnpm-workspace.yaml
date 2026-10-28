@@ -5,11 +5,13 @@ allowBuilds:
   esbuild: true
   keytar: true
   koffi: true
+  netlify-cli: true
   node-pty: true
   opencode-ai: true
   protobufjs: true
   re2: true
   tree-sitter-bash: true
+  unix-dgram: true
 minimumReleaseAgeExclude:
   - opencode-linux-x64-baseline-musl@1.18.19
   - opencode-linux-x64-musl@1.18.19
