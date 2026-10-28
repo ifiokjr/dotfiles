@@ -123,8 +123,12 @@
           # direnv's GNUmakefile unconditionally enables `-linkmode=external`
           # on Darwin, but nixpkgs builds direnv with `CGO_ENABLED=0`.
           # Remove that linker flag so static non-CGO builds succeed again.
-          # direnv 2.37.1 can also hang indefinitely in checkPhase on Darwin
-          # after a nixpkgs update, so disable checks for that affected release.
+          # Two releases also need their checks disabled on Darwin: 2.37.1 can
+          # hang indefinitely in checkPhase after a nixpkgs update, and 2.38.2
+          # runs a timing-sensitive shell test suite whose `direnv export bash`
+          # hooks hit the "taking a while to execute" timeout under heavy
+          # parallel rebuild load, exiting 2 and aborting the whole rebuild.
+          # The gate keeps checks running once a later release fixes either.
           direnv = prev.direnv.overrideAttrs (
             old:
             {
@@ -133,7 +137,12 @@
                   --replace-warn "GO_LDFLAGS += -linkmode=external" ""
               '';
             }
-            // prev.lib.optionalAttrs (prev.direnv.version == "2.37.1") {
+            // prev.lib.optionalAttrs (
+              prev.lib.elem prev.direnv.version [
+                "2.37.1"
+                "2.38.2"
+              ]
+            ) {
               doCheck = false;
             }
           );
