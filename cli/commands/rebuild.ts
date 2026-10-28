@@ -560,11 +560,15 @@ function printMachineConfig(config: MachineConfig, machinePath: string) {
 
 function prependBootstrapPath() {
 	const home = Deno.env.get("HOME") ?? "";
+	const user = Deno.env.get("USER") ?? "";
 	const currentPath = Deno.env.get("PATH") ?? "";
 	const paths = [
 		"/nix/var/nix/profiles/default/bin",
 		"/run/current-system/sw/bin",
 		`${home}/.nix-profile/bin`,
+		// nix-darwin installs user packages here, not in ~/.nix-profile. Without
+		// this a non-login SSH session cannot find tools like deno or nix itself.
+		user ? `/etc/profiles/per-user/${user}/bin` : "",
 		`${home}/.local/state/nix/profiles/home-manager/home-path/bin`,
 		`${home}/.local/bin`,
 		"/usr/local/bin",
