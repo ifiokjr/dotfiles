@@ -245,6 +245,20 @@ in
   # until the next boot; for an always-on machine reached only over Tailscale,
   # that means it is unreachable. KeepAlive makes launchd restart it.
   launchd.daemons.tailscaled.serviceConfig.KeepAlive = true;
+
+  # nix-darwin's tailscale module owns /etc/resolver/ts.net (MagicDNS) and
+  # only overwrites contents it recognizes: its own text plus one hash of the
+  # file older tailscaled versions write ("# Added by tailscaled" plus the
+  # IPv4 MagicDNS resolver). tailscale 1.104+ also writes the IPv6 MagicDNS
+  # resolver (fd7a:115c:a1e0::53), so activation treats the file as
+  # unrecognized content and aborts every rebuild until the hash list is
+  # extended. Cover both trailing-newline variants of that layout; drop this
+  # override once nix-darwin learns the new hash upstream.
+  environment.etc."resolver/ts.net".knownSha256Hashes = [
+    "57960503f4bd6e8afe1c6543597386a5af61efdec1bb5b8b0f42960670c1b352"
+    "5ab5a20500f76f20916837f462082a8bfe782af45aa7b4076cca853eb0a67067"
+  ];
+
   # Client-side routing (exit nodes, subnet routers) works out of the box on macOS.
   # The `useRoutingFeatures` option only exists in the NixOS tailscale module
   # (it sets IP forwarding and reverse-path filtering, which are Linux-only).
@@ -653,15 +667,14 @@ in
   # names, which is why an earlier `activationScripts.alwaysOn` never ran and
   # self-hosted runners kept dropping offline while the machines slept.
   system.activationScripts.postActivation.text =
-    lib.optionalString (alwaysOn && pkgs.stdenv.hostPlatform.isDarwin)
-      ''
-        echo "==> Configuring always-on power management (pmset)..."
-        /usr/bin/pmset -a sleep 0 displaysleep 10 disksleep 0 autorestart 1
-        echo "==> Enabling screensaver password lock..."
-        # Activation runs as root; write the user's per-host preferences.
-        /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
-        /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
-      ''
+    lib.optionalString (alwaysOn && pkgs.stdenv.hostPlatform.isDarwin) ''
+      echo "==> Configuring always-on power management (pmset)..."
+      /usr/bin/pmset -a sleep 0 displaysleep 10 disksleep 0 autorestart 1
+      echo "==> Enabling screensaver password lock..."
+      # Activation runs as root; write the user's per-host preferences.
+      /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPassword -int 1
+      /usr/bin/sudo -u ${username} /usr/bin/defaults -currentHost write com.apple.screensaver askForPasswordDelay -int 5
+    ''
     + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
       echo "==> Allowing tailscaled through the application firewall..."
       _tailscaled="${pkgs.tailscale}/bin/tailscaled"
