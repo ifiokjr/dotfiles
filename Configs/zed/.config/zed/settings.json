@@ -99,19 +99,34 @@
 			},
 			{
 				"provider": "ollama",
+				"model": "kimi-k3:cloud",
+				"enable_thinking": true
+			},
+			{
+				"provider": "ollama",
 				"model": "kimi-k2.7-code:cloud",
 				"enable_thinking": true
 			},
 			{
 				"provider": "openai-subscribed",
-				"model": "gpt-5.5",
+				"model": "gpt-6.1-sol",
 				"enable_thinking": true,
 				"effort": "xhigh",
 				"speed": "fast"
 			},
 			{
 				"provider": "ollama",
+				"model": "deepseek-v4.1-flash:cloud",
+				"enable_thinking": true
+			},
+			{
+				"provider": "ollama",
 				"model": "deepseek-v4-pro:cloud",
+				"enable_thinking": true
+			},
+			{
+				"provider": "ollama",
+				"model": "minimax-m3.1-flash:cloud",
 				"enable_thinking": true
 			},
 			{
