@@ -1,4 +1,30 @@
-# Dotfiles - Tuckr Managed
+<p align="center">
+  <a href="https://github.com/ifiokjr/dotfiles">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="./docs/branding/lockup-dark.svg" />
+      <img width="360" src="./docs/branding/lockup-light.svg" alt="dotfiles" />
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <strong>My machine, versioned.</strong><br />
+  Shell, editor, and macOS setup — deployed with Tuckr and Nix.
+</p>
+
+<br />
+
+<p align="center">
+  <a href="#quick-start"><strong>Quick start</strong></a> ·
+  <a href="docs/getting-started.md"><strong>Getting started</strong></a> ·
+  <a href="#available-groups"><strong>Groups</strong></a> ·
+  <a href="#common-workflows"><strong>Workflows</strong></a> ·
+  <a href="#troubleshooting"><strong>Troubleshooting</strong></a>
+</p>
+
+<br />
+
+---
 
 This repository uses [Tuckr](https://github.com/RaphGL/Tuckr), a modern dotfile manager that creates symlinks from this repository to your home directory.
 

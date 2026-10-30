@@ -1,0 +1,30 @@
+<svg
+	xmlns="http://www.w3.org/2000/svg"
+	viewBox="0 0 700 180"
+	role="img"
+	aria-label="dotfiles"
+>
+	<g
+		fill="none"
+		stroke="#F6F4EF"
+		stroke-width="5.5"
+		stroke-linecap="round"
+		transform="translate(16 20) scale(2.1875)"
+	>
+		<circle cx="30" cy="40" r="14" />
+		<path d="M44 40V10" />
+		<circle cx="30" cy="40" r="5.5" fill="#3B82F6" stroke="none" />
+	</g>
+	<text
+		x="152"
+		y="90"
+		fill="#F6F4EF"
+		font-family="Menlo, Monaco, 'Courier New', monospace"
+		font-size="94"
+		font-weight="600"
+		letter-spacing="-4"
+		dominant-baseline="central"
+	>
+		dotfiles<tspan fill="#3B82F6">.</tspan>
+	</text>
+</svg>
