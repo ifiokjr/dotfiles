@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>dotfiles — lowercase d</title>
+		<style>
+		:root {
+			color-scheme: light dark;
+			--ink: var(--foreground, light-dark(#18181b, #ececf1));
+			--muted: var(--muted-foreground, light-dark(#55555f, #9b9ba6));
+			--line: var(--border, light-dark(#e4e4e7, #2a2b31));
+			--surface: var(--card, light-dark(#f7f7f8, #17181c));
+			--sans: var(
+				--font-sans,
+				ui-sans-serif,
+				-apple-system,
+				BlinkMacSystemFont,
+				"Segoe UI",
+				sans-serif
+			);
+			--mono: var(
+				--font-mono,
+				ui-monospace,
+				SFMono-Regular,
+				"SF Mono",
+				Menlo,
+				Consolas,
+				monospace
+			);
+			--r: var(--radius, 12px);
+			--brand: #3b82f6;
+			--brand-ink: #0e1013;
+			--paper: #f6f4ef;
+			--signal: #3b82f6;
+			--slate: #7c828d;
+		}
+		* {
+			box-sizing: border-box;
+		}
+		html, body {
+			margin: 0;
+			background: transparent;
+		}
+		body {
+			color: var(--ink);
+			font-family: var(--sans);
+			-webkit-font-smoothing: antialiased;
+		}
+		.page {
+			padding: 8px 18px 6px;
+		}
+
+		.head {
+			padding: 0 0 18px;
+		}
+		.eyebrow {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-family: var(--mono);
+			font-size: 10px;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.pulse {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: var(--brand);
+			box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 16%, transparent);
+		}
+		h1 {
+			margin: 11px 0 9px;
+			font-size: clamp(28px, 4.4vw, 36px);
+			line-height: 1.06;
+			letter-spacing: -0.035em;
+			font-weight: 650;
+		}
+		.mono {
+			font-family: var(--mono);
+			font-weight: 600;
+			letter-spacing: -0.055em;
+		}
+		.lede {
+			margin: 0;
+			max-width: 610px;
+			font-size: 13px;
+			line-height: 1.55;
+			color: var(--muted);
+			text-wrap: pretty;
+		}
+
+		.hero {
+			position: relative;
+			overflow: hidden;
+			border-radius: calc(var(--r) + 4px);
+			background: #0d0f13;
+			border: 1px solid #262932;
+			padding: 18px 22px 16px;
+			box-shadow:
+				inset 0 1px 0 rgba(255, 255, 255, 0.04),
+				0 24px 50px -30px rgba(0, 0, 0, 0.8);
+		}
+		.hero::before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			pointer-events: none;
+			background:
+				radial-gradient(
+					65% 120% at 76% 8%,
+					rgba(59, 130, 246, 0.22),
+					transparent 62%
+				),
+				radial-gradient(
+				40% 60% at 18% 100%,
+				rgba(59, 130, 246, 0.08),
+				transparent 60%
+			);
+		}
+		.hero > * {
+			position: relative;
+		}
+		.hero-meta, .hero-foot {
+			display: flex;
+			justify-content: space-between;
+			gap: 12px;
+			font-family: var(--mono);
+			font-size: 9px;
+			letter-spacing: 0.14em;
+			text-transform: uppercase;
+			color: rgba(244, 242, 236, 0.48);
+		}
+		.hero-lockup {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 22px;
+			padding: 26px 0 24px;
+		}
+		.hero-mark {
+			width: 120px;
+			height: 120px;
+			color: #f4f2ec;
+			flex: none;
+		}
+		.hero-word {
+			font-family: var(--mono);
+			font-size: clamp(38px, 6vw, 54px);
+			font-weight: 600;
+			letter-spacing: -0.06em;
+			line-height: 1;
+			color: #f4f2ec;
+		}
+		.hero-word .dot {
+			color: var(--brand);
+		}
+		.hero-foot .tagline {
+			font-family: var(--sans);
+			font-size: 12px;
+			letter-spacing: 0;
+			text-transform: none;
+			color: rgba(244, 242, 236, 0.78);
+		}
+
+		.sec {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin: 20px 0 10px;
+			font-family: var(--mono);
+			font-size: 9px;
+			letter-spacing: 0.14em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.sec b {
+			color: var(--ink);
+			font-weight: 600;
+		}
+		.sec-line {
+			flex: 1;
+			height: 1px;
+			background: var(--line);
+		}
+		.sec-note {
+			color: var(--muted);
+		}
+
+		.roles {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 12px;
+		}
+		.role {
+			background: var(--surface);
+			border: 1px solid var(--line);
+			border-radius: var(--r);
+			padding: 14px;
+		}
+		.role-top {
+			display: flex;
+			justify-content: space-between;
+			gap: 8px;
+			font-family: var(--mono);
+			font-size: 8.5px;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.role-stage {
+			height: 156px;
+			border-radius: calc(var(--r) - 2px);
+			display: grid;
+			place-items: center;
+			margin: 11px 0 13px;
+		}
+		.role-stage.paper {
+			background: var(--paper);
+			color: var(--brand-ink);
+		}
+		.role-stage.app {
+			background: color-mix(in oklab, var(--surface) 88%, var(--ink));
+			border: 1px dashed var(--line);
+		}
+		.role-stage .mark {
+			width: 82px;
+			height: 82px;
+		}
+		.app-tile {
+			width: 124px;
+			height: 124px;
+			border-radius: 28px;
+			background: var(--signal);
+			display: grid;
+			place-items: center;
+			box-shadow: 0 14px 26px -14px rgba(59, 130, 246, 0.7);
+		}
+		.app-tile .mark {
+			width: 76px;
+			height: 76px;
+			color: #fff;
+		}
+		.role h2 {
+			margin: 0;
+			font-size: 16px;
+			letter-spacing: -0.015em;
+			font-weight: 600;
+		}
+		.role p {
+			margin: 6px 0 0;
+			font-size: 12.5px;
+			line-height: 1.5;
+			color: var(--muted);
+			min-height: 56px;
+			text-wrap: pretty;
+		}
+		.chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 5px;
+			margin-top: 10px;
+		}
+		.chip {
+			font-family: var(--mono);
+			font-size: 8.5px;
+			letter-spacing: 0.06em;
+			color: var(--muted);
+			border: 1px solid var(--line);
+			border-radius: 999px;
+			padding: 3px 7px;
+		}
+
+		.lockups {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 12px;
+		}
+		.lockup {
+			background: var(--surface);
+			border: 1px solid var(--line);
+			border-radius: var(--r);
+			overflow: hidden;
+		}
+		.lockup-stage {
+			height: 112px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 14px;
+		}
+		.lockup-stage.stacked {
+			flex-direction: column;
+			gap: 8px;
+		}
+		.lockup .mark {
+			width: 34px;
+			height: 34px;
+		}
+		.lockup-stage.stacked .mark {
+			width: 46px;
+			height: 46px;
+		}
+		.lk-word {
+			font-family: var(--mono);
+			font-size: 20px;
+			font-weight: 600;
+			letter-spacing: -0.05em;
+			color: var(--ink);
+		}
+		.lockup-stage.stacked .lk-word {
+			font-size: 17px;
+		}
+		.lockup-stage.text .lk-word {
+			font-size: 26px;
+		}
+		.lockup .dot {
+			color: var(--brand);
+		}
+		.lockup-cap {
+			display: flex;
+			justify-content: space-between;
+			gap: 8px;
+			padding: 9px 13px;
+			border-top: 1px solid var(--line);
+			font-family: var(--mono);
+			font-size: 8.5px;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+
+		.wild {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			background: var(--surface);
+			border: 1px solid var(--line);
+			border-radius: var(--r);
+			overflow: hidden;
+		}
+		.wild-cell {
+			padding: 16px 12px 13px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 12px;
+		}
+		.wild-cell + .wild-cell {
+			border-left: 1px solid var(--line);
+		}
+		.wild-stage {
+			height: 86px;
+			display: grid;
+			place-items: center;
+			width: 100%;
+		}
+		.wild-cap {
+			font-family: var(--mono);
+			font-size: 8.5px;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.tab {
+			width: 100%;
+			max-width: 200px;
+			height: 40px;
+			display: flex;
+			align-items: center;
+			gap: 7px;
+			padding: 0 9px;
+			background: #1a1c22;
+			border: 1px solid #2c2f37;
+			border-radius: 9px;
+			box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.6);
+		}
+		.tab-icon {
+			width: 20px;
+			height: 20px;
+			border-radius: 5px;
+			background: var(--paper);
+			display: grid;
+			place-items: center;
+			flex: none;
+		}
+		.tab-icon svg {
+			width: 14px;
+			height: 14px;
+			color: var(--brand-ink);
+		}
+		.tab-title {
+			font-size: 10px;
+			color: #d9dbe1;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.tab-x {
+			margin-left: auto;
+			color: #6f747e;
+			font-size: 11px;
+			line-height: 1;
+		}
+		.avatar {
+			width: 64px;
+			height: 64px;
+			border-radius: 50%;
+			background: var(--signal);
+			display: grid;
+			place-items: center;
+			box-shadow:
+				0 0 0 1px rgba(255, 255, 255, 0.08),
+				0 10px 24px -12px rgba(59, 130, 246, 0.6);
+		}
+		.avatar svg {
+			width: 40px;
+			height: 40px;
+			color: #fff;
+		}
+		.readme {
+			width: 100%;
+			max-width: 190px;
+			background: var(--paper);
+			border-radius: 8px;
+			padding: 11px 12px;
+			color: var(--brand-ink);
+			box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.35);
+		}
+		.readme-lock {
+			display: flex;
+			align-items: center;
+			gap: 7px;
+		}
+		.readme-lock svg {
+			width: 24px;
+			height: 24px;
+		}
+		.readme-lock span {
+			font-family: var(--mono);
+			font-size: 14px;
+			font-weight: 600;
+			letter-spacing: -0.05em;
+		}
+		.readme-lock .dot {
+			color: var(--brand);
+		}
+		.readme-line {
+			height: 4px;
+			border-radius: 2px;
+			background: #d9d5ca;
+			margin-top: 8px;
+		}
+		.readme-line.short {
+			width: 62%;
+			margin-top: 5px;
+		}
+
+		.swatches {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 12px;
+		}
+		.swatch {
+			display: flex;
+			flex-direction: column;
+			gap: 7px;
+		}
+		.swatch .chip {
+			height: 42px;
+			border-radius: 9px;
+			border: 1px solid var(--line);
+		}
+		.swatch b {
+			font-size: 11px;
+			font-weight: 600;
+		}
+		.swatch code {
+			font-family: var(--mono);
+			font-size: 9px;
+			color: var(--muted);
+			letter-spacing: 0.04em;
+		}
+		.note {
+			margin: 14px 0 0;
+			padding-top: 12px;
+			border-top: 1px solid var(--line);
+			font-size: 11.5px;
+			line-height: 1.5;
+			color: var(--muted);
+			text-wrap: pretty;
+		}
+		.note b {
+			color: var(--ink);
+			font-weight: 600;
+		}
+
+		@media (max-width: 620px) {
+			.roles, .lockups, .wild {
+				grid-template-columns: 1fr;
+			}
+			.wild-cell + .wild-cell {
+				border-left: 0;
+				border-top: 1px solid var(--line);
+			}
+		}
+		@media (max-width: 520px) {
+			.hero-lockup {
+				gap: 14px;
+			}
+			.hero-mark {
+				width: 88px;
+				height: 88px;
+			}
+			.hero-word {
+				font-size: 40px;
+			}
+			.swatches {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+		</style>
+	</head>
+	<body>
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+			<defs>
+				<symbol id="p7" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="5.5"
+						stroke-linecap="round"
+					>
+						<circle cx="30" cy="40" r="14" />
+						<path d="M44 40V10" />
+					</g>
+					<circle cx="30" cy="40" r="5.5" fill="var(--mark-dot, #3b82f6)" />
+				</symbol>
+			</defs>
+		</svg>
+
+		<main class="page">
+			<header class="head">
+				<div class="eyebrow">
+					<span class="pulse"></span>Selected identity · 07
+				</div>
+				<h1>The <span class="mono">lowercase d</span>, everywhere.</h1>
+				<p class="lede">
+					The dot lives in the counter of a d. It holds at 120 px and at 16 px,
+					so the same mark carries the full lockup, the favicon, and the app
+					icon. No second version.
+				</p>
+			</header>
+
+			<section class="hero">
+				<div class="hero-meta">
+					<span>Primary lockup</span><span>07 / Lowercase d</span>
+				</div>
+				<div class="hero-lockup">
+					<svg
+						class="hero-mark"
+						viewBox="0 0 64 64"
+						role="img"
+						aria-label="Lowercase d mark"
+					>
+						<use href="#p7" />
+					</svg>
+					<div class="hero-word">dotfiles<span class="dot">.</span></div>
+				</div>
+				<div class="hero-foot">
+					<span class="tagline">One dot. Every size.</span><span>64 px grid ·
+						one-color safe</span>
+				</div>
+			</section>
+
+			<div class="sec">
+				<b>01 / Range</b><span class="sec-line"></span><span class="sec-note"
+				>One mark, two scales</span>
+			</div>
+			<section class="roles">
+				<article class="role">
+					<div class="role-top">
+						<span>01 · Display</span><span>Full size</span>
+					</div>
+					<div class="role-stage paper">
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Lowercase d mark"
+						>
+							<use href="#p7" />
+						</svg>
+					</div>
+					<h2>The mark</h2>
+					<p>
+						At display sizes the d holds the lockup on its own. Use it in the
+						README, the docs, and the site header.
+					</p>
+					<div class="chips">
+						<span class="chip">README</span><span class="chip">Docs</span><span
+							class="chip"
+						>Site</span>
+					</div>
+				</article>
+				<article class="role">
+					<div class="role-top">
+						<span>02 · Compact</span><span>16–64 px</span>
+					</div>
+					<div class="role-stage app">
+						<div class="app-tile">
+							<svg
+								class="mark"
+								viewBox="0 0 64 64"
+								style="--mark-dot: #0e1013"
+								role="img"
+								aria-label="Lowercase d mark"
+							>
+								<use href="#p7" />
+							</svg>
+						</div>
+					</div>
+					<h2>The same mark</h2>
+					<p>
+						At small sizes it becomes the favicon, avatar, and app icon without
+						a simplified variant.
+					</p>
+					<div class="chips">
+						<span class="chip">Favicon</span><span class="chip"
+						>Avatar</span><span class="chip">App icon</span>
+					</div>
+				</article>
+			</section>
+
+			<div class="sec">
+				<b>02 / Lockups</b><span class="sec-line"></span><span class="sec-note"
+				>One system</span>
+			</div>
+			<section class="lockups">
+				<article class="lockup">
+					<div class="lockup-stage">
+						<svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+							<use href="#p7" />
+						</svg>
+						<span class="lk-word">dotfiles<span class="dot">.</span></span>
+					</div>
+					<div class="lockup-cap">
+						<span>Horizontal</span><span>mark + text</span>
+					</div>
+				</article>
+				<article class="lockup">
+					<div class="lockup-stage stacked">
+						<svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+							<use href="#p7" />
+						</svg>
+						<span class="lk-word">dotfiles<span class="dot">.</span></span>
+					</div>
+					<div class="lockup-cap">
+						<span>Stacked</span><span>centered</span>
+					</div>
+				</article>
+				<article class="lockup">
+					<div class="lockup-stage text">
+						<span class="lk-word">dotfiles<span class="dot">.</span></span>
+					</div>
+					<div class="lockup-cap">
+						<span>Wordmark</span><span>text only</span>
+					</div>
+				</article>
+			</section>
+
+			<div class="sec">
+				<b>03 / In the wild</b><span class="sec-line"></span><span
+					class="sec-note"
+				>Small surfaces</span>
+			</div>
+			<section class="wild">
+				<div class="wild-cell">
+					<div class="wild-stage">
+						<div class="tab">
+							<span class="tab-icon"><svg
+									viewBox="0 0 64 64"
+									aria-hidden="true"
+								>
+									<use href="#p7" />
+								</svg></span>
+							<span class="tab-title">dotfiles — GitHub</span>
+							<span class="tab-x">×</span>
+						</div>
+					</div>
+					<span class="wild-cap">Browser tab</span>
+				</div>
+				<div class="wild-cell">
+					<div class="wild-stage">
+						<div class="avatar">
+							<svg
+								viewBox="0 0 64 64"
+								style="--mark-dot: #0e1013"
+								aria-hidden="true"
+							>
+								<use href="#p7" />
+							</svg>
+						</div>
+					</div>
+					<span class="wild-cap">GitHub avatar</span>
+				</div>
+				<div class="wild-cell">
+					<div class="wild-stage">
+						<div class="readme">
+							<div class="readme-lock">
+								<svg viewBox="0 0 64 64" aria-hidden="true">
+									<use href="#p7" />
+								</svg>
+								<span>dotfiles<span class="dot">.</span></span>
+							</div>
+							<div class="readme-line"></div>
+							<div class="readme-line short"></div>
+						</div>
+					</div>
+					<span class="wild-cap">README header</span>
+				</div>
+			</section>
+
+			<div class="sec">
+				<b>04 / Palette</b><span class="sec-line"></span><span class="sec-note"
+				>One accent</span>
+			</div>
+			<section class="palette">
+				<div class="swatches">
+					<div class="swatch">
+						<span class="chip" style="background: #0e1013"></span><b
+						>Ink</b><code>#0E1013</code>
+					</div>
+					<div class="swatch">
+						<span class="chip" style="background: #f6f4ef"></span><b
+						>Paper</b><code>#F6F4EF</code>
+					</div>
+					<div class="swatch">
+						<span class="chip" style="background: #3b82f6"></span><b
+						>Signal</b><code>#3B82F6</code>
+					</div>
+					<div class="swatch">
+						<span class="chip" style="background: #7c828d"></span><b
+						>Slate</b><code>#7C828D</code>
+					</div>
+				</div>
+				<p class="note">
+					<b>Ink and paper do the work.</b> Only the dot carries signal; the
+					letterform and wordmark stay monochrome. The system survives one-color
+					printing, terminal themes, and dark mode.
+				</p>
+			</section>
+		</main>
+	</body>
+</html>

@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>dotfiles — ten logo directions</title>
+		<style>
+		:root {
+			color-scheme: light dark;
+			--ink: var(--foreground, light-dark(#18181b, #ececf1));
+			--muted: var(--muted-foreground, light-dark(#55555f, #9b9ba6));
+			--line: var(--border, light-dark(#e4e4e7, #2a2b31));
+			--surface: var(--card, light-dark(#f7f7f8, #17181c));
+			--brand: var(--chart-1, #3b82f6);
+			--mono: var(
+				--font-mono,
+				ui-monospace,
+				SFMono-Regular,
+				"SF Mono",
+				Menlo,
+				Consolas,
+				monospace
+			);
+			--sans: var(
+				--font-sans,
+				ui-sans-serif,
+				-apple-system,
+				BlinkMacSystemFont,
+				"Segoe UI",
+				sans-serif
+			);
+			--r: var(--radius, 12px);
+		}
+		* {
+			box-sizing: border-box;
+		}
+		html, body {
+			margin: 0;
+			background: transparent;
+		}
+		body {
+			color: var(--ink);
+			font-family: var(--sans);
+			-webkit-font-smoothing: antialiased;
+		}
+		.page {
+			max-width: 100%;
+			padding: 8px 18px;
+		}
+
+		.head {
+			padding: 0 0 18px;
+		}
+		.eyebrow {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			font-family: var(--mono);
+			font-size: 10px;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.pulse {
+			width: 6px;
+			height: 6px;
+			border-radius: 50%;
+			background: var(--brand);
+			box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand) 16%, transparent);
+		}
+		h1 {
+			margin: 11px 0 9px;
+			font-size: clamp(27px, 4.4vw, 36px);
+			line-height: 1.06;
+			letter-spacing: -0.035em;
+			font-weight: 650;
+		}
+		.mono {
+			font-family: var(--mono);
+			font-weight: 600;
+			letter-spacing: -0.055em;
+		}
+		.accent {
+			color: var(--brand);
+		}
+		.lede {
+			margin: 0;
+			max-width: 590px;
+			font-size: 13px;
+			line-height: 1.55;
+			color: var(--muted);
+			text-wrap: pretty;
+		}
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 12px;
+		}
+		@media (max-width: 620px) {
+			.grid {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		.card {
+			background: var(--surface);
+			border: 1px solid var(--line);
+			border-radius: var(--r);
+			overflow: hidden;
+			transition: transform 0.18s ease, border-color 0.18s ease;
+		}
+		.card:hover {
+			transform: translateY(-2px);
+			border-color: color-mix(in oklab, var(--brand) 38%, var(--line));
+		}
+		.stage {
+			position: relative;
+			height: 148px;
+			display: grid;
+			place-items: center;
+			border-bottom: 1px solid var(--line);
+			background: radial-gradient(
+				120% 130% at 76% 0%,
+				color-mix(in oklab, var(--brand) 11%, transparent),
+				transparent 62%
+			);
+		}
+		.num {
+			position: absolute;
+			top: 12px;
+			left: 14px;
+			font-family: var(--mono);
+			font-size: 10px;
+			letter-spacing: 0.08em;
+			color: var(--muted);
+		}
+		.mark {
+			width: 96px;
+			height: 96px;
+			color: var(--ink);
+			transition: transform 0.18s ease;
+		}
+		.card:hover .mark {
+			transform: scale(1.045);
+		}
+
+		.body {
+			padding: 14px 16px 16px;
+		}
+		.title-row {
+			display: flex;
+			align-items: baseline;
+			justify-content: space-between;
+			gap: 10px;
+		}
+		h2 {
+			margin: 0;
+			font-size: 15px;
+			letter-spacing: -0.015em;
+			font-weight: 600;
+		}
+		.tag {
+			font-family: var(--mono);
+			font-size: 9px;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: var(--muted);
+			border: 1px solid var(--line);
+			border-radius: 999px;
+			padding: 2px 7px;
+			white-space: nowrap;
+		}
+		.desc {
+			margin: 6px 0 0;
+			font-size: 12.5px;
+			line-height: 1.5;
+			color: var(--muted);
+			min-height: 38px;
+			text-wrap: pretty;
+		}
+		.lockup {
+			display: flex;
+			align-items: center;
+			gap: 9px;
+			margin-top: 13px;
+			padding-top: 12px;
+			border-top: 1px dashed var(--line);
+		}
+		.mini {
+			width: 26px;
+			height: 26px;
+			color: var(--ink);
+			flex: none;
+		}
+		.wordmark {
+			font-family: var(--mono);
+			font-size: 19px;
+			font-weight: 600;
+			letter-spacing: -0.05em;
+			line-height: 1;
+		}
+		.wordmark .d {
+			color: var(--brand);
+		}
+
+		.foot {
+			margin-top: 16px;
+			padding: 14px 16px 13px;
+			background: var(--surface);
+			border: 1px solid var(--line);
+			border-radius: var(--r);
+		}
+		.foot-head {
+			display: flex;
+			justify-content: space-between;
+			font-family: var(--mono);
+			font-size: 9.5px;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.foot-row {
+			display: flex;
+			align-items: flex-end;
+			gap: 4px;
+			margin: 15px 0 13px;
+		}
+		.fav {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 7px;
+		}
+		.fav svg {
+			width: 16px;
+			height: 16px;
+			color: var(--ink);
+		}
+		.fav span {
+			font-family: var(--mono);
+			font-size: 8px;
+			letter-spacing: 0.05em;
+			color: var(--muted);
+		}
+		.note {
+			margin: 0;
+			padding-top: 11px;
+			border-top: 1px solid var(--line);
+			font-size: 11.5px;
+			line-height: 1.5;
+			color: var(--muted);
+			text-wrap: pretty;
+		}
+		.note b {
+			color: var(--ink);
+			font-weight: 600;
+		}
+		</style>
+	</head>
+	<body>
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+			<defs>
+				<symbol id="m1" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<rect x="7.5" y="9" width="49" height="46" rx="10" />
+						<path d="M29 23h19" />
+						<path d="M20.5 36h28.5" />
+						<path d="M20.5 49h18" />
+					</g>
+					<circle cx="20.5" cy="23" r="5.2" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m2" viewBox="0 0 64 64">
+					<g fill="none" stroke="currentColor" stroke-width="4.5">
+						<circle cx="23.5" cy="32" r="13" />
+						<circle cx="40.5" cy="32" r="13" />
+					</g>
+					<circle cx="32" cy="32" r="5.2" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m3" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="6.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M14 18.5 31.5 32 14 45.5" />
+					</g>
+					<rect
+						x="38.5"
+						y="25.5"
+						width="14"
+						height="13"
+						rx="2.5"
+						fill="var(--brand, #3b82f6)"
+					/>
+				</symbol>
+				<symbol id="m4" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4.5"
+						stroke-linecap="round"
+					>
+						<path d="M32 9v46" />
+						<path d="M12.08 20.5l39.84 23" />
+						<path d="M51.92 20.5 12.08 43.5" />
+					</g>
+					<circle cx="32" cy="32" r="5.5" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m5" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M17.5 7H38l12 12v34.5a3.5 3.5 0 0 1-3.5 3.5h-29a3.5 3.5 0 0 1-3.5-3.5v-43A3.5 3.5 0 0 1 17.5 7Z" />
+						<path d="M38 7v8.5a3.5 3.5 0 0 0 3.5 3.5H50" />
+					</g>
+					<circle cx="28.5" cy="38" r="6.2" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m6" viewBox="0 0 64 64">
+					<g fill="none" stroke="currentColor" stroke-width="4">
+						<ellipse
+							cx="32"
+							cy="32"
+							rx="23"
+							ry="9.5"
+							transform="rotate(-30 32 32)"
+						/>
+					</g>
+					<circle cx="32" cy="32" r="6" fill="var(--brand, #3b82f6)" />
+					<circle cx="51.6" cy="26.2" r="4.2" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m7" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="5.5"
+						stroke-linecap="round"
+					>
+						<circle cx="30" cy="40" r="14" />
+						<path d="M44 40V10" />
+					</g>
+					<circle cx="30" cy="40" r="5.5" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m8" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M27 9c-5.5 0-9 3.5-9 9v6c0 4.5-2.5 7-7 8 4.5 1 7 3.5 7 8v6c0 5.5 3.5 9 9 9" />
+						<path d="M37 9c5.5 0 9 3.5 9 9v6c0 4.5 2.5 7 7 8-4.5 1-7 3.5-7 8v6c0 5.5-3.5 9-9 9" />
+					</g>
+					<circle cx="32" cy="32" r="5.5" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m9" viewBox="0 0 64 64">
+					<rect
+						x="8.5"
+						y="8.5"
+						width="47"
+						height="47"
+						rx="12"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4"
+						opacity=".4"
+					/>
+					<rect
+						x="18"
+						y="18"
+						width="28"
+						height="28"
+						rx="8"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4.5"
+					/>
+					<circle cx="32" cy="32" r="6.5" fill="var(--brand, #3b82f6)" />
+				</symbol>
+				<symbol id="m10" viewBox="0 0 64 64">
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width="7"
+						stroke-linecap="round"
+					>
+						<path d="M47.5 10 22 54" />
+					</g>
+					<circle cx="14" cy="46" r="6.2" fill="var(--brand, #3b82f6)" />
+				</symbol>
+			</defs>
+		</svg>
+		<main class="page">
+			<header class="head">
+				<div class="eyebrow">
+					<span class="pulse"></span>Identity exploration · 10 directions
+				</div>
+				<h1>
+					Ten marks for <span class="mono">dotfiles<span class="accent"
+						>.</span></span>
+				</h1>
+				<p class="lede">
+					Each direction starts from something the repo already is — the leading
+					dot, a symlink, a shell prompt, a Nix wildcard, or the home those
+					files land in. One idea, one color, readable at favicon size.
+				</p>
+			</header>
+			<section class="grid">
+				<article class="card">
+					<div class="stage">
+						<span class="num">01</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Leading Dot mark"
+						>
+							<use href="#m1" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Leading Dot</h2><span class="tag">Literal</span>
+						</div>
+						<p class="desc">
+							The period that hides a file, sitting right in front of its name.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m1" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">02</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Symlink mark"
+						>
+							<use href="#m2" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Symlink</h2><span class="tag">Symlink</span>
+						</div>
+						<p class="desc">
+							Two trees tied together — the dot is the link they share.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m2" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">03</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Prompt mark"
+						>
+							<use href="#m3" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Prompt</h2><span class="tag">Shell</span>
+						</div>
+						<p class="desc">
+							A shell chevron and the cursor, waiting for the next command.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m3" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">04</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Wildcard mark"
+						>
+							<use href="#m4" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Wildcard</h2><span class="tag">Nix</span>
+						</div>
+						<p class="desc">A six-spoke glob that doubles as a nod to Nix.</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m4" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">05</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Tucked File mark"
+						>
+							<use href="#m5" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Tucked File</h2><span class="tag">Tuckr</span>
+						</div>
+						<p class="desc">
+							A sheet with a dog-ear, and the dot tucked inside.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m5" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">06</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Orbit mark"
+						>
+							<use href="#m6" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Orbit</h2><span class="tag">Home</span>
+						</div>
+						<p class="desc">
+							Configurations circling the one home they deploy into.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m6" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">07</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Lowercase d mark"
+						>
+							<use href="#m7" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Lowercase d</h2><span class="tag">Monogram</span>
+						</div>
+						<p class="desc">
+							A geometric d whose counter holds the dot at its center.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m7" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">08</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Braces mark"
+						>
+							<use href="#m8" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Braces</h2><span class="tag">Config</span>
+						</div>
+						<p class="desc">The dot, framed by the syntax of a config file.</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m8" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">09</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Nested mark"
+						>
+							<use href="#m9" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Nested</h2><span class="tag">Layers</span>
+						</div>
+						<p class="desc">
+							The dot at the core, wrapped in layer after layer of config.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m9" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+				<article class="card">
+					<div class="stage">
+						<span class="num">10</span>
+						<svg
+							class="mark"
+							viewBox="0 0 64 64"
+							role="img"
+							aria-label="Dot Slash mark"
+						>
+							<use href="#m10" />
+						</svg>
+					</div>
+					<div class="body">
+						<div class="title-row">
+							<h2>Dot Slash</h2><span class="tag">Local</span>
+						</div>
+						<p class="desc">
+							The two characters that run something from right here.
+						</p>
+						<div class="lockup">
+							<svg class="mini" viewBox="0 0 64 64" aria-hidden="true">
+								<use href="#m10" />
+							</svg>
+							<span class="wordmark">dotfiles<span class="d">.</span></span>
+						</div>
+					</div>
+				</article>
+			</section>
+			<section class="foot">
+				<div class="foot-head">
+					<span>Favicon check</span><span>16 px</span>
+				</div>
+				<div class="foot-row">
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m1" /></svg>
+						<span>01</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m2" /></svg>
+						<span>02</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m3" /></svg>
+						<span>03</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m4" /></svg>
+						<span>04</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m5" /></svg>
+						<span>05</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m6" /></svg>
+						<span>06</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m7" /></svg>
+						<span>07</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m8" /></svg>
+						<span>08</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#m9" /></svg>
+						<span>09</span>
+					</div>
+					<div class="fav">
+						<svg viewBox="0 0 64 64" aria-hidden="true">
+							<use href="#m10" />
+						</svg>
+						<span>10</span>
+					</div>
+				</div>
+				<p class="note">
+					<b>How to pick:</b> one clear idea, still legible at 16 px, and no
+					reliance on color. Every mark is drawn on a 64 px grid and built to
+					work as one-color SVG. Pick a number and I'll refine the lockup,
+					spacing, and assets.
+				</p>
+			</section>
+		</main>
+	</body>
+</html>
