@@ -25,6 +25,27 @@ If an idea feels generic, say so; that's part of the job. Push back when somethi
 - Write **idiomatic code** for the environment we're working in. Don't transplant patterns between languages.
 - In **TypeScript**, never use `any`. Types stay strict and explicit.
 
+## Model routing
+
+Choose the model that fits the task, and prefer the cheapest one that can do it well. These rules apply wherever the orchestrator tools (`delegate_task`, `orchestrator_capabilities`) exist, such as T3 Code. Elsewhere, pick the model in the provider's own picker.
+
+**Cap reasoning at `xhigh`.** Claude: `effort: xhigh`, never `max`, `ultracode`, or `ultrathink`. Codex: `reasoningEffort: xhigh`, never `max` or `ultra`. Leave `fastMode` off and `serviceTier` at `default`.
+
+The parent decides and reviews; children execute. Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder:
+
+| Rung         | Use for                                                                  | Provider      | Model                             | Options                  |
+| ------------ | ------------------------------------------------------------------------ | ------------- | --------------------------------- | ------------------------ |
+| Implement    | Named files, clear acceptance criteria, a test command                   | `opencode`    | `opencode-go/deepseek-v4.1-flash` | `variant: max`           |
+| Second patch | The first attempt was wrong, or you want an independent patch to compare | `opencode`    | `zai-coding-plan/glm-5.3-flash`   | `variant: max`           |
+| Judgment     | Ambiguous scope, cross-cutting design, "decide how this should work"     | `claudeAgent` | `claude-opus-5-5`                 | `effort: xhigh`          |
+| Long horizon | Multi-hour refactors, migrations, deep debugging                         | `codex`       | `gpt-6-astra`                     | `reasoningEffort: xhigh` |
+
+- Climb only when the rung below actually failed. Implement and second-patch take the volume; judgment and long-horizon take one call per turn, never a fan-out.
+- Brief a child like a stranger: goal, files to touch, files to leave alone, acceptance criteria, and the exact test command.
+- Give an implementation child that will commit `isolation: "worktree"`, never the parent checkout.
+- Read the child's diff before accepting its summary. A green test run is not a review.
+- If a delegation fails on a usage limit, do not retry on that provider. Fall back down the ladder, or stop and report.
+
 ## Code quality
 
 Ship professional, production-quality code in every project. Quality is a requirement, not a final polish pass.
