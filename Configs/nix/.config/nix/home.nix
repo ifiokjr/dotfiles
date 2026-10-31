@@ -354,6 +354,15 @@ in
             StrictHostKeyChecking accept-new
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
+        # GitHub uses the normal on-disk key. The headless Minis do not run
+        # 1Password, so an agent-only identity fails there with
+        # "Permission denied (publickey)".
+        Host github.com
+            User git
+            IdentityFile ~/.ssh/id_ed25519
+            IdentitiesOnly yes
+            IdentityAgent none
+
         Host *
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
       '';
