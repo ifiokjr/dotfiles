@@ -10,6 +10,7 @@ This directory centralizes configuration for all AI coding agents and tools.
 | **Claude Code** | `~/.claude/`          | Anthropic's terminal coding agent           |
 | **Pi**          | `~/.pi/agent/`        | AI-powered development environment          |
 | **Codex**       | `~/.codex/`           | OpenAI's Codex CLI tool                     |
+| **Antigravity** | `~/.gemini/`          | Google's Antigravity app and `agy` CLI      |
 | **Zed**         | `~/.config/zed/`      | AI-powered code editor with agent panel     |
 | **ZCode**       | `~/.zcode/`           | Z.ai's GLM desktop coding agent             |
 
@@ -64,6 +65,7 @@ The canonical global agent instructions file. Every harness's global instruction
 | **Zed**         | `~/.config/zed/AGENTS.md`      |
 | **OpenCode**    | `~/.config/opencode/AGENTS.md` |
 | **Claude Code** | `~/.claude/CLAUDE.md`          |
+| **Antigravity** | `~/.gemini/AGENTS.md`          |
 | **ZCode**       | `~/.zcode/AGENTS.md`           |
 
 Edit the canonical file only — the harness locations are symlinks to it.
