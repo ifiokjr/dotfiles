@@ -169,7 +169,7 @@ in
       kotlin-language-server
       lua-language-server
       lsp-ai
-      ltex-ls
+      ltex-ls-plus
       markdown-oxide
       nil
       ruby

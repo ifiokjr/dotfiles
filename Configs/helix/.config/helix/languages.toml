@@ -86,7 +86,7 @@ args = ["-config", "$HOME/.config/sqls/config.yml"]
 name = "markdown"
 indent = { tab-width = 2, unit = "\t" }
 soft-wrap = { enable = true }
-language-servers = ["marksman", "ltex-ls"]
+language-servers = ["marksman", "ltex-ls-plus"]
 formatter = { command = "dprint", args = ["fmt", "--stdin", "%{buffer_name}"] }
 auto-format = true
 
