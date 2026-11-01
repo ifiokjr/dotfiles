@@ -169,6 +169,8 @@ in
         # Development
         "android-ndk"
         "android-studio"
+        "antigravity" # Google Antigravity agent orchestration app
+        "antigravity-cli" # Antigravity terminal harness, installed as `agy`
         "claude-code@latest"
         "cursor"
         "db-browser-for-sqlite"
@@ -220,6 +222,8 @@ in
         # lite list because lite is about skipping GUI-heavy personal apps, not
         # about limiting what a fleet machine can run. `lib.unique` collapses
         # the overlap with the lite and full lists above.
+        "antigravity" # Google Antigravity agent orchestration app
+        "antigravity-cli" # Antigravity terminal harness, installed as `agy`
         "claude" # Claude desktop app
         "claude-code@latest" # Claude Code CLI, installed as `claude`
         "cursor" # Cursor editor; the cask also links its `cursor` CLI into /opt/homebrew/bin
