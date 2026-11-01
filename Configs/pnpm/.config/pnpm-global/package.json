@@ -4,12 +4,12 @@
 	"private": true,
 	"dependencies": {
 		"@earendil-works/pi-coding-agent": "1.4.0",
-		"@openai/codex": "0.163.0",
+		"@openai/codex": "0.165.0",
 		"@opencode/cli": "2.2.0",
 		"@playwright/cli": "0.1.22",
-		"netlify-cli": "27.12.0",
+		"netlify-cli": "27.15.0",
 		"ocx": "2.0.15",
-		"vercel": "63.1.0",
-		"vite-plus": "1.3.0"
+		"vercel": "65.5.0",
+		"vite-plus": "1.4.0"
 	}
 }
