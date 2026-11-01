@@ -158,6 +158,16 @@
             }
           );
 
+          # atuin 18.24.4 fails its daemon e2e test suite on Darwin
+          # (`e2e_ai_sessions`: 3 of 47 tests fail inside the build sandbox).
+          # Skip checks until nixpkgs updates to a fixed revision.
+          atuin = prev.atuin.overrideAttrs (
+            old:
+            prev.lib.optionalAttrs (prev.lib.elem old.version [ "18.24.4" ]) {
+              doCheck = false;
+            }
+          );
+
           # Nushell 0.112.1 currently fails Darwin sandboxed REPL tests with
           # permission errors while checking `env_shlvl_in_repl` and
           # `env_shlvl_in_exec_repl`. Skip checks until nixpkgs updates to a
