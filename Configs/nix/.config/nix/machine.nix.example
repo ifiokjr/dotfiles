@@ -38,7 +38,7 @@
 
   # Optional: Machine presets — opt-in feature sets stored per machine.
   # Use `rebuild --add-preset <name>` or `rebuild --remove-preset <name>` to manage.
-  # `agent-apps` installs the AI coding agent suite (Claude, OpenCode, T3 Code,
-  # ZCode desktop apps plus their CLIs) and stays independent of `lite`.
+  # `agent-apps` installs the AI coding agent suite (Claude, Cursor, OpenCode,
+  # T3 Code, ZCode desktop apps plus their CLIs) and stays independent of `lite`.
   # presets = ["agent-apps"];
 }
