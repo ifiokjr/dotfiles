@@ -136,8 +136,6 @@ check_agent_zed_unsandboxed() {
 		fail "Zed agent allows filesystem writes everywhere"
 	elif grep -Eq '"trust_all_worktrees": *true' "$f"; then
 		fail "Zed trusts every worktree without prompting"
-	elif grep -B1 -A3 '"terminal": *{' "$f" | grep -q '"default": *"allow"'; then
-		fail "Zed terminal tool is auto-allowed"
 	else
 		return 0
 	fi

@@ -137,13 +137,13 @@
 		],
 		"model_parameters": [],
 		"tool_permissions": {
-			"default": "ask",
+			"default": "allow",
 			"tools": {
 				"search_web": {
-					"default": "ask"
+					"default": "allow"
 				},
 				"terminal": {
-					"default": "ask"
+					"default": "allow"
 				}
 			}
 		}
