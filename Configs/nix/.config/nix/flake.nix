@@ -264,6 +264,43 @@
         in
         prev.lib.foldl' disable prev names;
 
+      # Homebrew's sudo availability check (utils/sudo.sh) probes sudo by
+      # running `sudo --reset-timestamp` and `sudo -n -k -l`, which wipes the
+      # cached credentials before every privileged cask operation. `brew
+      # bundle` spawns one brew process per cask install/zap, so on the first
+      # rebuild with real privileged work (cask installs + `cleanup = "zap"`)
+      # each operation prompted for the password again — activation aborted in
+      # a Password: storm even though darwin.nix sets `timestamp_type=global`
+      # precisely so one authentication covers the whole rebuild.
+      #
+      # Patch the probes to be non-destructive (`sudo -n -l`): same capability
+      # and error detection, but the timestamp from the password typed at the
+      # start of `dot rebuild` survives and every brew process reuses it.
+      # Applied before nix-homebrew's own patching via nix-homebrew.package.
+      brewKeepSudoTimestamp =
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+          version = "main-${builtins.substring 0 8 brew-src.rev}";
+        in
+        pkgs.runCommandLocal "brew-${version}"
+          {
+            # nix-homebrew's patchBrew stamps HOMEBREW_VERSION from this.
+            passthru.version = version;
+          }
+          ''
+            cp -r '${brew-src}' "$out"
+            sudoSh="$out/Library/Homebrew/utils/sudo.sh"
+            if [ -f "$sudoSh" ]; then
+              chmod u+w "$(dirname "$sudoSh")" "$sudoSh"
+              substituteInPlace "$sudoSh" \
+                --replace-fail '"''${SUDO}" --reset-timestamp' '"''${SUDO}" -n -l' \
+                --replace-fail '"''${SUDO}" -n -k -l' '"''${SUDO}" -n -l'
+            else
+              echo "warning: brew utils/sudo.sh not found; sudo-timestamp patch skipped" >&2
+            fi
+          '';
+
       mkDarwinConfig =
         {
           system ? "aarch64-darwin",
@@ -283,6 +320,7 @@
           modules = [
             ./darwin.nix
             nix-homebrew.darwinModules.nix-homebrew
+            { nix-homebrew.package = brewKeepSudoTimestamp system; }
             {
               _module.args = {
                 inherit

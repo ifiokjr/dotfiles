@@ -374,7 +374,10 @@ in
     # repeatedly (activation script, brew bundle cask installs,
     # softwareupdate), so a cached timestamp alone cannot carry a headless
     # rebuild — brew resets the sudo timestamp mid-activation and a prompt
-    # kills the run.
+    # kills the run. (The managed Homebrew runtime is patched in flake.nix —
+    # brewKeepSudoTimestamp — so it no longer wipes the timestamp during
+    # activation; stock brew still does, and no cached timestamp can survive
+    # an SSH session with no TTY to type the first password into.)
     #
     # Security tradeoff: any code running as this user can escalate to root
     # without a password. Only enable this via `unattendedSudo = true` in
