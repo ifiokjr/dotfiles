@@ -197,7 +197,7 @@ Nix:      <nix>
 snapshot[`safe command outputs are stable > groups list 1`] = `
 "
 ==> Available configuration groups
-  agents         AI agent configurations and shared skills/extensions. Manages ~/.config/agents/, ~/.config/opencode/, ~/.agents/ (skills, extensions), and the global AGENTS.md symlinked across pi, codex, zed, and opencode.
+  agents         AI agent configurations and shared skills/extensions. Manages ~/.config/agents/, ~/.config/opencode/, ~/.agents/ (skills, extensions), and the global AGENTS.md symlinked across every supported harness.
   atuin          Atuin shell history manager — session-first up-arrow, global Ctrl-R.
   bash           Bash shell configuration and interactive shell defaults.
   codex          codex
