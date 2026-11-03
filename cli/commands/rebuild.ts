@@ -9,7 +9,7 @@
 
 import { Command } from "@cliffy/command";
 import { exists } from "@std/fs";
-import { dirname } from "@std/path";
+import { dirname, join } from "@std/path";
 import {
 	detectArch,
 	formatCommand,
@@ -18,8 +18,8 @@ import {
 	printInfo,
 	printSuccess,
 	printWarning,
-	refreshShellIntegrations,
 	privilegedPathEnv,
+	refreshShellIntegrations,
 	resolveCommandPath,
 	resolveDeployedDotfilesDir,
 	resolveDotfilesDir,
@@ -131,7 +131,7 @@ export const rebuildCommand = new Command()
 	.option("--brew", "With --update on macOS, run brew upgrade --cask --greedy")
 	.option(
 		"--commit",
-		"With --update, commit the files the update changed (flake.lock, managed skills, pnpm globals) after rebuilding, so only a git push remains",
+		"With --update, commit the files the update changed (flake.lock, the Determinate Nix pin, managed skills, pnpm globals) after rebuilding, so only a git push remains",
 	)
 	.option("--lite", "Set machine.nix lite = true before rebuilding")
 	.option("--no-lite", "Set machine.nix lite = false before rebuilding")
@@ -139,7 +139,7 @@ export const rebuildCommand = new Command()
 	.option("--no-desktop", "Set machine.nix isDesktop = false before rebuilding")
 	.option(
 		"--latest",
-		"Update dotfiles repo to the latest version before rebuilding",
+		"Update dotfiles repo and align Determinate Nix with the tracked version pin before rebuilding",
 	)
 	.option("--force", "With --latest, hard-reset to origin/main")
 	.option("--rebuild-os", "Install macOS software updates before rebuilding")
@@ -223,6 +223,7 @@ export const rebuildCommand = new Command()
 		const keepalive = await ensureSudoSession();
 
 		try {
+			await syncDeterminateNixVersion(context, opts);
 			await maybeInstallOsUpdates(opts);
 			await maybeUpdateFlake(context, opts);
 			await maybeCheckFlake(context, opts);
@@ -713,22 +714,90 @@ interface DeterminateVersions {
 	latest: string;
 }
 
+interface DeterminateInstallation {
+	current: string;
+	latest: string | null;
+}
+
 /**
- * Parse `determinate-nixd version` output into the installed and latest
- * advertised versions. The client line is preferred because that is the binary
- * on PATH; the daemon line is a fallback for outputs that only report one side.
+ * Repo-relative path of the tracked Determinate Nix version pin. The file is
+ * part of the deployed `nix` group, so the checkout and `~/.config/nix` always
+ * agree on the version a machine should run.
  */
-export function parseDeterminateVersions(
+export const DETERMINATE_NIX_VERSION_PATH =
+	"Configs/nix/.config/nix/determinate-nix-version";
+
+/** Absolute path of the Determinate Nix version pin for a checkout. */
+export function determinateNixVersionPath(dotfilesDir: string): string {
+	return join(dotfilesDir, DETERMINATE_NIX_VERSION_PATH);
+}
+
+/**
+ * Normalize a pinned version (`v3.24.1` -> `3.24.1`). Only dotted numeric
+ * versions are accepted so a malformed pin can never be passed to the
+ * privileged upgrade command.
+ */
+export function normalizeDeterminateVersion(value: string): string | null {
+	const trimmed = value.trim();
+	const withoutPrefix = trimmed.startsWith("v") ? trimmed.slice(1) : trimmed;
+	return /^\d+(?:\.\d+)*$/.test(withoutPrefix) ? withoutPrefix : null;
+}
+
+/** Read the tracked pin, or null when the file does not exist. */
+export async function readDeterminateNixPin(
+	dotfilesDir: string,
+): Promise<string | null> {
+	const pinPath = determinateNixVersionPath(dotfilesDir);
+	if (!await exists(pinPath, { isFile: true })) return null;
+
+	const content = await Deno.readTextFile(pinPath);
+	const pinned = normalizeDeterminateVersion(content);
+	if (!pinned) {
+		throw new Error(
+			`Invalid Determinate Nix version pin in ${pinPath}: ${
+				JSON.stringify(content.trim())
+			}`,
+		);
+	}
+
+	return pinned;
+}
+
+async function writeDeterminateNixPin(dotfilesDir: string, version: string) {
+	await Deno.writeTextFile(
+		determinateNixVersionPath(dotfilesDir),
+		`${version}\n`,
+	);
+}
+
+/**
+ * Parse the installed version from `determinate-nixd version` output. The
+ * client line is preferred because that is the binary on PATH; the daemon line
+ * is a fallback for outputs that only report one side. Unlike
+ * parseDeterminateVersions this does not require a "Latest version" line,
+ * which is absent when the installation is already current.
+ */
+export function parseDeterminateCurrentVersion(
 	output: string,
-): DeterminateVersions | null {
+): string | null {
 	const daemon = output.match(
 		/^Determinate Nixd daemon version:\s*(\S+)$/m,
 	)?.[1];
 	const client = output.match(
 		/^Determinate Nixd client version:\s*(\S+)$/m,
 	)?.[1];
+	return client ?? daemon ?? null;
+}
+
+/**
+ * Parse `determinate-nixd version` output into the installed and latest
+ * advertised versions.
+ */
+export function parseDeterminateVersions(
+	output: string,
+): DeterminateVersions | null {
+	const current = parseDeterminateCurrentVersion(output);
 	const latest = output.match(/^Latest version:\s*(\S+)$/m)?.[1];
-	const current = client ?? daemon;
 
 	if (!current || !latest) return null;
 	return { current, latest };
@@ -749,26 +818,36 @@ export function compareDeterminateVersions(a: string, b: string): number {
 	return 0;
 }
 
-/** Whether stdin is a terminal the upgrade prompt can be asked on. */
-function isInteractive(): boolean {
-	try {
-		return Deno.stdin.isTerminal();
-	} catch {
-		return false;
-	}
+/**
+ * Choose the version to install. `--update` advances the pin to the newest
+ * version it can see; every other flow (notably `--latest`) keeps the version
+ * already recorded in the repo.
+ *
+ * When the installation is already current, `determinate-nixd version` omits
+ * its "Latest version" line, so the installed version is the update candidate.
+ * Falling back to the pin there would downgrade a machine that got ahead of
+ * the repo.
+ */
+export function determinateTargetVersion(
+	pinned: string,
+	installed: Pick<DeterminateInstallation, "current" | "latest">,
+	update: boolean,
+): string {
+	if (!update) return pinned;
+
+	const candidate = installed.latest ?? installed.current;
+	const normalized = normalizeDeterminateVersion(candidate);
+	if (!normalized) return pinned;
+
+	return compareDeterminateVersions(normalized, pinned) > 0
+		? normalized
+		: pinned;
 }
 
-/**
- * With --update, check whether Determinate Systems advertises a newer Nix and
- * offer to upgrade via `determinate-nixd upgrade` before the flake update, so
- * the rebuild itself runs on the new Nix. Best effort: silent no-op without
- * determinate-nixd (plain Nix installs) or when the check fails (offline).
- */
-async function maybeUpgradeDeterminateNix(opts: RebuildOptions) {
-	if (!opts.update) return;
-
-	printInfo("Checking for Determinate Nix updates");
-
+/** Query the live installation, or null on plain Nix/offline machines. */
+async function queryDeterminateInstallation(): Promise<
+	DeterminateInstallation | null
+> {
 	let output: string | undefined;
 	try {
 		const check = await runCommand(["determinate-nixd", "version"], {
@@ -780,43 +859,119 @@ async function maybeUpgradeDeterminateNix(opts: RebuildOptions) {
 		// determinate-nixd is not installed; not a Determinate Nix machine.
 	}
 
-	const versions = output ? parseDeterminateVersions(output) : null;
-	if (!versions) return;
+	if (!output) return null;
 
-	if (compareDeterminateVersions(versions.latest, versions.current) <= 0) {
-		printSuccess(`Determinate Nix ${versions.current} is up to date`);
+	const current = parseDeterminateCurrentVersion(output);
+	if (!current) return null;
+
+	return {
+		current,
+		latest: parseDeterminateVersions(output)?.latest ?? null,
+	};
+}
+
+/**
+ * Align the machine's Determinate Nix with the version pinned in the repo.
+ *
+ * `dot rebuild --latest` pulls the pin from the updated checkout and installs
+ * exactly that version, so unattended fleet rebuilds converge on a known Nix
+ * instead of drifting to whatever Determinate advertises. `dot rebuild
+ * --update` first advances the pin to the newest advertised release, then
+ * installs it. Plain Nix installs and offline version checks are skipped with
+ * a warning instead of blocking the rebuild.
+ */
+async function syncDeterminateNixVersion(
+	context: RebuildContext,
+	opts: RebuildOptions,
+) {
+	if (!opts.latest && !opts.update) return;
+
+	let pinned: string | null;
+	try {
+		pinned = await readDeterminateNixPin(context.dotfilesDir);
+	} catch (error) {
+		printError(error instanceof Error ? error.message : String(error));
+		Deno.exit(1);
+	}
+
+	if (!pinned) {
+		printWarning(
+			`No Determinate Nix version pin at ${DETERMINATE_NIX_VERSION_PATH}; skipping the version check`,
+		);
 		return;
 	}
 
-	printWarning(
-		`Determinate Nix ${versions.latest} is available (installed: ${versions.current})`,
+	const installation = await queryDeterminateInstallation();
+	if (!installation) {
+		printInfo(
+			"determinate-nixd not found; skipping the pinned Determinate Nix check",
+		);
+		return;
+	}
+
+	const latest = installation.latest
+		? normalizeDeterminateVersion(installation.latest)
+		: null;
+	const target = determinateTargetVersion(
+		pinned,
+		installation,
+		opts.update === true,
 	);
 
-	const confirmed = isInteractive() &&
-		prompt("Upgrade Determinate Nix now? [y/N]")?.trim().toLowerCase() === "y";
-	if (!confirmed) {
-		printInfo("Skipping; run `sudo determinate-nixd upgrade` to update it");
+	if (opts.update && latest && compareDeterminateVersions(latest, pinned) < 0) {
+		printWarning(
+			`Determinate Nix advertises ${latest}, older than the pinned ${pinned}; keeping the pin`,
+		);
+	}
+
+	if (installation.current === target) {
+		if (target !== pinned) {
+			await writeDeterminateNixPin(context.dotfilesDir, target);
+			printSuccess(
+				`Updated Determinate Nix pin ${pinned} -> ${target} (already installed)`,
+			);
+		} else {
+			printSuccess(`Determinate Nix ${target} matches the tracked pin`);
+		}
 		return;
 	}
 
-	printInfo("Upgrading Determinate Nix (this may take a while)");
+	printInfo(
+		`Aligning Determinate Nix with the tracked pin: ${installation.current} -> ${target}`,
+	);
 	// sudo is already cached by ensureSudoSession on macOS; on Linux this may
 	// prompt once for the password. Sanitized PATH keeps the privileged
 	// lookup inside root-owned bin directories.
-	const upgrade = await runCommand(["sudo", "determinate-nixd", "upgrade"], {
-		env: privilegedPathEnv(),
-	});
-	if (upgrade.success) {
-		printSuccess(`Determinate Nix upgraded to ${versions.latest}`);
-	} else {
-		printWarning("Determinate Nix upgrade failed (continuing)");
+	const upgrade = await runCommand(
+		["sudo", "determinate-nixd", "upgrade", "--version", `v${target}`],
+		{ env: privilegedPathEnv() },
+	);
+	if (!upgrade.success) {
+		printError(
+			`Failed to install Determinate Nix ${target} (exit code ${upgrade.code})`,
+		);
+		Deno.exit(upgrade.code || 1);
 	}
+
+	const installed = await queryDeterminateInstallation();
+	if (installed?.current !== target) {
+		printError(
+			`Determinate Nix version check failed after install: expected ${target}, found ${
+				installed?.current ?? "unknown"
+			}`,
+		);
+		Deno.exit(1);
+	}
+
+	if (target !== pinned) {
+		await writeDeterminateNixPin(context.dotfilesDir, target);
+		printSuccess(`Updated Determinate Nix pin ${pinned} -> ${target}`);
+	}
+	printSuccess(`Determinate Nix ${target} is installed`);
 }
 
 async function maybeUpdateFlake(context: RebuildContext, opts: RebuildOptions) {
 	if (!opts.update) return;
-
-	await maybeUpgradeDeterminateNix(opts);
 
 	printInfo("Updating flake inputs");
 	const updateCommand = withSudoIfNeeded(context, [
@@ -1061,6 +1216,7 @@ async function maybeUpdateBrew(opts: RebuildOptions) {
 /** Files the rebuild --update flow can change and that --commit commits. */
 export const UPDATE_COMMIT_PATHS = [
 	"Configs/nix/.config/nix/flake.lock",
+	DETERMINATE_NIX_VERSION_PATH,
 	"Configs/agents/.agents/skills",
 	"Configs/pnpm/.config/pnpm-global",
 ];
@@ -1068,10 +1224,10 @@ export const UPDATE_COMMIT_PATHS = [
 const UPDATE_COMMIT_MESSAGE = "chore: sync updates from dot rebuild --update";
 
 /**
- * Commit the files the rebuild --update flow can change (flake.lock, managed
- * agent skills, pnpm globals). Scoped strictly to those paths so unrelated
- * work in the repo — staged or not — is never swept into the commit.
- * Returns true when a commit was created.
+ * Commit the files the rebuild --update flow can change (flake.lock, the
+ * Determinate Nix pin, managed agent skills, pnpm globals). Scoped strictly to
+ * those paths so unrelated work in the repo — staged or not — is never swept
+ * into the commit. Returns true when a commit was created.
  */
 export async function commitRebuildChanges(
 	dotfilesDir: string,
@@ -1480,10 +1636,15 @@ function printPlan(
 	}
 
 	printHeader("Rebuild plan");
-	if (opts.update) {
+	if (opts.latest || opts.update) {
+		const updateNote = opts.update
+			? " (advance the pin to the latest advertised release when newer)"
+			: "";
 		console.log(
-			"check for Determinate Nix updates (determinate-nixd; upgrade on request)",
+			`sync Determinate Nix to the tracked pin ${DETERMINATE_NIX_VERSION_PATH}${updateNote}`,
 		);
+	}
+	if (opts.update) {
 		console.log(
 			"sync managed external agent skills, then redeploy agents",
 		);

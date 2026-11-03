@@ -4,6 +4,7 @@ import { commitRebuildChanges } from "../commands/rebuild.ts";
 import { runCommand } from "../lib/config.ts";
 
 const FLAKE = "Configs/nix/.config/nix/flake.lock";
+const DETERMINATE_PIN = "Configs/nix/.config/nix/determinate-nix-version";
 const PNPM = "Configs/pnpm/.config/pnpm-global/pnpm-lock.yaml";
 const SKILL = "Configs/agents/.agents/skills/.demo-source.json";
 
@@ -22,6 +23,7 @@ async function initRepo(): Promise<string> {
 	}
 
 	await write(FLAKE, '{"lock": 1}');
+	await write(DETERMINATE_PIN, "3.24.1\n");
 	await write(SKILL, "{}");
 	await write(PNPM, "lock: 1");
 	await write("unrelated.txt", "original");
@@ -41,6 +43,7 @@ Deno.test(
 		const dir = await initRepo();
 		try {
 			await Deno.writeTextFile(join(dir, FLAKE), '{"lock": 2}');
+			await Deno.writeTextFile(join(dir, DETERMINATE_PIN), "3.25.0\n");
 			await Deno.writeTextFile(join(dir, PNPM), "lock: 2");
 			await Deno.writeTextFile(join(dir, SKILL), "---\nname: demo\n---\n");
 			await Deno.writeTextFile(join(dir, "unrelated.txt"), "changed");
@@ -57,7 +60,7 @@ Deno.test(
 				(files.stdout ?? "").trim().split("\n").map((l) => l.trim())
 					.filter((line) => line !== "")
 					.toSorted(),
-				[FLAKE, PNPM, SKILL].toSorted(),
+				[FLAKE, DETERMINATE_PIN, PNPM, SKILL].toSorted(),
 			);
 
 			const subject = await git(dir, ["log", "-1", "--format=%s"]);

@@ -93,6 +93,8 @@ Configs are symlinked, so editing either the repo file or the deployed path upda
 
 Headless fleet machines can opt in to passwordless sudo with `unattendedSudo = true` in `machine.nix` (a per-machine flag, intentionally independent of `lite`). With the flag set, machines can be rebuilt unattended without a TTY for the sudo password.
 
+`dot rebuild --latest` also installs exactly the Determinate Nix version tracked in `Configs/nix/.config/nix/determinate-nix-version`, so every fleet machine converges on the same Nix even when upstream advertises a newer release. Advance the pin deliberately with `dot rebuild --update --commit` (then push), or edit the version file and commit it before the machines rebuild.
+
 On macOS, submit the rebuild to launchd when connecting through Tailscale SSH. Activation restarts Tailscale and can terminate the SSH session and its descendants, including `nohup` jobs, before activation finishes. A launchd job survives that restart. Keep the machine's user logged in:
 
 ```bash

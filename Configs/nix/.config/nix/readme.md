@@ -195,6 +195,15 @@ This file is gitignored and never committed to the repository, making it safe to
 
 ## Updating
 
+### Determinate Nix Version Pin
+
+The installed Determinate Nix version is pinned in `Configs/nix/.config/nix/determinate-nix-version` (deployed as `~/.config/nix/determinate-nix-version`).
+
+- `dot rebuild --latest` reads the pin from the updated checkout and installs exactly that version with `sudo determinate-nixd upgrade --version`, even when a newer Determinate release is advertised. This is what keeps the fleet Mac minis on the same Nix.
+- `dot rebuild --update` advances the pin to the newest advertised release, installs it, and (with `--commit`) commits the new pin.
+
+To move the whole fleet to a specific version, edit the pin file, commit it, push, then let each machine run `dot rebuild --latest`.
+
 ### Update Flake Inputs
 
 ```bash

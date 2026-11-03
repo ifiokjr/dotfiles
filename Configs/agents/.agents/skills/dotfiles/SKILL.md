@@ -115,7 +115,7 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 | `dot pnpm` | Manage pnpm global packages |
 | `dot version` | Print CLI version and environment info |
 
-Rebuild flags: `--update` (update flake inputs, plus a Determinate Nix update check that offers to run `determinate-nixd upgrade` when a newer release is available), `--commit` (with --update, commits the changed files: flake.lock, managed skills, and pnpm globals, so only a git push remains), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
+Rebuild flags: `--latest` (update the checkout, then install exactly the Determinate Nix version pinned in `Configs/nix/.config/nix/determinate-nix-version`), `--update` (update flake inputs, advance that Determinate Nix pin to the newest advertised release and install it), `--commit` (with --update, commits the changed files: flake.lock, the Determinate Nix pin, managed skills, and pnpm globals, so only a git push remains), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
 
 ## Essential aliases
 
