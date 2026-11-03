@@ -328,7 +328,7 @@ in
         # Resolve peers through the daemon so MagicDNS and consumer VPN IPv4
         # routing cannot prevent SSH from reaching an otherwise online machine.
         Host mini01
-            HostName mini01-1.tailbfc6bf.ts.net
+            HostName mini01.tailbfc6bf.ts.net
             HostKeyAlias mini01-1.tailbfc6bf.ts.net
             User mini01
             ProxyCommand ${tailscaleSshProxy} %h %p
@@ -337,7 +337,7 @@ in
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
         Host mini02
-            HostName mini02-1.tailbfc6bf.ts.net
+            HostName mini02.tailbfc6bf.ts.net
             HostKeyAlias mini02-1.tailbfc6bf.ts.net
             User mini02
             ProxyCommand ${tailscaleSshProxy} %h %p
@@ -346,7 +346,7 @@ in
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
         Host mini03
-            HostName mini03-1.tailbfc6bf.ts.net
+            HostName mini03.tailbfc6bf.ts.net
             HostKeyAlias mini03-1.tailbfc6bf.ts.net
             User mini03
             ProxyCommand ${tailscaleSshProxy} %h %p
