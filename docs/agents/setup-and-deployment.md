@@ -62,6 +62,8 @@ dot rebuild --add-preset agent-apps   # set the preset and rebuild in one pass
 
 The Nix side reads the preset list on every evaluation; removing it with `dot machine remove-preset agent-apps` makes the next rebuild drop the preset-specific casks.
 
+xAI's official Grok Build CLI (`grok`) is installed through the managed pnpm global project as `@xai-official/grok`, so every machine gets it alongside Codex and OpenCode and it is not gated by `agent-apps`. It authenticates through `grok login` on first launch or `XAI_API_KEY` for headless runs; `dot rebuild --update` advances the pinned version through `pnpm:global:update`.
+
 ## Manual Setup
 
 ```bash

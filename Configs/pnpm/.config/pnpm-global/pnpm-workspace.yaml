@@ -1,6 +1,7 @@
 allowBuilds:
   "@google/genai": true
   "@opencode/cli": true
+  "@xai-official/grok": true
   core-js: true
   esbuild: true
   keytar: true
