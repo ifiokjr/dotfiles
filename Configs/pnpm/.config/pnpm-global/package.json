@@ -3,14 +3,15 @@
 	"type": "module",
 	"private": true,
 	"dependencies": {
-		"@earendil-works/pi-coding-agent": "1.4.0",
+		"@earendil-works/pi-coding-agent": "1.5.0",
 		"@openai/codex": "0.166.0",
 		"@opencode/cli": "2.2.5",
-		"@playwright/cli": "0.1.22",
+		"@playwright/cli": "0.1.23",
 		"@xai-official/grok": "1.0.70",
-		"netlify-cli": "27.16.1",
+		"cf": "1.0.0-beta.27",
+		"netlify-cli": "27.16.2",
 		"ocx": "2.0.15",
-		"vercel": "65.9.0",
+		"vercel": "65.10.0",
 		"vite-plus": "1.4.0"
 	}
 }

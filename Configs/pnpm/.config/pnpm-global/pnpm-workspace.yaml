@@ -13,6 +13,7 @@ allowBuilds:
   re2: true
   tree-sitter-bash: true
   unix-dgram: true
+  workerd: true
 minimumReleaseAgeExclude:
   - opencode-linux-x64-baseline-musl@1.18.19
   - opencode-linux-x64-musl@1.18.19
