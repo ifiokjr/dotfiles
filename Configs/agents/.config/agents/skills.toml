@@ -11,5 +11,5 @@
 #
 # Hand-edit the list below, then run `dot skills apply`.
 #
-# Valid collection ids: poteto, matt-pocock, patrol, mdt, monochange, pina
+# Valid collection ids: poteto, matt-pocock, patrol, mdt, monochange, pina, slopper
 disabled_collections = ["matt-pocock"]

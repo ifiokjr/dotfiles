@@ -25,6 +25,10 @@ If an idea feels generic, say so; that's part of the job. Push back when somethi
 - Write **idiomatic code** for the environment we're working in. Don't transplant patterns between languages.
 - In **TypeScript**, never use `any`. Types stay strict and explicit.
 
+## Cloudflare
+
+- When interacting with Cloudflare, use the `cf` CLI unless the project has a Wrangler configuration file.
+
 ## Model routing
 
 Choose the model that fits the task, and prefer the cheapest one that can do it well. These rules apply wherever the orchestrator tools (`delegate_task`, `orchestrator_capabilities`) exist, such as T3 Code. Elsewhere, pick the model in the provider's own picker.
