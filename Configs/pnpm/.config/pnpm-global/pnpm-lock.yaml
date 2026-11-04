@@ -36,8 +36,8 @@ importers:
         specifier: 2.0.15
         version: 2.0.15
       vercel:
-        specifier: 65.10.0
-        version: 65.10.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0)
+        specifier: 65.11.0
+        version: 65.11.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0)
       vite-plus:
         specifier: 1.4.0
         version: 1.4.0(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(@vitest/ui@5.0.5)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.9.0)
@@ -1219,8 +1219,8 @@ packages:
     engines: {node: '>=22.12.0'}
     hasBin: true
 
-  '@netlify/build@37.7.3':
-    resolution: {integrity: sha512-tb68/znIyn/8C5VALxC84ZwQdY4Phy+ZyvSsrlITVxBy3vHsbgEI9Qhs7nbFx4yCFcf/v6PW+4lPhWfaD5drGw==}
+  '@netlify/build@37.7.5':
+    resolution: {integrity: sha512-kWSAr2iUuaGVUajDdpzRIq30rP5nMuQ3q4/xgWn6WV0dGqzOTA8zQAwVS3YNPgHU9LS1DQGAxrvmu5MEWX6cKQ==}
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -1230,16 +1230,16 @@ packages:
       '@netlify/opentelemetry-sdk-setup':
         optional: true
 
-  '@netlify/cache-utils@7.1.2':
-    resolution: {integrity: sha512-QlBvQfBTbr+ti4MQcO7PUuA+moeQ93Gs1W5eFS7cnEMGv1kQjO3n6rZGGPqWO8Vol0gRXJJGUEnPxC20+KR8vA==}
+  '@netlify/cache-utils@7.1.3':
+    resolution: {integrity: sha512-BBeulx1S6LNAySXqbzKb6Q29QcSKibM+SWaLKuVgTJHf8OR2ZjTxa9HS0UI7Yut+/BMLZ+VeCN3n9LNXKBwrqw==}
     engines: {node: '>=22.12.0'}
 
   '@netlify/cache@4.1.0':
     resolution: {integrity: sha512-s57+0PvMqYHQH90cQDad+KMu0n7CQSL7ZNwggLOD7n7bW5Ywq0nD28X9NNu3DRy0Pv/hiVXKqa4Hht7QWx+sFw==}
     engines: {node: '>=22.12.0'}
 
-  '@netlify/config@25.5.2':
-    resolution: {integrity: sha512-dYa67p8Yus8yJ9EPanIOyNyieGC3j/MLUIzsr9vOEtWHBsxJznuiCo6JqP/LO26IQaq5kHxXooRK2U5Al3eWrw==}
+  '@netlify/config@25.6.1':
+    resolution: {integrity: sha512-Ly2b/1864tfhu845i2PcqPzeomHTesV39ECDEhUqsO7ZdYrP1gNk4EVixSLy51FVjrr6qHLAby/BRqdh5yQffw==}
     engines: {node: '>=22.12.0'}
     hasBin: true
 
@@ -1391,8 +1391,8 @@ packages:
     resolution: {integrity: sha512-PUE0NwWiXU2xh64WNb2y5cFFjkn3CvMH5ReL1zL8M9cue3BmEpqpCb1VPdsnrMtZdatjqmGDND8ACmGdrR/THg==}
     engines: {node: '>=22.12.0'}
 
-  '@netlify/plugins-list@6.81.14':
-    resolution: {integrity: sha512-cLA1tqBnL4zffrI+OlU+gLtLdOds5//i8XJolyTVxYEevKokym7LZI8B/uxSmGPWFrL4fWm0JsaFBQwFtOKyzg==}
+  '@netlify/plugins-list@6.81.15':
+    resolution: {integrity: sha512-d8jOgdb8l4TJvxQBsZpAatH0/Q2XjiCFgH+C2DPmOvYQnfTKj8rHwMqzQnOiwEzZzkD5w/IwIO/Y5p3xiORY5Q==}
     engines: {node: ^14.14.0 || >=16.0.0}
 
   '@netlify/redirect-matcher@0.4.2':
@@ -2328,9 +2328,6 @@ packages:
       rollup:
         optional: true
 
-  '@sec-ant/readable-stream@0.4.1':
-    resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
-
   '@silvia-odwyer/photon-node@0.3.4':
     resolution: {integrity: sha512-bnly4BKB3KDTFxrUIcgCLbaeVVS8lrAkri1pEzskpmxu9MdfGQTy8b8EgcD83ywD3RPMsIulY8xJH5Awa+t9fA==}
 
@@ -2509,8 +2506,8 @@ packages:
     resolution: {integrity: sha512-g9XerViJ/paZujufXYcu5XYI2vU2rtB4sgdpjUHde5RnOkdmpu0ngH46LCFGHoPXO/C+qDPSczIHIRN+8Q2YKQ==}
     engines: {node: '>= 18'}
 
-  '@vercel/cli-support@65.10.0':
-    resolution: {integrity: sha512-HLxM6JtOEVPiaaqJVkzsnM4f61mzhi4WaVoO9fsi1+JRtuXpk3zZz2ZJkTrrxyczqUQJWe/2JTycCjQkaU5Bsg==}
+  '@vercel/cli-support@65.11.0':
+    resolution: {integrity: sha512-9zZUeBOU7jF3vR6kDN4xuM2RxxbgIHjtvAEWVJaHe6tO22jPPxFd0X/kWmm+TY7gSy7gnbwciqZOBYe89rJHvw==}
     engines: {node: '>= 20'}
     os: ['!darwin', '!linux', '!win32']
 
@@ -2655,47 +2652,47 @@ packages:
   '@vercel/static-config@3.4.4':
     resolution: {integrity: sha512-WppaPyEKQhO8qo5gVee3mSo1QSCgDZaUcUDHrqICSlt90oYeC/SHTmKCPWY1x1NB9hU+kR2oDzJwAeRKKv5NIw==}
 
-  '@vercel/vc-native-darwin-arm64@65.10.0':
-    resolution: {integrity: sha512-HSQsnaz4sQHrQqzBRcdvMDH86qN/LW1W+12r1+4Kjap+mUveYrcGqdVdX4K64OsoM5ajyURGZ9VDGhobxq6/gw==}
+  '@vercel/vc-native-darwin-arm64@65.11.0':
+    resolution: {integrity: sha512-mvNIMqLt8LhVbJ3MTtMZMu6NjQeZgXWe4SuQiIF3Xy5L7cfLeqQCpN7XW99KH5qpI27jNrI6ux5MO6LaX0+5Og==}
     cpu: [arm64]
     os: [darwin]
 
-  '@vercel/vc-native-darwin-x64@65.10.0':
-    resolution: {integrity: sha512-oD4C+TokU9YFAyl4Z7GDlemD3HsngiwsNonBR7/6BzL/Nw5aQjp2M4BV9AMan+u30s6uklro/VBo0qjI6H6orA==}
+  '@vercel/vc-native-darwin-x64@65.11.0':
+    resolution: {integrity: sha512-uJx9hZd83B/1eE2YOvvRfj7sGjkXQ/TANWaZpoSuORaI5+kLHR0rz1hu/cZCClmyO7rZpjoBkcWVAL1NvhmXsg==}
     cpu: [x64]
     os: [darwin]
 
-  '@vercel/vc-native-linux-arm64-musl@65.10.0':
-    resolution: {integrity: sha512-oJViwIZLLoCsYv5gUbnioxSvOCeffnpWSI2MuBar0vnZ+kRJgNdSxkBrKDb64J9hFgLgkLyzRl5ppcfE7XPd4g==}
+  '@vercel/vc-native-linux-arm64-musl@65.11.0':
+    resolution: {integrity: sha512-rX/jzKrBWLa451CjLZCuW56Buk76HYoOWCHdH5WxRTamUgNnryke3k59vBY+WnGelmT6tLf1GqvL8hRNf8Kcug==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@vercel/vc-native-linux-arm64@65.10.0':
-    resolution: {integrity: sha512-GhjcosaJqo1jWPnowDe/Ry4O97B2IaBc4pP/S7hbRgGqHtLfILK8pbbTae2aHP2cvgePbZUP2XdiVsGf2vVcfQ==}
+  '@vercel/vc-native-linux-arm64@65.11.0':
+    resolution: {integrity: sha512-57vA1tsudA30ex8q4bFiFmCxgFkC41bGn6Rf8c5Ppk4QHUWcXNVRROgoTPjenGbC4h0q7a3hENLYmNLan8zXPg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@vercel/vc-native-linux-x64-musl@65.10.0':
-    resolution: {integrity: sha512-BjUrXcDAfh4MQXhRn4fAfs2LMZJTqJOZVRH6fibu+vncnBdPB1SDLL8zx7XdNqXxEMt7FUmGy0rkOuljUV5R4w==}
+  '@vercel/vc-native-linux-x64-musl@65.11.0':
+    resolution: {integrity: sha512-6ICTwsGE+0zwoUbcV68MS/zgAX2SxLORWbo8x4GpSSeiyJMg9bNRTlO9EDuAqsXpliz8l6xTY+Pi6SeVi2HL1Q==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@vercel/vc-native-linux-x64@65.10.0':
-    resolution: {integrity: sha512-tpTdd3jKH5vjwrK8YlZkHbgUnhgqrEG/jXk98D99QBH3p6UT/2yTerjOQ2VxuHJPGD6tzcY+HZvBPlgjZolZiQ==}
+  '@vercel/vc-native-linux-x64@65.11.0':
+    resolution: {integrity: sha512-rZAHMe8uyHRLUFIoTxot4t9hYwyyt9OPvqQRY58dmHZHCqJnT/zWS0juXWh+wo3PMDMsaWDEZSKwTWW2j3RsFA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@vercel/vc-native-win32-arm64@65.10.0':
-    resolution: {integrity: sha512-ZGm2klWtGkKkMROGGKNf/orIUMmYDqVzkcw7FiZHcgbN9IPLL0OK3+lbVTqHySnkMChurMP/fJhJyQmhFRFPgQ==}
+  '@vercel/vc-native-win32-arm64@65.11.0':
+    resolution: {integrity: sha512-zVB3MGDTKx4mMLXy6CPIwumaDoOIS+ROl8YMamOuBsN/J2ZTt3ooXOkUrzC5fzL8gy3DBSAW6Wf+whCwvXGOwQ==}
     cpu: [arm64]
     os: [win32]
 
-  '@vercel/vc-native-win32-x64@65.10.0':
-    resolution: {integrity: sha512-TCqCQBBfmEGtHi4g6uenNjtihBEN8SJ1oMYeOQ4ZHdGd1IslGec6qSXM/f4RsTlSs7uFMeq3UQdl5IdWEm1Q9A==}
+  '@vercel/vc-native-win32-x64@65.11.0':
+    resolution: {integrity: sha512-ByTtt0GMLt2j1rwO6rk2BYIPAkvgzcDzhORJY9fkeZPLFyACSual6Oqk+/VYHo7PgqcJ3qHZE+6fzy8N8JVlFQ==}
     cpu: [x64]
     os: [win32]
 
@@ -4173,10 +4170,6 @@ packages:
     resolution: {integrity: sha512-VaUJspBffn/LMCJVoMvSAdmscJyS1auj5Zulnn5UoYcY531UWmdwhRWkcGKnGU93m5HSXP9LP2usOryrBtQowA==}
     engines: {node: '>=16'}
 
-  get-stream@9.0.1:
-    resolution: {integrity: sha512-kVCxPF3vQM/N0B1PmoqVUqgHP+EeVjmZSQn+1oCRPxd2P21P2F19lIgbR3HBosbB1PUhOAoctJnfEn2GbN2eZA==}
-    engines: {node: '>=18'}
-
   get-symbol-description@1.1.0:
     resolution: {integrity: sha512-w9UMqWwJxHNOvoNzSJ2oPF5wvYcvP7jUvYzhp67yEhTi17ZDBBC1z9pTdGuzjD+EFIqLSYRweZjqfiPzQ06Ebg==}
     engines: {node: '>= 0.4'}
@@ -4423,8 +4416,8 @@ packages:
     resolution: {integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==}
     engines: {node: '>= 0.4'}
 
-  is-core-module@2.17.0:
-    resolution: {integrity: sha512-J/vG0zBCbIKOQFfufSwyXdMrsohyJIUNkrnmo6WZGzoM7tr/lsbfW5b2BvisL6zsyMzK9UxV9L6c7AoFbyXHOA==}
+  is-core-module@2.18.0:
+    resolution: {integrity: sha512-qyax9fgaKOEC4qK8WZn7Q4IcoZC9RC1O1fFxRcRTq/oMMkWT/uXpqpXa12kzWR409zAt1drYN9N9BO26UmBCmw==}
     engines: {node: '>= 0.4'}
 
   is-data-view@1.0.2:
@@ -6434,8 +6427,8 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
-  vercel@65.10.0:
-    resolution: {integrity: sha512-dXoJ5FqmbnUqpIJ/wBRXJnc/+fiARikuPA80wFJF3IfhS0/dpH+rv2oIKfpylWTe7p4gtHAIX3svZBiUA81cng==}
+  vercel@65.11.0:
+    resolution: {integrity: sha512-Zf4mh2J5+XsfPwQKAyMqUsY9LGBlXwCoHZuRMWvf/GLqP0cNwIv7reDKRPgnykioCbZyIPWYziaFYlbE9qrIBw==}
     engines: {node: '>= 20'}
     hasBin: true
 
@@ -7783,17 +7776,17 @@ snapshots:
       yaml: 2.9.1
       yargs: 17.7.3
 
-  '@netlify/build@37.7.3(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(picomatch@4.0.7)':
+  '@netlify/build@37.7.5(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(picomatch@4.0.7)':
     dependencies:
       '@bugsnag/js': 9.1.0
       '@netlify/blobs': 11.1.7(supports-color@11.0.0)
-      '@netlify/cache-utils': 7.1.2
-      '@netlify/config': 25.5.2
+      '@netlify/cache-utils': 7.1.3
+      '@netlify/config': 25.6.1
       '@netlify/edge-bundler': 16.2.0
       '@netlify/functions-utils': 7.1.22(supports-color@11.0.0)
       '@netlify/git-utils': 7.1.1
       '@netlify/opentelemetry-utils': 4.0.1(@opentelemetry/api@1.9.1)
-      '@netlify/plugins-list': 6.81.14
+      '@netlify/plugins-list': 6.81.15
       '@netlify/run-utils': 7.1.0
       '@netlify/zip-it-and-ship-it': 16.6.0(supports-color@11.0.0)
       '@opentelemetry/api': 1.9.1
@@ -7838,16 +7831,15 @@ snapshots:
       - react-native-b4a
       - rollup
 
-  '@netlify/cache-utils@7.1.2':
+  '@netlify/cache-utils@7.1.3':
     dependencies:
-      get-stream: 9.0.1
       junk: 4.0.1
 
   '@netlify/cache@4.1.0':
     dependencies:
       '@netlify/runtime-utils': 3.0.0
 
-  '@netlify/config@25.5.2':
+  '@netlify/config@25.6.1':
     dependencies:
       '@netlify/api': 15.1.6
       '@netlify/headers-parser': 10.1.1
@@ -7897,7 +7889,7 @@ snapshots:
     dependencies:
       '@netlify/ai': 1.0.2
       '@netlify/blobs': 11.1.7(supports-color@11.0.0)
-      '@netlify/config': 25.5.2
+      '@netlify/config': 25.6.1
       '@netlify/database-dev': 1.0.1
       '@netlify/dev-utils': 6.0.4
       '@netlify/edge-functions-dev': 2.0.5
@@ -8082,7 +8074,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@netlify/plugins-list@6.81.14': {}
+  '@netlify/plugins-list@6.81.15': {}
 
   '@netlify/redirect-matcher@0.4.2': {}
 
@@ -8711,8 +8703,6 @@ snapshots:
       estree-walker: 2.0.2
       picomatch: 4.0.7
 
-  '@sec-ant/readable-stream@0.4.1': {}
-
   '@silvia-odwyer/photon-node@0.3.4': {}
 
   '@sinclair/typebox@0.25.24': {}
@@ -8953,7 +8943,7 @@ snapshots:
     dependencies:
       execa: 5.1.1
 
-  '@vercel/cli-support@65.10.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0)':
+  '@vercel/cli-support@65.11.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0)':
     dependencies:
       '@vercel/backends': 24.0.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@vercel/build-utils@15.2.1)(supports-color@11.0.0)
       '@vercel/blob': 2.8.0
@@ -9345,28 +9335,28 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  '@vercel/vc-native-darwin-arm64@65.10.0':
+  '@vercel/vc-native-darwin-arm64@65.11.0':
     optional: true
 
-  '@vercel/vc-native-darwin-x64@65.10.0':
+  '@vercel/vc-native-darwin-x64@65.11.0':
     optional: true
 
-  '@vercel/vc-native-linux-arm64-musl@65.10.0':
+  '@vercel/vc-native-linux-arm64-musl@65.11.0':
     optional: true
 
-  '@vercel/vc-native-linux-arm64@65.10.0':
+  '@vercel/vc-native-linux-arm64@65.11.0':
     optional: true
 
-  '@vercel/vc-native-linux-x64-musl@65.10.0':
+  '@vercel/vc-native-linux-x64-musl@65.11.0':
     optional: true
 
-  '@vercel/vc-native-linux-x64@65.10.0':
+  '@vercel/vc-native-linux-x64@65.11.0':
     optional: true
 
-  '@vercel/vc-native-win32-arm64@65.10.0':
+  '@vercel/vc-native-win32-arm64@65.11.0':
     optional: true
 
-  '@vercel/vc-native-win32-x64@65.10.0':
+  '@vercel/vc-native-win32-x64@65.11.0':
     optional: true
 
   '@vitest/browser-preview@5.0.5(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.6)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.9.0))(vitest@5.0.5)':
@@ -10864,11 +10854,6 @@ snapshots:
 
   get-stream@8.0.1: {}
 
-  get-stream@9.0.1:
-    dependencies:
-      '@sec-ant/readable-stream': 0.4.1
-      is-stream: 4.0.1
-
   get-symbol-description@1.1.0:
     dependencies:
       call-bound: 1.0.4
@@ -11128,7 +11113,7 @@ snapshots:
 
   is-callable@1.2.7: {}
 
-  is-core-module@2.17.0:
+  is-core-module@2.18.0:
     dependencies:
       hasown: 2.0.4
 
@@ -11708,9 +11693,9 @@ snapshots:
       '@netlify/ai': 1.0.2
       '@netlify/api': 15.1.6
       '@netlify/blobs': 11.1.7(supports-color@11.0.0)
-      '@netlify/build': 37.7.3(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(picomatch@4.0.7)
+      '@netlify/build': 37.7.5(@opentelemetry/api@1.9.1)(@types/node@26.6.6)(picomatch@4.0.7)
       '@netlify/build-info': 11.3.1
-      '@netlify/config': 25.5.2
+      '@netlify/config': 25.6.1
       '@netlify/dev': 5.1.12(@types/node@26.6.6)(supports-color@11.0.0)
       '@netlify/dev-utils': 6.0.4
       '@netlify/edge-bundler': 16.2.0
@@ -12573,7 +12558,7 @@ snapshots:
   resolve@2.0.0-next.7:
     dependencies:
       es-errors: 1.3.0
-      is-core-module: 2.17.0
+      is-core-module: 2.18.0
       node-exports-info: 1.6.2
       object-keys: 1.1.1
       path-parse: 1.0.7
@@ -13307,7 +13292,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vercel@65.10.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0):
+  vercel@65.11.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0):
     dependencies:
       '@vercel/backends': 24.0.1(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(@vercel/build-utils@15.2.1)(supports-color@11.0.0)
       '@vercel/blob': 2.8.0
@@ -13347,15 +13332,15 @@ snapshots:
       uuid: 14.0.1
       zod: 4.6.7
     optionalDependencies:
-      '@vercel/cli-support': 65.10.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0)
-      '@vercel/vc-native-darwin-arm64': 65.10.0
-      '@vercel/vc-native-darwin-x64': 65.10.0
-      '@vercel/vc-native-linux-arm64': 65.10.0
-      '@vercel/vc-native-linux-arm64-musl': 65.10.0
-      '@vercel/vc-native-linux-x64': 65.10.0
-      '@vercel/vc-native-linux-x64-musl': 65.10.0
-      '@vercel/vc-native-win32-arm64': 65.10.0
-      '@vercel/vc-native-win32-x64': 65.10.0
+      '@vercel/cli-support': 65.11.0(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)(supports-color@11.0.0)
+      '@vercel/vc-native-darwin-arm64': 65.11.0
+      '@vercel/vc-native-darwin-x64': 65.11.0
+      '@vercel/vc-native-linux-arm64': 65.11.0
+      '@vercel/vc-native-linux-arm64-musl': 65.11.0
+      '@vercel/vc-native-linux-x64': 65.11.0
+      '@vercel/vc-native-linux-x64-musl': 65.11.0
+      '@vercel/vc-native-win32-arm64': 65.11.0
+      '@vercel/vc-native-win32-x64': 65.11.0
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
