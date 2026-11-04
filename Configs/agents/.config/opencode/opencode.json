@@ -14,5 +14,13 @@
 	},
 	"model": "ollama-cloud/kimi-k2.7-code",
 	"share": "disabled",
-	"autoupdate": false
+	"autoupdate": false,
+	"mcp": {
+		"servers": {
+			"cloudflare": {
+				"type": "remote",
+				"url": "https://mcp.cloudflare.com/mcp"
+			}
+		}
+	}
 }
