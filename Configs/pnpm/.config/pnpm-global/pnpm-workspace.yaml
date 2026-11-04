@@ -2,6 +2,7 @@ allowBuilds:
   "@google/genai": true
   "@opencode/cli": true
   "@xai-official/grok": true
+  agent-desktop: true
   core-js: true
   esbuild: true
   keytar: true

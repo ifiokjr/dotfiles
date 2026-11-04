@@ -76,7 +76,7 @@ Reading a project `AGENTS.md` requires Claude Code v2.1.277 or later, and is ski
 
 ### Skills
 
-Managed skills live under `Configs/agents/.agents/skills/` and deploy to `~/.agents/skills/`. That shared path is read directly by OpenCode, Cursor, Gemini CLI, and Zed. Two harnesses do not read it and need links created by `Hooks/agents/post.sh`:
+Managed skills live under `Configs/agents/.agents/skills/` and deploy to `~/.agents/skills/`. That shared path is read directly by OpenCode, Cursor, Gemini CLI, Zed, ZCode, and Pi. Two harnesses do not read it and need links created by `Hooks/agents/post.sh`:
 
 - **Codex** skips symlinked `SKILL.md` files, so each managed skill directory is linked into `~/.codex/skills` pointing at the repo copy, where files are real.
 - **Claude Code** reads only `~/.claude/skills`, project `.claude/skills`, plugin skills, and directories passed with `--add-dir`. It does not read `~/.agents/skills`, confirmed on 2.1.280 by placing a probe skill there and finding it invisible while the same skill in `~/.claude/skills` was found. Each managed skill directory is linked into `~/.claude/skills` pointing at the deployed `~/.agents/skills` path, which covers externally synced skills as well as committed ones.
@@ -84,6 +84,8 @@ Managed skills live under `Configs/agents/.agents/skills/` and deploy to `~/.age
 The link step skips dotfiles such as `.mdt-source.json`, skips directories with no `SKILL.md`, and never replaces an existing entry, so a locally installed skill of the same name wins and Claude's own `synced` directory is untouched.
 
 A skill whose frontmatter sets `disable-model-invocation: true` is deliberately invisible to the model and can only be run as `/name`. That is expected for the 21 managed skills that use it, not a linking failure.
+
+A skill can opt out of a specific harness by adding a `.harness-exclusions` file to its directory with one harness id per line (`codex`, `claude`). The hook skips those links and removes a link it created earlier if the exclusion is added later. The `agent-desktop` skill uses this to stay available in OpenCode, ZCode, and Pi while Codex and Claude keep their own computer-use implementations.
 
 The shared code-quality standard applies across projects and harnesses, including Codex. It requires idiomatic designs with explicit ownership, meaningful verification, root-cause fixes, and an honest account of remaining limits. Project-specific instructions add their own language and framework conventions.
 

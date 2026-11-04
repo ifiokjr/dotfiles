@@ -1,0 +1,5 @@
+# Harnesses that must not receive a link to this skill.
+# Read by Hooks/agents/post.sh during deployment. One harness id per line.
+# Codex and Claude Code have native computer-use support that should win.
+codex
+claude

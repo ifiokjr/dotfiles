@@ -8,6 +8,7 @@
 		"@opencode/cli": "2.2.5",
 		"@playwright/cli": "0.1.23",
 		"@xai-official/grok": "1.0.70",
+		"agent-desktop": "1.1.0",
 		"cf": "1.0.0-beta.27",
 		"netlify-cli": "27.16.2",
 		"ocx": "2.0.15",
