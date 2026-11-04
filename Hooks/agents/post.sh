@@ -49,6 +49,26 @@ skill_is_disabled() {
 	return 1
 }
 
+# True when a skill opts out of a harness.
+#
+# Some harnesses have capable native computer-use support, so a skill built for
+# a different implementation only routes work through the wrong tool. A
+# `.harness-exclusions` file in the skill directory lists harness ids, one per
+# line, that must not receive a link. Comments and blank lines are ignored, and
+# a missing file means the skill is linked everywhere.
+skill_excludes_harness() {
+	local name="$1" harness="$2" marker line
+	marker="$MANAGED_SKILLS_DIR/$name/.harness-exclusions"
+	[ -f "$marker" ] || return 1
+	while IFS= read -r line; do
+		case "$line" in
+		'' | '#'*) continue ;;
+		esac
+		[ "$line" = "$harness" ] && return 0
+	done <"$marker"
+	return 1
+}
+
 # Remove a disabled skill's entry from a harness directory.
 #
 # Removal is driven only by the explicit disabled list, never inferred from link
@@ -74,6 +94,28 @@ remove_disabled_skill_links() {
 		fi
 		rm -rf "$entry"
 		echo "Disabled skill $name removed from $skills_dir"
+	done
+}
+
+# Remove a harness link that an exclusion marker now forbids.
+#
+# The link loops below only add entries, so a skill that gains an exclusion
+# later would keep its old Codex or Claude link. Delete only symlinks this hook
+# creates: Codex points at the repo copy and Claude at the deployed directory.
+remove_excluded_skill_links() {
+	local skills_dir="$1" harness="$2" entry name target
+	[ -d "$skills_dir" ] || return 0
+	for entry in "$skills_dir"/*; do
+		[ -L "$entry" ] || continue
+		name="$(basename "$entry")"
+		skill_excludes_harness "$name" "$harness" || continue
+		target="$(readlink "$entry")"
+		case "$target" in
+		"$MANAGED_SKILLS_DIR/$name" | "$DEPLOYED_SKILLS_DIR/$name")
+			rm -f "$entry"
+			echo "Excluded skill $name removed from $skills_dir"
+			;;
+		esac
 	done
 }
 
@@ -158,6 +200,9 @@ if [ -d "$MANAGED_SKILLS_DIR" ] && [ -d "$CODEX_SKILLS_DIR" ]; then
 		if skill_is_disabled "$skill_name"; then
 			continue
 		fi
+		if skill_excludes_harness "$skill_name" codex; then
+			continue
+		fi
 		target="$CODEX_SKILLS_DIR/$skill_name"
 		if [ -e "$target" ] || [ -L "$target" ]; then
 			continue
@@ -202,6 +247,9 @@ if [ -d "$DEPLOYED_SKILLS_DIR" ] && [ -d "$CLAUDE_SKILLS_DIR" ]; then
 		if skill_is_disabled "$skill_name"; then
 			continue
 		fi
+		if skill_excludes_harness "$skill_name" claude; then
+			continue
+		fi
 		target="$CLAUDE_SKILLS_DIR/$skill_name"
 		if [ -e "$target" ] || [ -L "$target" ]; then
 			continue
@@ -224,6 +272,8 @@ remove_disabled_skill_links "$DEPLOYED_SKILLS_DIR"
 remove_disabled_skill_links "$CODEX_SKILLS_DIR"
 remove_disabled_skill_links "$CLAUDE_SKILLS_DIR"
 remove_disabled_skill_links "$PI_SKILLS_DIR"
+remove_excluded_skill_links "$CODEX_SKILLS_DIR" codex
+remove_excluded_skill_links "$CLAUDE_SKILLS_DIR" claude
 
 # ---------------------------------------------------------------------------
 # Seed the OpenCode credential store with the Z.AI (GLM) key

@@ -23,6 +23,9 @@ importers:
       '@xai-official/grok':
         specifier: 1.0.70
         version: 1.0.70
+      agent-desktop:
+        specifier: 1.1.0
+        version: 1.1.0
       cf:
         specifier: 1.0.0-beta.27
         version: 1.0.0-beta.27(@types/node@26.6.6)
@@ -3039,6 +3042,13 @@ packages:
   agent-base@9.0.0:
     resolution: {integrity: sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==}
     engines: {node: '>= 20'}
+
+  agent-desktop@1.1.0:
+    resolution: {integrity: sha512-4aITRplPcbV6xBFNKeehMbxSN0/L+IOhnn6LBuPXezoyr08Xl73Y6rwZiR4sM4rM/eBO6iJMoKL+IvFQvHwLEw==}
+    engines: {node: '>=18'}
+    cpu: [arm64, x64]
+    os: [darwin, win32, linux]
+    hasBin: true
 
   ajv-errors@3.0.0:
     resolution: {integrity: sha512-V3wD15YHfHz6y0KdhYFjyy9vWtEVALT9UrxfN3zqlI6dMioHnJrqOYfyPKol3oqrnCM9uwkcdCwkJ0WUcbLMTQ==}
@@ -9633,6 +9643,8 @@ snapshots:
   agent-base@8.0.0: {}
 
   agent-base@9.0.0: {}
+
+  agent-desktop@1.1.0: {}
 
   ajv-errors@3.0.0(ajv@8.20.0):
     dependencies:
