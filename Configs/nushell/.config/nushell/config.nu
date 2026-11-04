@@ -217,7 +217,7 @@ alias cb = cargo build
 alias ct = cargo test
 alias cch = cargo check
 alias ccl = cargo clippy
-alias cf = cargo fmt
+alias cfmt = cargo fmt
 alias cw = cargo watch -x run
 # pnpm
 alias p = pnpm
