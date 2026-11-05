@@ -33,18 +33,24 @@ If an idea feels generic, say so; that's part of the job. Push back when somethi
 
 Choose the model that fits the task, and prefer the cheapest one that can do it well. These rules apply wherever the orchestrator tools (`delegate_task`, `orchestrator_capabilities`) exist, such as T3 Code. Elsewhere, pick the model in the provider's own picker.
 
-**Cap reasoning at `xhigh`.** Claude: `effort: xhigh`, never `max`, `ultracode`, or `ultrathink`. Codex: `reasoningEffort: xhigh`, never `max` or `ultra`. Leave `fastMode` off and `serviceTier` at `default`.
+**Never delegate to `gpt-6-astra`** unless I explicitly ask for it in the current thread. It costs $10/$50 per million input/output tokens, ten times Terra's price, and it is the easiest way to burn a budget. Treat other premium models the same way: `gpt-5.6-cyber`, `gpt-5.5-pro`, and `claude-fable-5-1` all need an explicit request first.
+
+**Cap reasoning at `high` for Codex.** Use `reasoningEffort: high`, never `xhigh`, `max`, or `ultra`. Claude may use `effort: xhigh` for judgment, never `max`, `ultracode`, or `ultrathink`. Leave `fastMode` off and `serviceTier` at `default`.
 
 The parent decides and reviews; children execute. Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder:
 
-| Rung         | Use for                                                                  | Provider      | Model                             | Options                  |
-| ------------ | ------------------------------------------------------------------------ | ------------- | --------------------------------- | ------------------------ |
-| Implement    | Named files, clear acceptance criteria, a test command                   | `opencode`    | `opencode-go/deepseek-v4.1-flash` | `variant: max`           |
-| Second patch | The first attempt was wrong, or you want an independent patch to compare | `opencode`    | `zai-coding-plan/glm-5.3-flash`   | `variant: max`           |
-| Judgment     | Ambiguous scope, cross-cutting design, "decide how this should work"     | `claudeAgent` | `claude-opus-5-5`                 | `effort: xhigh`          |
-| Long horizon | Multi-hour refactors, migrations, deep debugging                         | `codex`       | `gpt-6-astra`                     | `reasoningEffort: xhigh` |
+| Rung         | Use for                                                                  | Provider      | Model                             | Options                 |
+| ------------ | ------------------------------------------------------------------------ | ------------- | --------------------------------- | ----------------------- |
+| Implement    | Named files, clear acceptance criteria, a test command                   | `opencode`    | `opencode-go/deepseek-v4.1-flash` | `variant: max`          |
+| Second patch | The first attempt was wrong, or you want an independent patch to compare | `opencode`    | `zai-coding-plan/glm-5.3`         | `variant: max`          |
+| Judgment     | Ambiguous scope, cross-cutting design, "decide how this should work"     | `claudeAgent` | `claude-opus-5-5`                 | `effort: xhigh`         |
+| Long horizon | Multi-hour refactors, migrations, deep debugging                         | `codex`       | `gpt-6.1-terra`                   | `reasoningEffort: high` |
 
-- Climb only when the rung below actually failed. Implement and second-patch take the volume; judgment and long-horizon take one call per turn, never a fan-out.
+- Price guide (input/output per million tokens): DeepSeek V4.1 Flash $0.15/$0.60, Terra $1/$5, Sol $2/$10, Astra $10/$50. GLM 5.3 is covered by the ZAI coding plan and has no marginal token cost.
+- For GLM, always use the subscription-backed `zai-coding-plan`; never substitute the per-token `opencode-go` copy. For DeepSeek, use `opencode-go`.
+- Escalate from Terra to `gpt-6.1-sol` only when Terra actually fails, and keep Sol at `reasoningEffort: high`. Neither Codex model is a default for fan-out.
+- Parallel fan-out is for independent, well-specified work. Use DeepSeek or GLM for it by default; use Terra or Sol only when each child genuinely needs the stronger model.
+- Climb only when the rung below actually failed. Implement and second-patch take the volume; judgment is one call per turn and long-horizon work is one child per task.
 - Brief a child like a stranger: goal, files to touch, files to leave alone, acceptance criteria, and the exact test command.
 - Give an implementation child that will commit `isolation: "worktree"`, never the parent checkout.
 - Read the child's diff before accepting its summary. A green test run is not a review.
