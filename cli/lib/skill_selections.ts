@@ -30,6 +30,7 @@ import { MONOCHANGE_SOURCE } from "./monochange.ts";
 import { PATROL_SOURCE } from "./patrol.ts";
 import { PINA_SOURCE } from "./pina.ts";
 import { PSTACK_SOURCE } from "./pstack.ts";
+import { SECURITY_AUDIT_SOURCE } from "./security_audit.ts";
 import { SLOPPER_SOURCE } from "./slopper.ts";
 
 /** User-editable intent, deployed to `~/.config/agents/skills.toml`. */
@@ -72,6 +73,11 @@ export const SKILL_COLLECTIONS: readonly SkillCollection[] = [
 		id: "patrol",
 		summary: "Patrol Flutter integration testing",
 		source: PATROL_SOURCE,
+	},
+	{
+		id: "security-audit",
+		summary: "Cloudflare multi-phase security audit",
+		source: SECURITY_AUDIT_SOURCE,
 	},
 	{ id: "mdt", summary: "mdt documentation tooling", source: MDT_SOURCE },
 	{

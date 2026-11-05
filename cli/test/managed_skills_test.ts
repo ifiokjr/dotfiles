@@ -3,6 +3,7 @@ import { findManagedSkillConflicts } from "../lib/managed_skills.ts";
 import { MATT_POCOCK_SOURCE } from "../lib/matt_pocock.ts";
 import { PATROL_SOURCE } from "../lib/patrol.ts";
 import { PSTACK_SOURCE } from "../lib/pstack.ts";
+import { SECURITY_AUDIT_SOURCE } from "../lib/security_audit.ts";
 
 Deno.test("managed external selections have no target-name conflicts", () => {
 	assertEquals(
@@ -10,6 +11,7 @@ Deno.test("managed external selections have no target-name conflicts", () => {
 			PSTACK_SOURCE,
 			MATT_POCOCK_SOURCE,
 			PATROL_SOURCE,
+			SECURITY_AUDIT_SOURCE,
 		]),
 		[],
 	);

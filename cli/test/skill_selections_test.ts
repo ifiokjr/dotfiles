@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { join } from "@std/path";
 import { MATT_POCOCK_SOURCE } from "../lib/matt_pocock.ts";
 import { PSTACK_SOURCE } from "../lib/pstack.ts";
+import { SECURITY_AUDIT_SOURCE } from "../lib/security_audit.ts";
 import {
 	disabledSkillNames,
 	isCollectionDisabled,
@@ -37,6 +38,10 @@ Deno.test("collection ids resolve to their source skill names", async () => {
 		assertEquals(
 			await skillNamesForCollection("matt-pocock", tempDir),
 			MATT_POCOCK_SOURCE.skills.map((skill) => skill.name),
+		);
+		assertEquals(
+			await skillNamesForCollection("security-audit", tempDir),
+			SECURITY_AUDIT_SOURCE.skills.map((skill) => skill.name),
 		);
 		assertEquals(await skillNamesForCollection("nope", tempDir), []);
 	} finally {
