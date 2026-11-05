@@ -39,18 +39,20 @@ Choose the model that fits the task, and prefer the cheapest one that can do it 
 
 The parent decides and reviews; children execute. Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder:
 
-| Rung         | Use for                                                                  | Provider      | Model                             | Options                 |
-| ------------ | ------------------------------------------------------------------------ | ------------- | --------------------------------- | ----------------------- |
-| Implement    | Named files, clear acceptance criteria, a test command                   | `opencode`    | `opencode-go/deepseek-v4.1-flash` | `variant: max`          |
-| Second patch | The first attempt was wrong, or you want an independent patch to compare | `opencode`    | `zai-coding-plan/glm-5.3`         | `variant: max`          |
-| Judgment     | Ambiguous scope, cross-cutting design, "decide how this should work"     | `claudeAgent` | `claude-opus-5-5`                 | `effort: xhigh`         |
-| Long horizon | Multi-hour refactors, migrations, deep debugging                         | `codex`       | `gpt-6.1-terra`                   | `reasoningEffort: high` |
+| Rung           | Use for                                                                  | Provider      | Model                             | Options                 |
+| -------------- | ------------------------------------------------------------------------ | ------------- | --------------------------------- | ----------------------- |
+| Implement      | Named files, clear acceptance criteria, a test command                   | `opencode`    | `opencode-go/deepseek-v4.1-flash` | `variant: max`          |
+| Long implement | Well-defined, long-running implementation with a clear brief             | `opencode`    | `zai-coding-plan/glm-5.3-flash`   | `variant: max`          |
+| Second patch   | The first attempt was wrong, or you want an independent patch to compare | `opencode`    | `zai-coding-plan/glm-5.3`         | `variant: max`          |
+| Judgment       | Ambiguous scope, cross-cutting design, "decide how this should work"     | `claudeAgent` | `claude-opus-5-5`                 | `effort: xhigh`         |
+| Long horizon   | Multi-hour refactors, migrations, deep debugging                         | `codex`       | `gpt-6.1-terra`                   | `reasoningEffort: high` |
 
 - Price guide (input/output per million tokens): DeepSeek V4.1 Flash $0.15/$0.60, Terra $1/$5, Sol $2/$10, Astra $10/$50. GLM 5.3 is covered by the ZAI coding plan and has no marginal token cost.
-- For GLM, always use the subscription-backed `zai-coding-plan`; never substitute the per-token `opencode-go` copy. For DeepSeek, use `opencode-go`.
+- `zai-coding-plan/glm-5.3-flash` is a strong long-running implementer: give it a clear brief and acceptance criteria, then let it work. It is not the choice for ambiguous scope.
+- For either GLM model, always use the subscription-backed `zai-coding-plan`; never substitute the per-token `opencode-go` copy. For DeepSeek, use `opencode-go`.
 - Escalate from Terra to `gpt-6.1-sol` only when Terra actually fails, and keep Sol at `reasoningEffort: high`. Neither Codex model is a default for fan-out.
 - Parallel fan-out is for independent, well-specified work. Use DeepSeek or GLM for it by default; use Terra or Sol only when each child genuinely needs the stronger model.
-- Climb only when the rung below actually failed. Implement and second-patch take the volume; judgment is one call per turn and long-horizon work is one child per task.
+- Climb only when the rung below actually failed. Implement, long implement, and second-patch take the volume; judgment is one call per turn and long-horizon work is one child per task.
 - Brief a child like a stranger: goal, files to touch, files to leave alone, acceptance criteria, and the exact test command.
 - Give an implementation child that will commit `isolation: "worktree"`, never the parent checkout.
 - Read the child's diff before accepting its summary. A green test run is not a review.
