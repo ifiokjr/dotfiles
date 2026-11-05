@@ -49,6 +49,7 @@ The parent decides and reviews; children execute. Start a thread on the model wh
 
 - Price guide (input/output per million tokens): DeepSeek V4.1 Flash $0.15/$0.60, Terra $1/$5, Sol $2/$10, Astra $10/$50. GLM 5.3 is covered by the ZAI coding plan and has no marginal token cost.
 - `zai-coding-plan/glm-5.3-flash` is a strong long-running implementer: give it a clear brief and acceptance criteria, then let it work. It is not the choice for ambiguous scope.
+- `zai-coding-plan/glm-5.3` is the higher-value GLM: use it for work that needs more intelligence, such as a difficult second patch or a careful review. It has no vision, so do not send it screenshots or image-based tasks.
 - For either GLM model, always use the subscription-backed `zai-coding-plan`; never substitute the per-token `opencode-go` copy. For DeepSeek, use `opencode-go`.
 - Escalate from Terra to `gpt-6.1-sol` only when Terra actually fails, and keep Sol at `reasoningEffort: high`. Neither Codex model is a default for fan-out.
 - Parallel fan-out is for independent, well-specified work. Use DeepSeek or GLM for it by default; use Terra or Sol only when each child genuinely needs the stronger model.
