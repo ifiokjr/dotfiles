@@ -62,6 +62,11 @@ import {
 	verifyPstackSkillDeployment,
 } from "../lib/pstack.ts";
 import {
+	SECURITY_AUDIT_SOURCE,
+	syncSecurityAuditSkills,
+	verifySecurityAuditSkillDeployment,
+} from "../lib/security_audit.ts";
+import {
 	disabledSkillNames,
 	readSkillSelections,
 	writeSkillSelections,
@@ -1004,6 +1009,7 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		MATT_POCOCK_SOURCE,
 		MONOCHANGE_SOURCE,
 		PATROL_SOURCE,
+		SECURITY_AUDIT_SOURCE,
 		PINA_SOURCE,
 		SLOPPER_SOURCE,
 	];
@@ -1049,6 +1055,13 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 		printSuccess(
 			`Updated ${patrol.skillCount} Patrol skills at ${
 				patrol.resolvedSha.slice(0, 12)
+			}`,
+		);
+
+		const securityAudit = await syncSecurityAuditSkills(context.dotfilesDir);
+		printSuccess(
+			`Updated ${securityAudit.skillCount} Cloudflare security-audit skill at ${
+				securityAudit.resolvedSha.slice(0, 12)
 			}`,
 		);
 
@@ -1147,6 +1160,11 @@ async function updateManagedAgentSkills(context: RebuildContext) {
 			homeDir,
 			{ skipSkills },
 		)).map((issue) => `Patrol: ${issue}`),
+		...(await verifySecurityAuditSkillDeployment(
+			context.dotfilesDir,
+			homeDir,
+			{ skipSkills },
+		)).map((issue) => `security-audit: ${issue}`),
 		...(await verifyPinaSkillDeployment(context.dotfilesDir, homeDir, {
 			skipSkills,
 		})).map((issue) => `pina: ${issue}`),
