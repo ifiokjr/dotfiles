@@ -37,7 +37,7 @@ Choose the model that fits the task, and prefer the cheapest one that can do it 
 
 **Cap reasoning at `high` for Codex.** Use `reasoningEffort: high`, never `xhigh`, `max`, or `ultra`. Claude may use `effort: xhigh` for judgment, never `max`, `ultracode`, or `ultrathink`. Leave `fastMode` off and `serviceTier` at `default`.
 
-The parent decides and reviews; children execute. Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder:
+Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder. The loop that governs that delegation is under **Orchestrating work** below.
 
 | Rung           | Use for                                                                  | Provider      | Model                             | Options                 |
 | -------------- | ------------------------------------------------------------------------ | ------------- | --------------------------------- | ----------------------- |
@@ -54,10 +54,22 @@ The parent decides and reviews; children execute. Start a thread on the model wh
 - Escalate from Terra to `gpt-6.1-sol` only when Terra actually fails, and keep Sol at `reasoningEffort: high`. Neither Codex model is a default for fan-out.
 - Parallel fan-out is for independent, well-specified work. Use DeepSeek or GLM for it by default; use Terra or Sol only when each child genuinely needs the stronger model.
 - Climb only when the rung below actually failed. Implement, long implement, and second-patch take the volume; judgment is one call per turn and long-horizon work is one child per task.
-- Brief a child like a stranger: goal, files to touch, files to leave alone, acceptance criteria, and the exact test command.
 - Give an implementation child that will commit `isolation: "worktree"`, never the parent checkout.
-- Read the child's diff before accepting its summary. A green test run is not a review.
 - If a delegation fails on a usage limit, do not retry on that provider. Fall back down the ladder, or stop and report.
+
+## Orchestrating work
+
+A session is the project's working memory, not a per-task scratchpad. Keep one long-running thread per project, let it accumulate decisions and context, and start a new thread only when I ask or when the work needs a separate checkout.
+
+The primary agent plans, scopes, and reviews; it does not implement. Every change to project files goes to a child, and the primary's own writes stay limited to briefs, notes, and review comments.
+
+**Scope one task at a time.** A task is one coherent change. Its brief names the goal, the files or areas in scope, the files to leave alone, the acceptance criteria, the exact command that proves it, and the evidence to return. If the work turns out bigger or different, stop and write a new task instead of widening this one. No drive-by refactors, dependency bumps, or formatting sweeps.
+
+**Ask for proof, not a summary.** A child is done when it returns the commands it ran with their real output, the test result, the changed paths or diffstat, and any artifact the change produces (screenshot, trace, log). "Done" and "tests pass" without output do not count. Re-run the cheap check yourself when the result matters.
+
+**Review the direction once, then stop.** Read the diff against the brief once: is this the change I asked for, in the files I named, and nothing else? If it is off, reject it and rescope with a new brief rather than patching it yourself. Review deeper only when the change touches security, auth, money, data migrations, or a public API.
+
+A green test run is not a review. Report the change, what the evidence covers, and what it leaves untested.
 
 ## Code quality
 
