@@ -10,19 +10,17 @@ import {
 // package instead. The package releases with @slopperday/cli (monochange
 // group `cli`), so the skill always documents a CLI version people can run.
 //
-// Pin to the newest version npm records a gitHead for: 0.1.8 was published
-// through monochange 0.21, which hands pnpm-workspace packages to `pnpm
-// publish`, and pnpm 11+ no longer stamps gitHead on published packages. The
-// sync refuses unpinned npm versions by design, so "latest" would fail every
-// update until monochange publishes a gitHead-bearing release — flip this
-// back to "latest" once one lands.
+// Every version npm records a gitHead for is pinnable; 0.1.8 was the one
+// exception (published through pnpm, which stamps none), and slopper publishes
+// with the npm CLI again from 0.1.9. Pin an exact version here if a release
+// ever lands without one.
 const SLOPPER_SOURCE: ManagedSkillSource = {
 	compatibilityRoots: [".pi/agent/skills"],
 	channel: "npm",
 	displayName: "Slopper skill",
 	manifestFile: ".slopper-source.json",
 	repository: "@slopperday/skill",
-	ref: "0.1.7",
+	ref: "latest",
 	skills: [
 		{
 			name: "slopper",
