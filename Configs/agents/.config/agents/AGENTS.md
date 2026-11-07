@@ -110,8 +110,21 @@ Data leaves this machine only when the task requires it, and it is never data ab
 Your training data is probably older than the GitHub you are actually talking to. These features exist now, and defaulting to older workflows wastes them. Load the `github` skill before any non-trivial `gh` work.
 
 - **Stacked pull requests are native.** When a change splits into dependent layers, do not ship one giant PR or rebase a long branch by hand. Use the `gh stack` extension: `gh stack init`, `gh stack add -Am "feat(scope): layer"`, `gh stack submit --auto`, `gh stack sync`, `gh stack merge --yes --squash`. Each PR targets the layer below, and merging a lower layer automatically rebases and retargets the ones above. Stacks must live in one repository, so no cross-fork stacks.
-- **The CLI uploads attachments.** `gh pr create`, `gh pr edit`, `gh pr comment`, `gh issue create`, `gh issue edit`, and `gh issue comment` all take `--attach <path>`, including videos. `./after.png#Alt text` sets alt text, and a local path already referenced in the body (`![alt](./shot.png)`) is rewritten to the uploaded asset. This removes the browser round trip for screenshots and video proof. Never attach secrets or personal images; uploads are public and permanent, and the rule in the `git-workflow` skill is absolute.
+- **The CLI uploads attachments.** `gh pr create`, `gh pr edit`, `gh pr comment`, `gh issue create`, `gh issue edit`, and `gh issue comment` all take `--attach <path>`, including videos. `./after.png#Alt text` sets alt text, and a local path already referenced in the body (`![alt](./shot.png)`) is rewritten to the uploaded asset. This removes the browser round trip for screenshots and video proof, and it is one of the two approved ways to host a README image: attach through one pinned `Media assets` issue and paste the uploaded URL into the Markdown (see **Media** below). Never attach secrets or personal images; uploads are public and permanent, and the rule in the `git-workflow` skill is absolute.
 - **Do not stop at these two.** GitHub ships changes constantly. Read `~/.agents/skills/github/SKILL.md` for the recent-feature inventory before assuming a workflow is unavailable.
+
+## Media: link assets, never commit them
+
+Screenshots, videos, GIFs, design mocks, traces, datasets, and other binary assets never go into a Git repository. Every committed byte stays in the history and makes clones, CI, and future work heavier; deleting the file in a later commit does not remove it. Link the asset instead.
+
+- **Only small brand assets belong in the repository**: a logo, favicon, app icon, or social preview that the project renders directly. Keep them optimized, and link anything the project does not need to build, run, or render.
+- **Backblaze B2 is the default for README and docs images.** Upload the file to the project's bucket with the `backblaze-upload` skill when it is installed, then link the public URL in the Markdown file.
+- **GitHub attachments are the alternative.** Attach the file with `gh ... --attach` to one pinned `Media assets` issue per repository, or to the PR when the image is review proof, then copy the uploaded URL into the Markdown. Do not commit the file as a fallback.
+- **Videos follow the same rule**: link the B2 object, or attach the video to a PR or issue for review. Never commit the video file.
+- **Git LFS is not an exception** unless I ask for it explicitly.
+- **Already-tracked media**: stop and ask before rewriting history. A delete commit does not shrink existing clones.
+
+See the `git-workflow` skill for the full rule and commands.
 
 ## Commit authorship: my name only
 

@@ -71,6 +71,8 @@ gh pr edit 456 --attach ./result.png
 - Available on GitHub.com and GitHub Enterprise Cloud. Not GHES in the initial release.
 - Requires write access to the target repository, using the OAuth token from `gh auth login` or a classic PAT.
 
+Attaching is also one of the two sanctioned ways to get an image into a README or Markdown file. Attach it to a single pinned `Media assets` issue (or to the PR when the image is review proof), copy the uploaded URL into the Markdown, and leave the issue and comment in place. Never commit the image to the repository instead; see the media rule in the `git-workflow` skill.
+
 **Hard rule, with no exceptions:** never attach secrets or personal images. No tokens, API keys, passwords, `.env` contents, SSH keys, or terminal output showing secret material, which in this dotfiles repo includes any `msr`, `msload`, or 1Password output. No private photos, identity documents, or screenshots exposing browser tabs, bookmarks, or account pages. Uploads land on GitHub's CDN where anyone with the URL can view them, and they cannot be reliably deleted afterwards. Read the image before attaching it and redact anything sensitive. If in doubt, describe it in text instead.
 
 ## Other `gh` changes worth knowing

@@ -99,6 +99,25 @@ When a unit of work splits into related, dependent changes, default to a stack o
 - Squash remains the merge method: `gh stack merge --squash` lands a stack without violating a squash-only repo policy
 - Preview caveats: all branches in a stack must live in the same repository (no fork stacks), and merge queue support is still rolling out
 
+### 6. Link media assets, never commit them
+
+Screenshots, videos, GIFs, and other binary media do not belong in Git history. A repository carries every version of every file ever committed, so one committed screenshot keeps costing its bytes forever: clones stay slow, CI and caches get heavier, and removing the file in a later commit does not shrink the history. Link the asset instead of committing it.
+
+**Never commit:** screenshots, screen recordings, demo videos, GIFs, design mocks, sample media, traces, profiles, generated reports, datasets, or archives.
+
+**Allowed in the repository:** small brand assets the project renders directly (a logo, favicon, app icon, or social preview). Keep them optimized and few. If the project does not need the file to build, run, or render, or the file is larger than roughly 100 KB, link it instead.
+
+**The two approved ways to publish an image for a README or Markdown file:**
+
+1. **Backblaze B2 bucket.** Upload the file to the project's bucket with the `backblaze-upload` skill when it is installed, then paste the public URL into the Markdown (`![alt](https://...)`). This is the default for screenshots that document the project, design mocks, and anything long-lived.
+2. **A GitHub attachment on a pinned phantom issue or a PR.** Attach the file with `gh ... --attach`, then copy the uploaded CDN URL from the created body and paste that URL into the Markdown. Keep one pinned `Media assets` issue per repository rather than creating a phantom issue per image; use a PR when the image is proof for that review. Deleting the issue, comment, or PR breaks the image, so leave it in place.
+
+Videos follow the same rule: link the B2 object, or attach the video to a PR or issue for review. Never commit the video file.
+
+Git LFS is not a loophole. It still stores the bytes in a remote and consumes bandwidth and quota, so use it only when the user explicitly asks for it.
+
+If media is already tracked, stop and ask before rewriting history. Removing it in a new commit leaves the bloat in every existing clone.
+
 ## Capabilities
 
 ### Branch strategy
@@ -243,6 +262,20 @@ gh pr create --title "..." --body "..." --attach './before.png#Before' --attach 
 gh pr comment --attach ./screenshot.png
 gh issue comment --attach ./regression.webm
 ```
+
+This is also the second approved way to host a Markdown image, through a single pinned phantom issue:
+
+```bash
+# once per repository: a pinned issue that hosts README and docs images
+gh issue create --title "Media assets" \
+  --body "Pinned: files attached here are linked from the README and docs. Do not delete." \
+  --attach ./architecture.png
+
+# later images: add another comment to the same issue
+gh issue comment <issue-number> --attach ./dashboard.png
+```
+
+Copy the uploaded URL out of the comment body and use it in the Markdown file. Leave the issue and its comments in place; deleting them breaks every image that points at them. See [Core Principle #6: Link media assets, never commit them](#6-link-media-assets-never-commit-them).
 
 - Works with `gh pr create/edit/comment` and `gh issue create/edit/comment`; repeat `--attach` for multiple files (up to 50 per command)
 - Alt text follows the path after `#` (`./login.png#The login error state`); without it the filename is used

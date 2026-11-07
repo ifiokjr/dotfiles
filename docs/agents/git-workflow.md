@@ -48,6 +48,15 @@ Common scopes in this repo:
 
 ## Media Attachments
 
-- Attach screenshots with `gh pr create --attach ./screenshot.png` (also `gh pr edit`, `gh pr comment`, `gh issue create/edit/comment`); repeat the flag for multiple files and add alt text as `./file.png#Alt text`. Requires `gh` 2.99.0+.
+Never commit screenshots, videos, GIFs, design mocks, traces, datasets, or other binary assets to the repository. Git keeps every version forever, so the repository only grows and clones and CI get slower; a later delete commit does not shrink the history. Link the asset instead.
+
+- Only small runtime brand assets belong in the repository: logos, favicons, app icons, and social previews. Optimize them, and link anything the project does not need to build, run, or render.
+- Publish README and docs images one of two ways:
+  1. **Backblaze B2**: upload with the `backblaze-upload` skill, then link the public URL in the Markdown file.
+  2. **GitHub attachment**: attach with `gh ... --attach` to one pinned `Media assets` issue per repository (or to the PR when the image is review proof), then copy the uploaded URL into the Markdown file.
+- Videos follow the same rule: link the B2 object, or attach the video to a PR or issue for review. Never commit the video file.
+- Git LFS is not an exception unless the user explicitly asks for it.
+- If media is already tracked, stop and ask before rewriting history.
+- `gh 2.99.0+` supports `--attach` on `gh pr create/edit/comment` and `gh issue create/edit/comment`; repeat the flag for multiple files and add alt text as `./file.png#Alt text`.
 - Never attach secrets or personal images: no tokens, API keys, `.env` contents, terminal output showing secret material (e.g. `msr`/`msload`/1Password output), SSH keys, or private/personal photos. Uploads land on GitHub's CDN where anyone with the URL can view them and they cannot be reliably deleted.
 - Redact or crop screenshots before attaching when anything sensitive is visible; if in doubt, describe it in text instead.
