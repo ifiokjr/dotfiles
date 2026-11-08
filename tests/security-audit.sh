@@ -288,8 +288,10 @@ check_risky_casks_absent() {
 	local f="$1/Configs/nix/.config/nix/darwin.nix" cask
 	require_file "$f" || return 1
 	# charles = HTTPS-MITM proxy CA; qbittorrent = torrent client;
-	# nordvpn = conflicts with Tailscale; obs = unused screen/AV capture.
-	for cask in charles qbittorrent nordvpn obs; do
+	# obs = unused screen/AV capture. nordvpn was pruned here in the
+	# 2026-10 audit but deliberately re-added as the daily VPN in
+	# 2026-11; it must not be connected alongside Tailscale.
+	for cask in charles qbittorrent obs; do
 		if grep -q "\"${cask}\"" "$f"; then
 			fail "cask '$cask' is installed (high-risk, unused at audit time)"
 			return 1
