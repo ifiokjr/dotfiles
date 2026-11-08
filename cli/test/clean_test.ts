@@ -4,7 +4,10 @@ import {
 	fmtBytes,
 	isSudoRemovablePath,
 	parseDfAvailableKilobytes,
+	parsePnpmStoreDir,
+	pnpmGlobalInstallRoots,
 	removeCachePath,
+	selectPnpmStoresToRemove,
 } from "../commands/clean.ts";
 
 Deno.test("fmtBytes formats human-readable sizes", () => {
@@ -213,5 +216,82 @@ Deno.test("removeCachePath never escalates outside HOME", async () => {
 		});
 	} finally {
 		await unlockAndRemove(dir, locked);
+	}
+});
+
+Deno.test("parsePnpmStoreDir reads the storeDir from .modules.yaml", () => {
+	const yaml = [
+		"layoutVersion: 5",
+		"storeDir: /Users/me/Library/pnpm/store/v11",
+		"virtualStoreDir: .pnpm",
+		"",
+	].join("\n");
+	assertEquals(
+		parsePnpmStoreDir(yaml),
+		"/Users/me/Library/pnpm/store/v11",
+	);
+	// Quoted values and trailing slashes are normalised.
+	assertEquals(
+		parsePnpmStoreDir(`storeDir: "/Users/me/store/v3/"`),
+		"/Users/me/store/v3",
+	);
+	// Current pnpm writes the same file as JSON.
+	assertEquals(
+		parsePnpmStoreDir(
+			`{\n  "storeDir": "/Users/me/Library/pnpm/store/v11",\n  "virtualStoreDir": ".pnpm"\n}`,
+		),
+		"/Users/me/Library/pnpm/store/v11",
+	);
+	assertEquals(parsePnpmStoreDir("layoutVersion: 5"), null);
+	assertEquals(parsePnpmStoreDir("storeDir:\n"), null);
+});
+
+Deno.test("selectPnpmStoresToRemove keeps stores global installs reference", () => {
+	const root = "/Users/me/Library/pnpm/store";
+	const entries = ["v10", "v11", "v3", "metadata.json"];
+	// A global install built against v11 keeps v11 alive; older stores go.
+	assertEquals(
+		selectPnpmStoresToRemove(root, entries, [`${root}/v11`]),
+		[`${root}/v10`, `${root}/v3`],
+	);
+	// Trailing slashes in either side must not defeat the comparison.
+	assertEquals(
+		selectPnpmStoresToRemove(root, entries, [`${root}/v11/`]),
+		[`${root}/v10`, `${root}/v3`],
+	);
+	// Non-versioned entries are never selected.
+	assertEquals(
+		selectPnpmStoresToRemove(root, entries, [`${root}/v10`, `${root}/v11`]),
+		[`${root}/v3`],
+	);
+	// Nothing referenced means every versioned store is removable.
+	assertEquals(
+		selectPnpmStoresToRemove(root, ["v11"], []),
+		[`${root}/v11`],
+	);
+});
+
+Deno.test("pnpmGlobalInstallRoots covers the managed and PNPM_HOME layouts", () => {
+	const previousData = Deno.env.get("XDG_DATA_HOME");
+	const previousPnpm = Deno.env.get("PNPM_HOME");
+	try {
+		Deno.env.delete("XDG_DATA_HOME");
+		Deno.env.delete("PNPM_HOME");
+		assertEquals(pnpmGlobalInstallRoots("/Users/me"), [
+			"/Users/me/.local/share/pnpm-global",
+			"/Users/me/Library/pnpm",
+		]);
+
+		Deno.env.set("XDG_DATA_HOME", "/Users/me/.data/");
+		Deno.env.set("PNPM_HOME", "/Users/me/.pnpm/");
+		assertEquals(pnpmGlobalInstallRoots("/Users/me"), [
+			"/Users/me/.data/pnpm-global",
+			"/Users/me/.pnpm",
+		]);
+	} finally {
+		if (previousData === undefined) Deno.env.delete("XDG_DATA_HOME");
+		else Deno.env.set("XDG_DATA_HOME", previousData);
+		if (previousPnpm === undefined) Deno.env.delete("PNPM_HOME");
+		else Deno.env.set("PNPM_HOME", previousPnpm);
 	}
 });

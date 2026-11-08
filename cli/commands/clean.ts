@@ -409,35 +409,68 @@ async function cleanCaches(apply: boolean): Promise<number> {
 		freed += bytes;
 	}
 
-	// The pnpm store is a pure content-addressable cache: existing node_modules
-	// keep working after deletion because packages are hard-linked into them.
-	// `pnpm store path` points at the current versioned store (…/store/v11);
-	// its parent also holds older vN stores left by pnpm upgrades that
+	// `pnpm store path` points at the current versioned store (…/store/v11); its
+	// parent also holds older vN stores left by pnpm upgrades that
 	// `pnpm store prune` never cleans — on a single machine those were tens of
-	// GB, so remove the whole store root.
+	// GB.
+	//
+	// Deleting the whole store root is only safe when nothing links into it. A
+	// pnpm *global* install (`dot pnpm sync`, `~/.local/share/pnpm-global`)
+	// records the store it was built from and symlinks its packages there, so
+	// wiping that store silently breaks every managed CLI — opencode, codex,
+	// grok, cf, vercel — even though their `node_modules` directories still
+	// exist. Only ever remove versioned stores that no global install references.
 	if (await commandExists("pnpm")) {
 		const storePath = await pnpmStorePath();
 		if (storePath) {
 			const storeRoot = storePath.replace(/\/v\d+$/, "");
-			let bytes = await duBytes(storeRoot);
-			if (bytes !== null && bytes > 0) {
+			const globalDirs = await pnpmGlobalInstallDirs();
+			const referenced = await referencedPnpmStores(globalDirs);
+			const entries = await readDirNames(storeRoot);
+			const removable = globalDirs.length > 0 && referenced.length === 0
+				? null // globals exist but we cannot tell which store they need
+				: referenced.length === 0
+				? [storeRoot] // no global installs: the old whole-root behaviour
+				: selectPnpmStoresToRemove(storeRoot, entries, referenced);
+			let bytes = 0;
+			if (removable === null) {
+				printWarning(
+					"pnpm global packages are installed but their store could not be determined; keeping the pnpm store",
+				);
+			} else if (removable.length === 0) {
+				printInfo(`pnpm store (${storeRoot}): nothing to remove`);
+			} else {
+				for (const target of removable) {
+					bytes += (await duBytes(target)) ?? 0;
+				}
 				if (apply) {
-					try {
-						const privileged = await removeCachePath(storeRoot);
-						printInfo(
-							`pnpm store: removed ${fmtBytes(bytes)}${viaSudo(privileged)}`,
-						);
-					} catch (error) {
-						printError(`Failed to remove pnpm store: ${error}`);
-						printInfo(
-							`Clear it with \`sudo rm -rf "${storeRoot}"\` once sudo is available`,
-						);
-						bytes = 0;
+					for (const target of removable) {
+						try {
+							const privileged = await removeCachePath(target);
+							printInfo(
+								`pnpm store: removed ${target}${viaSudo(privileged)}`,
+							);
+						} catch (error) {
+							printError(`Failed to remove pnpm store: ${error}`);
+							printInfo(
+								`Clear it with \`sudo rm -rf "${target}"\` once sudo is available`,
+							);
+							bytes = 0;
+						}
 					}
 				} else {
-					printInfo(`pnpm store (${storeRoot}): ${fmtBytes(bytes)}`);
+					printInfo(
+						`pnpm store: ${fmtBytes(bytes)} across ${removable.length} unreferenced store(s)`,
+					);
 				}
 				freed += bytes;
+				// The stores a global install links into are kept, but their
+				// unreferenced packages can still go: `prune` only drops content
+				// no project or global package points at.
+				if (apply && referenced.length > 0) {
+					printInfo("Pruning the active pnpm store…");
+					await runCommand(["pnpm", "store", "prune"]);
+				}
 			}
 		}
 	}
@@ -468,6 +501,88 @@ async function pnpmStorePath(): Promise<string | null> {
 	if (!success || !stdout) return null;
 	const path = stdout.trim().split("\n").pop()?.trim();
 	return path || null;
+}
+
+/**
+ * Directories a pnpm global install can live in: the dotfiles-managed
+ * `pnpm-global` workspace and pnpm's own `PNPM_HOME`.
+ */
+export function pnpmGlobalInstallRoots(home: string): string[] {
+	const dataHome = Deno.env.get("XDG_DATA_HOME")?.replace(/\/+$/, "");
+	const pnpmHome = Deno.env.get("PNPM_HOME")?.replace(/\/+$/, "");
+	return [
+		`${dataHome || `${home}/.local/share`}/pnpm-global`,
+		pnpmHome || `${home}/Library/pnpm`,
+	];
+}
+
+/**
+ * The `storeDir` a pnpm install recorded in its `.modules.yaml`.
+ * pnpm writes that file as YAML in older versions and as JSON in newer ones,
+ * so both spellings are accepted.
+ */
+export function parsePnpmStoreDir(modulesYaml: string): string | null {
+	const yaml = modulesYaml.match(/^storeDir:\s*(.+)$/m);
+	const json = modulesYaml.match(/"storeDir"\s*:\s*"([^"]+)"/);
+	const raw = yaml?.[1] ?? json?.[1];
+	if (!raw) return null;
+	const value = raw.trim().replace(/^["']|["']$/g, "");
+	return value.replace(/\/+$/, "") || null;
+}
+
+/**
+ * Versioned stores inside one store root that no global install references.
+ * Stores are `vN` directories; anything else in the root is left alone.
+ */
+export function selectPnpmStoresToRemove(
+	storeRoot: string,
+	entries: string[],
+	referencedStoreDirs: string[],
+): string[] {
+	const root = storeRoot.replace(/\/+$/, "");
+	const referenced = new Set(referencedStoreDirs.map((p) => p.replace(/\/+$/, "")));
+	return entries
+		.filter((entry) => /^v\d+$/.test(entry))
+		.map((entry) => `${root}/${entry}`)
+		.filter((path) => !referenced.has(path));
+}
+
+/** Global install roots that actually contain packages. */
+async function pnpmGlobalInstallDirs(): Promise<string[]> {
+	const found: string[] = [];
+	for (const root of pnpmGlobalInstallRoots(HOME)) {
+		const modules = `${root}/node_modules`;
+		if (!(await pathExists(modules))) continue;
+		const names = await readDirNames(modules);
+		if (names.length > 0) found.push(root);
+	}
+	return found;
+}
+
+/** Store directories the given global installs were built from. */
+async function referencedPnpmStores(roots: string[]): Promise<string[]> {
+	const referenced: string[] = [];
+	for (const root of roots) {
+		const modulesYaml = `${root}/node_modules/.modules.yaml`;
+		if (!(await pathExists(modulesYaml))) continue;
+		try {
+			const parsed = parsePnpmStoreDir(await Deno.readTextFile(modulesYaml));
+			if (parsed) referenced.push(parsed);
+		} catch {
+			// Unreadable metadata: the caller keeps the store rather than guess.
+		}
+	}
+	return referenced;
+}
+
+async function readDirNames(path: string): Promise<string[]> {
+	const names: string[] = [];
+	try {
+		for await (const entry of Deno.readDir(path)) names.push(entry.name);
+	} catch {
+		// Missing or unreadable: treat as empty.
+	}
+	return names;
 }
 
 /**
