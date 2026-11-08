@@ -25,6 +25,16 @@ If an idea feels generic, say so; that's part of the job. Push back when somethi
 - Write **idiomatic code** for the environment we're working in. Don't transplant patterns between languages.
 - In **TypeScript**, never use `any`. Types stay strict and explicit.
 
+## Rust builds
+
+Every Rust build on this machine goes through [mr boxington](https://github.com/jdx/mr-boxington) (`mbx`), installed from `ifiokjr/nixpkgs`. It shares compiler output across worktrees and keeps build data on disk under a budget.
+
+- Run `cargo` normally in a shell whose `PATH` carries mbx's Cargo shim, or name the command with `mbx build`, `mbx check`, `mbx test`, `mbx clippy`.
+- Never reclaim space by deleting `target/` by hand. Preview with `mbx gc --dry-run`, reclaim with `mbx gc`, inspect with `mbx cache stats`; `mbx doctor` reports a broken setup.
+- Never set `CARGO_TARGET_DIR`, `--target-dir`, or `build.target-dir` in order to save space: a target directory mbx does not place is invisible to its cache and its budget. Set `MBX_TARGET_VIEWS=0` for the rare build that must stay self-contained.
+- A managed `target/` is a symlink into the cache, so plain Cargo outside mbx can fail with `output file ... is not writeable`; rerun the command through mbx instead of deleting the file.
+- The machine-wide policy lives in this repository (120 GiB combined budget, agent worktrees evicted first). Edit home.nix, not `mbx settings set`.
+
 ## Cloudflare
 
 - When interacting with Cloudflare, use the `cf` CLI unless the project has a Wrangler configuration file.
