@@ -132,6 +132,8 @@ $env.GC_LOG_FILE = "/dev/null"
 # PATH (single consolidation point)
 # ---------------------------------------------------------------------------
 let path_prepend = [
+    # macOS: the mbx Cargo shim, first so `cargo` always shares mbx's build cache.
+    $"($env.HOME)/Library/Application Support/mbx/bin"
     $"($env.HOME)/.local/bin"
     $"($env.HOME)/.cargo/bin"
     $"($env.HOME)/.shorebird/bin"
