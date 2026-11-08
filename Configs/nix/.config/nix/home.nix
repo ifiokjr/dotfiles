@@ -222,6 +222,7 @@ in
       extra.cargo-clean-all
       extra.cargo-interactive-update
       extra.deno
+      extra.mbx
       extra.monochange
       extra.monostyle
       extra.pnpm
@@ -320,6 +321,20 @@ in
         exec "$cli" "$@"
       '';
     };
+
+    # Machine-wide mbx policy. 120 GiB is the combined budget for the action
+    # store, managed target directories, and learned incremental state; agent
+    # worktrees are evicted before long-lived checkouts. Home-manager owns this
+    # file, so `mbx settings set` must not be used to change these values — edit
+    # home.nix and rebuild instead.
+    "Library/Application Support/mbx/config.toml".text = ''
+      [gc]
+      max_total_size = "120GiB"
+      rustc_max_age = "90d"
+
+      [target]
+      evict_first = [".claude/worktrees", ".codex/worktrees", ".t3/worktrees"]
+    '';
 
     ".ssh/config" = {
       force = true;
