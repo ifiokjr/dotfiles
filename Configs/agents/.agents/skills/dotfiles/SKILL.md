@@ -117,6 +117,12 @@ The `dotfiles` CLI (aliased as `dot`) manages the dotfiles installation.
 
 Rebuild flags: `--latest` (update the checkout, then install exactly the Determinate Nix version pinned in `Configs/nix/.config/nix/determinate-nix-version`), `--update` (update flake inputs, advance that Determinate Nix pin to the newest advertised release and install it), `--commit` (with --update, commits the changed files: flake.lock, the Determinate Nix pin, managed skills, and pnpm globals, so only a git push remains), `--lite` / `--no-lite`, `--desktop` / `--no-desktop`, `--always-on`, `--add-preset`, `--rebuild-os`, `--dry-run`.
 
+### Rebuild log
+
+Every `dot rebuild` appends its full stdout and stderr to `~/.local/state/dotfiles/rebuild.log`, whether it succeeds or fails. Sessions are delimited by `=== dot rebuild … ===` / `=== exit … ===` markers, and the file is capped at 10 MB by dropping its oldest lines (it keeps the last 8 MB when a trim fires). The launchd fleet flow (see `docs/agents/setup-and-deployment.md`) appends to the same file, so unattended and interactive rebuilds share one history.
+
+When diagnosing a rebuild problem, read the log: the last session starts at the final `=== dot rebuild` marker, and its `=== exit N` footer shows how it ended.
+
 ## Essential aliases
 
 ### Monosecret

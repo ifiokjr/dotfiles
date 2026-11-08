@@ -26,6 +26,8 @@ import {
 	resolveMachineConfigPath,
 	resolveNixConfigDir,
 	runCommand,
+	shellCommand,
+	shellQuote,
 } from "../lib/config.ts";
 import {
 	findManagedSkillConflicts,
@@ -76,6 +78,7 @@ import {
 	syncSlopperSkills,
 	verifySlopperSkillDeployment,
 } from "../lib/slopper.ts";
+import { runLoggedRebuild } from "../lib/rebuild_log.ts";
 import { installDotfilesCli } from "./self.ts";
 
 interface RebuildOptions {
@@ -172,6 +175,13 @@ export const rebuildCommand = new Command()
 	.option("--dry-run", "Show the rebuild plan without executing")
 	.action(async (opts: RebuildOptions) => {
 		validateOptions(opts);
+
+		// Append this rebuild's full output to the rebuild log, success or
+		// failure, so warnings and errors can be diagnosed after the fact.
+		// Inside the already-logged child (and when the log is unavailable)
+		// this returns null and the rebuild proceeds unwrapped below.
+		const loggedExit = await runLoggedRebuild();
+		if (loggedExit !== null) Deno.exit(loggedExit);
 
 		// Prefer the checkout the deployed ~/.config/nix symlinks point into: on
 		// deployed machines that is the checkout nix builds from, so updating,
@@ -1712,13 +1722,4 @@ async function captureCommand(args: string[], cwd: string): Promise<string> {
 	const output = await command.output();
 	if (!output.success) return "";
 	return new TextDecoder().decode(output.stdout).trim();
-}
-
-function shellCommand(args: string[]): string {
-	return args.map(shellQuote).join(" ");
-}
-
-function shellQuote(value: string): string {
-	if (/^[A-Za-z0-9_@%+=:,./#-]+$/.test(value)) return value;
-	return `'${value.replaceAll("'", `'\\''`)}'`;
 }

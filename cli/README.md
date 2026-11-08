@@ -4,6 +4,8 @@ Unified CLI for managing dotfiles — setup, rebuild, reload, doctor, and more.
 
 After a rebuild, the binary is auto-compiled and installed to `~/.local/bin/dotfiles` with a `dot` symlink alias for quick access.
 
+Every `dot rebuild` appends its full stdout and stderr to `~/.local/state/dotfiles/rebuild.log` — success or failure. Sessions are delimited by `=== dot rebuild … ===` and `=== exit … ===` markers, and the file is capped at 10 MB by dropping its oldest lines, so failed or warned rebuilds can be diagnosed after the fact.
+
 ```bash
 dot --help          # show all commands
 dot help groups          # detailed help for a subcommand

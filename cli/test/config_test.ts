@@ -17,6 +17,8 @@ import {
 	resolveMachineConfigPath,
 	resolveNixConfigDir,
 	runCommand,
+	shellCommand,
+	shellQuote,
 } from "../lib/config.ts";
 
 Deno.test("platform helpers return supported labels", () => {
@@ -388,4 +390,18 @@ Deno.test("refreshShellIntegrations tolerates missing and failing scripts", asyn
 	} finally {
 		await Deno.remove(tempDir, { recursive: true });
 	}
+});
+
+Deno.test("shellQuote leaves shell-safe values bare", () => {
+	assertEquals(shellQuote("aarch64-darwin"), "aarch64-darwin");
+	assertEquals(shellQuote("/usr/local/bin/dotfiles"), "/usr/local/bin/dotfiles");
+});
+
+Deno.test("shellQuote quotes values with spaces and escapes quotes", () => {
+	assertEquals(shellQuote("my log.log"), "'my log.log'");
+	assertEquals(shellQuote("it's"), `'it'\\''s'`);
+});
+
+Deno.test("shellCommand joins arguments into one shell string", () => {
+	assertEquals(shellCommand(["echo", "a b"]), `echo 'a b'`);
 });
