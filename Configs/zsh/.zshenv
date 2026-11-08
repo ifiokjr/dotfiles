@@ -9,8 +9,13 @@ export PATH="$PATH:/Users/ifiokjr/.foundry/bin"
 # Prepended after rustup's env so the shim wins over ~/.cargo/bin for all zsh
 # shells, including the non-interactive ones agents and scripts use. The shim
 # falls back to `mbx` on PATH, and is a no-op where mbx is not installed.
+# The case guard keeps nested shells (agents spawn many) from stacking
+# duplicate entries.
 if [ -x "$HOME/Library/Application Support/mbx/bin/cargo" ]; then
-	export PATH="$HOME/Library/Application Support/mbx/bin:$PATH"
+	case ":$PATH:" in
+	*":$HOME/Library/Application Support/mbx/bin:"*) ;;
+	*) export PATH="$HOME/Library/Application Support/mbx/bin:$PATH" ;;
+	esac
 fi
 
 # Vite+ bin (https://viteplus.dev)
