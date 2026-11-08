@@ -198,6 +198,7 @@ in
         "google-drive"
         "gpg-suite"
         "ledger-wallet"
+        "nordvpn" # daily-use VPN; re-added 2026-11 after the 2026-10 audit prune (never connect alongside Tailscale)
         "raycast"
         "the-unarchiver"
         "vysor"
