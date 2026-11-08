@@ -117,7 +117,7 @@ launchctl bootstrap "gui/$(id -u)" "$job"
 REMOTE
 ```
 
-Reconnect and inspect `launchctl print gui/$(id -u)/org.dotfiles.rebuild` and `~/.local/state/dotfiles/rebuild.log`. A finished job has no `pid`; check its `last exit code` and log. Unload the finished job with `launchctl bootout gui/$(id -u)/org.dotfiles.rebuild` before submitting another rebuild under that label.
+Reconnect and inspect `launchctl print gui/$(id -u)/org.dotfiles.rebuild` and `~/.local/state/dotfiles/rebuild.log`. A finished job has no `pid`; check its `last exit code` and log. Unload the finished job with `launchctl bootout gui/$(id -u)/org.dotfiles.rebuild` before submitting another rebuild under that label. The launchd redirect points at the same file `dot rebuild` logs to on every interactive run (see the rebuild log section in troubleshooting-and-migration), so unattended and interactive rebuilds share one history; `dot rebuild` detects the redirect and appends each line once.
 
 On Linux, a direct SSH rebuild remains available:
 

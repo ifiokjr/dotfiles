@@ -635,6 +635,17 @@ export function formatCommand(cmd: string[]): string {
 	).join(" ");
 }
 
+/** Join command arguments into a single shell string. */
+export function shellCommand(args: string[]): string {
+	return args.map(shellQuote).join(" ");
+}
+
+/** Quote a value for safe inclusion in a shell command string. */
+export function shellQuote(value: string): string {
+	if (/^[A-Za-z0-9_@%+=:,./#-]+$/.test(value)) return value;
+	return `'${value.replaceAll("'", `'\\''`)}'`;
+}
+
 /** Colored output helpers. */
 export const colors = {
 	red: (s: string) => `\x1b[0;31m${s}\x1b[0m`,
