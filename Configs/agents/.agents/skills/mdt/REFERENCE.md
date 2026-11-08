@@ -57,7 +57,7 @@ Install version <!-- {~version:"{{ pkg.version }}"} -->0.0.0<!-- {/version} --> 
 ```
 
 - Padding never applies to inline blocks, so they stay on one line.
-- In a table cell, leave out `|` transformers: GFM splits the row on `|` before mdt sees the comment, and the tag is not recognized.
+- Transformer chains work in table cells: mdt reads the row's raw text before GFM splits cells on `|`, so `{~ver:"{{ pkg.version }}"|code}` keeps its transformer in a cell.
 
 ### Block arguments
 
@@ -134,7 +134,7 @@ Padding controls the lines between the tags and the content.
 - **Default** (no `[padding]` section): `before = 0`, `after = 0` — content starts on the line after the opening tag and the closing tag starts on its own line, keeping its comment prefix (`//! <!-- {/x} -->`).
 - **Values:** `false` keeps content on the tag's line; `0` puts it on the next line; `1` adds one blank line; `2+` adds more. In source files blank padding lines take the comment prefix with trailing whitespace trimmed (`//!`, `///`, `*`).
 - **Padding adds to the content's own newlines.** Untrimmed provider content keeps its surrounding blank lines; use `|trim` when you want padding alone to decide.
-- With a `[padding]` section, an omitted key defaults to `1`.
+- An omitted `[padding]` key behaves like an absent section: `0` (content on the next line). Padding applies only when configured.
 - An indented closing tag (in a list item or docstring) keeps its indentation.
 
 ```toml
@@ -186,6 +186,9 @@ pkg = "package.json"
 before = 0
 after = 0
 
+[format]
+preset = "dprint-markdown" # or set rules individually: tables = true
+
 [check]
 comparison = "strict" # or "lenient"
 
@@ -228,8 +231,17 @@ ignore = ["**/*.t.md"]
 ### `[check]`
 
 - `"strict"` (default): byte-for-byte comparison.
-- `"lenient"`: trims trailing whitespace on each line and collapses runs of blank lines before comparing. It does not normalize indentation, table alignment, or JSON layout — use `[[formatters]]` for those.
+- `"lenient"`: trims trailing whitespace on each line and collapses runs of blank lines before comparing. It does not normalize indentation, table alignment, or JSON layout — use `[format] tables` or `[[formatters]]` for those.
 - `mdt update` always writes exact bytes.
+
+### `[format]`
+
+Internal formatting of block content; runs inside block boundaries only, never inside fenced code blocks, and before transformers and padding.
+
+- `preset = "dprint-markdown"`: turns on every rule below — the dprint behaviors mdt implements. An explicit rule key overrides the preset for that rule alone.
+- `tables = true`: aligns GFM table columns the way dprint and prettier do — every column pads to its widest cell by display width (CJK counts double), the delimiter row fills the width, alignment colons are preserved. `mdt update` also rewrites provider blocks in `*.t.md` files whose tables are unaligned, so templates and formatted outputs carry identical table bytes. Unaligned provider tables are reported as stale by `mdt check`.
+- `trailing_whitespace = true`: trims trailing whitespace from every line of block content (outside fenced code blocks), in providers and consumers alike, so strict comparison stops diverging from formatters that trim.
+- Conservative by design: rows with more cells than the header, pipes inside code spans, tables glued to prose, and fenced examples are left untouched.
 
 ### `[[formatters]]`
 
@@ -274,17 +286,30 @@ Global flags: `--ignore-unclosed-blocks` (unclosed and unmatched tags), `--ignor
 
 ## CLI
 
-| Command                                                             | Purpose                                                                                          |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `mdt init`                                                          | Add a starter `mdt.toml`, sample provider, synced sample readme (no README only), `.mdt/` ignore |
-| `mdt check [--diff] [--format text\|json\|github] [--watch]`        | Verify every consumer is linked and current                                                      |
-| `mdt update [--dry-run \| --watch]`                                 | Rewrite stale consumers                                                                          |
-| `mdt list`                                                          | Every block with `file:line`, transformers, and `[linked]`/`[orphan]`/`[inline]`                 |
-| `mdt info [--format json]`                                          | Project summary: blocks, data, templates, diagnostics, cache                                     |
-| `mdt doctor [--format json]`                                        | Health checks with hints (exit 1 on any FAIL)                                                    |
-| `mdt skill [--reference \| --install <DIR>]`                        | Print this skill, its reference, or write both to `<DIR>/mdt/`                                   |
-| `mdt assist <generic\|claude\|cursor\|copilot\|pi> [--format json]` | MCP config and skill setup for an assistant                                                      |
-| `mdt lsp` / `mdt mcp`                                               | Language server / MCP server over stdio                                                          |
+| Command                                                              | Purpose                                                                                            |
+| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `mdt init`                                                           | Add a starter `mdt.toml`, sample provider, synced sample readme (no README only), `.mdt/` ignore   |
+| `mdt check [--diff] [--format text\|json\|github] [--watch]`         | Verify every consumer is linked and current                                                        |
+| `mdt update [--dry-run \| --watch] [--block <NAME>] [--file <PATH>]` | Rewrite stale consumers (all, or only the named blocks/files; validation still gates project-wide) |
+| `mdt list`                                                           | Every block with `file:line`, transformers, and `[linked]`/`[orphan]`/`[inline]`                   |
+| `mdt info [--format json]`                                           | Project summary: blocks, data, templates, diagnostics, cache                                       |
+| `mdt doctor [--format json]`                                         | Health checks with hints (exit 1 on any FAIL)                                                      |
+| `mdt skill [--reference \| --install <DIR>]`                         | Print this skill, its reference, or write both to `<DIR>/mdt/`                                     |
+| `mdt assist <generic\|claude\|cursor\|copilot\|pi> [--format json]`  | MCP config and skill setup for an assistant                                                        |
+| `mdt lsp` / `mdt mcp`                                                | Language server / MCP server over stdio                                                            |
+| Command                                                              | Purpose                                                                                            |
+| -------------------------------------------------------------------  | ------------------------------------------------------------------------------------------------   |
+| `mdt init`                                                           | Add a starter `mdt.toml`, sample provider, synced sample readme (no README only), `.mdt/` ignore   |
+| `mdt check [--diff] [--format text\|json\|github] [--watch]`         | Verify every consumer is linked and current                                                        |
+| `mdt update [--dry-run \| --watch] [--format text\|json]`            | Rewrite stale consumers (JSON output for CI and tools)                                             |
+| `mdt list [--format json]`                                           | Every block with `file:line`, transformers, and `[linked]`/`[orphan]`/`[inline]`                   |
+| `mdt info [--format json]`                                           | Project summary: blocks, data, templates, diagnostics, cache                                       |
+| `mdt doctor [--format json]`                                         | Health checks with hints (exit 1 on any FAIL)                                                      |
+| `mdt skill [--reference \| --install <DIR>]`                         | Print this skill, its reference, or write both to `<DIR>/mdt/`                                     |
+| `mdt assist <generic\|claude\|cursor\|copilot\|pi> [--format json]`  | MCP config and skill setup for an assistant                                                        |
+| `mdt completions <shell>`                                            | Shell completion script (bash, zsh, fish, powershell, elvish)                                      |
+| `mdt hook install [--force]`                                         | Install the `mdt check` pre-commit hook into `.git/hooks/`                                         |
+| `mdt lsp` / `mdt mcp`                                                | Language server / MCP server over stdio                                                            |
 
 Global: `-p, --path <DIR>` (must exist, except for `init`), `-v, --verbose`, `--no-color`, and the `--ignore-*` flags. Environment: `NO_COLOR`, `CLICOLOR`, `CLICOLOR_FORCE`, `MDT_LOG=debug` (logs to stderr), `MDT_CACHE_VERIFY_HASH=1` (hash-verified cache).
 
@@ -348,7 +373,9 @@ Global: `-p, --path <DIR>` (must exist, except for `init`), `-v, --verbose`, `--
 | `mdt_find_reuse` | `block_name?`, `content_query?`, `limit?` (1–20) | `candidates` ranked exact → same ignoring case/separators → prefix → substring → close spelling    |
 | `mdt_list`       | `include_content?` (default false), `ignore_*?`  | `providers`, `consumers` (with `type`, `line`, `status`), `diagnostics`                            |
 | `mdt_check`      | `ignore_*?`                                      | `stale`, `stale_files`, `orphans` (with `suggestions`), `render_errors`, `diagnostics`, `warnings` |
-| `mdt_update`     | `dry_run?`, `ignore_*?`                          | `updated_count`, `updated_files`, `render_errors`, `diagnostics`; refuses to write on errors       |
+| `mdt_update`     | `dry_run?`, `block_names?`, `ignore_*?`          | `updated_count`, `updated_files`, `render_errors`, `diagnostics`; refuses to write on errors       |
+| `mdt_doctor`     | `ignore_*?`                                      | `counts` (`pass`/`warn`/`fail`/`skip`) and `checks` (`id`, `title`, `status`, `message`, `hint`)   |
+| `mdt_info`       |                                                  | `project`, `blocks`, `data`, `templates`, `diagnostics`, `cache` sections, as `mdt info` reports   |
 | `mdt_preview`    | `block_name`                                     | The provider rendered for each consumer: `rendered_content`, `current_content`, `status`           |
 | `mdt_get_block`  | `block_name`                                     | `provider` (or null) and `consumers`                                                               |
 | `mdt_init`       | `path?`                                          | `config`, `sample`, `gitignore` outcomes, `written_files`, `next_steps` (same as `mdt init`)       |

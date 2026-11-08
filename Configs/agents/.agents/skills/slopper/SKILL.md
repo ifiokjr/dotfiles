@@ -1,6 +1,6 @@
 ---
 name: slopper
-description: Ship to slopper.day from the terminal with the `slopper` CLI (npm @slopperday/cli). Use when the user wants to launch a project as today's slop or schedule launches for later days, post an update or field test, set a daily shipping goal, log costs or revenue, check today's slop of the day race, search slops, vote on slops, review slops they tried, or read their slops' reviews.
+description: Ship to slopper.day from the terminal with the `slopper` CLI (npm @slopperday/cli). Use when the user says to deploy, ship, post or put a project on Slopper or slopper.day, wants to launch a project as today's slop or schedule launches for later days, post an update or field test, edit and upload a Slopper promo video, manage social drafts and schedules, set a daily shipping goal, log costs or revenue, check today's slop of the day race, search slops, vote on slops, review slops they tried, or read their slops' reviews.
 ---
 
 # Slopper
@@ -9,6 +9,11 @@ description: Ship to slopper.day from the terminal with the `slopper` CLI (npm @
 daily (a site, a TestFlight or Play beta, a repo), set a goal like 30 slops in 30 days, and keep slopping until one is
 slopcessful. Every UTC day the slops launched that day race on votes; the leader at midnight UTC wins slop of the day
 and goes slopcessful. Slopcessful is earned, never declared: nobody can mark their own slop slopcessful.
+
+"Deploy this to Slopper" means launch the project as a slop (see [Launch a slop](#launch-a-slop)). Slopper doesn't
+host apps: a slop links to where the project already runs, so deploy it to its own host first if it isn't live yet. Only
+something to read (a PDF or EPUB) is uploaded to Slopper itself. Inside the slopper.day repository, deploying means
+releasing the site: follow that repository's `AGENTS.md` instead.
 
 ## Setup
 
@@ -37,6 +42,8 @@ SLOPPER_TOKEN=slp_... slopper whoami   # saves nothing: use this when you should
 ```
 
 `--url` (or `SLOPPER_URL`) points it at another site, like a local one.
+Saved tokens stay with their saved origin (scheme, host and port); for another site, log in there or supply its token
+explicitly. Use HTTPS except for loopback HTTP addresses during local development.
 
 Every command prints JSON on stdout. Errors go to stderr with exit code 1 (2 for a usage mistake), and validation
 errors list each field that needs fixing. `slopper help <command>` shows every flag. A value that starts with a dash,
@@ -77,6 +84,12 @@ slopper launch \
 Link kinds: `website`, `app_store`, `testflight`, `play_store`, `play_beta`, `source`, `other`. A bare URL is a
 website. Store links must use their store's domain.
 
+When the user wrote something to read (a book, zine, guide or paper), launch it with `--publication ./guide.pdf`
+(a PDF or EPUB up to 4 MB, uploaded for you). People read it from the slop page, and `--link` becomes optional.
+Files with scripts, auto-run actions, forms, attachments, a password or DRM are refused, and so are EPUBs that load
+anything from the web; export a plain PDF or EPUB instead.
+`slopper edit <slop> --remove-publication` takes it off.
+
 The result has the slop's `id`, `slug` and `url`. Give the user the URL. `hidden: true` means only they can see it
 while it waits for a moderator, and `nsfw: true` that it's blurred.
 
@@ -103,6 +116,56 @@ slopper unschedule <scheduled>               # drop it
 
 Nobody else sees a scheduled launch until it goes out. `--autopost` posts it then.
 
+## Post to social accounts
+
+The user's connected accounts (X, LinkedIn, Bluesky, Threads, Facebook Pages, Instagram, TikTok, YouTube, Mastodon,
+Discord, Telegram, Reddit) can all post
+one message at once, each copy fitted to its network and checked first:
+
+```sh
+slopper social accounts                                         # ids, networks and brands
+slopper social post "Tiltmaze 2.0 is out" --account <id> --account <id> --link https://tiltmaze.app \
+  --thread "40 new levels" --first-comment "#indiegames" --at draft --key launch-2-0
+slopper social edit <post> --text "Revised announcement"        # keeps it a draft
+slopper social edit <post> --copy x="Short version for X" --copy <account-id>="Brand-specific version"
+slopper social edit <post> --link-for linkedin=https://tiltmaze.app/blog --comment-for x="Play it: tiltmaze.app" \
+  --media-for instagram=<media-id>,<media-id> --time-for <account-id>=2026-11-24T18:00
+slopper social post "Idea: a 2.0 teaser thread" --at draft  # an idea: no accounts yet
+slopper social status <post>                                    # per-account previews and readiness warnings
+slopper social edit <post> --options '{"instagram":{"format":"story"}}' # update one network's format
+slopper social edit <post> --at 2026-11-24T09:30               # schedule all selected accounts
+slopper social edit <post> --at 2026-11-25T10:00               # move the scheduled time
+slopper social cancel <post>                                    # delete draft or cancel schedule
+slopper social posts                                            # drafts, scheduled and sent
+slopper social status <post>                                    # each copy's link and stats
+slopper social resolve <delivery> --posted --link https://x.com/… # an uncertain copy did post
+slopper social resolve <delivery> --resend                      # it didn't: send it again
+```
+
+Use `--at draft` to save without publishing; `social edit` changes only flags provided and keeps the existing
+accounts, media, network options and schedule. Use `social accounts` for account IDs and repeat `--account` to replace
+the selected accounts. Times without offsets use the user's time zone; include `Z` or an offset for an explicit zone.
+Each `--copy` changes only that network or account; account-specific text takes precedence over network text, and
+`--copy x=` removes that override. `--link-for`, `--comment-for` and `--media-for` give a network or account its own
+link, first comment or subset of the post's media the same way (an empty value means none there), and `--time-for`
+gives one account its own time. Two X accounts can't post the same words (X's automation rules): give each its own
+`--copy`. A draft with no accounts is an idea; pick accounts before scheduling. `social status` gives each fitted preview and warnings about missing media,
+network options, unavailable accounts or text that would be shortened. Discuss useful improvements with the user;
+preflight does not predict content-check or network acceptance. Set network-specific formats through `--options`
+with JSON; `social status` shows the current settings. Each supplied network replaces its settings, preserving the rest. Scheduling runs the content check. Cancel a scheduled
+post before it goes out. A copy marked uncertain was lost mid-send and is never resent on its own: ask the user to check
+the network, then `social resolve` it. Post or schedule when the user has
+authorized it; otherwise save a draft for review. The corresponding MCP operations are `list_social_accounts`,
+`create_social_post`, `list_social_posts`, `get_social_post`, `edit_social_post`, `cancel_social_post` and
+`resolve_social_delivery`; REST uses `GET/POST /api/v1/social/posts`, `GET/PATCH/DELETE /api/v1/social/posts/:post`
+and `POST /api/v1/social/deliveries/:delivery/resolve`.
+
+To make a promo video, edit the user's source files locally with the available video tools (for example, ffmpeg),
+preview the result and keep it MP4 or WebM under 4 MB. Then run `slopper video <slop> <file>`: it uploads the file and
+sets it as that Slop's promo. The response says whether it is pending moderation or live. MCP can do the same with
+`upload_video` followed by `set_video`; REST uses `POST /api/v1/videos` and `PUT /api/v1/slops/:slop/video`.
+This publishes the promo to Slopper subject to moderation, without sending it to the connected social platforms.
+
 ## Keep it alive
 
 ```sh
@@ -120,7 +183,7 @@ tried it and what they said), `repromote` (bump it back up). An update can carry
 and who tried it (`--who`). `--preview` shows a card read from each linked page: only pass it when the user wants one.
 `<slop>` is one of the user's slops, by id or slug (see
 `slopper slops`). `edit` changes only the flags passed; `--link` and `--screenshot` replace the whole list. Editing
-closes at the end of the launch day, or 12 hours after launch if that's later (`editableUntil` in `slopper slops`).
+closes at the end of the day after launch, at least 24 hours after it goes out (`editableUntil` in `slopper slops`).
 After that the original post is locked (its `video` isn't): share what's new with `slopper post`.
 `video` puts a promo (MP4 or WebM, up to 4 MB) on a slop, replacing its last. It says `pending` while it waits for a
 moderator, then `live`. Once one of the user's videos has been approved, later ones can say `live` straight away. `video <slop> --remove` takes it off.

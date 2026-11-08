@@ -49,7 +49,7 @@ After `mdt update` the consumer contains the fenced command. Rules:
 - Names match `[A-Za-z_][A-Za-z0-9_-]*` and are case-sensitive. The sigil must follow `{` directly: `{@name}` works, `{ @name }` is not a tag (reported as an invalid tag in markdown; in code comments its leftover closing tag is reported as unmatched).
 - Provider names are unique across the project. A `{@name}` outside a `*.t.md` file is ignored (with a warning).
 - Blocks never nest (`mdt::nested_block`): inside a consumer, `mdt update` would overwrite the inner block; inside a provider, its tags would be copied into every consumer. Use `{{ ... }}` data in providers instead of inline blocks.
-- Inline blocks render a data value in place: `Version <!-- {~v:"{{ pkg.version }}"} -->0.0.0<!-- {/v} -->`. Use them for values inside sentences and table cells (in a table cell, leave out `|` transformers — the table syntax splits on `|`).
+- Inline blocks render a data value in place: `Version <!-- {~v:"{{ pkg.version }}"} -->0.0.0<!-- {/v} -->`. Use them for values inside sentences and table cells; transformer chains work in table cells too.
 - Tags inside fenced code blocks and inline code in markdown are inert examples. An example that contains its own `` ``` `` fence needs a 4-backtick outer fence, or the inner fence closes the outer one early.
 
 ## Transformers
@@ -103,7 +103,16 @@ Providers render with minijinja once `[data]` exists: `{{ pkg.version }}`, `{% i
 
 ## Formatters
 
-`mdt check` compares bytes. A formatter that rewraps a synced file makes it stale again. Fix it once in `mdt.toml` so mdt runs the formatter itself:
+`mdt check` compares bytes. A formatter that rewraps a synced file makes it stale again. For table-padding drift, enable mdt's internal alignment first — no formatter needed:
+
+```toml
+[format]
+tables = true
+```
+
+`mdt update` then aligns GFM table columns inside blocks the same way dprint/prettier do (display-width columns, CJK aware) and rewrites provider `*.t.md` files to match, so templates and outputs carry identical table bytes. It never touches fenced code blocks or text outside blocks.
+
+For everything else a formatter rewrites, fix it once in `mdt.toml` so mdt runs the formatter itself:
 
 ```toml
 [[formatters]]
@@ -123,7 +132,7 @@ patterns = ["**/*.rs"]
 - Also exclude `*.t.md` in the formatter's own config (dprint `excludes`, `.prettierignore`): markdown formatters rewrite `#` lines and `**` globs inside provider text.
 - With formatters, `mdt check` also reports **stale files** (formatting drift anywhere in a file with a consumer); `mdt update` fixes them.
 - CI must install the same formatter versions, or `mdt check` fails.
-- Whitespace-only drift can instead use `[check] comparison = "lenient"` (trailing spaces and blank-line runs only — not indentation or tables).
+- Whitespace-only drift can instead use `[check] comparison = "lenient"` (trailing spaces and blank-line runs only — not indentation or table alignment; use `[format] tables` for tables).
 
 ## CI
 
@@ -156,6 +165,6 @@ Exit codes: `0` in sync; `1` stale, orphan (consumer with no provider), or rende
 ## Agents
 
 - `mdt skill --install .claude/skills` (or `.agents/skills`, `.pi/skills`, `.github/skills`) installs this skill for a project; `mdt assist <claude|cursor|copilot|pi|generic>` prints MCP setup for each client.
-- MCP server (`mdt mcp`): `mdt_find_reuse` (call before creating a provider), `mdt_list`, `mdt_check`, `mdt_update` (`dry_run`), `mdt_preview`, `mdt_get_block`, `mdt_init`. Responses are JSON with `ok`, `action`, and `summary`.
+- MCP server (`mdt mcp`): `mdt_find_reuse` (call before creating a provider), `mdt_list`, `mdt_check`, `mdt_update` (`dry_run`, `block_names` for scoped updates), `mdt_doctor`, `mdt_info`, `mdt_preview`, `mdt_get_block`, `mdt_init`. Responses are JSON with `ok`, `action`, and `summary`.
 
 For the full reference — every config key, padding rules, transformer details, diagnostics, and JSON output — run `mdt skill --reference` or read [REFERENCE.md](REFERENCE.md).

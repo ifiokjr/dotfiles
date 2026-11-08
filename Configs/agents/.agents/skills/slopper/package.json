@@ -1,6 +1,6 @@
 {
   "name": "@slopperday/skill",
-  "version": "0.1.7",
+  "version": "0.1.9",
   "description": "Agent skill for slopper.day: ship a slop every day with the slopper CLI.",
   "keywords": [
     "agent",
@@ -9,6 +9,11 @@
   ],
   "homepage": "https://slopper.day",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ifiokjr/slopper.git",
+    "directory": "packages/skill"
+  },
   "files": [
     "SKILL.md"
   ],
