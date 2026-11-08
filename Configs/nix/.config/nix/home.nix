@@ -249,7 +249,9 @@ in
     ]
     ++ lib.optionals (!lite) [
       # Heavy/optional packages skipped in lite mode (~8 GB saved)
-      dotnet-sdk
+      # extra.dotnet-sdk installs Microsoft's official binaries in about a
+      # minute; nixpkgs' dotnet-sdk source-builds it for hours.
+      extra.dotnet-sdk
       emscripten
       evcxr
       go
