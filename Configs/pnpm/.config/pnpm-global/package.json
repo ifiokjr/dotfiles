@@ -4,15 +4,15 @@
 	"private": true,
 	"dependencies": {
 		"@earendil-works/pi-coding-agent": "1.5.0",
-		"@openai/codex": "0.166.0",
-		"@opencode/cli": "2.2.5",
+		"@openai/codex": "0.167.0",
+		"@opencode/cli": "2.2.6",
 		"@playwright/cli": "0.1.23",
-		"@xai-official/grok": "1.0.70",
-		"agent-desktop": "1.1.0",
-		"cf": "1.0.0-beta.27",
+		"@xai-official/grok": "1.0.77",
+		"agent-desktop": "1.2.0",
+		"cf": "1.0.0-beta.28",
 		"netlify-cli": "27.16.2",
 		"ocx": "2.0.15",
-		"vercel": "65.11.0",
-		"vite-plus": "1.4.0"
+		"vercel": "65.12.1",
+		"vite-plus": "1.5.0"
 	}
 }
