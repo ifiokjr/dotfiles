@@ -41,13 +41,15 @@ Every Rust build on this machine goes through [mr boxington](https://github.com/
 
 ## Model routing
 
-Choose the model that fits the task, and prefer the cheapest one that can do it well. These rules apply wherever the orchestrator tools (`delegate_task`, `orchestrator_capabilities`) exist, such as T3 Code. Elsewhere, pick the model in the provider's own picker.
+Choose the model that fits the task. Prefer the cheapest one that can do it well, except where a rule below requires a specific model. These rules apply wherever the orchestrator tools (`delegate_task`, `orchestrator_capabilities`) exist, such as T3 Code. Elsewhere, pick the model in the provider's own picker.
 
 **Never use DeepSeek V4 Pro.** It is a high-usage, low-quality model: it costs roughly four times DeepSeek V4.1 Flash per token and produces worse work, so each call burns quota that better models need. The ban covers every place a model can be chosen: top-level threads, `delegate_task` and subagent targets, `create_threads`, scheduled tasks, text generation, titles, compaction, and fallback chains. The banned IDs include `opencode-go/deepseek-v4-pro`, `opencode/deepseek-v4-pro`, `ollama-cloud/deepseek-v4-pro`, `ollama-cloud/deepseek-v4-pro:0813`, and `ollama/deepseek-v4-pro:cloud`. If a memory note, old brief, project config, or favourites list suggests it, that note is stale: remove it instead of following it.
 
 **Never delegate to `gpt-6-astra`** unless I explicitly ask for it in the current thread. It costs $10/$50 per million input/output tokens, ten times Terra's price, and it is the easiest way to burn a budget. Treat other premium models the same way: `gpt-5.6-cyber`, `gpt-5.5-pro`, and `claude-fable-5-1` all need an explicit request first.
 
 **Cap reasoning at `high` for Codex.** Use `reasoningEffort: high`, never `xhigh`, `max`, or `ultra`. Claude may use `effort: xhigh` for judgment, never `max`, `ultracode`, or `ultrathink`. Leave `fastMode` off and `serviceTier` at `default`.
+
+**All design work starts on Opus 5.5, at `high` or above.** Design work means anything whose deliverable or core judgment is visual: logo and brand identity, landing pages and marketing sites, UI and UX, design systems, typography, color, illustration, iconography, art direction, motion, game visuals, and visual QA. Start the task's thread, or the `delegate_task` child, on the first-party Claude subscription instance (`claudeAgent`) with `claude-opus-5-5` at `effort: high` or `xhigh`, and never `max`. Never route design work to DeepSeek, GLM, Codex, Cursor, Antigravity, or a resold or aggregated Opus model from another provider. Do not substitute a cheaper model to save budget, and do not hand the design direction to one. If Opus 5.5 on the Claude subscription is unavailable, stop and tell me rather than shipping a lesser design. A narrow, fully specified slice of implementation may go down the ladder once Opus has fixed the design, but the look, feel, and final visual review stay with Opus.
 
 Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder. The loop that governs that delegation is under **Orchestrating work** below.
 
