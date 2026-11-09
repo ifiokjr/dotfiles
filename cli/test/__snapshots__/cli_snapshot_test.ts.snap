@@ -19,7 +19,7 @@ Options:
 Commands:
 
   clean                  - Reclaim disk space: stale AI session transcripts, regenerable caches, project build artifacts (node_modules, build, Pods,  
-                           …), Rust target dirs, nix GC. Dry-run by default.                                                                          
+                           …), Rust target dirs, mbx shared build cache, nix GC. Dry-run by default.                                                  
   worktrees              - Remove stale git worktrees under ~/Developer. Dry-run by default; pass --apply to delete. Branches are left alone.         
   setup                  - Initial dotfiles setup — install Nix, clone repo, deploy groups                                                            
   rebuild                - Rebuild system configuration (nix-darwin switch or home-manager switch)                                                    

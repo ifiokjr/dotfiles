@@ -107,6 +107,52 @@ export function cargoCleanAllArgs(keepDays: number, home: string): string[] {
 	return args;
 }
 
+/**
+ * Build the `mbx gc` invocation. `mbx` owns the shared Rust build cache and
+ * evicts store objects, managed targets, and learned state to its configured
+ * budgets; `--dry-run` previews the eviction and `--json` gives a stable
+ * report we can sum for the clean summary.
+ */
+export function mbxGcArgs(apply: boolean): string[] {
+	return ["mbx", "gc", ...(apply ? [] : ["--dry-run"]), "--json"];
+}
+
+interface MbxGcReport {
+	action_store?: { removed_bytes?: number; remaining_bytes?: number };
+	targets?: { removed_bytes?: number; remaining_bytes?: number };
+	incremental?: { removed_bytes?: number; remaining_bytes?: number };
+	generated?: { removed_bytes?: number; remaining_bytes?: number };
+}
+
+/** Sum the removed/remaining byte counts from `mbx gc --json`. */
+export function parseMbxGcReport(
+	stdout: string,
+): { removedBytes: number; remainingBytes: number } {
+	let report: MbxGcReport;
+	try {
+		report = JSON.parse(stdout) as MbxGcReport;
+	} catch {
+		return { removedBytes: 0, remainingBytes: 0 };
+	}
+
+	const sections = [
+		report.action_store,
+		report.targets,
+		report.incremental,
+		report.generated,
+	];
+	const sum = (key: "removed_bytes" | "remaining_bytes") =>
+		sections.reduce((total, section) => {
+			const value = section?.[key];
+			return total + (typeof value === "number" ? value : 0);
+		}, 0);
+
+	return {
+		removedBytes: sum("removed_bytes"),
+		remainingBytes: sum("remaining_bytes"),
+	};
+}
+
 /** Recursively collect regular files older than cutoff, skipping symlinks. */
 async function collectOldFiles(
 	root: string,
@@ -624,6 +670,36 @@ async function cleanCargoTargets(
 }
 
 /**
+ * Reclaim space from mbx's shared Rust build cache with `mbx gc`. mbx owns the
+ * object store and managed target directories, so deleting them by hand is not
+ * safe; its GC protects active builds and evicts to the configured budgets.
+ */
+async function cleanMbx(apply: boolean): Promise<number> {
+	if (!(await commandExists("mbx"))) {
+		printWarning("mbx not found; skipping shared Rust build cache cleanup");
+		return 0;
+	}
+
+	const { success, stdout } = await runCommand(mbxGcArgs(apply), {
+		stdout: "piped",
+	});
+	const report = parseMbxGcReport(stdout ?? "");
+	if (!success) {
+		printError("mbx gc failed; see output above");
+		return 0;
+	}
+
+	const verb = apply ? "evicted" : "would evict";
+	printInfo(
+		`mbx shared build cache: ${verb} ${fmtBytes(report.removedBytes)} (${
+			fmtBytes(report.remainingBytes)
+		} remains)`,
+	);
+	if (apply) printSuccess("mbx shared build cache collected");
+	return report.removedBytes;
+}
+
+/**
  * Delete regenerable build artifacts (node_modules, build, Pods, .dart_tool, …)
  * from dormant projects under ~/Developer.
  *
@@ -922,7 +998,7 @@ function printSummary(freed: number, apply: boolean): void {
 
 export const cleanCommand = new Command()
 	.description(
-		"Reclaim disk space: stale AI session transcripts, regenerable caches, project build artifacts (node_modules, build, Pods, …), Rust target dirs, nix GC. Dry-run by default.",
+		"Reclaim disk space: stale AI session transcripts, regenerable caches, project build artifacts (node_modules, build, Pods, …), Rust target dirs, mbx shared build cache, nix GC. Dry-run by default.",
 	)
 	.option("--apply", "Actually delete files (default is a dry-run report)")
 	.option(
@@ -932,7 +1008,7 @@ export const cleanCommand = new Command()
 	)
 	.option(
 		"--only <category:string>",
-		"Limit to a category: sessions, caches, cargo, projects, nix, rustup, trash (repeatable)",
+		"Limit to a category: sessions, caches, cargo, mbx, projects, nix, rustup, trash (repeatable)",
 		{ collect: true },
 	)
 	.option(
@@ -972,6 +1048,9 @@ export const cleanCommand = new Command()
 		}
 		if (wants("cargo")) {
 			freed += await cleanCargoTargets(apply, cargoKeepDays);
+		}
+		if (wants("mbx")) {
+			freed += await cleanMbx(apply);
 		}
 		if (wants("projects")) {
 			printInfo(

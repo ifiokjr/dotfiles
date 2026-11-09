@@ -3,7 +3,9 @@ import {
 	cargoCleanAllArgs,
 	fmtBytes,
 	isSudoRemovablePath,
+	mbxGcArgs,
 	parseDfAvailableKilobytes,
+	parseMbxGcReport,
 	parsePnpmStoreDir,
 	pnpmGlobalInstallRoots,
 	removeCachePath,
@@ -61,6 +63,28 @@ Deno.test("cargoCleanAllArgs keeps recent projects and skips system dirs", () =>
 	assertEquals(args.includes("/Users/test/Library"), true);
 	assertEquals(args.includes("/Users/test/Downloads"), true);
 	assertEquals(args.includes("/Users/test/.Trash"), true);
+});
+
+Deno.test("mbxGcArgs previews with dry-run and reads JSON", () => {
+	assertEquals(mbxGcArgs(false), ["mbx", "gc", "--dry-run", "--json"]);
+	assertEquals(mbxGcArgs(true), ["mbx", "gc", "--json"]);
+});
+
+Deno.test("parseMbxGcReport sums evicted and remaining bytes", () => {
+	const report = {
+		action_store: { removed_bytes: 100, remaining_bytes: 10 },
+		targets: { removed_bytes: 50, remaining_bytes: 20 },
+		incremental: { removed_bytes: 5, remaining_bytes: 1 },
+		generated: { removed_bytes: 2, remaining_bytes: 3 },
+	};
+	assertEquals(parseMbxGcReport(JSON.stringify(report)), {
+		removedBytes: 157,
+		remainingBytes: 34,
+	});
+	assertEquals(parseMbxGcReport("not json"), {
+		removedBytes: 0,
+		remainingBytes: 0,
+	});
 });
 
 async function pathExists(path: string): Promise<boolean> {
