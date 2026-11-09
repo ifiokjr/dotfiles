@@ -69,6 +69,14 @@ $env.DENO_INSTALL = $"($env.HOME)/.deno"
 # Android
 # ---------------------------------------------------------------------------
 $env.ANDROID_HOME = $"($env.HOME)/Library/Android/sdk"
+# nix-darwin sets XDG_CONFIG_HOME, which moves sdkmanager/avdmanager/Gradle
+# state to $XDG_CONFIG_HOME/.android while the emulator and adb still look in
+# ~/.android. ANDROID_USER_HOME points the SDK tools at one place, and the
+# emulator needs ANDROID_AVD_HOME too: it ignores ANDROID_USER_HOME for AVDs.
+$env.ANDROID_USER_HOME = if ($env.XDG_CONFIG_HOME? | is-not-empty) {
+    $"($env.XDG_CONFIG_HOME)/.android"
+} else { $"($env.HOME)/.android" }
+$env.ANDROID_AVD_HOME = $"($env.ANDROID_USER_HOME)/avd"
 let ndk_base = $"($env.ANDROID_HOME)/ndk"
 $env.NDK_HOME = if ($ndk_base | path exists) {
     let ndks = ls $ndk_base | where type == dir | sort-by name
@@ -147,6 +155,7 @@ let path_prepend = [
 let path_append = [
     $"($env.ANDROID_HOME)/cmdline-tools/latest/bin"
     $"($env.ANDROID_HOME)/platform-tools"
+    $"($env.ANDROID_HOME)/emulator"
     "/Applications/Android Studio.app/Contents/MacOS"
     $"($env.HOME)/.pub-cache/bin"
     "/usr/local/bin"

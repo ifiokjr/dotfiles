@@ -1,9 +1,10 @@
-
 # Debug: capture earliest start time (zero-cost when DOTFILES_DEBUG unset)
 [[ -n "${DOTFILES_DEBUG:-}" ]] && zmodload zsh/datetime && _zsh_earliest_ns=$EPOCHREALTIME
 
-export PATH="$PATH:/Users/ifiokjr/.foundry/bin"
-. "$HOME/.cargo/env"
+# zshenv runs for every zsh shell, so everything below is guarded: a missing
+# tool must not print an error into every agent and script shell.
+[[ -d "$HOME/.foundry/bin" ]] && export PATH="$PATH:$HOME/.foundry/bin"
+[[ -f "$HOME/.cargo/env" ]] && . "$HOME/.cargo/env"
 
 # mr boxington (mbx): every Rust build goes through the shared build cache.
 # Prepended after rustup's env so the shim wins over ~/.cargo/bin for all zsh
@@ -18,5 +19,9 @@ if [ -x "$HOME/Library/Application Support/mbx/bin/cargo" ]; then
 	esac
 fi
 
+# Android SDK: agents build and test Android apps from non-interactive shells,
+# which never read .zshrc (and so never reach env.sh).
+[[ -f "$HOME/.config/shell/android.sh" ]] && . "$HOME/.config/shell/android.sh"
+
 # Vite+ bin (https://viteplus.dev)
-. "$HOME/.vite-plus/env"
+[[ -f "$HOME/.vite-plus/env" ]] && . "$HOME/.vite-plus/env"

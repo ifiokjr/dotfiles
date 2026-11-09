@@ -58,17 +58,11 @@ export DENO_INSTALL="$HOME/.deno"
 # ---------------------------------------------------------------------------
 # Android
 # ---------------------------------------------------------------------------
-export ANDROID_HOME="$HOME/Library/Android/sdk"
-_ndk_base="$ANDROID_HOME/ndk"
-if [ -d "$_ndk_base" ]; then
-	# Pick the latest NDK version directory
-	NDK_HOME=$(find "$_ndk_base" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -V | tail -1)
-	[ -z "$NDK_HOME" ] && NDK_HOME="$_ndk_base/29.0.13599879"
-else
-	NDK_HOME="$_ndk_base/29.0.13599879"
+# Kept in its own file so ~/.zshenv can load it for non-interactive shells.
+if [ -f "$HOME/.config/shell/android.sh" ]; then
+	# shellcheck disable=SC1091
+	. "$HOME/.config/shell/android.sh"
 fi
-export NDK_HOME
-unset _ndk_base
 
 # ---------------------------------------------------------------------------
 # pnpm
@@ -118,10 +112,7 @@ for _p in "$HOME/.local/bin" \
 done
 
 # Append (low priority)
-for _p in "$ANDROID_HOME/cmdline-tools/latest/bin" \
-	"$ANDROID_HOME/platform-tools" \
-	"/Applications/Android Studio.app/Contents/MacOS" \
-	"$HOME/.pub-cache/bin" \
+for _p in "$HOME/.pub-cache/bin" \
 	"/usr/local/bin"; do
 	# shellcheck disable=SC2249
 	case ":$PATH:" in *":$_p:"*) ;; *) export PATH="$PATH:$_p" ;; esac
