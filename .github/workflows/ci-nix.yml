@@ -145,15 +145,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm --lite
+        # The Docker integration test runs the full Linux setup (including the
+        # nix group's home-manager rebuild). This job validates the setup script
+        # and group deployment without spending an hour on cold Nix builds.
+        run: ./setup --skip-nix --no-confirm --lite --groups scripts,bash,direnv,dprint,shell,zellij,zsh,nushell,helix
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ✅ verify setup completed
         run: |
-          command -v tuckr && echo "tuckr: ok"
-          command -v nu && echo "nushell: ok"
-          tuckr status || true
           test -L "$HOME/.config/nushell/config.nu"
           test -L "$HOME/.config/helix/config.toml"
           test -L "$HOME/.zshrc"
