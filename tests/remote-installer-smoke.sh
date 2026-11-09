@@ -38,7 +38,11 @@ grep -Fq "Remote: curl -fsSL https://raw.githubusercontent.com/ifiokjr/dotfiles/
 grep -Fq -- "--preset NAME" "$HELP_OUTPUT"
 
 echo "Running remote installer against the checked-out branch"
-curl -fsSL "$SERVER_URL/setup" | bash -s -- --cwd "$REPO_DIR" --skip-nix --no-confirm --preset core
+# The installer path is what this smoke test covers. The nix group's full
+# home-manager rebuild is covered by setup-ubuntu and the Docker integration
+# test; running it here spends an hour building from source and turns a runner
+# preemption into an installer failure.
+curl -fsSL "$SERVER_URL/setup" | bash -s -- --cwd "$REPO_DIR" --skip-nix --no-confirm --preset core --groups scripts,bash,direnv,dprint,shell,zellij,zsh,nushell,helix
 
 echo "Verifying core preset state"
 command -v tuckr >/dev/null
