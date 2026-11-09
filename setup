@@ -24,6 +24,8 @@
 #   --lite              Force CLI-focused mode and skip GUI-heavy applications
 #   --desktop           Mark machine.nix isDesktop = true (podman/launchd desktop bits)
 #   --always-on         Mark machine.nix alwaysOn = true (never sleeps, screensaver lock)
+#   --android-sdk       Provision the Android SDK and emulator AVD (desktop macOS only)
+#   --no-android-sdk    Skip Android SDK provisioning
 #   --doctor            Run preflight checks without changing the machine
 #   --validate-metadata Validate Configs/*.group.toml files and exit
 #   --dry-run           Print the setup plan and exit without making changes
@@ -57,6 +59,8 @@ LITE=false
 LITE_EXPLICIT=false
 DESKTOP=false
 ALWAYS_ON=false
+ANDROID_SDK_MODE="auto"
+export ANDROID_SDK_MODE
 WITH_RUNNER=false
 VALIDATE_METADATA=false
 NO_CONFIRM=false
@@ -117,6 +121,8 @@ Options:
   --lite              Force CLI-focused mode and skip GUI-heavy applications
   --desktop           Mark machine.nix isDesktop = true (podman/launchd desktop bits)
   --always-on         Mark machine.nix alwaysOn = true (never sleeps, screensaver lock)
+  --android-sdk       Provision the Android SDK and emulator AVD (desktop macOS only)
+  --no-android-sdk    Skip Android SDK provisioning
   --doctor            Run preflight checks without changing the machine
   --validate-metadata Validate Configs/*.group.toml files and exit
   --dry-run           Print the setup plan and exit without making changes
@@ -198,6 +204,14 @@ parse_args() {
                 ;;
             --always-on)
                 ALWAYS_ON=true
+                shift
+                ;;
+            --android-sdk)
+                ANDROID_SDK_MODE=true
+                shift
+                ;;
+            --no-android-sdk)
+                ANDROID_SDK_MODE=false
                 shift
                 ;;
             --doctor)
@@ -921,6 +935,8 @@ source_setup_libraries() {
     # shellcheck disable=SC1091
     . "$setup_lib_dir/common.sh"
     # shellcheck disable=SC1091
+    . "$setup_lib_dir/android.sh"
+    # shellcheck disable=SC1091
     . "$setup_lib_dir/groups.sh"
     # shellcheck disable=SC1091
     . "$setup_lib_dir/deploy.sh"
@@ -1292,6 +1308,16 @@ main() {
         echo ""
         print_error "Setup completed with errors"
         exit "$deploy_exit"
+    fi
+
+    # Provision the Android SDK on desktop macOS machines that act as
+    # connected-device hosts for T3 Code and other device tooling.
+    if should_run_phase install-android-sdk && android_sdk_should_install; then
+        write_setup_phase "install-android-sdk"
+        if ! install_android_sdk; then
+            print_error "Android SDK provisioning failed"
+            exit 1
+        fi
     fi
 
     # Install a GitHub Actions self-hosted runner when requested (--with-runner).

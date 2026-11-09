@@ -26,6 +26,10 @@ matching check and its `mutate_*` counterpart in the same PR so the self-test
 stays green — a check that cannot fail is noise. Add new checks by following
 the `reg`/`check_<name>`/optional `mutate_<name>` conventions in the script.
 
+## Docker Integration Test
+
+CI builds the Docker image with `DOTFILES_CI_FAST=1` and GitHub Actions layer caching. That path deploys the full configuration and generates `machine.nix`, but skips the home-manager rebuild: without a working FlakeHub cache the rebuild spends 1-2 hours compiling Nix from source. A plain `docker build -t dotfiles-test .` keeps the full rebuild for local Linux confidence.
+
 ## Pre-Push Verification
 
 Run before pushing relevant changes:

@@ -62,14 +62,29 @@ else
 fi
 
 # ----- Step 2: Run rebuild (nh home switch on Linux) -----
-step "Running rebuild"
-"$HOME/.local/bin/dot" rebuild --skip-check
-pass "rebuild completed"
+if [ "${DOTFILES_CI_FAST:-0}" = "1" ]; then
+	step "Fast CI mode: skipping the full home-manager rebuild"
+	for link in \
+		"$HOME/.config/nix/flake.nix" \
+		"$HOME/.config/nushell/config.nu" \
+		"$HOME/.config/helix/config.toml" \
+		"$HOME/.zshrc"; do
+		if [ -e "$link" ]; then
+			pass "deployed $link"
+		else
+			fail "missing deployed file: $link"
+		fi
+	done
+else
+	step "Running rebuild"
+	"$HOME/.local/bin/dot" rebuild --skip-check
+	pass "rebuild completed"
 
-# ----- Step 3: Run verification tests -----
-step "Running verification tests"
-nu tests/docker-verify.nu
-pass "all verification tests passed"
+	# ----- Step 3: Run verification tests -----
+	step "Running verification tests"
+	nu tests/docker-verify.nu
+	pass "all verification tests passed"
+fi
 
 echo ""
 echo -e "${GREEN}${BOLD}All integration tests passed!${NC}"

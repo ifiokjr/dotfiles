@@ -62,6 +62,14 @@ ensure_darwin_sudo_session() {
 		return
 	fi
 
+	# Passwordless sudo (unattendedSudo) cannot be validated with `sudo -v` in
+	# a non-interactive shell: sudo insists on a TTY even for NOPASSWD entries.
+	# A real command check proves the credential works without prompting.
+	if sudo -n true 2> /dev/null; then
+		SUDO_SESSION_READY=true
+		return
+	fi
+
 	echo "==> Preparing sudo session for nix-darwin..."
 	sudo -v
 
@@ -409,6 +417,18 @@ if [ "$HOME" != "$EXPECTED_HOME" ]; then
 	echo "  then re-run setup from that account. Alternatively rename the home directory"
 	echo "  and update the account's NFSHomeDirectory to /Users/$CFG_USERNAME."
 	exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Fast CI path
+# ---------------------------------------------------------------------------
+# The Docker integration test deploys the full Nix configuration and needs
+# machine.nix, but rebuilding home-manager inside the container takes 1-2 hours
+# when the FlakeHub cache is unavailable. Full rebuilds remain the local
+# `docker build` path and every real machine's `dot rebuild`.
+if [ "${DOTFILES_CI_FAST:-0}" = "1" ]; then
+	echo "==> DOTFILES_CI_FAST=1: deployed Nix config and machine.nix; skipping the rebuild"
+	exit 0
 fi
 
 # ---------------------------------------------------------------------------

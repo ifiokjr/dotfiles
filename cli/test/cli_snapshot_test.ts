@@ -57,6 +57,9 @@ function scrubOutput(value: string): string {
 					"Temporary bootstrap tools: <tools>",
 				);
 			}
+			if (line.includes("• Android SDK: ")) {
+				return line.replace(/• Android SDK: .*/, "• Android SDK: <android-sdk>");
+			}
 			if (line.includes("Rosetta 2 is already installed")) return "";
 
 			return line;

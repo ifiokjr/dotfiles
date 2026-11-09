@@ -330,6 +330,27 @@ mutate_installer_pinned() {
 		"$1/setup"
 }
 
+reg android_sdk_pinned
+check_android_sdk_pinned() {
+	local f="$1/lib/setup/android.sh"
+	require_file "$f" || return 1
+	# shellcheck disable=SC2016  # matching the literal shell text in the library
+	if ! grep -q 'commandlinetools-mac_${arch}-${ANDROID_CMDLINE_TOOLS_BUILD}_latest.zip' "$f"; then
+		fail "Android command-line tools URL is not pinned to a Google build"
+		return 1
+	fi
+	if ! grep -q 'shasum -a 256' "$f" || ! grep -q 'checksum mismatch' "$f"; then
+		fail "Android command-line tools download is not SHA-256 verified"
+		return 1
+	fi
+	return 0
+}
+mutate_android_sdk_pinned() {
+	# shellcheck disable=SC2016  # writing the literal unpinned URL into the mutated file
+	sed -i.bak 's#https://dl.google.com/android/repository/commandlinetools-mac_${arch}-${ANDROID_CMDLINE_TOOLS_BUILD}_latest.zip#https://dl.google.com/android/repository/commandlinetools-mac_latest.zip#' \
+		"$1/lib/setup/android.sh"
+}
+
 reg no_mktemp_u
 check_no_mktemp_u() {
 	local hits

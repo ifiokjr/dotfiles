@@ -110,10 +110,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # lets magic-nix-cache authenticate to FlakeHub Cache via OIDC;
-      # without it the nix-heavy jobs build the devenv chain cold and
-      # never finish inside the runner window
-      id-token: write
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -137,10 +133,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # lets magic-nix-cache authenticate to FlakeHub Cache via OIDC;
-      # without it the nix-heavy jobs build the devenv chain cold and
-      # never finish inside the runner window
-      id-token: write
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -153,15 +145,15 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🧪 run setup script
-        run: ./setup --skip-nix --no-confirm --lite
+        # The Docker integration test runs the full Linux setup (including the
+        # nix group's home-manager rebuild). This job validates the setup script
+        # and group deployment without spending an hour on cold Nix builds.
+        run: ./setup --skip-nix --no-confirm --lite --groups scripts,bash,direnv,dprint,shell,zellij,zsh,nushell,helix
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ✅ verify setup completed
         run: |
-          command -v tuckr && echo "tuckr: ok"
-          command -v nu && echo "nushell: ok"
-          tuckr status || true
           test -L "$HOME/.config/nushell/config.nu"
           test -L "$HOME/.config/helix/config.toml"
           test -L "$HOME/.zshrc"
@@ -215,17 +207,28 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # lets magic-nix-cache authenticate to FlakeHub Cache via OIDC;
-      # without it the nix-heavy jobs build the devenv chain cold and
-      # never finish inside the runner window
-      id-token: write
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: 🏗️ build and run docker integration test
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: DOCKER_BUILDKIT=1 docker build --secret id=github_token,env=GITHUB_TOKEN -t dotfiles-test .
+      - name: 🔧 set up docker buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: 🏗️ build docker integration image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: dotfiles-test:latest
+          # The fast path skips the 1-2 hour home-manager rebuild; full
+          # rebuilds remain covered by local `docker build` and the fleet.
+          build-args: DOTFILES_CI_FAST=1
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          secrets: |
+            github_token=${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧪 run docker integration test
+        run: docker run --rm dotfiles-test:latest

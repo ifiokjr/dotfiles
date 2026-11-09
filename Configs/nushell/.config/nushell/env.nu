@@ -76,7 +76,15 @@ $env.ANDROID_HOME = $"($env.HOME)/Library/Android/sdk"
 $env.ANDROID_USER_HOME = if ($env.XDG_CONFIG_HOME? | is-not-empty) {
     $"($env.XDG_CONFIG_HOME)/.android"
 } else { $"($env.HOME)/.android" }
-$env.ANDROID_AVD_HOME = $"($env.ANDROID_USER_HOME)/avd"
+# Prefer an existing legacy AVD directory so pre-XDG AVDs stay visible to the
+# emulator and T3 Code's device host; fresh machines use the XDG location.
+$env.ANDROID_AVD_HOME = if ($env.ANDROID_AVD_HOME? | is-not-empty) {
+    $env.ANDROID_AVD_HOME
+} else if ($"($env.HOME)/.android/avd" | path exists) {
+    $"($env.HOME)/.android/avd"
+} else {
+    $"($env.ANDROID_USER_HOME)/avd"
+}
 let ndk_base = $"($env.ANDROID_HOME)/ndk"
 $env.NDK_HOME = if ($ndk_base | path exists) {
     let ndks = ls $ndk_base | where type == dir | sort-by name
