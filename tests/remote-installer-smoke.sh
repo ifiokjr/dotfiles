@@ -44,9 +44,10 @@ echo "Running remote installer against the checked-out branch"
 # preemption into an installer failure.
 curl -fsSL "$SERVER_URL/setup" | bash -s -- --cwd "$REPO_DIR" --skip-nix --no-confirm --preset core --groups scripts,bash,direnv,dprint,shell,zellij,zsh,nushell,helix
 
-echo "Verifying core preset state"
-command -v tuckr >/dev/null
-command -v nu >/dev/null
+echo "Verifying deployed configuration"
+# tuckr and nushell are temporary bootstrap tools when the nix group does not
+# run, so setup's cleanup removes them. The full setup-ubuntu job verifies they
+# remain on PATH; this smoke test checks the deployed configuration itself.
 test -L "$HOME/.config/nushell/config.nu"
 test -L "$HOME/.config/helix/config.toml"
 test -L "$HOME/.zshrc"
