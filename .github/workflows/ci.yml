@@ -51,7 +51,8 @@ jobs:
             Configs/shell/.config/shell/env.sh Configs/bash/.bashrc \
             Configs/scripts/.local/bin/setup:dotfiles Configs/scripts/.local/bin/uninstall:dotfiles Configs/scripts/.local/bin/reset:dotfiles \
             Configs/scripts/.local/bin/refresh-nu-vendor-autoloads tests/setup-uninstall-reset-test.sh \
-            tests/security-audit.sh .githooks/pre-push Configs/scripts/.local/bin/setup:runner
+            tests/security-audit.sh .githooks/pre-push Configs/scripts/.local/bin/setup:runner \
+            .cursor/cloud-agent-install.sh .cursor/cloud-agent-start.sh
 
       - name: 🔍 validate nushell scripts (nu-check)
         run: |
