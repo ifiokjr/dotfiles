@@ -29,6 +29,8 @@ cd ~/path/to/dotfiles
 - `--lite`: enable CLI-focused install and skip GUI-heavy applications.
 - `--desktop`: mark `machine.nix` `isDesktop = true` (podman/launchd desktop bits).
 - `--always-on`: mark `machine.nix` `alwaysOn = true` (never sleeps, screensaver lock).
+- `--android-sdk`: provision the Android SDK and emulator AVD on desktop macOS machines.
+- `--no-android-sdk`: skip Android SDK provisioning.
 - `--doctor`: run preflight checks without changing the machine.
 - `--validate-metadata`: validate `Configs/*.group.toml` files and exit.
 - `--dry-run`: print the setup execution plan and exit.
@@ -63,6 +65,12 @@ dot rebuild --add-preset agent-apps   # set the preset and rebuild in one pass
 The Nix side reads the preset list on every evaluation; removing it with `dot machine remove-preset agent-apps` makes the next rebuild drop the preset-specific casks.
 
 xAI's official Grok Build CLI (`grok`) is installed through the managed pnpm global project as `@xai-official/grok`, so every machine gets it alongside Codex and OpenCode and it is not gated by `agent-apps`. It authenticates through `grok login` on first launch or `XAI_API_KEY` for headless runs; `dot rebuild --update` advances the pinned version through `pnpm:global:update`.
+
+## Android SDK
+
+On macOS, `./setup` provisions the Android SDK under `~/Library/Android/sdk` when `machine.nix` marks the machine as a desktop (`isDesktop = true` or `alwaysOn = true`), which is the fleet's connected-device host configuration. The phase is idempotent: it reuses an existing SDK and command-line tools, accepts licenses, installs `platform-tools`, `emulator`, the pinned platform/build-tools/NDK, and the arm64 (or x86_64) `google_apis` system image, then creates an AVD only when none exists.
+
+The command-line tools archive is pinned to a Google build and verified by SHA-256. Override the automatic decision with `--android-sdk` or `--no-android-sdk`; CI runners and non-desktop machines skip the phase. T3 Code's Device panel still needs **Agent device access** enabled under Settings > Integrations > Devices before an agent can open the emulator.
 
 ## Manual Setup
 

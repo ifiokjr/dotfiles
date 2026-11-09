@@ -18,7 +18,16 @@ if [ -n "${XDG_CONFIG_HOME:-}" ]; then
 else
 	export ANDROID_USER_HOME="$HOME/.android"
 fi
-export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+# Prefer an existing legacy AVD directory so AVDs created before this XDG-aware
+# setup remain visible to both the emulator and T3 Code's device host. Fresh
+# machines use the XDG location.
+if [ -z "${ANDROID_AVD_HOME:-}" ]; then
+	if [ -d "$HOME/.android/avd" ]; then
+		export ANDROID_AVD_HOME="$HOME/.android/avd"
+	else
+		export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+	fi
+fi
 
 # Pick the latest NDK version directory. Child shells inherit NDK_HOME, so
 # only the first shell pays for the lookup.

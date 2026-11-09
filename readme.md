@@ -69,6 +69,8 @@ If you are setting up a new machine or want the human-oriented walkthrough first
 - `--lite` - Enable CLI-focused install and skip GUI-heavy applications
 - `--desktop` - Mark `machine.nix` `isDesktop = true` (podman/launchd desktop bits)
 - `--always-on` - Mark `machine.nix` `alwaysOn = true` (never sleeps, screensaver lock)
+- `--android-sdk` - Provision the Android SDK and emulator AVD (desktop macOS only)
+- `--no-android-sdk` - Skip Android SDK provisioning
 - `--doctor` - Run preflight checks without changing the machine
 - `--validate-metadata` - Validate `Configs/*.group.toml` files and exit
 - `--dry-run` - Print the setup execution plan and exit

@@ -121,6 +121,7 @@ print_execution_plan() {
 	echo "  • Nix: $(plan_nix_action)"
 	echo "  • Temporary bootstrap tools: $(plan_bootstrap_tools)"
 	echo "  • GUI applications: $(plan_gui_mode)"
+	echo "  • Android SDK: $(plan_android_sdk_action)"
 	echo "  • Expected duration: $(plan_expected_duration)"
 
 	if [ "${ORDERED_GROUPS+set}" = "set" ] && [ ${#ORDERED_GROUPS[@]} -gt 0 ]; then
