@@ -43,31 +43,33 @@ Every Rust build on this machine goes through [mr boxington](https://github.com/
 
 Choose the model that fits the task, and prefer the cheapest one that can do it well. These rules apply wherever the orchestrator tools (`delegate_task`, `orchestrator_capabilities`) exist, such as T3 Code. Elsewhere, pick the model in the provider's own picker.
 
+**Never use DeepSeek V4 Pro.** It is a high-usage, low-quality model: it costs roughly four times DeepSeek V4.1 Flash per token and produces worse work, so each call burns quota that better models need. The ban covers every place a model can be chosen: top-level threads, `delegate_task` and subagent targets, `create_threads`, scheduled tasks, text generation, titles, compaction, and fallback chains. The banned IDs include `opencode-go/deepseek-v4-pro`, `opencode/deepseek-v4-pro`, `ollama-cloud/deepseek-v4-pro`, `ollama-cloud/deepseek-v4-pro:0813`, and `ollama/deepseek-v4-pro:cloud`. If a memory note, old brief, project config, or favourites list suggests it, that note is stale: remove it instead of following it.
+
 **Never delegate to `gpt-6-astra`** unless I explicitly ask for it in the current thread. It costs $10/$50 per million input/output tokens, ten times Terra's price, and it is the easiest way to burn a budget. Treat other premium models the same way: `gpt-5.6-cyber`, `gpt-5.5-pro`, and `claude-fable-5-1` all need an explicit request first.
 
 **Cap reasoning at `high` for Codex.** Use `reasoningEffort: high`, never `xhigh`, `max`, or `ultra`. Claude may use `effort: xhigh` for judgment, never `max`, `ultracode`, or `ultrathink`. Leave `fastMode` off and `serviceTier` at `default`.
 
 Start a thread on the model whose judgment the task needs, then delegate the mechanical work down this ladder. The loop that governs that delegation is under **Orchestrating work** below.
 
-| Rung           | Use for                                                                             | Provider      | Model                             | Options                 |
-| -------------- | ----------------------------------------------------------------------------------- | ------------- | --------------------------------- | ----------------------- |
-| Implement      | **Default for well-defined work**: named files, acceptance criteria, a test command | `opencode`    | `opencode-go/deepseek-v4.1-flash` | `variant: max`          |
-| Long implement | Well-defined work that outgrows one DeepSeek session, or where DeepSeek stalls      | `opencode`    | `zai-coding-plan/glm-5.3-flash`   | `variant: max`          |
-| Second patch   | The first attempt was wrong, or you want an independent patch to compare            | `opencode`    | `zai-coding-plan/glm-5.3`         | `variant: max`          |
-| Judgment       | Ambiguous scope, cross-cutting design, "decide how this should work"                | `claudeAgent` | `claude-opus-5-5`                 | `effort: xhigh`         |
-| Long horizon   | Multi-hour refactors, migrations, deep debugging                                    | `codex`       | `gpt-6.1-terra`                   | `reasoningEffort: high` |
+| Rung           | Use for                                                                             | Provider      | Model                                   | Options                 |
+| -------------- | ----------------------------------------------------------------------------------- | ------------- | --------------------------------------- | ----------------------- |
+| Implement      | **Default for well-defined work**: named files, acceptance criteria, a test command | `opencode`    | `ollama-cloud/deepseek-v4.1-flash:1017` | `variant: max`          |
+| Long implement | Well-defined work that outgrows one DeepSeek session, or where DeepSeek stalls      | `opencode`    | `zai-coding-plan/glm-5.3-flash`         | `variant: max`          |
+| Second patch   | The first attempt was wrong, or you want an independent patch to compare            | `opencode`    | `zai-coding-plan/glm-5.3`               | `variant: max`          |
+| Judgment       | Ambiguous scope, cross-cutting design, "decide how this should work"                | `claudeAgent` | `claude-opus-5-5`                       | `effort: xhigh`         |
+| Long horizon   | Multi-hour refactors, migrations, deep debugging                                    | `codex`       | `gpt-6.1-terra`                         | `reasoningEffort: high` |
 
-- **DeepSeek V4.1 Flash is the default implementer.** The $40 OpenCode plan makes its usage effectively unlimited, so treat well-defined work as DeepSeek's job: write a tight brief and let it implement, rather than reaching for a pricier model. Climb to another rung only when the task is ambiguous, genuinely long-running, or needs stronger judgment.
-- Price guide (input/output per million tokens): DeepSeek V4.1 Flash $0.15/$0.60 and effectively unlimited on the $40 OpenCode Go plan, Terra $1/$5, Sol $2/$10, Astra $10/$50. GLM 5.3 is covered by the ZAI coding plan and has no marginal token cost.
+- **DeepSeek V4.1 Flash is the default implementer, in this order:** first `ollama-cloud/deepseek-v4.1-flash:1017` at `variant: max`, which is the best version and the normal choice for well-defined work. If 1017 is out of usage or unavailable, fall back to `opencode/deepseek-v4.1-flash-free` at `variant: max`: it is free but has a lower context window, so keep the brief tight and expect earlier compaction. Only if both are unavailable, use `opencode-go/deepseek-v4.1-flash` at `variant: max`. If all three are unavailable, climb to the next rung; never fall through to DeepSeek V4 Pro.
+- Price guide (input/output per million tokens): DeepSeek V4.1 Flash 1017 $0.15/$0.60, DeepSeek V4.1 Flash Free $0, Terra $1/$5, Sol $2/$10, Astra $10/$50. DeepSeek V4 Pro is $0.66/$1.98 and banned anyway. GLM 5.3 is covered by the ZAI coding plan and has no marginal token cost.
 - `zai-coding-plan/glm-5.3-flash` is the fallback for well-defined work that outgrows one DeepSeek session: give it a clear brief and acceptance criteria, then let it work. It is not the choice for ambiguous scope.
 - `zai-coding-plan/glm-5.3` is the higher-value GLM: use it for work that needs more intelligence, such as a difficult second patch or a careful review. It has no vision, so do not send it screenshots or image-based tasks.
 - For either GLM model, always use the subscription-backed `zai-coding-plan`, never a per-token copy.
-- **From the `opencode-go` subscription, use exactly one model: `opencode-go/deepseek-v4.1-flash`.** Do not use any other `opencode-go/*` model, even if it looks cheaper or stronger. This is a standing choice I may revisit, not a per-task decision.
+- **From the `opencode-go` subscription, use exactly one model: `opencode-go/deepseek-v4.1-flash`.** Never use `opencode-go/deepseek-v4-pro`: it is the specific model this rule exists to keep out of usage. Do not use any other `opencode-go/*` model, even if it looks cheaper or stronger. This is a standing choice I may revisit, not a per-task decision.
 - Escalate from Terra to `gpt-6.1-sol` only when Terra actually fails, and keep Sol at `reasoningEffort: high`. Neither Codex model is a default for fan-out.
-- Parallel fan-out is for independent, well-specified work. Use DeepSeek or GLM for it by default; use Terra or Sol only when each child genuinely needs the stronger model.
+- Parallel fan-out is for independent, well-specified work. Use DeepSeek V4.1 Flash 1017 (or the free fallback) or GLM for it by default; use Terra or Sol only when each child genuinely needs the stronger model.
 - Climb only when the rung below actually failed. Implement, long implement, and second-patch take the volume; judgment is one call per turn and long-horizon work is one child per task.
 - Give an implementation child that will commit `isolation: "worktree"`, never the parent checkout.
-- If a delegation fails on a usage limit, do not retry on that provider. Fall back down the ladder, or stop and report.
+- If a delegation fails on a usage limit, do not retry on that provider. Fall back down the ladder within the DeepSeek sequence above, or stop and report. Never substitute DeepSeek V4 Pro to keep going.
 
 ## Orchestrating work
 
