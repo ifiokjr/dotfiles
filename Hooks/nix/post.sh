@@ -420,6 +420,18 @@ if [ "$HOME" != "$EXPECTED_HOME" ]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Fast CI path
+# ---------------------------------------------------------------------------
+# The Docker integration test deploys the full Nix configuration and needs
+# machine.nix, but rebuilding home-manager inside the container takes 1-2 hours
+# when the FlakeHub cache is unavailable. Full rebuilds remain the local
+# `docker build` path and every real machine's `dot rebuild`.
+if [ "${DOTFILES_CI_FAST:-0}" = "1" ]; then
+	echo "==> DOTFILES_CI_FAST=1: deployed Nix config and machine.nix; skipping the rebuild"
+	exit 0
+fi
+
+# ---------------------------------------------------------------------------
 # Detect root-only nix (Docker/containers without systemd)
 # ---------------------------------------------------------------------------
 ROOT_ONLY_NIX=false

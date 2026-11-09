@@ -14,6 +14,14 @@ RUN useradd -m -s /bin/bash testuser && echo "testuser ALL=(ALL) NOPASSWD:ALL" >
 
 # Switch to testuser for the rest
 USER testuser
+
+# The CI integration test deploys the full configuration but skips the
+# home-manager rebuild: without a working FlakeHub cache that rebuild spends
+# 1-2 hours building Nix from source, and the full rebuild is already covered
+# by local `docker build` (leave this at 0) and the fleet's real rebuilds.
+ARG DOTFILES_CI_FAST=0
+ENV DOTFILES_CI_FAST=${DOTFILES_CI_FAST}
+
 # Copy dotfiles into container
 COPY --chown=testuser:testuser . /home/testuser/.dotfiles
 WORKDIR /home/testuser/.dotfiles
