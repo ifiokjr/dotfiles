@@ -253,6 +253,7 @@ snapshot[`safe command outputs are stable > setup dry run 1`] = `
   • Nix: Skip Nix installation (--skip-nix)
   • Temporary bootstrap tools: <tools>
   • GUI applications: CLI-focused / GUI-heavy applications skipped
+  • Android SDK: <android-sdk>
   • Expected duration: 5–10 minutes
   • Deploy groups: scripts, nix, bash, direnv, dprint, git, kdl, shell, starship, zellij, zsh, nushell
   • Hooks that will run: nix, bash, git, nushell
