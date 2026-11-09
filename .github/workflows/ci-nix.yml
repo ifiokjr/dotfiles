@@ -110,10 +110,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # lets magic-nix-cache authenticate to FlakeHub Cache via OIDC;
-      # without it the nix-heavy jobs build the devenv chain cold and
-      # never finish inside the runner window
-      id-token: write
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -137,10 +133,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # lets magic-nix-cache authenticate to FlakeHub Cache via OIDC;
-      # without it the nix-heavy jobs build the devenv chain cold and
-      # never finish inside the runner window
-      id-token: write
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -215,10 +207,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # lets magic-nix-cache authenticate to FlakeHub Cache via OIDC;
-      # without it the nix-heavy jobs build the devenv chain cold and
-      # never finish inside the runner window
-      id-token: write
     steps:
       - name: 📥 checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
