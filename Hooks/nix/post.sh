@@ -62,6 +62,14 @@ ensure_darwin_sudo_session() {
 		return
 	fi
 
+	# Passwordless sudo (unattendedSudo) cannot be validated with `sudo -v` in
+	# a non-interactive shell: sudo insists on a TTY even for NOPASSWD entries.
+	# A real command check proves the credential works without prompting.
+	if sudo -n true 2> /dev/null; then
+		SUDO_SESSION_READY=true
+		return
+	fi
+
 	echo "==> Preparing sudo session for nix-darwin..."
 	sudo -v
 
