@@ -1,0 +1,23 @@
+# Cargo configuration for every T3 agent worktree.
+#
+# Deployed to ~/.t3/worktrees/.cargo/config.toml by the `scripts` tuckr group.
+# Cargo searches ancestor directories of the current package for a .cargo
+# directory, so this applies to every checkout below ~/.t3/worktrees without
+# any project needing to know about it.
+#
+# Why a shared target directory:
+#   T3 worktrees are created by the app, not by mbx, so they never receive an
+#   mbx target view and each one accumulated its own unmanaged target/. One of
+#   them reached 25 GB, which is what drove the 228 GB build machines to 99%
+#   full and failed every agent that tried to push. Builds in different
+#   worktrees now share a single cache, so total build output is one target
+#   directory instead of one per worktree. Cargo's own target lock serialises
+#   concurrent builds as a side effect.
+#
+# "../target" is relative to ~/.t3/worktrees, which resolves to ~/.t3/target.
+# It stays relative because the machines use different account names and the
+# same file is deployed everywhere. The path is deliberately named "target" so
+# the secscan target-prune walk (which starts at $HOME) treats it like any
+# other build cache and can reclaim it when the disk fills.
+[build]
+target-dir = "../target"
