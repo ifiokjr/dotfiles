@@ -132,6 +132,10 @@ jobs:
         run: |
           nu Configs/scripts/.local/bin/test_scripts
 
+      - name: verify active Rust targets survive cache pruning
+        if: runner.os == 'macOS'
+        run: python3 -m unittest discover -s tests -p test_target_prune.py -v
+
       - name: ✅ verify generate-machine-config (cross-platform)
         run: |
           nu Configs/scripts/.local/bin/generate-machine-config --output /tmp/test-machine.nix
