@@ -29,13 +29,19 @@ if (( pct < 85 )); then
   exit 0
 fi
 
-# Build-active protection is per-target, not global: below 97% require no
-# build at all (conservative); at 97%+ a stale target cannot belong to an
-# active build, so protect only targets touched in the last 30 minutes.
-build_active=0
-if pgrep -x cargo >/dev/null || pgrep -x rustc >/dev/null; then
-  build_active=1
-  print -- "build active; only pruning stale targets"
+# A target root's mtime does not track writes beneath it. Even an old root
+# can belong to a live compiler or test runner, including when disk is full.
+# pgrep exit 1 means no match; errors must also keep build output safe.
+rust_work_active() {
+  local probe_status
+  pgrep -x 'cargo|cargo-nextest|cargo-clippy|rustc|rustdoc|clippy-driver|mbx' >/dev/null
+  probe_status=$?
+  (( probe_status != 1 ))
+}
+
+if rust_work_active; then
+  print -- "Rust build/test command active or activity unknown; skipping target pruning"
+  exit 0
 fi
 
 # Staleness gate: 6 hours normally, but at >=97% full the disk outage risk
@@ -87,15 +93,13 @@ while IFS= read -r t; do
     continue
   fi
 
-  if (( build_active )) && (( pct < 97 )); then
-    fresh="$(find "$t" -maxdepth 0 -mmin -30 2>/dev/null)"
-    if [[ -n "$fresh" ]]; then
-      print -- "active build target; keeping $t"
-      continue
-    fi
-  fi
-
   sz="$(du -sk "$t" 2>/dev/null | cut -f1)"
+  # The walk and size calculation can take time. Stop if work started since
+  # the initial check, before deleting any more targets.
+  if rust_work_active; then
+    print -- "Rust work started or activity unknown; stopping target pruning"
+    break
+  fi
   if rm -rf "$t"; then
     print -- "pruned $t ($(( ${sz:-0} / 1024 )) MB)"
     freed=$(( freed + ${sz:-0} ))
