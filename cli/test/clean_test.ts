@@ -177,6 +177,23 @@ Deno.test("isSudoRemovablePath allows only paths inside HOME", () => {
 	assertEquals(isSudoRemovablePath("/tmp/.npm/_cacache", "/Users/me"), false);
 	// A HOME that itself carries a trailing slash still matches.
 	assertEquals(isSudoRemovablePath("/Users/me/.npm", "/Users/me/"), true);
+	// `..` must be collapsed before the prefix check. A string prefix would
+	// treat these as inside HOME and hand them to `sudo rm -rf`.
+	assertEquals(isSudoRemovablePath("/Users/me/../../etc", "/Users/me"), false);
+	assertEquals(
+		isSudoRemovablePath("/Users/me/foo/../../../etc/passwd", "/Users/me"),
+		false,
+	);
+	assertEquals(
+		isSudoRemovablePath("/Users/me/../../Users/megan/.npm", "/Users/me"),
+		false,
+	);
+	// A `..` that stays inside HOME is still removable.
+	assertEquals(
+		isSudoRemovablePath("/Users/me/foo/../.npm", "/Users/me"),
+		true,
+	);
+	assertEquals(isSudoRemovablePath("etc", "/Users/me"), false);
 });
 
 Deno.test("removeCachePath removes a user-owned cache without sudo", async () => {
@@ -221,6 +238,30 @@ Deno.test("removeCachePath reports the denial when sudo fails", async () => {
 		});
 	} finally {
 		await unlockAndRemove(dir, locked);
+	}
+});
+
+Deno.test("removeCachePath refuses a symlink that escapes HOME", async () => {
+	// `~/link` -> an outside directory. The lexical path is inside HOME, but
+	// `rm -rf ~/link/locked` would delete the outside tree. Only the resolved
+	// path is safe to hand to sudo.
+	const home = Deno.env.get("HOME") ?? "/tmp";
+	const outside = await Deno.makeTempDir({ prefix: "clean-escape-" });
+	const link = `${home}/.clean-escape-${crypto.randomUUID()}`;
+	const locked = await makeLockedCache(outside);
+	try {
+		await Deno.symlink(outside, link);
+		await withFakeSudo(emulatedRootRm, async (logPath) => {
+			await assertRejects(
+				() => removeCachePath(`${link}/locked`),
+				Deno.errors.PermissionDenied,
+			);
+			assertEquals(await pathExists(logPath), false);
+			assertEquals(await pathExists(`${outside}/locked`), true);
+		});
+	} finally {
+		await Deno.remove(link).catch(() => {});
+		await unlockAndRemove(outside, locked);
 	}
 });
 
