@@ -17,6 +17,7 @@
  */
 
 import { Command } from "@cliffy/command";
+import { normalize } from "@std/path";
 import {
 	commandExists,
 	printError,
@@ -236,14 +237,44 @@ async function chromeCloneDir(): Promise<string | null> {
 	return base ? `${base}/X/com.google.Chrome.code_sign_clone` : null;
 }
 
+/** Drop a trailing slash without turning the filesystem root into an empty string. */
+function withoutTrailingSlash(path: string): string {
+	return path.length > 1 ? path.replace(/\/+$/, "") : path;
+}
+
 /**
  * Whether a path may be removed with sudo: strictly inside HOME, and not HOME
- * itself. The privileged fallback refuses anything else, so a bad value from
- * `pnpm store path` or a platform lookup can never reach `sudo rm -rf`.
+ * itself. `..` segments are collapsed first, so `/home/me/../../etc` does not
+ * count as inside HOME. The privileged fallback refuses anything else, so a
+ * bad value from `pnpm store path` or a platform lookup can never reach
+ * `sudo rm -rf`.
  */
 export function isSudoRemovablePath(path: string, home: string): boolean {
-	const root = `${home.replace(/\/+$/, "")}/`;
-	return path.startsWith(root) && path.length > root.length;
+	const root = withoutTrailingSlash(normalize(home));
+	const candidate = withoutTrailingSlash(normalize(path));
+	if (!root.startsWith("/") || !candidate.startsWith("/")) return false;
+	if (candidate === root) return false;
+	return candidate.startsWith(`${root}/`);
+}
+
+/**
+ * Path to pass to `sudo rm -rf` after a permission error.
+ *
+ * Lexical normalization is not enough when an intermediate component is a
+ * symlink (`~/store` -> `/`). `rm -rf` follows that link. Resolve the real
+ * path and apply the same HOME check to it. Returns null when the path
+ * cannot be proven to stay inside HOME.
+ */
+async function sudoRemovalTarget(target: string): Promise<string | null> {
+	if (!isSudoRemovablePath(target, HOME)) return null;
+	let real: string;
+	try {
+		real = await Deno.realPath(target);
+	} catch {
+		return null;
+	}
+	const resolved = withoutTrailingSlash(normalize(real));
+	return isSudoRemovablePath(resolved, HOME) ? resolved : null;
 }
 
 /**
@@ -266,15 +297,23 @@ export async function removeCachePath(path: string): Promise<boolean> {
 		return false;
 	} catch (error) {
 		if (!(error instanceof Deno.errors.PermissionDenied)) throw error;
-		if (!isSudoRemovablePath(target, HOME)) throw error;
+		const removable = await sudoRemovalTarget(target);
+		if (removable === null) throw error;
 		printWarning(
-			`${target} contains root-owned files; retrying with sudo…`,
+			`${removable} contains root-owned files; retrying with sudo…`,
 		);
 		// Absolute rm: with secure_path in sudoers (darwin.nix) and sanitized
 		// privileged PATHs elsewhere, a bare name must not resolve through
 		// user-writable bin directories for the root-invoked binary.
-		const { success } = await runCommand(["sudo", "/bin/rm", "-rf", target]);
-		if (!success || (await pathExists(target))) throw error;
+		// Use the resolved path so the directory we checked is the directory
+		// rm deletes, including when an earlier component was a symlink.
+		const { success } = await runCommand([
+			"sudo",
+			"/bin/rm",
+			"-rf",
+			removable,
+		]);
+		if (!success || (await pathExists(removable))) throw error;
 		return true;
 	}
 }
@@ -506,7 +545,9 @@ async function cleanCaches(apply: boolean): Promise<number> {
 					}
 				} else {
 					printInfo(
-						`pnpm store: ${fmtBytes(bytes)} across ${removable.length} unreferenced store(s)`,
+						`pnpm store: ${
+							fmtBytes(bytes)
+						} across ${removable.length} unreferenced store(s)`,
 					);
 				}
 				freed += bytes;
@@ -586,7 +627,9 @@ export function selectPnpmStoresToRemove(
 	referencedStoreDirs: string[],
 ): string[] {
 	const root = storeRoot.replace(/\/+$/, "");
-	const referenced = new Set(referencedStoreDirs.map((p) => p.replace(/\/+$/, "")));
+	const referenced = new Set(
+		referencedStoreDirs.map((p) => p.replace(/\/+$/, "")),
+	);
 	return entries
 		.filter((entry) => /^v\d+$/.test(entry))
 		.map((entry) => `${root}/${entry}`)
