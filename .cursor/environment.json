@@ -1,0 +1,5 @@
+{
+	"name": "dotfiles",
+	"install": "[ ! -d /agent/repos/dotfiles ] || cd /agent/repos/dotfiles || exit $?\nbash .cursor/cloud-agent-install.sh",
+	"start": "[ ! -d /agent/repos/dotfiles ] || cd /agent/repos/dotfiles || exit $?\nbash .cursor/cloud-agent-start.sh"
+}
