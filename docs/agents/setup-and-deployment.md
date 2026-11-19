@@ -55,7 +55,7 @@ The setup script prints a human-readable execution plan before deployment so use
 
 Machine presets are per-machine feature sets stored in `machine.nix`. They are separate from the setup presets above and independent of `lite`, so a CLI-focused machine can opt into exactly the tools its job needs.
 
-- `agent-apps`: installs the AI coding agent suite — Antigravity (desktop app plus the `agy` CLI), Claude (desktop app plus the `claude` CLI), Cursor (desktop app; the cask also links its `cursor` CLI), OpenCode (desktop app; the `opencode` CLI comes from the pnpm group), T3 Code (desktop app; the `t3` CLI comes from Nix), and ZCode (desktop app plus its bundled CLI). Intended for fleet machines that run agents, where `lite` still keeps the GUI-heavy personal apps off.
+- `agent-apps`: installs the AI coding agent suite — Antigravity (desktop app plus the `agy` CLI), Claude (desktop app; the `claude` CLI comes from the pnpm group), Cursor (desktop app; the cask also links its `cursor` CLI), OpenCode (desktop app; the `opencode` CLI comes from the pnpm group), T3 Code (desktop app; the `t3` CLI comes from Nix), and ZCode (desktop app plus its bundled CLI). Intended for fleet machines that run agents, where `lite` still keeps the GUI-heavy personal apps off.
 
 ```bash
 dot machine add-preset agent-apps
@@ -65,6 +65,8 @@ dot rebuild --add-preset agent-apps   # set the preset and rebuild in one pass
 The Nix side reads the preset list on every evaluation; removing it with `dot machine remove-preset agent-apps` makes the next rebuild drop the preset-specific casks.
 
 xAI's official Grok Build CLI (`grok`) is installed through the managed pnpm global project as `@xai-official/grok`, so every machine gets it alongside Codex and OpenCode and it is not gated by `agent-apps`. It authenticates through `grok login` on first launch or `XAI_API_KEY` for headless runs; `dot rebuild --update` advances the pinned version through `pnpm:global:update`.
+
+Claude Code's `claude` CLI is managed the same way, as `@anthropic-ai/claude-code`, so `agent-apps` installs only the Claude desktop app and the CLI is never a Homebrew cask.
 
 ## Android SDK
 
