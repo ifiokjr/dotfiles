@@ -74,6 +74,13 @@ Claude Code is the one harness whose global file is not named `AGENTS.md`. It re
 
 Reading a project `AGENTS.md` requires Claude Code v2.1.277 or later, and is skipped when a `CLAUDE.md` or `CLAUDE.local.md` exists in the working directory or above it, unless the `Project instructions` setting is changed to `claude-md-and-agents-md`.
 
+### `models.toml`
+
+Declarative model routing tiers, usage thresholds, bans, and tri-provider council definitions, deployed to `~/.config/agents/models.toml` and read by `dot models`.
+
+- Run `dot models` (or `dot models pick <tier>`) to inspect live T3 Code provider usage caches (`~/.t3/caches/*.json`) and pick the highest-priority model with healthy headroom.
+- Put temporary per-machine overrides (disabled providers, threshold tweaks, or custom tier chains) in `~/.config/agents/models.local.toml` (untracked) so dotfiles history does not churn on transient quota changes.
+
 ### Skills
 
 Managed skills live under `Configs/agents/.agents/skills/` and deploy to `~/.agents/skills/`. That shared path is read directly by OpenCode, Cursor, Gemini CLI, Zed, ZCode, and Pi. Two harnesses do not read it and need links created by `Hooks/agents/post.sh`:

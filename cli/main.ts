@@ -12,6 +12,7 @@ import { doctorCommand } from "./commands/doctor.ts";
 import { envCommand } from "./commands/env.ts";
 import { groupsCommand } from "./commands/groups.ts";
 import { machineCommand } from "./commands/machine.ts";
+import { modelsCommand } from "./commands/models.ts";
 import { nixCommand } from "./commands/nix.ts";
 import { pnpmCommand } from "./commands/pnpm.ts";
 import { rebuildCommand } from "./commands/rebuild.ts";
@@ -41,6 +42,7 @@ await new Command()
 	.command("doctor", doctorCommand)
 	.command("groups", groupsCommand)
 	.command("skills", skillsCommand)
+	.command("models", modelsCommand)
 	.command("machine", machineCommand)
 	.command("nix", nixCommand)
 	.command("env", envCommand)
