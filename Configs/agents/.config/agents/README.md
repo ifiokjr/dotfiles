@@ -26,6 +26,7 @@ OpenCode configuration, used by the `opencode` command:
 
 - Global `permission` rules, with `"*"` set to `allow` for unrestricted access
 - `external_directory` set to `"*": "allow"`, which is what actually governs file and shell access outside the working directory
+- `browse` MCP server (`browse mcp`), which drives the user's real Chromium browser, alongside the Cloudflare remote server
 - Default model selection
 - `share` set to `"disabled"`, so no session can be published to a public transcript URL, and `autoupdate` set to `false`, so the binary does not phone home for version checks (`dot pnpm` manages its updates)
 
@@ -38,6 +39,7 @@ OpenCode validates this file strictly and rejects unknown keys, so every key mus
 Secondary OpenCode configuration, used by the `opencode2` command:
 
 - `permissions` as an ordered array of `{ action, resource, effect }` rules
+- `browse` MCP server (`browse mcp`), the same real-browser bridge as `opencode/opencode.json`
 - Default model selection
 
 Both configs are read by the same OpenCode binary and both accept the singular `permission` map, so this directory is no longer required to keep the two versions apart. It is kept because the `opencode2` wrapper still points `OPENCODE_CONFIG_DIR` here, and the array form is the shape the newer `permissions` key takes.

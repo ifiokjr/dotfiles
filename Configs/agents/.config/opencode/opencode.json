@@ -17,6 +17,10 @@
 	"autoupdate": false,
 	"mcp": {
 		"servers": {
+			"browse": {
+				"type": "local",
+				"command": ["browse", "mcp"]
+			},
 			"cloudflare": {
 				"type": "remote",
 				"url": "https://mcp.cloudflare.com/mcp"
