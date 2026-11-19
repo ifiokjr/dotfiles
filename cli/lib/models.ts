@@ -24,6 +24,9 @@ export const LOCAL_MODELS_CONFIG_RELATIVE = ".config/agents/models.local.toml";
 /** Default T3 Code provider caches directory under HOME. */
 export const T3_CACHES_RELATIVE = ".t3/caches";
 
+/** Usage snapshots written by this CLI (`dot models refresh`) under HOME. */
+export const AGENT_USAGE_RELATIVE = ".config/agents/usage";
+
 export interface UsageThresholds {
 	lowPercent: number;
 	exhaustedPercent: number;
@@ -587,16 +590,36 @@ export async function readProviderUsageSnapshots(
 	t3CachesDir: string,
 	staleMinutes = DEFAULT_THRESHOLDS.staleMinutes,
 	now: Date = new Date(),
+	usageDir?: string,
+): Promise<Map<string, ProviderUsageSnapshot>> {
+	const snapshots = await readSnapshotDirectory(t3CachesDir, staleMinutes, now);
+	if (!usageDir) return snapshots;
+
+	const overlays = await readSnapshotDirectory(usageDir, staleMinutes, now);
+	for (const [instanceId, overlay] of overlays) {
+		const base = snapshots.get(instanceId);
+		// An overlay measures quota for a provider T3 already reports; it must
+		// never make a provider look ready when T3 has no cache for it.
+		if (!base) continue;
+		snapshots.set(instanceId, mergeUsageOverlay(base, overlay));
+	}
+	return snapshots;
+}
+
+async function readSnapshotDirectory(
+	dir: string,
+	staleMinutes: number,
+	now: Date,
 ): Promise<Map<string, ProviderUsageSnapshot>> {
 	const snapshots = new Map<string, ProviderUsageSnapshot>();
-	if (!await exists(t3CachesDir, { isDirectory: true })) {
+	if (!await exists(dir, { isDirectory: true })) {
 		return snapshots;
 	}
 
-	for await (const entry of Deno.readDir(t3CachesDir)) {
+	for await (const entry of Deno.readDir(dir)) {
 		if (!entry.isFile || !entry.name.endsWith(".json")) continue;
 		const fallbackId = entry.name.slice(0, -".json".length);
-		const filePath = join(t3CachesDir, entry.name);
+		const filePath = join(dir, entry.name);
 		try {
 			const parsed: unknown = JSON.parse(await Deno.readTextFile(filePath));
 			const snapshot = parseProviderCacheJson(
@@ -614,6 +637,19 @@ export async function readProviderUsageSnapshots(
 	}
 
 	return snapshots;
+}
+
+function mergeUsageOverlay(
+	base: ProviderUsageSnapshot,
+	overlay: ProviderUsageSnapshot,
+): ProviderUsageSnapshot {
+	const windows = new Map(base.windows.map((window) => [window.id, window]));
+	for (const window of overlay.windows) windows.set(window.id, window);
+	return {
+		...base,
+		stale: base.stale || overlay.stale,
+		windows: [...windows.values()],
+	};
 }
 
 /** Evaluate a single model candidate against its provider's live usage snapshot. */
@@ -671,7 +707,7 @@ export function evaluateCandidate(
 	}
 
 	// Empty usageWindows explicitly marks subscription-backed or unmetered models
-	// whose quota is not tracked by the provider's T3 cache windows (e.g. z.ai).
+	// whose quota is not tracked by any provider cache window (e.g. free Go models).
 	if (candidate.usageWindows.length === 0) {
 		return {
 			candidate,

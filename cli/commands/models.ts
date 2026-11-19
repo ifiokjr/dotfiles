@@ -16,7 +16,10 @@ import {
 	resolveDotfilesDir,
 } from "../lib/config.ts";
 import {
+	AGENT_USAGE_RELATIVE,
 	formatCandidateOptions,
+	formatPercent,
+	formatResetCountdown,
 	type ModelsConfig,
 	pickModelForTier,
 	type ProviderUsageSnapshot,
@@ -27,6 +30,7 @@ import {
 	resolveCouncil,
 	T3_CACHES_RELATIVE,
 } from "../lib/models.ts";
+import { refreshZaiUsage } from "../lib/zaiUsage.ts";
 
 interface SharedModelOptions {
 	json?: boolean;
@@ -35,8 +39,12 @@ interface SharedModelOptions {
 }
 
 function defaultT3CachesDir(): string {
-	const home = Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE") ?? "";
+	const home = defaultHomeDir();
 	return join(home, T3_CACHES_RELATIVE);
+}
+
+function defaultHomeDir(): string {
+	return Deno.env.get("HOME") ?? Deno.env.get("USERPROFILE") ?? "";
 }
 
 async function loadState(opts: SharedModelOptions): Promise<{
@@ -56,11 +64,20 @@ async function loadState(opts: SharedModelOptions): Promise<{
 	}
 
 	const now = new Date();
+	const homeDir = defaultHomeDir();
+	// Only the live run refreshes Z.AI; a custom cache directory stays offline.
+	if (opts.cachesDir === undefined && homeDir) {
+		await refreshZaiUsage({ homeDir, now });
+	}
 	const cachesDir = opts.cachesDir ?? defaultT3CachesDir();
+	const usageDir = opts.cachesDir === undefined && homeDir
+		? join(homeDir, AGENT_USAGE_RELATIVE)
+		: undefined;
 	const snapshots = await readProviderUsageSnapshots(
 		cachesDir,
 		loaded.config.thresholds.staleMinutes,
 		now,
+		usageDir,
 	);
 
 	return { ...loaded, snapshots, now };
@@ -135,6 +152,55 @@ export const modelsCommand = new Command()
 			)
 			.action(async (opts: SharedModelOptions) => {
 				await runStatus(opts);
+			}),
+	)
+	.command(
+		"refresh",
+		new Command()
+			.description("Refresh the Z.AI coding-plan quota cache")
+			.option("--json", "Output machine-readable JSON")
+			.action(async (opts: { json?: boolean }) => {
+				const homeDir = defaultHomeDir();
+				if (!homeDir) {
+					printError("HOME is not set; cannot locate the Z.AI cache.");
+					Deno.exit(1);
+				}
+
+				const result = await refreshZaiUsage({ homeDir, force: true });
+				if (opts.json) {
+					console.log(JSON.stringify(result, null, 2));
+					if (
+						result.status === "failed" || result.status === "no-credential"
+					) {
+						Deno.exit(1);
+					}
+					return;
+				}
+
+				printHeader("Z.AI coding plan usage");
+				switch (result.status) {
+					case "written": {
+						printInfo(`Plan: ${result.planLevel ?? "unknown"}`);
+						for (const window of result.windows) {
+							const countdown = formatResetCountdown(window.resetsAt ?? null);
+							const resetNote = countdown ? ` (${countdown})` : "";
+							console.log(
+								`  ${window.label}: ${formatPercent(window.usedPercent)}${resetNote}`,
+							);
+						}
+						break;
+					}
+					case "fresh":
+						printInfo(`Cache is fresh: ${result.cachePath}`);
+						break;
+					case "no-credential":
+						printWarning("No Z.AI coding-plan key found in OpenCode auth.");
+						Deno.exit(1);
+						break;
+					case "failed":
+						printError(result.message);
+						Deno.exit(1);
+				}
 			}),
 	)
 	.command(
