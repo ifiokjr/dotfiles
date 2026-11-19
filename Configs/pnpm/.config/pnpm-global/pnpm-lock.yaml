@@ -14,6 +14,9 @@ importers:
       '@openai/codex':
         specifier: 0.167.0
         version: 0.167.0
+      '@opencode/browse':
+        specifier: 0.0.16
+        version: 0.0.16
       '@opencode/cli':
         specifier: 2.2.6
         version: 2.2.6
@@ -1404,6 +1407,11 @@ packages:
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
+
+  '@opencode/browse@0.0.16':
+    resolution: {integrity: sha512-DOiguaDF1EovDR/w+4xLmkri5Lpc6DxgUUfVuIxwxt34kWu2HB1uZ5ISlM6YumlGek869K9/ih7Ls2gh7VzDEw==}
+    engines: {node: '>=22.19.0'}
+    hasBin: true
 
   '@opencode/cli-darwin-arm64@2.2.6':
     resolution: {integrity: sha512-OZwkLtiDOvcsfWkRS4e0o/Vpgb7vw12xBLlIFyuDZfglsCmOSNzihS3Akg0Wh3kbob8JKDngIbktctgbfHmF8w==}
@@ -2926,6 +2934,11 @@ packages:
   acorn-walk@8.3.5:
     resolution: {integrity: sha512-HEHNfbars9v4pgpW6SO1KSPkfoS0xVOM/9UzkJltjlsHZmJasxg8aXkuZa7SMf8vKGIBhpUsPluQSqhJFCqebw==}
     engines: {node: '>=0.4.0'}
+
+  acorn@8.18.0:
+    resolution: {integrity: sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
 
   acorn@8.19.0:
     resolution: {integrity: sha512-oJlA3XiRm7Cyk6qFD2Jn8ak9B7jSy0qy00ADO3+8dpT0LSjFihQYv4C02LFCSYJV3Q37xYwwRy5m+IpIiUzqWw==}
@@ -5304,6 +5317,11 @@ packages:
   partial-json@0.1.7:
     resolution: {integrity: sha512-Njv/59hHaokb/hRUjce3Hdv12wd60MtM9Z5Olmn+nehe0QDAsRtRbJPvJ0Z91TusF0SuZRIvnM+S4l6EIP8leA==}
 
+  patchright-core@1.63.0:
+    resolution: {integrity: sha512-nuRJVTMVKoOFzY8vmwFqJZR3F0trUCKiPzDSgCOPq/yHHTefm9czILV23dXJsi5mvS7sCy7U1CqG7edA/21DtQ==}
+    engines: {node: '>=20'}
+    hasBin: true
+
   path-browserify@1.0.1:
     resolution: {integrity: sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==}
 
@@ -5410,6 +5428,10 @@ packages:
 
   pino@10.4.0:
     resolution: {integrity: sha512-bk1ZMTwG/Vymx+zPoa28MhNzucFvXJWp3csrSuxuHPSMeUettaCoQ5Jvg07mtC4JGNpcfTwz41oVCnNgBK9+vA==}
+    hasBin: true
+
+  pixelmatch@7.2.0:
+    resolution: {integrity: sha512-xhcb4yHu9sM/G7foGzoLtXYcC0zHEaOXXjRKhGup0fw78Nf2Tkiapv4EQyMzrbcmQPsllAI7DbFY2UT7PlI9Pg==}
     hasBin: true
 
   playwright-core@1.65.0-alpha-2026-10-30:
@@ -6490,6 +6512,18 @@ packages:
 
   ws@8.21.0:
     resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.22.0:
+    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -8060,6 +8094,17 @@ snapshots:
   '@openai/codex@0.167.0-win32-x64':
     optional: true
 
+  '@opencode/browse@0.0.16':
+    dependencies:
+      acorn: 8.18.0
+      patchright-core: 1.63.0
+      pixelmatch: 7.2.0
+      pngjs: 7.0.0
+      ws: 8.22.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@opencode/cli-darwin-arm64@2.2.6':
     optional: true
 
@@ -9471,6 +9516,8 @@ snapshots:
   acorn-walk@8.3.5:
     dependencies:
       acorn: 8.19.0
+
+  acorn@8.18.0: {}
 
   acorn@8.19.0: {}
 
@@ -12009,6 +12056,8 @@ snapshots:
 
   partial-json@0.1.7: {}
 
+  patchright-core@1.63.0: {}
+
   path-browserify@1.0.1: {}
 
   path-exists@5.0.0: {}
@@ -12107,6 +12156,10 @@ snapshots:
       safe-stable-stringify: 2.5.0
       sonic-boom: 4.2.1
       thread-stream: 4.2.1
+
+  pixelmatch@7.2.0:
+    dependencies:
+      pngjs: 7.0.0
 
   playwright-core@1.65.0-alpha-2026-10-30: {}
 
@@ -13370,6 +13423,8 @@ snapshots:
       signal-exit: 4.1.0
 
   ws@8.21.0: {}
+
+  ws@8.22.0: {}
 
   ws@8.22.1: {}
 

@@ -4,5 +4,13 @@
 	"autoupdate": false,
 	"permissions": [
 		{ "action": "*", "resource": "*", "effect": "ask" }
-	]
+	],
+	"mcp": {
+		"servers": {
+			"browse": {
+				"type": "local",
+				"command": ["browse", "mcp"]
+			}
+		}
+	}
 }
