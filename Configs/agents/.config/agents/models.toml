@@ -103,7 +103,7 @@ variant = "high"
 [[tiers.simple.candidates]]
 provider = "opencode"
 model = "zai-coding-plan/glm-5.3-flash"
-usage_windows = []
+usage_windows = ["zai_5h", "zai_weekly"]
 note = "ZAI subscription-backed fallback"
 
 [tiers.simple.candidates.options]
@@ -133,7 +133,7 @@ variant = "max"
 [[tiers.implement.candidates]]
 provider = "opencode"
 model = "zai-coding-plan/glm-5.3-flash"
-usage_windows = []
+usage_windows = ["zai_5h", "zai_weekly"]
 note = "ZAI subscription-backed Flash fallback / long implement"
 
 [tiers.implement.candidates.options]

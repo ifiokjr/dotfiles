@@ -500,6 +500,180 @@ Deno.test("readProviderUsageSnapshots loads valid JSON files and skips malformed
 	}
 });
 
+Deno.test("readProviderUsageSnapshots merges usage overlays into existing providers", async () => {
+	const tempDir = await Deno.makeTempDir({ prefix: "usage-merge-" });
+	const t3Dir = join(tempDir, "t3");
+	const usageDir = join(tempDir, "usage");
+
+	try {
+		await Deno.mkdir(t3Dir, { recursive: true });
+		await Deno.mkdir(usageDir, { recursive: true });
+		await Deno.writeTextFile(
+			join(t3Dir, "opencode.json"),
+			JSON.stringify({
+				instanceId: "opencode",
+				displayName: "OpenCode",
+				enabled: true,
+				status: "ready",
+				checkedAt: "2026-11-19T07:55:00.000Z",
+				usageLimits: {
+					checkedAt: "2026-11-19T07:55:00.000Z",
+					windows: [
+						{
+							id: "go_rolling",
+							label: "Go · Session",
+							kind: "session",
+							usedPercent: 0,
+						},
+						{
+							id: "go_monthly",
+							label: "Go · Monthly",
+							kind: "monthly",
+							usedPercent: 84,
+						},
+					],
+				},
+			}),
+		);
+		await Deno.writeTextFile(
+			join(usageDir, "zai-coding-plan.json"),
+			JSON.stringify({
+				instanceId: "opencode",
+				displayName: "Z.AI Coding Plan",
+				enabled: true,
+				status: "ready",
+				checkedAt: "2026-11-19T06:00:00.000Z",
+				usageLimits: {
+					checkedAt: "2026-11-19T06:00:00.000Z",
+					windows: [
+						{
+							id: "go_rolling",
+							label: "Overridden",
+							kind: "session",
+							usedPercent: 12,
+						},
+						{
+							id: "zai_5h",
+							label: "Z.AI · 5-hour",
+							kind: "session",
+							usedPercent: 96,
+						},
+						{
+							id: "zai_weekly",
+							label: "Z.AI · Weekly",
+							kind: "weekly",
+							usedPercent: 4,
+						},
+					],
+				},
+			}),
+		);
+		// A provider T3 never reported must not appear just because an overlay exists.
+		await Deno.writeTextFile(
+			join(usageDir, "ghost.json"),
+			JSON.stringify({
+				instanceId: "ghost",
+				enabled: true,
+				status: "ready",
+				usageLimits: { windows: [{ id: "ghost_window", usedPercent: 1 }] },
+			}),
+		);
+
+		const snapshots = await readProviderUsageSnapshots(
+			t3Dir,
+			60,
+			NOW,
+			usageDir,
+		);
+		assertEquals(snapshots.has("ghost"), false);
+
+		const opencode = snapshots.get("opencode");
+		assertEquals(opencode?.displayName, "OpenCode");
+		assertEquals(opencode?.windows.map((window) => window.id), [
+			"go_rolling",
+			"go_monthly",
+			"zai_5h",
+			"zai_weekly",
+		]);
+		assertEquals(opencode?.windows[0].effectiveUsedPercent, 12);
+		assertEquals(opencode?.windows[0].label, "Overridden");
+		assertEquals(opencode?.windows[2].effectiveUsedPercent, 96);
+		// The overlay is older than the TTL, so the merged snapshot is stale.
+		assertEquals(opencode?.stale, true);
+	} finally {
+		await Deno.remove(tempDir, { recursive: true });
+	}
+});
+
+Deno.test("evaluateCandidate gates Z.AI candidates on Z.AI quota windows", () => {
+	const thresholds = {
+		lowPercent: 80,
+		exhaustedPercent: 95,
+		staleMinutes: 60,
+	};
+	const candidate = {
+		provider: "opencode",
+		model: "zai-coding-plan/glm-5.3-flash",
+		options: {},
+		usageWindows: ["zai_5h", "zai_weekly"],
+		note: "",
+	};
+	const snapshot = parseProviderCacheJson(
+		"opencode",
+		{
+			instanceId: "opencode",
+			enabled: true,
+			status: "ready",
+			checkedAt: "2026-11-19T07:55:00.000Z",
+			usageLimits: {
+				checkedAt: "2026-11-19T07:55:00.000Z",
+				windows: [
+					{
+						id: "zai_5h",
+						label: "Z.AI · 5-hour",
+						kind: "session",
+						usedPercent: 96,
+						resetsAt: "2026-11-19T20:01:11.999Z",
+					},
+					{
+						id: "zai_weekly",
+						label: "Z.AI · Weekly",
+						kind: "weekly",
+						usedPercent: 4,
+						resetsAt: "2026-11-25T17:25:30.984Z",
+					},
+				],
+			},
+		},
+		60,
+		NOW,
+	)!;
+
+	const exhausted = evaluateCandidate(candidate, snapshot, thresholds);
+	assertEquals(exhausted.health, "exhausted");
+	assertEquals(exhausted.bottleneck?.id, "zai_5h");
+
+	const relaxed = parseProviderCacheJson(
+		"opencode",
+		{
+			instanceId: "opencode",
+			enabled: true,
+			status: "ready",
+			checkedAt: "2026-11-19T07:55:00.000Z",
+			usageLimits: {
+				checkedAt: "2026-11-19T07:55:00.000Z",
+				windows: [
+					{ id: "zai_5h", label: "Z.AI · 5-hour", usedPercent: 50 },
+					{ id: "zai_weekly", label: "Z.AI · Weekly", usedPercent: 4 },
+				],
+			},
+		},
+		60,
+		NOW,
+	)!;
+	assertEquals(evaluateCandidate(candidate, relaxed, thresholds).health, "ok");
+});
+
 Deno.test("pickModelForTier routes around low/exhausted providers and falls back cleanly", () => {
 	const config = parseModelsToml(SAMPLE_TOML);
 	const snapshots = new Map<string, ProviderUsageSnapshot>([
