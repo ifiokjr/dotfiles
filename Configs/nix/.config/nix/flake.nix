@@ -16,7 +16,16 @@
     # nixpkgs#563205 is open, its libghostty-vt is older than what devenv
     # expects, and the ABI mismatch makes `devenv shell` fail with
     # `terminal error: invalid value` (cachix/devenv#3183).
-    devenv.url = "github:cachix/devenv";
+    #
+    # Held at this rev (2026-11-19): devenv-proxy (the pingora-based proxy
+    # crate) has no nix openssl in its darwin build inputs, so a local build
+    # cannot link (-lssl is stripped by purity enforcement after openssl-sys
+    # probes Homebrew). It never built locally — the artifact always came
+    # from FlakeHub Cache, whose anonymous reads now 401. Rebuilds pass
+    # again once the cache reads authenticate (register the GitHub account
+    # at flakehub.com) or upstream adds darwin openssl to the crate; unpin
+    # when either lands.
+    devenv.url = "github:cachix/devenv/215e857bd3403963855a4ff718822be0949a41e6";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     # nix-homebrew pins its own brew-src input to a fixed Homebrew release,
     # but the taps above advance daily and can adopt cask DSL changes newer
@@ -148,14 +157,15 @@
                   --replace-warn "GO_LDFLAGS += -linkmode=external" ""
               '';
             }
-            // prev.lib.optionalAttrs (
-              prev.lib.elem prev.direnv.version [
-                "2.37.1"
-                "2.38.2"
-              ]
-            ) {
-              doCheck = false;
-            }
+            //
+              prev.lib.optionalAttrs
+                (prev.lib.elem prev.direnv.version [
+                  "2.37.1"
+                  "2.38.2"
+                ])
+                {
+                  doCheck = false;
+                }
           );
 
           # atuin 18.24.4 fails its daemon e2e test suite on Darwin
