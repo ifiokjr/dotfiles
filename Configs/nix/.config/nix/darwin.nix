@@ -171,7 +171,6 @@ in
         "android-studio"
         "antigravity" # Google Antigravity agent orchestration app
         "antigravity-cli" # Antigravity terminal harness, installed as `agy`
-        "claude-code@latest"
         "cursor"
         "db-browser-for-sqlite"
         "dbeaver-community"
@@ -219,14 +218,14 @@ in
         "t3-code" # T3 Code desktop app (stable) — AI coding editor for the lite fleet; app-only cask, so it does not collide with the t3code CLI's bin/t3
       ]
       ++ lib.optionals agentApps [
-        # AI coding agent suite — desktop apps plus their CLIs. Kept out of the
-        # lite list because lite is about skipping GUI-heavy personal apps, not
-        # about limiting what a fleet machine can run. `lib.unique` collapses
-        # the overlap with the lite and full lists above.
+        # AI coding agent suite — desktop apps plus the terminal harnesses a
+        # fleet machine needs. Kept out of the lite list because lite is about
+        # skipping GUI-heavy personal apps, not about limiting what a fleet
+        # machine can run. `lib.unique` collapses the overlap with the lite and
+        # full lists above. Claude Code's `claude` CLI comes from the pnpm group.
         "antigravity" # Google Antigravity agent orchestration app
         "antigravity-cli" # Antigravity terminal harness, installed as `agy`
-        "claude" # Claude desktop app
-        "claude-code@latest" # Claude Code CLI, installed as `claude`
+        "claude" # Claude desktop app; the claude CLI comes from the pnpm group
         "cursor" # Cursor editor; the cask also links its `cursor` CLI into /opt/homebrew/bin
         "opencode-desktop" # OpenCode desktop app; the opencode CLI comes from the pnpm group
         "t3-code" # T3 Code desktop app; CLI comes from extra.t3code in home.nix
