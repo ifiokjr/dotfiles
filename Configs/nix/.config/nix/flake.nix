@@ -25,7 +25,7 @@
     # again once the cache reads authenticate (register the GitHub account
     # at flakehub.com) or upstream adds darwin openssl to the crate; unpin
     # when either lands.
-    devenv.url = "github:cachix/devenv/215e857bd3403963855a4ff718822be0949a41e6";
+    devenv.url = "github:ifiokjr/devenv/89196027e37714506e5730db4c826c090a61b045";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     # nix-homebrew pins its own brew-src input to a fixed Homebrew release,
     # but the taps above advance daily and can adopt cask DSL changes newer
