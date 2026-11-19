@@ -1,0 +1,362 @@
+# Agent model routing policy and usage-aware fallback chains.
+#
+# Deployed to `~/.config/agents/models.toml` and read by `dot models`.
+# Keep AGENTS.md focused on durable rules; update model IDs, tiers, or
+# thresholds here instead of churning global agent instructions.
+#
+# Optional machine-local overrides live in `~/.config/agents/models.local.toml`
+# (untracked). Any `[thresholds]`, `disabled_providers`, `[council]`, or
+# `[tiers.<name>]` entries there override this file on that machine.
+
+[thresholds]
+# Prefer the next healthy candidate once any governed window hits this percent.
+low_percent = 80
+# Skip a candidate completely once any governed window hits this percent.
+exhausted_percent = 95
+# Flag cached T3 Code usage snapshots older than this many minutes.
+stale_minutes = 60
+
+[bans]
+# Permanently banned across every harness, thread, subagent, and fallback.
+models = [
+	"opencode-go/deepseek-v4-pro",
+	"opencode/deepseek-v4-pro",
+	"ollama-cloud/deepseek-v4-pro",
+	"ollama-cloud/deepseek-v4-pro:0813",
+	"ollama/deepseek-v4-pro:cloud",
+]
+# Expensive models that require an explicit request in the current thread.
+explicit_only = [
+	"gpt-6-astra",
+	"gpt-6.2-astra",
+	"gpt-5.6-cyber",
+	"gpt-5.5-pro",
+	"claude-fable-5-1",
+	"claude-fable-5-2",
+]
+# High-consumption models avoided by default (prefer their Flash or Neon peers).
+reduced = [
+	"zai-coding-plan/glm-5.3",
+	"opencode-go/glm-5.3",
+]
+
+[council]
+description = "Tri-provider review council (one frontier model per provider, high effort)"
+
+[[council.members]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Google Ultra frontier peer to Opus 5.5"
+
+[council.members.options]
+thought_level = "high"
+
+[[council.members]]
+provider = "claudeAgent"
+model = "claude-opus-5-5"
+usage_windows = ["seven_day"]
+note = "Anthropic frontier reviewer"
+
+[council.members.options]
+effort = "high"
+
+[[council.members]]
+provider = "codex"
+model = "gpt-6.2-sol"
+usage_windows = ["primary"]
+note = "OpenAI frontier adversarial reviewer (sol-loop)"
+
+[council.members.options]
+reasoningEffort = "high"
+
+[tiers.simple]
+description = "Quick single-file edits, triage, formatting, summaries, lightweight lookups"
+
+[[tiers.simple.candidates]]
+provider = "antigravity"
+model = "gemini-4-hydrogen"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Google Ultra fast workhorse for simple tasks"
+
+[tiers.simple.candidates.options]
+thought_level = "medium"
+
+[[tiers.simple.candidates]]
+provider = "opencode"
+model = "opencode-go/deepseek-v4.1-flash"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "High-volume OpenCode Go sub 1 fallback"
+
+[tiers.simple.candidates.options]
+variant = "high"
+
+[[tiers.simple.candidates]]
+provider = "opencode-go-2"
+model = "opencode-go/deepseek-v4.1-flash"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "High-volume OpenCode Go sub 2 fallback"
+
+[tiers.simple.candidates.options]
+variant = "high"
+
+[[tiers.simple.candidates]]
+provider = "opencode"
+model = "zai-coding-plan/glm-5.3-flash"
+usage_windows = []
+note = "ZAI subscription-backed fallback"
+
+[tiers.simple.candidates.options]
+variant = "high"
+
+[tiers.implement]
+description = "Default for well-defined work and parallel fan-out: named files, acceptance criteria, test command"
+
+[[tiers.implement.candidates]]
+provider = "opencode"
+model = "opencode-go/deepseek-v4.1-flash"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "Primary near-infinite volume workhorse (OpenCode Go sub 1)"
+
+[tiers.implement.candidates.options]
+variant = "max"
+
+[[tiers.implement.candidates]]
+provider = "opencode-go-2"
+model = "opencode-go/deepseek-v4.1-flash"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "Secondary near-infinite volume workhorse (OpenCode Go sub 2)"
+
+[tiers.implement.candidates.options]
+variant = "max"
+
+[[tiers.implement.candidates]]
+provider = "opencode"
+model = "zai-coding-plan/glm-5.3-flash"
+usage_windows = []
+note = "ZAI subscription-backed Flash fallback / long implement"
+
+[tiers.implement.candidates.options]
+variant = "max"
+
+[[tiers.implement.candidates]]
+provider = "antigravity"
+model = "gemini-4-hydrogen"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Google Ultra fallback for surgical debugging and edits"
+
+[tiers.implement.candidates.options]
+thought_level = "high"
+
+[[tiers.implement.candidates]]
+provider = "opencode"
+model = "opencode-go/beam-free"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "Free Go fallback (sub 1)"
+
+[[tiers.implement.candidates]]
+provider = "opencode-go-2"
+model = "opencode-go/beam-free"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "Free Go fallback (sub 2)"
+
+[[tiers.implement.candidates]]
+provider = "opencode"
+model = "opencode-go/iceman-contributor-free"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "Free Go fallback"
+
+[[tiers.implement.candidates]]
+provider = "opencode"
+model = "opencode-go/longcat-2.5-free"
+usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
+note = "Free Go fallback"
+
+[tiers.computer-use]
+description = "Native macOS/browser/simulator UI automation and steady visual execution"
+
+[[tiers.computer-use.candidates]]
+provider = "codex"
+model = "gpt-6.1-terra"
+usage_windows = ["primary"]
+note = "Primary computer-use workhorse on Codex"
+
+[tiers.computer-use.candidates.options]
+reasoningEffort = "high"
+
+[[tiers.computer-use.candidates]]
+provider = "codex"
+model = "gpt-6.2-sol"
+usage_windows = ["primary"]
+note = "Codex escalation when Terra stalls"
+
+[tiers.computer-use.candidates.options]
+reasoningEffort = "high"
+
+[[tiers.computer-use.candidates]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Vision-capable fallback when Codex quota is low"
+
+[tiers.computer-use.candidates.options]
+thought_level = "high"
+
+[tiers.long-horizon]
+description = "Multi-hour refactors, migrations, deep debugging, persistent workhorse execution"
+
+[[tiers.long-horizon.candidates]]
+provider = "codex"
+model = "gpt-6.1-terra"
+usage_windows = ["primary"]
+note = "Reliable underlying workhorse on Codex"
+
+[tiers.long-horizon.candidates.options]
+reasoningEffort = "high"
+
+[[tiers.long-horizon.candidates]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Google Ultra high-intelligence peer with deep headroom"
+
+[tiers.long-horizon.candidates.options]
+thought_level = "high"
+
+[[tiers.long-horizon.candidates]]
+provider = "codex"
+model = "gpt-6.2-sol"
+usage_windows = ["primary"]
+note = "Codex escalation when Terra fails"
+
+[tiers.long-horizon.candidates.options]
+reasoningEffort = "high"
+
+[tiers.judgment]
+description = "Ambiguous scope, architecture, complex second patch, high-intelligence reasoning"
+
+[[tiers.judgment.candidates]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Hit heavily first: Opus 5.5 peer backed by Google Ultra headroom"
+
+[tiers.judgment.candidates.options]
+thought_level = "xhigh"
+
+[[tiers.judgment.candidates]]
+provider = "claudeAgent"
+model = "claude-opus-5-5"
+usage_windows = ["seven_day"]
+note = "Primary alternative and tie-breaker for subtle craft"
+
+[tiers.judgment.candidates.options]
+effort = "xhigh"
+
+[[tiers.judgment.candidates]]
+provider = "codex"
+model = "gpt-6.2-sol"
+usage_windows = ["primary"]
+note = "Independent third-provider escalation"
+
+[tiers.judgment.candidates.options]
+reasoningEffort = "high"
+
+[tiers.review]
+description = "Adversarial code review, security review, and bug hunting (sol-loop / council)"
+
+[[tiers.review.candidates]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Google Ultra primary reviewer (strong defensive/bug-finding benchmarks)"
+
+[tiers.review.candidates.options]
+thought_level = "high"
+
+[[tiers.review.candidates]]
+provider = "codex"
+model = "gpt-6.2-sol"
+usage_windows = ["primary"]
+note = "Adversarial review loop standard (sol-loop)"
+
+[tiers.review.candidates.options]
+reasoningEffort = "high"
+
+[[tiers.review.candidates]]
+provider = "claudeAgent"
+model = "claude-opus-5-5"
+usage_windows = ["seven_day"]
+note = "Third-provider review alternative"
+
+[tiers.review.candidates.options]
+effort = "high"
+
+[tiers.design]
+description = "Visual and brand work: identity, landing pages, UI/UX, design systems, visual QA"
+
+[[tiers.design.candidates]]
+provider = "claudeAgent"
+model = "claude-opus-5-5"
+usage_windows = ["seven_day"]
+note = "Primary for visual direction, art direction, and final craft QA"
+
+[tiers.design.candidates.options]
+effort = "high"
+
+[[tiers.design.candidates]]
+provider = "claudeAgent"
+model = "claude-sonnet-5-5"
+usage_windows = ["seven_day"]
+note = "Smaller components, straightforward restyles, quick visual iterations"
+
+[tiers.design.candidates.options]
+effort = "high"
+
+[[tiers.design.candidates]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Fallback only when Claude subscription usage is low or exhausted"
+
+[tiers.design.candidates.options]
+thought_level = "high"
+
+[tiers.orchestrate]
+description = "Optional top-level orchestrator for multi-subagent coordination threads"
+
+[[tiers.orchestrate.candidates]]
+provider = "antigravity"
+model = "gemini-pro-orchestrator-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "Antigravity native Neon orchestrator"
+
+[tiers.orchestrate.candidates.options]
+thought_level = "high"
+
+[[tiers.orchestrate.candidates]]
+provider = "antigravity"
+model = "gemini-4-neon"
+usage_windows = ["gemini-5h", "gemini-weekly"]
+note = "General-purpose Neon fallback"
+
+[tiers.orchestrate.candidates.options]
+thought_level = "high"
+
+[[tiers.orchestrate.candidates]]
+provider = "claudeAgent"
+model = "claude-opus-5-5"
+usage_windows = ["seven_day"]
+note = "Opus 5.5 orchestrator fallback"
+
+[tiers.orchestrate.candidates.options]
+effort = "high"
+
+[[tiers.orchestrate.candidates]]
+provider = "codex"
+model = "gpt-6.1-terra"
+usage_windows = ["primary"]
+note = "Codex Terra orchestrator fallback"
+
+[tiers.orchestrate.candidates.options]
+reasoningEffort = "high"
