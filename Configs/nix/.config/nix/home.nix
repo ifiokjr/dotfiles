@@ -324,6 +324,26 @@ in
       '';
     };
 
+    # The Claude Code CLI comes from the pnpm global group, whose shim lives in
+    # ~/.local/share/pnpm-global. That directory is not on the PATH of GUI apps
+    # or non-interactive SSH commands, so T3's Claude provider probe cannot see
+    # it. This wrapper pins the node and pnpm paths and exposes `claude` on the
+    # standard local bin path, matching how zcode is handled above.
+    ".local/bin/claude" = {
+      executable = true;
+      text = ''
+        #!/bin/sh
+        user="''${USER:-$(id -un)}"
+        export PATH="/etc/profiles/per-user/$user/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:$HOME/.local/share/pnpm-global/node_modules/.bin:$PATH"
+        cli="$HOME/.local/share/pnpm-global/node_modules/.bin/claude"
+        if [ ! -x "$cli" ]; then
+          echo "claude: $cli is missing; run the pnpm global sync (dot rebuild --latest)" >&2
+          exit 127
+        fi
+        exec "$cli" "$@"
+      '';
+    };
+
     # Machine-wide mbx policy. 120 GiB is the combined budget for the action
     # store, managed target directories, and learned incremental state; agent
     # worktrees are evicted before long-lived checkouts. Home-manager owns this
