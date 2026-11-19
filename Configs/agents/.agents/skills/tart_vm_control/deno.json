@@ -1,0 +1,5 @@
+{
+	"name": "@skills/tart-vm-control",
+	"version": "0.1.0",
+	"exports": "./mcp-server-tart.ts"
+}

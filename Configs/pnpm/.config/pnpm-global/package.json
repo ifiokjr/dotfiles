@@ -5,16 +5,16 @@
 	"dependencies": {
 		"@anthropic-ai/claude-code": "2.1.328",
 		"@earendil-works/pi-coding-agent": "1.5.2",
-		"@openai/codex": "0.169.0",
-		"@opencode/browse": "0.0.16",
-		"@opencode/cli": "2.3.0",
+		"@openai/codex": "0.170.0",
+		"@opencode/browse": "0.1.5",
+		"@opencode/cli": "2.3.2",
 		"@playwright/cli": "0.1.24",
-		"@xai-official/grok": "1.0.88",
+		"@xai-official/grok": "1.0.89",
 		"agent-desktop": "1.3.1",
-		"cf": "1.0.0-rc.0",
+		"cf": "1.0.0-rc.1",
 		"netlify-cli": "27.20.0",
 		"ocx": "2.0.15",
-		"vercel": "65.17.0",
+		"vercel": "66.1.0",
 		"vite-plus": "1.7.0"
 	}
 }

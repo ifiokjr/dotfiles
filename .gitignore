@@ -128,3 +128,6 @@ build.gradle.kts
 *.temp
 .*.tmp
 .ant-colony/
+
+# ZCode Desktop session state (plans, paste attachments)
+.zcode/
