@@ -689,5 +689,13 @@ in
       /usr/libexec/ApplicationFirewall/socketfilterfw --add "$_tailscaled" >/dev/null 2>&1 || true
       /usr/libexec/ApplicationFirewall/socketfilterfw --unblock "$_tailscaled" >/dev/null 2>&1 || true
       unset _tailscaled
+    ''
+    + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
+      echo "==> Exposing the Claude CLI to non-interactive shells..."
+      # home-manager owns the wrapper at ~/.local/bin/claude. Non-interactive
+      # SSH commands get /usr/local/bin:/usr/bin:/bin, so link it there for
+      # T3's Claude provider probe.
+      /bin/mkdir -p /usr/local/bin
+      /bin/ln -sfn "/Users/${username}/.local/bin/claude" /usr/local/bin/claude
     '';
 }
