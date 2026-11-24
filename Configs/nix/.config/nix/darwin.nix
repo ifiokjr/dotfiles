@@ -336,15 +336,20 @@ in
     script = ''
       TS="${pkgs.tailscale}/bin/tailscale"
       state="/tmp/tailscale-direct-watchdog.last"
-      json="$("$TS" status --json 2>/dev/null)" || exit 0
-      relay="$(printf '%s' "$json" | ${pkgs.jq}/bin/jq -r '.Self.Relay // empty')"
-      [ -n "$relay" ] || exit 0
+      # Probe the workstation that runs fleet maintenance. `Self.Relay` is
+      # always populated (even on direct machines), so use the ping result:
+      # a relayed path prints "via DERP", a direct one prints the address.
+      out="$("$TS" ping -c 1 --timeout 2s macbookpro 2>&1)" || exit 0
+      case "$out" in
+        *"via DERP"*) : ;;
+        *) exit 0 ;;
+      esac
       now="$(/bin/date +%s)"
       last="$(/bin/cat "$state" 2>/dev/null || echo 0)"
       [ $((now - last)) -lt 300 ] && exit 0
       printf '%s\n' "$now" > "$state"
       "$TS" debug restun >/dev/null 2>&1
-      echo "$(/bin/date) relay=$relay restun"
+      echo "$(/bin/date) to macbookpro via DERP; restun"
     '';
     serviceConfig = {
       RunAtLoad = true;
