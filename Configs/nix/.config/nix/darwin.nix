@@ -339,7 +339,10 @@ in
       # Probe the workstation that runs fleet maintenance. `Self.Relay` is
       # always populated (even on direct machines), so use the ping result:
       # a relayed path prints "via DERP", a direct one prints the address.
-      out="$("$TS" ping -c 1 --timeout 2s macbookpro 2>&1)" || exit 0
+      # `tailscale ping` exits nonzero when it cannot establish a direct path,
+      # which is exactly the relayed case we need to act on. Do not treat that
+      # as a failure: inspect the output instead.
+      out="$("$TS" ping -c 1 --timeout 2s macbookpro 2>&1)"
       case "$out" in
         *"via DERP"*) : ;;
         *) exit 0 ;;
