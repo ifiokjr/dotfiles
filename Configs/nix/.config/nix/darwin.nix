@@ -327,6 +327,33 @@ in
     };
   };
 
+  # When Tailscale cannot establish a direct path it falls back to a DERP
+  # relay, and raw `tailscale nc` SSH connections intermittently fail or drop
+  # long-running commands. Re-run NAT traversal periodically while relayed so
+  # the machine keeps trying to restore a direct path. `debug restun` is
+  # low-impact compared with restarting tailscaled (which would drop SSH).
+  launchd.agents.tailscale-direct-watchdog = {
+    script = ''
+      TS="${pkgs.tailscale}/bin/tailscale"
+      state="/tmp/tailscale-direct-watchdog.last"
+      json="$("$TS" status --json 2>/dev/null)" || exit 0
+      relay="$(printf '%s' "$json" | ${pkgs.jq}/bin/jq -r '.Self.Relay // empty')"
+      [ -n "$relay" ] || exit 0
+      now="$(/bin/date +%s)"
+      last="$(/bin/cat "$state" 2>/dev/null || echo 0)"
+      [ $((now - last)) -lt 300 ] && exit 0
+      printf '%s\n' "$now" > "$state"
+      "$TS" debug restun >/dev/null 2>&1
+      echo "$(/bin/date) relay=$relay restun"
+    '';
+    serviceConfig = {
+      RunAtLoad = true;
+      StartInterval = 600;
+      StandardOutPath = "/tmp/tailscale-direct-watchdog.log";
+      StandardErrorPath = "/tmp/tailscale-direct-watchdog.log";
+    };
+  };
+
   # Raise system-wide file descriptor limits from the macOS default of 256.
   # Without this, nix builds and tools like devenv frequently hit "Too many open
   # files". The daemon runs as root at boot so it can raise kernel ceilings and
@@ -686,9 +713,15 @@ in
     + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
       echo "==> Allowing tailscaled through the application firewall..."
       _tailscaled="${pkgs.tailscale}/bin/tailscaled"
-      /usr/libexec/ApplicationFirewall/socketfilterfw --add "$_tailscaled" >/dev/null 2>&1 || true
-      /usr/libexec/ApplicationFirewall/socketfilterfw --unblock "$_tailscaled" >/dev/null 2>&1 || true
-      unset _tailscaled
+      _tailscaled_resolved="$(/usr/bin/readlink -f "$_tailscaled" 2>/dev/null || echo "$_tailscaled")"
+      # Allow both the profile symlink and the resolved store binary; the
+      # firewall matches paths, and a blocked daemon forces DERP relays.
+      for _ts in "$_tailscaled" "$_tailscaled_resolved"; do
+        /usr/libexec/ApplicationFirewall/socketfilterfw --add "$_ts" >/dev/null 2>&1 || true
+        /usr/libexec/ApplicationFirewall/socketfilterfw --unblockapp "$_ts" >/dev/null 2>&1 || true
+        /usr/libexec/ApplicationFirewall/socketfilterfw --unblock "$_ts" >/dev/null 2>&1 || true
+      done
+      unset _ts _tailscaled _tailscaled_resolved
     ''
     + lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
       echo "==> Exposing the Claude CLI to non-interactive shells..."
