@@ -402,6 +402,12 @@ in
 
         Host *
             IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+            # Tailscale falls back to DERP relays when no direct path is
+            # available, and relayed connections can silently drop during long
+            # commands. Keep sessions alive across those hiccups.
+            ServerAliveInterval 15
+            ServerAliveCountMax 8
+            TCPKeepAlive yes
       '';
     };
   };
