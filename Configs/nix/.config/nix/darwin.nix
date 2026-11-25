@@ -251,18 +251,22 @@ in
   # that means it is unreachable. KeepAlive makes launchd restart it.
   launchd.daemons.tailscaled.serviceConfig.KeepAlive = true;
 
-  # nix-darwin's tailscale module owns /etc/resolver/ts.net (MagicDNS) and
-  # only overwrites contents it recognizes: its own text plus one hash of the
-  # file older tailscaled versions write ("# Added by tailscaled" plus the
-  # IPv4 MagicDNS resolver). tailscale 1.104+ also writes the IPv6 MagicDNS
-  # resolver (fd7a:115c:a1e0::53), so activation treats the file as
-  # unrecognized content and aborts every rebuild until the hash list is
-  # extended. Cover both trailing-newline variants of that layout; drop this
-  # override once nix-darwin learns the new hash upstream.
-  environment.etc."resolver/ts.net".knownSha256Hashes = [
-    "57960503f4bd6e8afe1c6543597386a5af61efdec1bb5b8b0f42960670c1b352"
-    "5ab5a20500f76f20916837f462082a8bfe782af45aa7b4076cca853eb0a67067"
-  ];
+  # Hand /etc/resolver/ts.net to tailscaled instead of nix-darwin.
+  #
+  # nix-darwin's tailscale module declares this file in environment.etc, which
+  # activation installs as a symlink into /etc/static. tailscale 1.104+ now
+  # writes the MagicDNS resolver itself and refuses to follow a symlink out of
+  # /etc/resolver ("openat ts.net: path escapes from parent"), so the write
+  # fails and `tailscale status` reports a permanent health warning on every
+  # machine while MagicDNS config is left stale.
+  #
+  # Listing tailscaled's content in knownSha256Hashes only silenced the
+  # activation abort: a known hash means "OK to overwrite", so each rebuild
+  # still reinstated the symlink and reintroduced the failure. Disabling the
+  # entry makes activation ignore the path outright, leaving tailscaled's own
+  # regular file ("# Added by tailscaled" plus the IPv4 and IPv6 MagicDNS
+  # resolvers) in place across rebuilds.
+  environment.etc."resolver/ts.net".enable = lib.mkForce false;
 
   # Client-side routing (exit nodes, subnet routers) works out of the box on macOS.
   # The `useRoutingFeatures` option only exists in the NixOS tailscale module
