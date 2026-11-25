@@ -34,11 +34,6 @@ explicit_only = [
 	"claude-fable-5-1",
 	"claude-fable-5-2",
 ]
-# High-consumption models avoided by default (prefer their Flash or Neon peers).
-reduced = [
-	"zai-coding-plan/glm-5.3",
-	"opencode-go/glm-5.3",
-]
 
 [council]
 description = "Tri-provider review council (one frontier model per provider, high effort)"
@@ -100,15 +95,6 @@ note = "High-volume OpenCode Go sub 2 fallback"
 [tiers.simple.candidates.options]
 variant = "high"
 
-[[tiers.simple.candidates]]
-provider = "opencode"
-model = "zai-coding-plan/glm-5.3-flash"
-usage_windows = ["zai_5h", "zai_weekly"]
-note = "ZAI subscription-backed fallback"
-
-[tiers.simple.candidates.options]
-variant = "high"
-
 [tiers.implement]
 description = "Default for well-defined work and parallel fan-out: named files, acceptance criteria, test command"
 
@@ -126,15 +112,6 @@ provider = "opencode-go-2"
 model = "opencode-go/deepseek-v4.1-flash"
 usage_windows = ["go_rolling", "go_weekly", "go_monthly"]
 note = "Secondary near-infinite volume workhorse (OpenCode Go sub 2)"
-
-[tiers.implement.candidates.options]
-variant = "max"
-
-[[tiers.implement.candidates]]
-provider = "opencode"
-model = "zai-coding-plan/glm-5.3-flash"
-usage_windows = ["zai_5h", "zai_weekly"]
-note = "ZAI subscription-backed Flash fallback / long implement"
 
 [tiers.implement.candidates.options]
 variant = "max"
@@ -206,15 +183,6 @@ thought_level = "high"
 description = "Multi-hour refactors, migrations, deep debugging, persistent workhorse execution"
 
 [[tiers.long-horizon.candidates]]
-provider = "codex"
-model = "gpt-6.1-terra"
-usage_windows = ["primary"]
-note = "Reliable underlying workhorse on Codex"
-
-[tiers.long-horizon.candidates.options]
-reasoningEffort = "high"
-
-[[tiers.long-horizon.candidates]]
 provider = "antigravity"
 model = "gemini-4-neon"
 usage_windows = ["gemini-5h", "gemini-weekly"]
@@ -222,6 +190,24 @@ note = "Google Ultra high-intelligence peer with deep headroom"
 
 [tiers.long-horizon.candidates.options]
 thought_level = "high"
+
+[[tiers.long-horizon.candidates]]
+provider = "opencode"
+model = "zai-coding-plan/glm-5.4"
+usage_windows = ["zai_5h", "zai_weekly"]
+note = "ZAI Coding Plan intelligence immediately behind Neon"
+
+[tiers.long-horizon.candidates.options]
+variant = "max"
+
+[[tiers.long-horizon.candidates]]
+provider = "codex"
+model = "gpt-6.1-terra"
+usage_windows = ["primary"]
+note = "Reliable underlying workhorse on Codex"
+
+[tiers.long-horizon.candidates.options]
+reasoningEffort = "high"
 
 [[tiers.long-horizon.candidates]]
 provider = "codex"
@@ -243,6 +229,15 @@ note = "Hit heavily first: Opus 5.5 peer backed by Google Ultra headroom"
 
 [tiers.judgment.candidates.options]
 thought_level = "xhigh"
+
+[[tiers.judgment.candidates]]
+provider = "opencode"
+model = "zai-coding-plan/glm-5.4"
+usage_windows = ["zai_5h", "zai_weekly"]
+note = "Immediate second opinion behind Neon via the ZAI Coding Plan"
+
+[tiers.judgment.candidates.options]
+variant = "max"
 
 [[tiers.judgment.candidates]]
 provider = "claudeAgent"
@@ -273,6 +268,15 @@ note = "Google Ultra primary reviewer (strong defensive/bug-finding benchmarks)"
 
 [tiers.review.candidates.options]
 thought_level = "high"
+
+[[tiers.review.candidates]]
+provider = "opencode"
+model = "zai-coding-plan/glm-5.4"
+usage_windows = ["zai_5h", "zai_weekly"]
+note = "Ordinary code-review second opinion; sol-loop stays on Codex Sol"
+
+[tiers.review.candidates.options]
+variant = "high"
 
 [[tiers.review.candidates]]
 provider = "codex"

@@ -285,7 +285,7 @@ remove_excluded_skill_links "$CLAUDE_SKILLS_DIR" claude
 #
 # Source is the same Keychain item Codex uses for its ZAI provider; the value
 # never touches the repo. Only zai-coding-plan is seeded: it serves the GLM
-# Coding Plan models (zai-coding-plan/glm-5.3) that the key is entitled to,
+# Coding Plan models (zai-coding-plan/glm-5.4) that the key is entitled to,
 # while the non-plan `zai` endpoint answers 429 with it.
 #
 # Best-effort: a missing Keychain item (fresh machine, Linux) must not fail
