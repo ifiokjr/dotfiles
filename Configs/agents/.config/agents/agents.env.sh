@@ -36,7 +36,7 @@
 # ---------------------------------------------------------------------------
 # OpenCode's Z.AI providers auto-activate from ZHIPU_API_KEY — one variable
 # enables zai, zai-coding-plan, zhipuai, and zhipuai-coding-plan. The key is a
-# GLM Coding Plan subscription, so select models as zai-coding-plan/glm-5.3
+# GLM Coding Plan subscription, so select models as zai-coding-plan/glm-5.4
 # (the non-plan `zai` endpoint answers 429 with this key). Ollama Cloud needs
 # no wiring here: it activates from OLLAMA_API_KEY, exported in shell/env.sh.
 #
