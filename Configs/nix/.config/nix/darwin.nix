@@ -181,7 +181,7 @@ in
         "react-native-debugger"
         "reactotron"
         "robloxstudio"
-        "t3-code"
+        "t3-code@nightly" # T3 Code desktop app (nightly channel)
         "visual-studio-code"
         "zed@preview"
 
@@ -215,7 +215,7 @@ in
         "claude" # Claude desktop app — AI assistant usable via screen sharing
         "ghostty" # Terminal emulator — needed even in lite mode on desktop machines
         "google-chrome" # Browser for web-based checks in CI workflows
-        "t3-code" # T3 Code desktop app (stable) — AI coding editor for the lite fleet; app-only cask, so it does not collide with the t3code CLI's bin/t3
+        "t3-code@nightly" # T3 Code desktop app (nightly channel) — AI coding editor for the lite fleet; app-only cask, so it does not collide with the t3code CLI's bin/t3
       ]
       ++ lib.optionals agentApps [
         # AI coding agent suite — desktop apps plus the terminal harnesses a
@@ -228,7 +228,7 @@ in
         "claude" # Claude desktop app; the claude CLI comes from the pnpm group
         "cursor" # Cursor editor; the cask also links its `cursor` CLI into /opt/homebrew/bin
         "opencode-desktop" # OpenCode desktop app; the opencode CLI comes from the pnpm group
-        "t3-code" # T3 Code desktop app; CLI comes from extra.t3code in home.nix
+        "t3-code@nightly" # T3 Code desktop app (nightly channel); CLI comes from extra.t3code-nightly in home.nix
         "zcode" # ZCode desktop app; also ships the bundled zcode CLI
       ]
     );

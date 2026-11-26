@@ -16,18 +16,10 @@ let
   extraPackages = ifiokjr-nixpkgs.packages.${pkgs.stdenv.system};
   extra = extraPackages;
 
-  # Keep the CLI current while the package input catches up with this stable
-  # release. Newer upstream package versions take over automatically.
-  t3codeStable =
-    if lib.versionAtLeast extra.t3code.version "0.1.3" then
-      extra.t3code
-    else
-      extra.t3code.override {
-        overrideVersion = "0.1.3";
-        t3codeHashes = {
-          "darwin-arm64" = "sha256-In99eeC4rvBQokMOQtlRAyZu+Kf3Iv6/6aKMstJmtHc=";
-        };
-      };
+  # T3 Code's nightly CLI. The `t3-code@nightly` cask in darwin.nix installs the
+  # matching desktop app, so the headless server and the UI stay on one build.
+  # Install this or `t3code`, never both: each provides `bin/t3`.
+  t3codeNightly = extra.t3code-nightly;
 
   # Consumer VPNs can intercept Tailscale's IPv4 range and MagicDNS. Resolve
   # the peer locally and use its IPv6 address without requiring a TUN route.
@@ -272,14 +264,14 @@ in
         # sandbox due to missing Vulkan/CUDA runtime libraries.
         extra.ollama
 
-        # Stable t3 CLI, for every macOS machine including lite ones: the
+        # Nightly t3 CLI, for every macOS machine including lite ones: the
         # headless minis are lite and are exactly where it is wanted. It is a
         # ~190 MB CLI, not one of the GUI-heavy packages the lite gate exists
         # to skip. Darwin-only by choice — Linux CI and the Docker image have
-        # no use for it. Install this or `t3code-nightly`, never both: each
-        # provides `bin/t3`. The `t3-code` cask in darwin.nix ships only the
-        # desktop app, so it collides with neither.
-        t3codeStable
+        # no use for it. Install this or `t3code`, never both: each provides
+        # `bin/t3`. The `t3-code@nightly` cask in darwin.nix ships the desktop
+        # app, so it collides with neither.
+        t3codeNightly
       ]
       ++ lib.optionals (!lite) [
         # macOS-only packages (heavy, skipped in lite mode)
@@ -328,8 +320,11 @@ in
     # ~/.local/share/pnpm-global. That directory is not on the PATH of GUI apps
     # or non-interactive SSH commands, so T3's Claude provider probe cannot see
     # it. This wrapper pins the node and pnpm paths and exposes `claude` on the
-    # standard local bin path, matching how zcode is handled above.
+    # standard local bin path, matching how zcode is handled above. The native
+    # installer writes its own symlink at this path whenever it updates, so
+    # `force` reclaims the foreign link instead of aborting activation.
     ".local/bin/claude" = {
+      force = true;
       executable = true;
       text = ''
         #!/bin/sh
