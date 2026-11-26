@@ -3,18 +3,18 @@
 	"type": "module",
 	"private": true,
 	"dependencies": {
-		"@anthropic-ai/claude-code": "2.1.328",
-		"@earendil-works/pi-coding-agent": "1.5.2",
-		"@openai/codex": "0.170.0",
+		"@anthropic-ai/claude-code": "2.1.332",
+		"@earendil-works/pi-coding-agent": "1.6.1",
+		"@openai/codex": "0.172.0",
 		"@opencode/browse": "0.1.5",
-		"@opencode/cli": "2.3.2",
-		"@playwright/cli": "0.1.24",
-		"@xai-official/grok": "1.0.89",
+		"@opencode/cli": "2.4.1",
+		"@playwright/cli": "0.1.25",
+		"@xai-official/grok": "1.0.92",
 		"agent-desktop": "1.3.1",
-		"cf": "1.0.0-rc.1",
-		"netlify-cli": "27.20.0",
+		"cf": "1.0.0-rc.6",
+		"netlify-cli": "27.20.1",
 		"ocx": "2.0.15",
-		"vercel": "66.1.0",
-		"vite-plus": "1.7.0"
+		"vercel": "66.6.0",
+		"vite-plus": "1.8.0"
 	}
 }
