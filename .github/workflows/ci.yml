@@ -179,7 +179,7 @@ jobs:
         # fail-severity was silently ignored. Findings surface as SARIF
         # annotations (security tab); config issues fail CI via
         # tests/security-audit.sh instead.
-        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        uses: zizmorcore/zizmor-action@1b4550e929643b8b26a62303c6bd64814271a4f1 # v0.9.2
 
   security-audit:
     name: security regression audit
