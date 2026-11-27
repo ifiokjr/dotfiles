@@ -14,7 +14,7 @@
 		"cf": "1.0.0-rc.6",
 		"netlify-cli": "27.20.1",
 		"ocx": "2.0.15",
-		"vercel": "67.0.0",
+		"vercel": "68.0.0-snapshot-c9dfd83f2293",
 		"vite-plus": "1.8.0"
 	}
 }
